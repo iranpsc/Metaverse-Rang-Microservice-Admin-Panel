@@ -1,0 +1,16 @@
+@props(['id', 'title'])
+
+<div id="{{ $id }}" wire:ignore.self class="modal fade" data-bs-backdrop="static" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
+                <h4 class="modal-title">{{ $title }}</h4>
+            </div>
+            <div class="modal-body">
+                {{ $slot }}
+            </div>
+            <div class="modal-footer">{{ $footer }}</div>
+        </div>
+    </div>
+</div>
