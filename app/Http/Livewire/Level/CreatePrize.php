@@ -10,7 +10,7 @@ class CreatePrize extends Component
     public $level, $key, $prize;
     public $psc, $blue, $red, $yellow, $union_license, $union_members_count;
     public $observing_license, $gate_license, $lawyer_license, $city_counsile_entry;
-    public $special_residence_property, $property_on_area, $judge_entry, $satisfaction;
+    public $special_residence_property, $property_on_area, $judge_entry, $satisfaction, $upload_feature_image;
     public $effect;
 
     protected $rules = [
@@ -55,10 +55,6 @@ class CreatePrize extends Component
         'effect.min' => 'کمترین مقدار 0 می باشد',
     ];
 
-    public function mount() {
-        $this->prize = new Prize();
-    }
-
     public function save() {
         $this->validate();
         if($this->level->prize) {
@@ -66,6 +62,7 @@ class CreatePrize extends Component
             return;
         }
 
+        $this->prize = new Prize();
         $this->prize->level_id = $this->level->id;
         $this->prize->psc = $this->psc;
         $this->prize->blue = $this->blue;
@@ -82,6 +79,7 @@ class CreatePrize extends Component
         $this->prize->judge_entry = $this->judge_entry ?? 0;
         $this->prize->satisfaction = $this->satisfaction;
         $this->prize->effect = $this->effect;
+        $this->prize->upload_feature_image = $this->upload_feature_image;
         $this->prize->save();
         session()->flash('success', 'جوایز سطح با موفقیت ثبت شد');
         $this->emitUp('prizeCreated');

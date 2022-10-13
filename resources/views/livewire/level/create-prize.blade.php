@@ -9,7 +9,7 @@
         <div class="row">
             <div class="col-md-6">
                 <x-forms.group for="psc-{{$level->id}}" label="PSC">
-                    <x-forms.input id="psc-{{$level->id}}" wire:model="psc" />
+                    <x-forms.input  id="psc-{{$level->id}}" wire:model="psc" />
                     @error('psc')
                         <span class="form-text text-danger">{{ $message }}</span>
                     @enderror
@@ -91,6 +91,16 @@
                     @enderror
                 </x-forms.group>
 
+                <x-forms.group for="upload-feature-image-{{$level->id}}" label="بار گذاری تصاویر املاک">
+                    <x-forms.select wire:model="upload_feature_image" id="upload-feature-image-{{$level->id}}">
+                        <option selected value="0">خیر</option>
+                        <option value="1">بله</option>
+                    </x-forms.select>
+                    @error('city_counsile_entry')
+                        <span class="form-text text-danger">{{ $message }}</span>
+                    @enderror
+                </x-forms.group>
+
                 <x-forms.group for="special_residence_property-{{$level->id}}" label="ملک مسکونی ویژه">
                     <x-forms.input id="special_residence_property-{{$level->id}}" wire:model="special_residence_property" />
                     @error('special_residence_property')
@@ -104,7 +114,6 @@
                         <span class="form-text text-danger">{{ $message }}</span>
                     @enderror
                 </x-forms.group>
-
 
                 <x-forms.group for="judge_entry-{{$level->id}}" label="ورود به قضاوت">
                     <x-forms.select wire:model="judge_entry" id="judge_entry-{{$level->id}}">

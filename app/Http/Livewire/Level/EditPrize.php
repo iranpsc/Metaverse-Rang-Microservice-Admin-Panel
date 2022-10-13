@@ -53,9 +53,9 @@ class EditPrize extends Component
         'effect.integer' => 'لطفا مقدار حد تاثیر را عددی وارد کنید',
     ];
 
-    public function mount(Level $level)
+    public function mount()
     {
-        $this->prize                      = $level->prize;
+        $this->prize                      = $this->level->prize;
         $this->psc                        = $this->prize->psc;
         $this->blue                       = $this->prize->blue;
         $this->red                        = $this->prize->red;
@@ -72,6 +72,8 @@ class EditPrize extends Component
         $this->judge_entry                = $this->prize->judge_entry;
         $this->satisfaction               = $this->prize->satisfaction;
         $this->effect                     = $this->prize->effect;
+        $this->upload_feature_image       = $this->prize->upload_feature_image;
+
     }
 
     public function save()
@@ -93,14 +95,17 @@ class EditPrize extends Component
         $this->prize->judge_entry                = $this->judge_entry;
         $this->prize->satisfaction               = $this->satisfaction;
         $this->prize->effect                     = $this->effect;
+        $this->prize->upload_feature_image       = $this->upload_feature_image;
         $this->prize->save();
         session()->flash('success', 'جوایز سطح با موفقیت ثبت شد');
+        $this->emitUp('prizeUpdated');
     }
 
     public function updated($prop)
     {
         $this->validateOnly($prop);
     }
+    
     public function render()
     {
         return view('livewire.level.edit-prize');
