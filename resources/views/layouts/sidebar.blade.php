@@ -90,7 +90,7 @@
             <li>
                 <a href="{{ route('variables') }}">
                     <span class="icon-note"></span>
-                    <span>لیست متغیرها</span>
+                    <span>محصولات فروشگاه</span>
                 </a>
             </li>
             <li>
@@ -99,28 +99,11 @@
                     <span>مدیریت سلسله</span>
                 </a>
             </li>
-            <li>
-                <a href="{{ route('transactions') }}">
-                    <span class="fa fa-bank"></span>
-                    <span>آمار تراکنش ها</span>
-                </a>
-            </li>
-            <li>
-                <a href="#">
-                    <span class="icon-user"></span>
-                    <span>آمار ثبت نام</span>
-                </a>
-            </li>
+
             <li>
                 <a href="#">
                     <span class="icon-note"></span>
-                    <span>آمار فعالیت ها</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('shop') }}">
-                    <span class="fa fa-cart-plus"></span>
-                    <span>محصولات فروشگاه</span>
+                    <span>آمار سراسری</span>
                 </a>
             </li>
             <li>
