@@ -46,16 +46,15 @@ class InsertIntoDatabase extends Component
         }
         $verifyCode = random_int(10000, 99999);
         Cache::put('maps-verify-code-' . $this->admin->id, $verifyCode, now()->addMinute());
-        session()->flash('success', $verifyCode);
-        // $result = SMS::send($this->admin->phone, $verifyCode);
+        $result = SMS::send($this->admin->phone, $verifyCode);
 
-        // if(is_array($result)) {
-        //     foreach($result as $r) {
-        //         session()->flash('success', $r->message);
-        //     }
-        // } else {
-        //     session()->flash('error', explode(":", $result)[1]);
-        // }
+        if(is_array($result)) {
+            foreach($result as $r) {
+                session()->flash('success', $r->message);
+            }
+        } else {
+            session()->flash('error', explode(":", $result)[1]);
+        }
     }
 
     public function insertIntoDatabase(Polygon $polygon)
