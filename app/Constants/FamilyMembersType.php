@@ -10,7 +10,7 @@ class FamilyMembersType extends Enum
     const FATHER = 'father';
     const WIFE = 'wife';
     const HUSBAND = 'husband';
-    const OFSPRING = 'ofspring';
+    const OFFSPRING = 'ofspring';
     const OWNER = 'owner';
 
     public static function familyMembersTypeList()
@@ -23,7 +23,7 @@ class FamilyMembersType extends Enum
             self::SISTER => 'خواهر',
             self::MOTHER => 'مادر',
             self::FATHER => 'پدر',
-            self::OFSPRING => 'فرزند'
+            self::OFFSPRING => 'فرزند'
         ];
     }
 }

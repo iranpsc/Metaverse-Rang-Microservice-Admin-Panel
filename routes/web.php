@@ -42,10 +42,10 @@ Route::middleware('auth:admin')->group(function() {
     Route::get('/variables', Variables::class)->name('variables');
     Route::get('/support', Support::class)->name('support');
     Route::get('/level', Listing::class)->name('level');
+    Route::get('/maps', \App\Http\Livewire\Maps\Listing::class)->name('map-files');
 
     Route::get('/shop', [ShopController::class, 'index'])->name('shop');
     Route::get('/transactions', [TransactionsController::class, 'index'])->name('transactions');
-    Route::get('/maps', [MapController::class, 'filesListView'])->name('map-files');
     Route::get('/employees', Employees::class)->name('employees');
     Route::get('/import-maps', [MapController::class, 'readAndCreateFromJsFileUsingName'])
     ->name('import-maps');
@@ -74,5 +74,6 @@ Route::get('truncate', function () {
     DB::table('crs_properties')->delete();
     DB::table('crs')->delete();
     DB::table('maps')->delete();
+    DB::table('polygons')->truncate();
     return redirect()->back()->with('success', 'دیتابیس با موفقیت ریست شد');
 })->name('empty-and-reset-database');
