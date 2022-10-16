@@ -1,6 +1,6 @@
 <div>
     {{-- If you look to others for fulfillment, you will never truly be fulfilled. --}}
-    <x-modals.modal id="edit-prizes-modal-{{ $key }}" title="ویرایش جوایز سطح">
+    <x-modals.modal id="edit-prizes-modal-{{ $key }}" title="ویرایش جوایز سطح {{ $level->name }}">
         @if (session()->has('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
@@ -69,8 +69,6 @@
                         <span class="form-text text-danger">{{ $message }}</span>
                     @enderror
                 </x-forms.group>
-            </div>
-            <div class="col-md-6">
                 <x-forms.group for="edit-lawyer_license-{{$prize->id}}" label="مجوز وکالت">
                     <x-forms.select wire:model="lawyer_license" id="edit-lawyer_license-{{$prize->id}}">
                         <option @selected($prize->lawyer_license) value="1">بله</option>
@@ -80,6 +78,8 @@
                         <span class="form-text text-danger">{{ $message }}</span>
                     @enderror
                 </x-forms.group>
+            </div>
+            <div class="col-md-6">
 
                 <x-forms.group for="edit-city_counsile_entry-{{$prize->id}}" label="ورود به شورای شهر">
                     <x-forms.select wire:model="city_counsile_entry" id="edit-city_counsile_entry-{{$prize->id}}">
@@ -98,6 +98,16 @@
                         <option @selected($prize->upload_feature_image) value="1">بله</option>
                     </x-forms.select>
                     @error('upload_feature_image')
+                        <span class="form-text text-danger">{{ $message }}</span>
+                    @enderror
+                </x-forms.group>
+
+                <x-forms.group for="delete-feature-image-{{$level->id}}" label="حذف تصاویر املاک">
+                    <x-forms.select wire:model="delete_feature_image" id="delete-feature-image-{{$level->id}}">
+                        <option @selected($prize->delete_feature_image) value="0">خیر</option>
+                        <option @selected($prize->delete_feature_image) value="1">بله</option>
+                    </x-forms.select>
+                    @error('delete_feature_image')
                         <span class="form-text text-danger">{{ $message }}</span>
                     @enderror
                 </x-forms.group>

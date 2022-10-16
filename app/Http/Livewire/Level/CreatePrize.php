@@ -11,7 +11,7 @@ class CreatePrize extends Component
     public $psc, $blue, $red, $yellow, $union_license, $union_members_count;
     public $observing_license, $gate_license, $lawyer_license, $city_counsile_entry;
     public $special_residence_property, $property_on_area, $judge_entry, $satisfaction, $upload_feature_image;
-    public $effect;
+    public $delete_feature_image, $effect;
 
     protected $rules = [
         'psc' => 'required|integer|min:0',
@@ -80,6 +80,7 @@ class CreatePrize extends Component
         $this->prize->satisfaction = $this->satisfaction;
         $this->prize->effect = $this->effect;
         $this->prize->upload_feature_image = $this->upload_feature_image;
+        $this->prize->delete_feature_image = $this->delete_feature_image;
         $this->prize->save();
         session()->flash('success', 'جوایز سطح با موفقیت ثبت شد');
         $this->emitUp('prizeCreated');
