@@ -8,8 +8,17 @@
                 </div>
                 <div class="modal-body">
                     @if (session()->has('success'))
-                        <x-alert :type="'success'" :message="session('success')"></x-alert>
+                        <x-alerts.success>{{ session('success') }}</x-alerts.success>
                     @endif
+                    <ul class="alert alert-info">
+                        <li>لیست شورت کدهای پیامهای سلسله</li>
+                        <li>نسبت خانوادگی: [relation]</li>
+                        <li>کد شهروندی دریافت کننده: [reciever-code]</li>
+                        <li>کد شهروندی ارسال کننده: [sender-code]</li>
+                        <li>تاریخ: [date]</li>
+                        <li>نام فرستنده: [sender]</li>
+                        <li>نام دریافت کننده: [reciever]</li>
+                    </ul>
                     <div class="form-group">
                         <label class="form-col-label">عنوان پیام</label>
                         <select class="form-control form-control-sm" wire:model="message.type">

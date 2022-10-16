@@ -53,6 +53,6 @@
             </table>
         </div>
     @else
-        <x-alert :type="'danger'" :message="'پیامی تعریف نشده است'"></x-alert>
+        <x-alerts.danger>پیامی تعریف نشده است</x-alerts.danger>
     @endif
 </div>
