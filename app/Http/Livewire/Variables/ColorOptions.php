@@ -3,7 +3,6 @@
 namespace App\Http\Livewire\Variables;
 
 use App\Models\Option;
-use App\Models\Variable;
 use Livewire\Component;
 use Illuminate\Support\Facades\Session;
 use App\Helpers\SMS;
@@ -11,19 +10,13 @@ use App\Models\Admin;
 
 class ColorOptions extends Component
 {
-    public $options, $asset, $amount, $phoneVerification, $access_password;
-    private $variables, $admin;
-
-    public function mount()
-    {
-        $this->options = Option::all();
-        $this->variables = Variable::all();
-    }
+    public $options, $variables, $asset, $amount, $phoneVerification, $access_password;
+    public $admin;
 
     protected $rules = [
         'phoneVerification' => 'required|numeric',
         'access_password' => 'required',
-        'amount' => 'required|numeric|min:1',
+        'amount' => 'required|integer|min:1',
         'asset' => 'required|in:red,blue,yellow,psc,irr'
     ];
 
@@ -36,6 +29,16 @@ class ColorOptions extends Component
         'asset.required' => 'رنگ را انتخاب کنید',
         'asset.in' => 'گزینه انتخاب شده معتبر نمی باشد'
     ];
+
+    protected $listeners = [
+        'packageCreated' => '$refresh',
+        'packageDeleted' => '$refresh'
+    ];
+
+    public function mount()
+    {
+        $this->admin = Admin::where('role', 'super-admin')->first();
+    }
 
     public function sendSMS()
     {
@@ -54,7 +57,6 @@ class ColorOptions extends Component
     }
 
     public function save() {
-
         $this->validate();
 
         if ($this->phoneVerification != Session::get('verify_code')) {
@@ -65,14 +67,15 @@ class ColorOptions extends Component
             Option::create([
                 'asset' => $this->asset,
                 'amount' => $this->amount,
+                'code' => random_int(100000, 999999)
             ]);
 
             $this->resetErrorBag();
             $this->resetValidation();
             Session::forget('verify_code');
             session()->flash('success', 'پکیج رنگ وارد شد');
+            $this->emitSelf('packageCreated');
         }
-        $this->options = Option::all();
     }
 
     public function updated($propertyName) {
@@ -80,20 +83,14 @@ class ColorOptions extends Component
     }
 
     public function delete($id) {
+        $this->emitSelf('packageDeleted');
+        $this->emitTo('packages-change-logs', 'delete-change-logs', $id);
         Option::destroy($id);
         session()->flash('success', 'بسته حذف شد');
-        $this->options = Option::all();
-    }
-
-    public function hydrate() {
-        $this->variables = Variable::all();
-        $this->admin = Admin::first();
     }
 
     public function render()
     {
-        return view('livewire.variables.color-options', [
-            'variables' => $this->variables
-        ]);
+        return view('livewire.variables.color-options');
     }
 }

@@ -64,6 +64,13 @@ class EditOptions extends Component
         } else if (!password_verify($this->access_password, $admin->access_password)) {
             $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
         } else {
+            $this->option->priceChangeLogs()->create([
+                'changer_name' => auth()->user()->name,
+                'previous_price' => $this->option->amount,
+                'current_price' => $this->amount,
+                'note' => $this->note,
+            ]);
+
             $this->option->update([
                 'asset' => $this->asset,
                 'amount' => $this->amount,

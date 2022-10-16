@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Session;
 use App\Helpers\SMS;
+use App\Models\VariableChangeLog;
 
 class EditColors extends Component
 {
@@ -62,6 +63,14 @@ class EditColors extends Component
         } else if (!password_verify($this->access_password, $this->admin->access_password)) {
             $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
         } else {
+
+            $this->asset->priceChangeLogs()->create([
+                'changer_name' => auth()->user()->name,
+                'previous_price' => $this->asset->price,
+                'current_price' => $this->price,
+                'note' => $this->note,
+            ]);
+
             $this->asset->update([
                 'price' => $this->price,
                 'note' => $this->note

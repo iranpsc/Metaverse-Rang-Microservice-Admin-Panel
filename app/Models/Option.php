@@ -35,11 +35,17 @@ class Option extends Model
 	protected $fillable = [
 		'asset',
 		'amount',
-        'note'
+        'note',
+        'code'
 	];
 
     public function variable() {
         return $this->hasOne(Variable::class);
+    }
+
+    public function priceChangeLogs()
+    {
+        return $this->hasMany(VariableChangeLog::class);
     }
 
 }

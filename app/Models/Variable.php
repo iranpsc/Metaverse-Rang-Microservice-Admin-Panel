@@ -41,4 +41,9 @@ class Variable extends Model
     public function option() {
         return $this->belongsTo(Option::class);
     }
+
+    public function priceChangeLogs()
+    {
+        return $this->hasMany(VariableChangeLog::class);
+    }
 }

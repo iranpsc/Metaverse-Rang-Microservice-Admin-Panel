@@ -13,12 +13,12 @@ class ColorsPrice extends Component
     public $price;
     public $asset, $variables;
 
-    public $phoneVerification;
+    public $admin, $phoneVerification;
     public $access_password;
 
     public function mount()
     {
-        $this->variables = Variable::all();
+        $this->admin = Admin::where('role', 'super-admin')->first();
     }
 
     protected $rules = [
@@ -45,9 +45,7 @@ class ColorsPrice extends Component
 
         Session::put('verify_code', $verify_code);
 
-        $admin = Admin::first();
-
-        $result = SMS::send($admin->phone, $verify_code);
+        $result = SMS::send($this->admin->phone, $verify_code);
         if (is_array($result)) {
             foreach ($result as $r) {
                 session()->flash('success', 'کد تایید با موفقیت ارسال شد');
@@ -61,7 +59,6 @@ class ColorsPrice extends Component
     {
 
         $this->validate();
-        $this->admin = Admin::first();
 
         if ($this->phoneVerification != Session::get('verify_code')) {
             $this->addError('phoneVerification', 'کد تایید وارد شده صحیح نمی باشد');
@@ -89,6 +86,7 @@ class ColorsPrice extends Component
     public function delete($id) {
         Variable::destroy($id);
         $this->variables = Variable::all();
+        $this->emitTo('variables-change-logs','delete-variables-change-logs', $id);
     }
 
     public function render()

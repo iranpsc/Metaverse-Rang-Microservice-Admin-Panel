@@ -66,6 +66,7 @@
     @if ($options->count() > 0)
         <x-tables.table>
             <x-slot:headers>
+                <th>کد بسته</th>
                 <th>ارز</th>
                 <th>قیمت بسته</th>
                 <th>تعداد</th>
@@ -76,6 +77,7 @@
             @forelse ($options as $option)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
+                    <td>{{ $option->code }}</td>
                     <td>{{ \App\Helpers\getAssetColor($option->asset) }}</td>
                     <td>{{ \App\Models\Variable::getRate($option->asset) * $option->amount }}</td>
                     <td>{{ $option->amount }}</td>
