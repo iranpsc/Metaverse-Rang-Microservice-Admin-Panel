@@ -50,7 +50,7 @@ class InsertIntoDatabase extends Component
 
         if(is_array($result)) {
             foreach($result as $r) {
-                session()->flash('success', $r->message);
+                session()->flash('success', $r->statustext);
             }
         } else {
             session()->flash('error', explode(":", $result)[1]);
