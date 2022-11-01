@@ -4,19 +4,23 @@ namespace App\Http\Livewire\Dynasty;
 
 use App\Models\Dynasty\DynastyPrize;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Prize extends Component
 {
+    use WithPagination;
+
     public DynastyPrize $prize;
-    public $prizes;
+    private $prizes;
+
+    protected $listeners = [
+        'prizeCreated' => '$refresh',
+        'prizeDeleted' => '$refresh',
+    ];
 
     public function mount()
     {
-        $this->prizes = DynastyPrize::all();
-    }
-
-    public function __construct()
-    {
+        $this->prizes = DynastyPrize::paginate(10);
         $this->prize = new DynastyPrize;
     }
 
@@ -43,7 +47,7 @@ class Prize extends Component
         $this->prize->save();
         session()->flash('success', 'پاداش با موفقیت ثبت شد');
         $this->resetExcept('prizes');
-        $this->prizes = DynastyPrize::all();
+        $this->emitSelf('prizeCreated');
     }
 
     public function updated($prop)
@@ -51,14 +55,16 @@ class Prize extends Component
         $this->validateOnly($prop);
     }
 
-    public function delete(DynastyPrize $dynastyPrize)
+    public function delete($id)
     {
-        $dynastyPrize->delete();
-        $this->prizes = DynastyPrize::all();
+        DynastyPrize::destroy($id);
+        $this->emitSelf('prizeDeleted');
     }
 
     public function render()
     {
-        return view('livewire.dynasty.prize');
+        return view('livewire.dynasty.prize', [
+            'prizes' => $this->prizes
+        ]);
     }
 }

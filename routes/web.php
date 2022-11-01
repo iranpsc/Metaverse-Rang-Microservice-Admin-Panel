@@ -15,6 +15,7 @@ use App\Http\Livewire\Lands\Lands;
 use App\Http\Livewire\Level\Listing;
 use App\Http\Livewire\Support\Support;
 use App\Http\Livewire\Variables\Variables;
+use App\Http\Livewire\Dynasty\Listing as DynastyListing;
 
 /*
 |--------------------------------------------------------------------------
@@ -50,7 +51,8 @@ Route::middleware('auth:admin')->group(function() {
     Route::get('/import-maps', [MapController::class, 'readAndCreateFromJsFileUsingName'])
     ->name('import-maps');
 
-    Route::get('/dynasty', [DynastyController::class, 'index'])->name('dynasty');
+    // Route::get('/dynasty', [DynastyController::class, 'index'])->name('dynasty');
+    Route::get('/dynasty', DynastyListing::class)->name('dynasty');
 
     Route::controller(DynastyMessageController::class)->prefix('/dynasty-messages')->group(function (){
         Route::get('/',App\Http\Livewire\Dynasty\DynastyMessages::class)->name('dynasty.messages');
