@@ -11,7 +11,7 @@
 
         <div class="form-group row">
             <div class="col-sm-4">
-                <x-buttons.btn-success wire:click="sendCode">ارسال کد تایید</x-buttons.btn-success>
+                <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendCode">ارسال کد تایید</x-buttons.btn-success>
             </div>
             <div class="col-sm-8">
                 <x-forms.input wire:model="code"/>
