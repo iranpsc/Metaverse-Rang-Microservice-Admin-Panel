@@ -45,7 +45,7 @@ class InsertIntoDatabase extends Component
             return;
         }
         $verifyCode = random_int(10000, 99999);
-        Cache::put('maps-verify-code-' . $this->admin->id, $verifyCode, now()->addMinute());
+        Cache::put('maps-verify-code-' . $this->admin->id, $verifyCode, now()->addMinutes(5));
         $result = SMS::send($this->admin->phone, $verifyCode);
 
         if(is_array($result)) {
