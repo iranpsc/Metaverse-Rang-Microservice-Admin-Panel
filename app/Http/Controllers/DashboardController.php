@@ -42,12 +42,12 @@ class DashboardController extends Controller
             'referrals' => Referral::count(),
             'referral_amount' => ReferralOrderHistory::sum('amount')  * Variable::getRate('psc'),
             'sold_assets' => [
-                'psc' => $this->orderRepository->pscOrderAmount(),
-                'red' => $this->orderRepository->redOrderAmount(),
-                'blue' => $this->orderRepository->blueOrderAmount(),
-                'yellow' => $this->orderRepository->yellowOrderAmount()
+                'psc' => $this->orderRepository->pscOrderAmount() ?? 0,
+                'red' => $this->orderRepository->redOrderAmount() ?? 0,
+                'blue' => $this->orderRepository->blueOrderAmount() ?? 0,
+                'yellow' => $this->orderRepository->yellowOrderAmount() ?? 0
             ],
-            'deposited_rial_amount' => $this->orderRepository->totalOrderAmount()
+            'deposited_rial_amount' => $this->orderRepository->totalOrderAmount() ?? 0
         ]);
     }
 }
