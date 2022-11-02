@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Http\Livewire\Lands;
+namespace App\Http\Livewire\Dynasty;
 
 use Livewire\Component;
 
-class Lands extends Component
+class Listing extends Component
 {
     public function render()
     {
-        return view('livewire.lands.lands')
+        return view('livewire.dynasty.listing')
         ->extends('layouts.app')
         ->section('content');
     }

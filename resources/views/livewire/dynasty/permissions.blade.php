@@ -1,9 +1,9 @@
 <div>
     @if (session()->has('success'))
-        <x-alert :type="'success'" :message="session('success')"></x-alert>
+        <x-alerts.success>{{ session('success') }}</x-alerts.success>
     @endif
-    <table class="table table-striped table-bordered">
-        <tbody>
+    <x-tables.table>
+        <x-slot name="headers"></x-slot>
             <tr>
                 <td>
                     <div class="input-group">
@@ -64,7 +64,7 @@
                 <td>
                     <div class="input-group">
                         <input class="normal" wire:model="DM" type="checkbox" id="permission5">
-                        <label for="permission5">قابیلت مدیریت به سلسله </label>
+                        <label for="permission5">قابیلت مدیریت سلسله </label>
                     </div>
                 </td>
                 <td>
@@ -75,7 +75,6 @@
                 </td>
             </tr>
 
-        </tbody>
-    </table>
-    <button class="btn btn-primary w-25 rounded" wire:click="update">ثبت</button>
+    </x-tables.table>
+    <x-buttons.btn-info wire:click="update">ثبت</x-buttons.btn-info>
 </div>
