@@ -6,32 +6,29 @@ use Livewire\Component;
 
 class EditMessages extends Component
 {
-    public $message, $type, $message_content;
+    public $message, $content;
 
     public function mount($message) {
         $this->message = $message;
-        $this->type = $message->type;
-        $this->message_content = $message->message;
+        $this->content = $message->message;
     }
 
-
     protected $rules = [
-        'message_content' => 'required|string',
+        'content' => 'required|string',
     ];
 
     protected $messages = [
-        'message_content.required' => 'متن پیام را وارد کنید'
+        'content.required' => 'متن پیام را وارد کنید'
     ];
-
 
     public function edit()
     {
         $this->validate();
         $this->message->update([
-            'type' => $this->type,
-            'message' => $this->message_content
+            'message' => $this->content
         ]);
         session()->flash('success', 'بروزرسانی انجام شد');
+        $this->emitUp('messageUpdated');
     }
 
     public function updated($prop)

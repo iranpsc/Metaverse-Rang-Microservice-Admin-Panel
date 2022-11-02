@@ -1,7 +1,7 @@
-@props(['id', 'title'])
+@props(['id', 'title', 'size' => 'modal-lg'])
 
 <div id="{{ $id }}" wire:ignore.self class="modal fade" data-bs-backdrop="static" role="dialog" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog {{ $size }}">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-bs-dismiss="modal">&times;</button>

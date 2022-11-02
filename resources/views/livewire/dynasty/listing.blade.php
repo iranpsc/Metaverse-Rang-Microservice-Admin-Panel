@@ -10,9 +10,6 @@
         <li class="nav-item">
             <a href="#tab3" data-bs-toggle="tab" class="nav-link">مدیریت دسترسی ها</a>
         </li>
-        <li class="nav-item">
-            <a href="#tab4" data-bs-toggle="tab" class="nav-link">درخواست های پیوستن به سلسله</a>
-        </li>
     </ul>
     <div class="tab-content">
         <div id="tab1" class="tab-pane fade show active">
@@ -23,9 +20,6 @@
         </div>
         <div id="tab3" class="tab-pane fade">
             @livewire('dynasty.permissions')
-        </div>
-        <div id="tab4" class="tab-pane fade">
-            @livewire('dynasty.join-requests')
         </div>
     </div>
 </div>

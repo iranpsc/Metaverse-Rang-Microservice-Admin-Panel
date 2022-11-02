@@ -1,21 +1,16 @@
 <?php
 
-use App\Http\Controllers\Dynasty\DynastyMessageController;
-use App\Http\Controllers\MapController;
-use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\DynastyController;
-use App\Http\Controllers\ShopController;
-use App\Http\Controllers\TransactionsController;
 use Illuminate\Support\Facades\DB;
 use App\Http\Livewire\Citizens\Citizens;
+use App\Http\Livewire\Dashboard\Dashboard;
 use App\Http\Livewire\Employees\Employees;
 use App\Http\Livewire\Lands\Lands;
-use App\Http\Livewire\Level\Listing;
+use App\Http\Livewire\Level\Listing as LevelListing;
 use App\Http\Livewire\Support\Support;
 use App\Http\Livewire\Variables\Variables;
 use App\Http\Livewire\Dynasty\Listing as DynastyListing;
+use App\Http\Livewire\Maps\Listing as MapListing;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,41 +26,19 @@ use App\Http\Livewire\Dynasty\Listing as DynastyListing;
 
 Route::redirect('/', '/dashboard');
 
-Route::middleware('auth:admin')->group(function() {
-    Route::controller(DashboardController::class)->group(function() {
-        Route::get('/dashboard', 'index')->name('dashboard');
-    });
-
-
+Route::middleware('auth:admin')->group(function () {
+    Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/citizens', Citizens::class)->name('citizens');
-
     Route::get('/lands', Lands::class)->name('lands');
     Route::get('/variables', Variables::class)->name('variables');
     Route::get('/support', Support::class)->name('support');
-    Route::get('/level', Listing::class)->name('level');
-    Route::get('/maps', \App\Http\Livewire\Maps\Listing::class)->name('map-files');
-
-    Route::get('/shop', [ShopController::class, 'index'])->name('shop');
-    Route::get('/transactions', [TransactionsController::class, 'index'])->name('transactions');
+    Route::get('/level', LevelListing::class)->name('level');
+    Route::get('/maps', MapListing::class)->name('map-management');
     Route::get('/employees', Employees::class)->name('employees');
-    Route::get('/import-maps', [MapController::class, 'readAndCreateFromJsFileUsingName'])
-    ->name('import-maps');
-
-    // Route::get('/dynasty', [DynastyController::class, 'index'])->name('dynasty');
     Route::get('/dynasty', DynastyListing::class)->name('dynasty');
-
-    Route::controller(DynastyMessageController::class)->prefix('/dynasty-messages')->group(function (){
-        Route::get('/',App\Http\Livewire\Dynasty\DynastyMessages::class)->name('dynasty.messages');
-    });
-
 });
 
-
-Route::controller(AuthController::class)->group(function() {
-    Route::get('/login', 'showLoginForm')->name('showLoginForm');
-    Route::post('/login', 'login')->name('login');
-    Route::get('/logout', 'logout')->name('logout');
-});
+require_once(__DIR__ . '/auth.php');
 
 Route::get('truncate', function () {
     \App\Models\Coordinate::truncate();
