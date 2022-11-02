@@ -1,6 +1,5 @@
-@extends('layouts.app')
-
-@section('content')
+<div>
+    {{-- A good traveler has no fixed plans and is not intent upon arriving. --}}
     <div class="col-md-12">
         <div class="row">
             <div class="col-lg-3 col-6">
@@ -37,4 +36,5 @@
                 <x-dashboard.card type="cyan" :value="$deposited_rial_amount">مقدار ریال وارد شده</x-dashboard.card>
             </div><!-- /.col-lg-3 -->
         </div>
-    @endsection
+    </div>
+</div>

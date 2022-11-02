@@ -107,7 +107,7 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('map-files') }}">
+                <a href="{{ route('map-management') }}">
                     <span class="fa fa-cart-plus"></span>
                     <span>مدیریت نقشه ها</span>
                 </a>
