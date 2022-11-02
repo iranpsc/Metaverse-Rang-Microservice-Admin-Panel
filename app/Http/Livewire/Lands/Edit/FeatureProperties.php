@@ -3,25 +3,23 @@
 namespace App\Http\Livewire\Lands\Edit;
 
 use Livewire\Component;
-use App\Models\Admin;
 use Illuminate\Support\Facades\Session;
 use App\Helpers\SMS;
+use Illuminate\Support\Facades\Auth;
 
-class EditFeatureModal extends Component
+class FeatureProperties extends Component
 {
     public $feature, $phoneVerification, $access_password;
-    public $properties_id, $area, $density, $karbari, $address;
+    public $properties_id, $area, $density, $karbari, $address, $admin;
 
     public function mount($feature) {
+        $this->admin = Auth::guard('admin')->user();
         $this->properties_id = $feature->properties->id;
         $this->area = $feature->properties->area;
         $this->area = $feature->properties->area;
         $this->density = $feature->properties->density;
         $this->karbari = $feature->properties->karbari;
         $this->address = $feature->properties->address;
-
-        $this->admin = Admin::first();
-
     }
 
     protected $rules = [
@@ -35,11 +33,12 @@ class EditFeatureModal extends Component
 
     protected $messages = [
         'phoneVerification.required' => 'کد تایید را وارد کنید',
+        'phoneVerification.numeric' => 'کد تایید صحیح نیست',
         'access_password.required' => 'رمز دسترسی را وارد کنید',
-        'area.required' => 'قیمت را وارد کنید',
-        'area.numberic' => 'مقدار عددی برای مساحت وارد کنید',
+        'area.required' => 'مساحت را وارد کنید',
+        'area.numeric' => 'مقدار عددی برای مساحت وارد کنید',
         'density.required' => 'تراکم را وارد کنید',
-        'density.numberic' => 'مقدار عددی برای تراکم وارد کنید',
+        'density.numeric' => 'مقدار عددی برای تراکم وارد کنید',
         'karbari.required' => 'کاربری را وارد کنید',
         'karbari.string' => 'مقدار حروفی برای کاربری وارد کنید',
         'address.required' => 'آدرس را وارد کنید'
@@ -47,14 +46,16 @@ class EditFeatureModal extends Component
 
     public function sendSMS()
     {
+        if(session()->has('verify_code')) {
+            Session::forget('verify_code');
+        }
+
         $verify_code = random_int(100000, 999999);
-
         Session::put('verify_code', $verify_code);
-
         $result = SMS::send($this->admin->phone, $verify_code);
         if(is_array($result)) {
             foreach($result as $r) {
-                session()->flash('success', 'کد تایید با موفقیت ارسال شد');
+                session()->flash('success', $r->statustext);
             }
         } else {
             session()->flash('error', explode(":", $result)[1]);
@@ -70,22 +71,25 @@ class EditFeatureModal extends Component
         } else if (!password_verify($this->access_password, $this->admin->access_password)) {
             $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
         } else {
-            $this->feature->features_property->update([
-                'area' => $this->area,
+            Session::forget('verify_code');
+            $this->feature->properties->update([
+                'area'    => $this->area,
                 'density' => $this->density,
                 'karbari' => $this->karbari,
                 'address' => $this->address,
             ]);
-
-            $this->resetErrorBag();
-            $this->resetValidation();
-            Session::forget('verify_code');
             session()->flash('success', 'مشخصات ملک با موفقیت بروزرسانی شد');
+            $this->emitUp('featureUpdated');
         }
+    }
+
+    public function updated($prop)
+    {
+        $this->validateOnly($prop);
     }
 
     public function render()
     {
-        return view('livewire.lands.edit.edit-feature-modal');
+        return view('livewire.lands.edit.feature-properties');
     }
 }

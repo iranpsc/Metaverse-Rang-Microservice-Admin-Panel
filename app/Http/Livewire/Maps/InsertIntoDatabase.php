@@ -9,6 +9,7 @@ use Livewire\Component;
 use App\Models\MapManagement\Polygon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class InsertIntoDatabase extends Component
 {
@@ -35,7 +36,7 @@ class InsertIntoDatabase extends Component
 
     public function mount()
     {
-        $this->admin = Admin::where('role', 'super-admin')->first();
+        $this->admin = Auth::guard('admin')->user();
     }
 
     public function sendCode()

@@ -1,5 +1,5 @@
     <div>
-        <x-forms.search-box wire:model="search" placeholder="شناسه ملک را وارد کنید"></x-forms.search-box>
+        <x-forms.search-box wire:model.debounce.1000ms="search" placeholder="شناسه ملک را وارد کنید"></x-forms.search-box>
 
         @if ($features->count() > 0)
             <x-tables.table>
@@ -24,17 +24,21 @@
                         <td>{{ \Morilog\Jalali\Jalalian::forge($feature->properties->date)->format('Y/m/d') }}</td>
                         <td>مدیر سایت</td>
                         <td>
-                            <button class="btn btn-primary btn-sm round" data-bs-toggle="modal"
-                                data-bs-target="#modal-{{ explode('+', $feature->properties->id)[1] }}">ویرایش</button>
+                            <x-buttons.btn-primary data-bs-toggle="modal"
+                                data-bs-target="#modal-{{ explode('+', $feature->properties->id)[1] }}">ویرایش
+                            </x-buttons.btn-primary>
 
+                            <x-buttons.btn-success data-bs-toggle="modal" data-bs-target="#modal-{{ $feature->id }}">
+                                ویرایش
+                                مختصات</x-buttons.btn-success>
 
-                            <button class="btn btn-success btn-sm round" data-bs-toggle="modal"
-                                data-bs-target="#modal-{{ explode('+', $feature->properties->id)[1] . $loop->iteration }}">ویرایش
-                                مختصات</button>
+                            <livewire:lands.edit.feature-properties :feature="$feature"
+                                :wire:key="'edit-properties-'.$feature->properties->id">
+
+                                <livewire:lands.edit.feature-coordinates :feature="$feature"
+                                    :wire:key="'edit-coordinates-'.$feature->id">
                         </td>
                     </tr>
-                    @livewire('lands.edit.edit-feature-coordinate-modal', ['feature' => $feature, 'num' => $loop->iteration], key($feature->properties->id . $loop->iteration))
-                    @livewire('lands.edit.edit-feature-modal', ['feature' => $feature], key($feature->properties->id))
                 @endforeach
             </x-tables.table>
             {{ $features->links() }}

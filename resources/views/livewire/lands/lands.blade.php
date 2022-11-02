@@ -1,6 +1,4 @@
-@extends('layouts.app')
-
-@section('content')
+<div>
     <ul class="nav nav-tabs border">
         <li class="nav-item">
             <a class="nav-link active" data-bs-toggle="tab" href="#tab1">کل زمین ها</a>
@@ -55,6 +53,3 @@
         </div>
 
     </div>
-@endsection
-
-

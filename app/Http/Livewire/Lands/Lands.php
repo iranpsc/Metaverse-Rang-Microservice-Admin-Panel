@@ -8,6 +8,8 @@ class Lands extends Component
 {
     public function render()
     {
-        return view('livewire.lands.lands');
+        return view('livewire.lands.lands')
+        ->extends('layouts.app')
+        ->section('content');
     }
 }
