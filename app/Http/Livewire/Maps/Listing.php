@@ -3,9 +3,8 @@
 namespace App\Http\Livewire\Maps;
 
 use App\Helpers\Feature;
-use App\Models\MapManagement\Polygon;
+use App\Models\Map;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -31,8 +30,8 @@ class Listing extends Component
     ];
 
     protected $listeners = [
-        'deletePolygon' => 'delete',
-        'polygonDeleted' => '$refresh',
+        'deleteMap' => 'delete',
+        'pmapDeleted' => '$refresh',
         'mapsInsertedToDatabase' => '$refresh'
     ];
 
@@ -65,18 +64,18 @@ class Listing extends Component
         $last_id = $fileContents['features'][count($fileContents['features']) - 1]['properties']['id'] ?? "";
         $karbari = Feature::getKarbari($fileContents['features'][0]['properties']['karbari']);
 
-        $polygon = new Polygon();
-        $polygon->name = $this->name;
-        $polygon->publish_date = Jalalian::forge(now())->format('Y/m/d');
-        $polygon->publisher_name = Auth::user()->name;
-        $polygon->polygon_count = $polygon_count;
-        $polygon->total_area = $polygons_total_area;
-        $polygon->first_id = $first_id;
-        $polygon->last_id = $last_id;
-        $polygon->status = 0;
-        $polygon->karbari = $karbari;
-        $polygon->fileName = $fileName;
-        $polygon->save();
+        $map = new Map();
+        $map->name = $this->name;
+        $map->publish_date = Jalalian::forge(now())->format('Y/m/d');
+        $map->publisher_name = Auth::guard('admin')->user()->name;
+        $map->polygon_count = $polygon_count;
+        $map->total_area = $polygons_total_area;
+        $map->first_id = $first_id;
+        $map->last_id = $last_id;
+        $map->status = 0;
+        $map->karbari = $karbari;
+        $map->fileName = $fileName;
+        $map->save();
         $this->reset(['name', 'file']);
     }
 
@@ -85,17 +84,17 @@ class Listing extends Component
         $this->validateOnly($prop);
     }
 
-    public function delete(Polygon $polygon)
+    public function delete(Map $map)
     {
-        unlink(public_path('storage/maps/' . $polygon->fileName));
-        $polygon->delete();
-        $this->emitSelf('polygonDeleted');
+        unlink(public_path('storage/maps/' . $map->fileName));
+        $map->delete();
+        $this->emitSelf('mapDeleted');
     }
 
     public function render()
     {
         return view('livewire.maps.listing', [
-            'polygons' => Polygon::paginate(10, ['*'], 'listing')
+            'maps' => Map::paginate(10, ['*'], 'listing')
         ])
             ->extends('layouts.app')
             ->section('content');
