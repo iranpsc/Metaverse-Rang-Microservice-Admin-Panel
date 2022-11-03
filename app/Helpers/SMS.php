@@ -1,10 +1,10 @@
 <?php
 
 namespace App\Helpers;
+
 use Kavenegar;
 
 class SMS {
-
     public static function send($to, $content) {
         try {
             $receptor = $to;

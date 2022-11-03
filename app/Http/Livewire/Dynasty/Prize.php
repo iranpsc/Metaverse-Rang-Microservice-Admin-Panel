@@ -13,6 +13,7 @@ class Prize extends Component
     public $member, $satisfaction, $introduction_profit_increase, $accumulated_capital_reserve, $data_storage, $psc;
 
     protected $listeners = [
+        'deleteDynastyPrize' => 'delete',
         'prizeCreated' => '$refresh',
         'prizeUpdated' => '$refresh',
         'prizeDeleted' => '$refresh',

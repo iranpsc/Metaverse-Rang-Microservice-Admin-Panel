@@ -119,7 +119,7 @@
                     <td>
                         <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#edit-prize-{{ $prize->id }}">
                             ویرایش</x-buttons.btn-primary>
-                        <x-buttons.btn-danger wire:click="delete({{ $prize->id }})">حذف</x-buttons.btn-danger>
+                        <x-buttons.btn-danger class="confirm" title="deleteDynastyPrize" id="{{ $prize->id }}">حذف</x-buttons.btn-danger>
                         <livewire:dynasty.edit-prize :prize="$prize" :wire:key="'edit-prize-'.$prize->id">
                     </td>
                 </tr>

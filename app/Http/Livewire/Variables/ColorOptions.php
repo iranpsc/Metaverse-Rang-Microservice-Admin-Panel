@@ -7,10 +7,12 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Session;
 use App\Helpers\SMS;
 use App\Models\Admin;
+use App\Models\Variable;
+use Illuminate\Support\Facades\Auth;
 
 class ColorOptions extends Component
 {
-    public $options, $variables, $asset, $amount, $phoneVerification, $access_password;
+    public $asset, $amount, $phoneVerification, $access_password;
     public $admin;
 
     protected $rules = [
@@ -31,25 +33,25 @@ class ColorOptions extends Component
     ];
 
     protected $listeners = [
+        'deletePackage' => 'delete',
         'packageCreated' => '$refresh',
+        'packageUpdated' => '$refresh',
         'packageDeleted' => '$refresh'
     ];
 
     public function mount()
     {
-        $this->admin = Admin::where('role', 'super-admin')->first();
+        $this->admin = Auth::guard('admin')->user();
     }
 
     public function sendSMS()
     {
         $verify_code = random_int(100000, 999999);
-
         Session::put('verify_code', $verify_code);
-
         $result = SMS::send($this->admin->phone, $verify_code);
         if(is_array($result)) {
             foreach($result as $r) {
-                session()->flash('success', 'کد تایید با موفقیت ارسال شد');
+                session()->flash('success', $r->statustext);
             }
         } else {
             session()->flash('error', explode(":", $result)[1]);
@@ -58,7 +60,6 @@ class ColorOptions extends Component
 
     public function save() {
         $this->validate();
-
         if ($this->phoneVerification != Session::get('verify_code')) {
             $this->addError('phoneVerification', 'کد تایید وارد شده صحیح نمی باشد');
         } else if (!password_verify($this->access_password, $this->admin->access_password)) {
@@ -69,9 +70,7 @@ class ColorOptions extends Component
                 'amount' => $this->amount,
                 'code' => random_int(100000, 999999)
             ]);
-
-            $this->resetErrorBag();
-            $this->resetValidation();
+            $this->resetExcept('admin');
             Session::forget('verify_code');
             session()->flash('success', 'پکیج رنگ وارد شد');
             $this->emitSelf('packageCreated');
@@ -82,15 +81,18 @@ class ColorOptions extends Component
         $this->validateOnly($propertyName);
     }
 
-    public function delete($id) {
+    public function delete(Option $option) {
         $this->emitSelf('packageDeleted');
-        $this->emitTo('packages-change-logs', 'delete-change-logs', $id);
-        Option::destroy($id);
-        session()->flash('success', 'بسته حذف شد');
+        $this->emit('packageDeleted');
+        $option->priceChangeLogs()->delete();
+        $option->delete();
     }
 
     public function render()
     {
-        return view('livewire.variables.color-options');
+        return view('livewire.variables.color-options', [
+            'variables' => Variable::all('asset'),
+            'options'   => Option::paginate(10, ['*'], 'package-listing')
+        ]);
     }
 }

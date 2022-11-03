@@ -6,47 +6,47 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Session;
 use App\Helpers\SMS;
 use App\Models\Admin;
+use Illuminate\Support\Facades\Auth;
 
 class EditOptions extends Component
 {
-    public $option, $asset, $amount, $phoneVerification, $access_password, $note;
+    public $option, $asset, $amount, $phoneVerification, $access_password, $note, $admin;
 
     public function mount($option)
     {
         $this->option = $option;
         $this->asset = $option->asset;
         $this->amount = $option->amount;
+        $this->admin = Auth::guard('admin')->user();
     }
 
     protected $rules = [
         'phoneVerification' => 'required|numeric',
         'access_password' => 'required',
         'amount' => 'required|numeric|min:1',
-        'asset' => 'required|in:red,blue,yellow,psc,irr'
+        'note' => 'required'
     ];
 
     protected $messages = [
         'phoneVerification.required' => 'کد تایید را وارد کنید',
         'access_password.required' => 'رمز دسترسی را وارد کنید',
         'amount.required' => 'قیمت را وارد کنید',
-        'amount.numberic' => 'مقدار عددی برای قیمت وارد کنید',
+        'amount.numeric' => 'مقدار عددی برای قیمت وارد کنید',
         'amount.min' => 'کمترین مقدار قیمت 1 است',
         'asset.required' => 'رنگ را انتخاب کنید',
-        'asset.in' => 'گزینه انتخاب شده معتبر نمی باشد'
+        'note.required' => 'دلیل بروزرسانی را وارد کنید'
     ];
 
     public function sendSMS()
     {
         $verify_code = random_int(100000, 999999);
 
-        $admin =Admin::first();
-
         Session::put('verify_code', $verify_code);
 
-        $result = SMS::send($admin->phone, $verify_code);
+        $result = SMS::send($this->admin->phone, $verify_code);
         if(is_array($result)) {
             foreach($result as $r) {
-                session()->flash('success', 'کد تایید با موفقیت ارسال شد');
+                session()->flash('success', $r->statustext);
             }
         } else {
             session()->flash('error', explode(":", $result)[1]);
@@ -57,15 +57,13 @@ class EditOptions extends Component
 
         $this->validate();
 
-        $admin =Admin::first();
-
         if ($this->phoneVerification != Session::get('verify_code')) {
             $this->addError('phoneVerification', 'کد تایید وارد شده صحیح نمی باشد');
-        } else if (!password_verify($this->access_password, $admin->access_password)) {
+        } else if (!password_verify($this->access_password, $this->admin->access_password)) {
             $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
         } else {
             $this->option->priceChangeLogs()->create([
-                'changer_name' => auth()->user()->name,
+                'changer_name' => $this->admin->name,
                 'previous_price' => $this->option->amount,
                 'current_price' => $this->amount,
                 'note' => $this->note,
@@ -77,15 +75,15 @@ class EditOptions extends Component
                 'note' => $this->note,
             ]);
 
-            $this->resetErrorBag();
-            $this->resetValidation();
             Session::forget('verify_code');
+            $this->emitUp('packageUpdated');
+            $this->emit('packageUpdated');
             session()->flash('success', 'بسته بروزرسانی شد');
         }
     }
 
-    public function updated($propertyName) {
-        $this->validateOnly($propertyName);
+    public function updated($prop) {
+        $this->validateOnly($prop);
     }
 
     public function render()

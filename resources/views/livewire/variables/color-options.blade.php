@@ -7,12 +7,8 @@
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
 
-        @if (session()->has('error'))
-            <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
-        @endif
-
         <x-forms.group for="asset" label="رنگ">
-            <x-forms.select wire:model="asset">
+            <x-forms.select id="asset" wire:model="asset">
                 <option selected>ارز را انتخاب کنید</option>
                 @forelse ($variables as $variable)
                     <option value="{{ $variable->asset }}">{{ \App\Helpers\getAssetColor($variable->asset) }}</option>
@@ -25,9 +21,8 @@
             @enderror
         </x-forms.group>
 
-        <x-forms.group label="تعداد" for="package-color">
-            <x-forms.input type="text" id="package-color" wire:model="amount" placeholder="تعداد را وارد کنید"
-                class="only-number" />
+        <x-forms.group label="تعداد" for="amount">
+            <x-forms.input id="amount" wire:model="amount" placeholder="تعداد را وارد کنید"/>
             @error('amount')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
@@ -35,13 +30,13 @@
 
         <div class="row form-group">
             <div class="col-sm-4">
-                <a href="javascript:void(0)" class="btn btn-success btn-block btn-sm rounded" wire:click="sendSMS">
+                <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendSMS">
                     ارسال پیامک تایید
-                </a>
+                </x-buttons.btn-success>
             </div>
             <div class="col-sm-8">
-                <input type="text" class="form-control rounded only-number" wire:model="phoneVerification"
-                    placeholder="تایید پیامکی">
+                <x-forms.input wire:model="phoneVerification"
+                    placeholder="تایید پیامکی"/>
                 @error('phoneVerification')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
@@ -50,16 +45,15 @@
         </div>
 
         <x-forms.group label="رمز دسترسی" for="access_password">
-            <x-forms.input type="password" id="access_password" wire:model="access_password" placeholder="رمز دسترسی"
-                class="only-number" />
+            <x-forms.input type="password" id="access_password" wire:model="access_password" placeholder="رمز دسترسی"/>
             @error('access_password')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
 
         <x-slot:footer>
+            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
-            <x-buttons.btn-primary wire:click="save">ثبت</x-buttons.btn-primary>
         </x-slot:footer>
     </x-modals.modal>
 
@@ -84,11 +78,11 @@
                     <td>{{ \Morilog\Jalali\Jalalian::forge($option->update_at) }}</td>
                     <td>{{ $option->note }}</td>
                     <td>
-                        <x-buttons.btn-danger wire:click="delete({{ $option->id }})">حذف</x-buttons.btn-danger>
                         <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#edit-package-modal-{{$option->id}}">بروز رسانی</x-buttons.btn-primary>
+                        <x-buttons.btn-danger title="deletePackage" class="confirm" id="{{ $option->id }}">حذف</x-buttons.btn-danger>
                     </td>
                 </tr>
-                @livewire('variables.edit.edit-options', ['option' => $option], key('options-'.$option->id))
+                <livewire:variables.edit.edit-options :option="$option" :wire:key="'edit-option-'.$option->id">
             @endforeach
         </x-tables.table>
     @else
