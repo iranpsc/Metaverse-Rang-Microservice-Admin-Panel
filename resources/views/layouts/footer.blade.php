@@ -75,47 +75,60 @@
 <script src="{{ asset('assets/plugins/paper-ripple/dist/PaperRipple.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js') }}">
 </script>
-<script src="{{ asset('assets/plugins/sweetalert2/dist/sweetalert2.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/screenfull/dist/screenfull.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/iCheck/icheck.min.js') }}"></script>
 <script src="{{ asset('assets/plugins/switchery/dist/switchery.js') }}"></script>
 <script src="{{ asset('assets/js/core.js') }}"></script>
 <!-- END JS -->
 <!-- BEGIN PAGE JAVASCRIPT -->
-<script src="{{ asset('assets/plugins/raphael/raphael.min.js')}}"></script>
-<script src="{{ asset('assets/plugins/morris.js/morris.min.js')}}"></script>
-<script src="{{ asset('assets/plugins/jquery-incremental-counter/jquery.incremental-counter.min.js')}}"></script>
-<script src="{{ asset('assets/plugins/ammap3/ammap/ammap.js')}}"></script>
-<script src="{{ asset('assets/plugins/ammap3/ammap/maps/js/iranHighFa.js')}}"></script>
-<script src="{{ asset('assets/plugins/kamadatepicker/kamadatepicker.min.js')}}"></script>
-<script src="{{ asset('assets/plugins/jquery-knob/dist/jquery.knob.min.js')}}"></script>
-<script src="{{ asset('assets/js/pages/dashboard1.js')}}"></script>
+<script src="{{ asset('assets/plugins/raphael/raphael.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/morris.js/morris.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/jquery-incremental-counter/jquery.incremental-counter.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/ammap3/ammap/ammap.js') }}"></script>
+<script src="{{ asset('assets/plugins/ammap3/ammap/maps/js/iranHighFa.js') }}"></script>
+<script src="{{ asset('assets/plugins/kamadatepicker/kamadatepicker.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/jquery-knob/dist/jquery.knob.min.js') }}"></script>
+<script src="{{ asset('assets/js/pages/dashboard1.js') }}"></script>
 <script src="{{ asset('assets/js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('assets/plugins/select2/dist/js/select2.full.min.js')}}"></script>
-<script src="{{ asset('assets/plugins/select2/dist/js/i18n/fa.js')}}"></script>
-<script src="{{ asset('assets/js/pages/select2.js')}}"></script>
-<script src="{{ asset('assets/plugins/datepicker/jquery-ui-1.10.1.custom.min.js')}}"></script>
-<script src="{{ asset('assets/plugins/datepicker/jquery.ui.datepicker-cc.js')}}"></script>
-<script src="{{ asset('assets/plugins/datepicker/calendar.js')}}"></script>
-<script src="{{ asset('assets/plugins/datepicker/jquery.ui.datepicker-cc-fa.js')}}"></script>
-<script src="{{ asset('assets/js/pages/calendar-ui.js')}}"></script>
+<script src="{{ asset('assets/plugins/select2/dist/js/select2.full.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/select2/dist/js/i18n/fa.js') }}"></script>
+<script src="{{ asset('assets/js/pages/select2.js') }}"></script>
+<script src="{{ asset('assets/plugins/datepicker/jquery-ui-1.10.1.custom.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/datepicker/jquery.ui.datepicker-cc.js') }}"></script>
+<script src="{{ asset('assets/plugins/datepicker/calendar.js') }}"></script>
+<script src="{{ asset('assets/plugins/datepicker/jquery.ui.datepicker-cc-fa.js') }}"></script>
+<script src="{{ asset('assets/js/pages/calendar-ui.js') }}"></script>
+<script src="{{ asset('assets/js/sweetalert2@11.js') }}"></script>
 <!-- END PAGE JAVASCRIPT -->
 
 <script>
     $(document).ready(function() {
-        $('.only-number').on('keypress', function() {
-            var charCode = (evt.which) ? evt.which : evt.keyCode;
-            if (charCode > 31 && (charCode < 48 || charCode > 57)) {
-                return false;
-            }
-            return true;
+        $('.confirm').on('click', function() {
+            Swal.fire({
+                title: 'آیا می خواهید حذف کنید؟',
+                text: "بعد از حذف قادر به بازیابی نخواهید بود!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'بله، حذف کن!',
+                cancelButtonText: 'لغو',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Livewire.emit(this.title, this.id);
+                    Swal.fire(
+                        'حذف شد!',
+                        'اطلاعات مورد نظر حذف شد',
+                        'success',
+                    )
+                }
+            })
         })
     })
 </script>
 @stack('js')
 
 @livewireScripts
-
 
 </body>
 

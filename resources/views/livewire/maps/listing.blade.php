@@ -4,9 +4,6 @@
     </x-buttons.btn-primary>
     <a href="{{ route('empty-and-reset-database') }}" class="btn btn-danger btn-sm rounded">حذف اطلاعات نقشه ها از
         دیتابیس</a>
-    @if (session('success'))
-        <x-alerts.success>{{ session('success') }}</x-alerts.success>
-    @endif
     <x-modals.modal id="upload-map-modal" title="بارگزاری فایل نقشه">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
@@ -73,7 +70,7 @@
                             <x-buttons.btn-primary data-bs-toggle="modal"
                                 data-bs-target="#polygon-modal-{{ $polygon->id }}">
                                 اعمال</x-buttons.btn-primary>
-                            <x-buttons.btn-danger wire:click="delete({{ $polygon->id }})">حذف
+                            <x-buttons.btn-danger class="confirm" id="{{ $polygon->id }}" title="deletePolygon">حذف
                             </x-buttons.btn-danger>
                         @endunless
                         @livewire('maps.insert-into-database', ['polygon' => $polygon], key('polygon-' . $polygon->id))
