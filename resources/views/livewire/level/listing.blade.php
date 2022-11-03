@@ -27,7 +27,7 @@
                             @endif
                             <x-buttons.btn-success data-bs-target="#edit-level-modal-{{ $key }}"
                                 data-bs-toggle="modal">ویرایش</x-buttons.btn-success>
-                            <x-buttons.btn-danger wire:click="delete('{{ $level->id }}')">حذف
+                            <x-buttons.btn-danger class="confirm" id="{{ $level->id }}" title="deleteLevel">حذف
                             </x-buttons.btn-danger>
                             @livewire('level.update', ['level' => $level, 'key' => $key], key('update-' . $key))
                             @livewire('level.create-prize', ['level' => $level, 'key' => $key], key('create-prize-' . $key))

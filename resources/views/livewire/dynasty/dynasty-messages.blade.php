@@ -70,7 +70,7 @@
                     <td>
                         <x-buttons.btn-primary data-bs-toggle="modal"
                         data-bs-target="#edit-message-{{ $message->id }}">ویرایش</x-buttons.btn-primary>
-                        <x-buttons.btn-danger wire:click="delete({{ $message->id }})">حذف</x-buttons.btn-danger>
+                        <x-buttons.btn-danger class="confirm" title="deleteDynastyMessage" id="{{ $message->id }}">حذف</x-buttons.btn-danger>
                         <livewire:dynasty.edit-messages :message="$message" :wire:key="'edit-message-'.$message->id">
                     </td>
                 </tr>

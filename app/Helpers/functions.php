@@ -44,8 +44,14 @@ function getRelationTitle($member)
         case 'sister':
             return 'خواهر';
             break;
-        case 'ofspring':
+        case 'offspring':
             return 'فرزند';
+            break;
+        case 'wife':
+            return 'زن';
+            break;
+        case 'husband':
+            return 'شوهر';
             break;
     }
 }

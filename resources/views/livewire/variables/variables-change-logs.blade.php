@@ -1,13 +1,8 @@
 <div>
     {{-- Stop trying to control. --}}
 
-    @if ($variables->count() > 0)
-        @php
-            $variables = $variables->reject(function ($variable) {
-                return is_null($variable->priceChangeLogs);
-            });
-        @endphp
-        <x-tables.table id="variables-price-change-table">
+    @if ($changeLogs->count() > 0)
+        <x-tables.table>
             <x-slot name="headers">
                 <th>دارایی</th>
                 <th>تاریخ تغییر</th>
@@ -17,21 +12,19 @@
                 <th>وضعیت حال</th>
                 <th>توضیحات</th>
                 <tbody>
-                    @foreach ($variables as $variable)
-                        @foreach ($variable->priceChangeLogs as $priceChangeLog)
-                            <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>ارز {{ \App\Helpers\getAssetColor($variable->asset) }}</td>
-                                <td>{{ \Morilog\Jalali\Jalalian::forge($priceChangeLog->created_at)->format('Y/m/d') }}
-                                </td>
-                                <td>{{ \Morilog\Jalali\Jalalian::forge($priceChangeLog->created_at)->format('H:m:s') }}
-                                </td>
-                                <td>{{ $priceChangeLog->changer_name }}</td>
-                                <td>{{ $priceChangeLog->previous_price }}</td>
-                                <td>{{ $priceChangeLog->current_price }}</td>
-                                <td>{{ $priceChangeLog->note }}</td>
-                            </tr>
-                        @endforeach
+                    @foreach ($changeLogs as $changeLog)
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td>ارز {{ \App\Helpers\getAssetColor($changeLog->variable->asset) }}</td>
+                            <td>{{ \Morilog\Jalali\Jalalian::forge($changeLog->created_at)->format('Y/m/d') }}
+                            </td>
+                            <td>{{ \Morilog\Jalali\Jalalian::forge($changeLog->created_at)->format('H:m:s') }}
+                            </td>
+                            <td>{{ $changeLog->changer_name }}</td>
+                            <td>{{ $changeLog->previous_price }}</td>
+                            <td>{{ $changeLog->current_price }}</td>
+                            <td>{{ $changeLog->note }}</td>
+                        </tr>
                     @endforeach
                 </tbody>
             </x-slot>
@@ -39,11 +32,4 @@
     @else
         <x-alerts.danger>لاگ تغییری ثبت نشده است</x-alerts.danger>
     @endif
-
-    @push('js')
-        <script>
-            $('#variables-price-change-table').DataTable();
-        </script>
-    @endpush
-
 </div>

@@ -8,40 +8,39 @@
         @if (session()->has('error'))
             <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
         @endif
-        <x-forms.group for="price" label="قیمت واحد">
-            <x-forms.input type="text" wire:model="price" class="only-number" />
+        <x-forms.group for="price-{{ $asset->id }}" label="قیمت واحد">
+            <x-forms.input id="price-{{ $asset->id }}" wire:model="price" />
             @error('price')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
-        <div class="form-group">
-            <label for="note">علت بروزرسانی</label>
-            <textarea name="note" id="note" cols="30" rows="3" class="form-control rounded" wire:model="note"></textarea>
-        </div>
+        <x-forms.group for="note-{{ $asset->id }}" label="علت بروزرسانی">
+            <textarea id="note-{{ $asset->id }}" id="note" cols="30" rows="3" class="form-control rounded"
+                wire:model="note"></textarea>
+        </x-forms.group>
         <div class="row form-group">
             <div class="col-sm-4">
-                <a href="javascript:void(0)" class="btn btn-success btn-block btn-sm rounded" wire:click="sendSMS">
+                <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendSMS">
                     ارسال پیامک تایید
-
-                </a>
+                </x-buttons.btn-success>
             </div>
             <div class="col-sm-8">
-                <input type="text" class="form-control rounded" wire:model="phoneVerification">
+                <x-forms.input wire:model="phoneVerification"/>
                 @error('phoneVerification')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
             </div>
 
         </div>
-        <x-forms.group for="access_password" label="رمز دسترسی">
-            <x-forms.input type="password" wire:model="access_password" class="only-number" />
+        <x-forms.group for="access_password-{{ $asset->id }}" label="رمز دسترسی">
+            <x-forms.input id="access_password-{{ $asset->id }}" type="password" wire:model="access_password" />
             @error('access_password')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
         <x-slot:footer>
+            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="update">بروزرسانی</x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
-            <x-buttons.btn-primary wire:click="update">بروزرسانی</x-buttons.btn-primary>
         </x-slot:footer>
     </x-modals.modal>
 </div>

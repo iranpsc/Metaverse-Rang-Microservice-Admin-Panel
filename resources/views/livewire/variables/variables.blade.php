@@ -1,6 +1,4 @@
-@extends('layouts.app')
-
-@section('content')
+<div>
     <ul class="nav nav-tabs border">
         <li class="nav-item">
             <a href="#tab1" class="nav-link active" data-bs-toggle="tab">بسته ها</a>
@@ -17,19 +15,16 @@
     </ul>
     <div class="tab-content">
         <div id="tab1" class="tab-pane fade active show">
-            @livewire('variables.color-options', ['options' => $options, 'variables' => $variables])
+            <livewire:variables.color-options>
         </div>
-        <div id="tab2" class="tab-pane fade active show">
-            @livewire('variables.packages-change-logs', ['options' => $options])
+        <div id="tab2" class="tab-pane fade">
+            <livewire:variables.packages-change-logs>
         </div>
         <div id="tab3" class="tab-pane fade">
-            @livewire('variables.colors-price', ['variables' => $variables])
+            <livewire:variables.colors-price>
         </div>
         <div id="tab4" class="tab-pane fade">
-            @livewire('variables.variables-change-logs', ['variables' => $variables])
+            <livewire:variables.variables-change-logs>
         </div>
     </div>
-@endsection
-
-
-
+</div>

@@ -10,6 +10,7 @@ class DynastyMessages extends Component
     public $type, $content;
 
     protected $listeners = [
+        'deleteDynastyMessage' => 'delete',
         'messageCreated' => '$refresh',
         'messageUpdated' => '$refresh',
         'messageDeleted' => '$refresh',
@@ -46,7 +47,6 @@ class DynastyMessages extends Component
     public function delete($id)
     {
         DynastyMessage::destroy($id);
-        session()->flash('success', 'پیام حذف شد');
         $this->emitSelf('messageDeleted');
     }
 

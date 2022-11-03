@@ -31,6 +31,7 @@ class Listing extends Component
     ];
 
     protected $listeners = [
+        'deletePolygon' => 'delete',
         'polygonDeleted' => '$refresh',
         'mapsInsertedToDatabase' => '$refresh'
     ];
@@ -86,9 +87,8 @@ class Listing extends Component
 
     public function delete(Polygon $polygon)
     {
-        Storage::delete(public_path('storage/maps/' . $polygon->fileName));
+        unlink(public_path('storage/maps/' . $polygon->fileName));
         $polygon->delete();
-        session()->flash('success', 'نقشه حذف شد');
         $this->emitSelf('polygonDeleted');
     }
 

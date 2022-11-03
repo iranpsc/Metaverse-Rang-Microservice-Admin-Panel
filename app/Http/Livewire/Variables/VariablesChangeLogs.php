@@ -7,18 +7,16 @@ use App\Models\VariableChangeLog;
 
 class VariablesChangeLogs extends Component
 {
-    public $variables;
     protected $listeners = [
-        'delete-variables-change-logs' => 'deleteVariableChangeLogs'
+        'currencyUpdated' => '$refresh',
+        'currencyDeleted' => '$refresh',
     ];
-
-    public function deleteVariableChangeLogs($id)
-    {
-        VariableChangeLog::where('variable_id', $id)->delete();
-    }
 
     public function render()
     {
-        return view('livewire.variables.variables-change-logs');
+        return view('livewire.variables.variables-change-logs', [
+            'changeLogs' => VariableChangeLog::where('variable_id', '!=', null)
+            ->paginate(10, ['*'], 'change-log-listing')
+        ]);
     }
 }

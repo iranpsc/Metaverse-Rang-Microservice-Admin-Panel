@@ -16,12 +16,10 @@
     <link href="{{ asset('assets/plugins/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css') }}"
         rel="stylesheet">
     <link href="{{ asset('assets/plugins/switchery/dist/switchery.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/plugins/sweetalert2/dist/sweetalert2.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/plugins/paper-ripple/dist/paper-ripple.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/plugins/iCheck/skins/square/_all.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/colors.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/plugins/select2/dist/css/select2.min.css')}}" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('assets/plugins/data-table/DataTables-1.10.16/css/jquery.dataTables.css') }}">
     <link href="{{asset('assets/plugins/datepicker/jquery.ui.datepicker1.8-all.css')}}" rel="stylesheet">
     <!-- END CSS -->
