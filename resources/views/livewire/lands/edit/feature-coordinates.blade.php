@@ -3,19 +3,26 @@
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
-        @if ($errors->any())
-            <x-alerts.danger>ورودی ها را کنترل کنید</x-alerts.danger>
-        @endif
+{{--        @if ($errors->any())--}}
+{{--                @dd($errors->getMessages())--}}
+{{--            <x-alerts.danger>ورودی ها را کنترل کنید</x-alerts.danger>--}}
+{{--        @endif--}}
         @foreach ($coordinates as $key => $coordinate)
             <div class="row">
                 <div class="col-sm-6">
                     <x-forms.group for="x-{{ $db_coordinates[$key]->id }}" label="X">
                         <x-forms.input id="x-{{ $db_coordinates[$key]->id }}" wire:model="coordinates.{{ $key }}.x" />
+                        @error('coordinates.'.$key.'.x')
+                            <p class="text-danger">{{ $message }}</p>
+                        @enderror
                     </x-forms.group>
                 </div>
                 <div class="col-sm-6">
                     <x-forms.group for="y-{{ $db_coordinates[$key]->id }}" label="Y">
                         <x-forms.input id="y-{{ $db_coordinates[$key]->id }}" wire:model="coordinates.{{ $key }}.y" />
+                        @error('coordinates.'.$key.'.y')
+                        <p class="text-danger">{{ $message }}</p>
+                        @enderror
                     </x-forms.group>
                 </div>
             </div>
