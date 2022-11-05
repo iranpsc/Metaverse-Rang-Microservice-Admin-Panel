@@ -38,8 +38,16 @@ class Map extends Model
 	protected $table = 'maps';
 
 	protected $fillable = [
-		'type',
-		'name'
+		'name',
+        'publish_date',
+        'publisher_name',
+        'polygon_count',
+        'total_area',
+        'first_id',
+        'last_id',
+        'status',
+        'karbari',
+        'fileName'
 	];
 
 	public function crs()

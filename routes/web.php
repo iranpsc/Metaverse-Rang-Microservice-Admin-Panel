@@ -49,6 +49,6 @@ Route::get('truncate', function () {
     DB::table('crs_properties')->delete();
     DB::table('crs')->delete();
     DB::table('maps')->delete();
-    DB::table('polygons')->truncate();
+    DB::table('maps')->truncate();
     return redirect()->back()->with('success', 'دیتابیس با موفقیت ریست شد');
 })->name('empty-and-reset-database');
