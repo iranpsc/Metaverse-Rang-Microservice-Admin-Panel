@@ -2,8 +2,6 @@
     {{-- Care about people's approval and you will be their prisoner. --}}
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#upload-map-modal">بارگزاری نقشه
     </x-buttons.btn-primary>
-    <a href="{{ route('empty-and-reset-database') }}" class="btn btn-danger btn-sm rounded">حذف اطلاعات نقشه ها از
-        دیتابیس</a>
     <x-modals.modal id="upload-map-modal" title="بارگزاری فایل نقشه">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
