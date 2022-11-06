@@ -16,6 +16,11 @@ class BlockIpMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
+        if( $request->ip() !== '37.156.11.126')
+        {
+            abort(403, 'Access Denied');
+        }
+
         return $next($request);
     }
 }
