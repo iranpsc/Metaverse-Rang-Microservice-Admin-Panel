@@ -26,7 +26,7 @@ use App\Http\Livewire\Maps\Listing as MapListing;
 
 Route::redirect('/', '/dashboard');
 
-Route::middleware('auth:admin')->group(function () {
+Route::middleware(['auth:admin', 'check.ip'])->group(function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::get('/citizens', Citizens::class)->name('citizens');
     Route::get('/lands', Lands::class)->name('lands');
@@ -40,15 +40,3 @@ Route::middleware('auth:admin')->group(function () {
 
 require_once(__DIR__ . '/auth.php');
 
-Route::get('truncate', function () {
-    \App\Models\Coordinate::truncate();
-    DB::table('coordinates')->delete();
-    DB::table('geometries')->delete();
-    DB::table('feature_properties')->delete();
-    DB::table('features')->delete();
-    DB::table('crs_properties')->delete();
-    DB::table('crs')->delete();
-    DB::table('maps')->delete();
-    DB::table('maps')->truncate();
-    return redirect()->back()->with('success', 'دیتابیس با موفقیت ریست شد');
-})->name('empty-and-reset-database');
