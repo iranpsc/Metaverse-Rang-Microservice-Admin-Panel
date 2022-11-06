@@ -4,10 +4,10 @@ namespace App\Http\Livewire\Lands;
 
 use Livewire\Component;
 
-class LandsEntries extends Component
+class Entries extends Component
 {
     public function render()
     {
-        return view('livewire.lands.lands-entries');
+        return view('livewire.lands.entries');
     }
 }

@@ -4,16 +4,15 @@ namespace App\Http\Livewire\Maps;
 
 use App\Helpers\SMS;
 use App\Jobs\ImportMaps;
-use App\Models\Admin;
+use App\Models\Map;
 use Livewire\Component;
-use App\Models\MapManagement\Polygon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 
 class InsertIntoDatabase extends Component
 {
-    public $polygon, $code = '', $accessPassword = '', $admin;
+    public $map, $code = '', $accessPassword = '', $admin;
 
     protected $rules = [
         'code' => 'required|integer|min:5',
@@ -58,11 +57,11 @@ class InsertIntoDatabase extends Component
         }
     }
 
-    public function insertIntoDatabase(Polygon $polygon)
+    public function insertIntoDatabase(Map $map)
     {
         $this->validate();
 
-        if($polygon->status)
+        if($map->status)
         {
             session()->flash('error', 'اطلاعات قبلا وارد دیتابیس شده است');
             return;
@@ -75,8 +74,8 @@ class InsertIntoDatabase extends Component
         } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
             $this->addError('accessPassword', 'رمز دسترسی صحیح نیست');
         } else {
-            ImportMaps::dispatch($polygon);
-            $polygon->update(['status' => 1]);
+            ImportMaps::dispatch($map);
+            $map->update(['status' => 1]);
             session()->flash('success', 'اطلاعات با موفقیت وارد دیتابیس شد');
             Cache::delete('maps-verify-code-' . $this->admin->id);
             $this->emitUp('mapsInsertedToDatabase');

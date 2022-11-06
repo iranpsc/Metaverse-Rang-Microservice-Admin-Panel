@@ -35,7 +35,7 @@ class Variable extends Model
     ];
 
     public static function getRate($asset) {
-        return self::firstWhere('asset', $asset)->price;
+        return self::firstWhere('asset', $asset)->price ?? 0;
     }
 
     public function option() {

@@ -6,7 +6,7 @@ use App\Models\Trade;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-class LandsSold extends Component
+class Sold extends Component
 {
     use WithPagination;
 
@@ -19,7 +19,7 @@ class LandsSold extends Component
 
     public function render()
     {
-        return view('livewire.lands.lands-sold', [
+        return view('livewire.lands.sold', [
             'trades' => Trade::with('feature', 'buyer')
             ->where('seller_id', 1)
             ->paginate(10, '*', 'sold-lands')

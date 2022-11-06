@@ -6,7 +6,7 @@ use Livewire\Component;
 use App\Models\SellFeatureRequest;
 use Livewire\WithPagination;
 
-class PricingLands extends Component
+class Pricing extends Component
 {
     use WithPagination;
 
@@ -15,7 +15,7 @@ class PricingLands extends Component
 
     public function render()
     {
-        return view('livewire.lands.pricing-lands', [
+        return view('livewire.lands.pricing', [
             'pricings' => SellFeatureRequest::with('feature')
             ->where('status', 0)
             ->paginate(10, '*', 'pricing-lands')

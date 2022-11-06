@@ -6,7 +6,7 @@ use Livewire\Component;
 use App\Models\Feature;
 use Livewire\WithPagination;
 
-class LandsPrice extends Component
+class Prices extends Component
 {
     use WithPagination;
 
@@ -21,7 +21,7 @@ class LandsPrice extends Component
 
     public function render()
     {
-        return view('livewire.lands.lands-price', [
+        return view('livewire.lands.prices', [
             'features' => $this->features ?? Feature::with([
                 'properties',
                 'geometry',

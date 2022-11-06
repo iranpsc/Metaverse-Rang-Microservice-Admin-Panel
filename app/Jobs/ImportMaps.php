@@ -20,11 +20,11 @@ class ImportMaps implements ShouldQueue, ShouldBeUnique
      * @return void
      */
 
-    private $polygon;
+    private $map;
 
-    public function __construct($polygon)
+    public function __construct($map)
     {
-        $this->polygon = $polygon;
+        $this->map = $map;
     }
 
     /**
@@ -34,17 +34,13 @@ class ImportMaps implements ShouldQueue, ShouldBeUnique
      */
     public function handle()
     {
-        $file = file_get_contents(public_path('/storage/maps/' . $this->polygon->fileName));
+        $file = file_get_contents(public_path('/storage/maps/' . $this->map->fileName));
         $request = json_decode(explode('=', $file)[1], true);
 
         if ($request) {
-            $map = \App\Models\Map::create([
-                'type' => $request['type'],
-                'name' => $request['name'],
-            ]);
             $crs = \App\Models\Crs::create([
                 'type' => $request['crs']['type'],
-                'map_id' => $map->id
+                'map_id' => $this->map->id
             ]);
             \App\Models\CrsProperty::create([
                 'name' => $request['crs']['properties']['name'],
@@ -54,7 +50,7 @@ class ImportMaps implements ShouldQueue, ShouldBeUnique
             foreach ($request['features'] as $feature) {
                 $feature_db = \App\Models\Feature::create([
                     'type' => $feature['type'],
-                    'map_id' => $map->id,
+                    'map_id' => $this->map->id,
                     'owner_id' => 1,
                 ]);
                 $stability = $feature['properties']['density'] * $feature['properties']['area'];
