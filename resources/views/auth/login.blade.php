@@ -36,7 +36,7 @@
 
                     <div class="col-md-12 round">
                         <div class="logo-con m-t-10 m-b-10">
-                            <img src="assets/images/logo-rgb.png" class="light-logo center-block img-responsive" style="width:15%; height:15%" alt="logo">
+                            <img src="{{ asset('assets/images/logo-rgb.png') }}" class="light-logo center-block img-responsive" style="width:15%; height:15%" alt="logo">
                         </div><!-- /.logo-con -->
 
                         <h2 class="text-center m-b-20">وارد شوید</h2>
