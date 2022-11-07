@@ -85,7 +85,8 @@
                 <livewire:variables.edit.edit-options :option="$option" :wire:key="'edit-option-'.$option->id">
             @endforeach
         </x-tables.table>
+        {{ $options->links() }}
     @else
-        <x-alerts.danger>پکیجی تعریف نشده است</x-alert>
+        <x-alerts.danger>پکیجی تعریف نشده است</x-alerts.danger>
     @endif
 </div>

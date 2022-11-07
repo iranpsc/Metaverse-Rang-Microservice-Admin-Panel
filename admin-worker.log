@@ -668,3 +668,135 @@ Could not open input file: /home/admin/domains/rgb.irpsc.com/admin/artisan
   2022-11-06 13:36:29 App\Notifications\LogedInNotification ...... 7.49ms FAIL
   2022-11-06 13:36:29 App\Notifications\LogedInNotification ...... 6.84ms FAIL
   2022-11-06 13:36:29 App\Notifications\LogedInNotification ..... 10.25ms FAIL
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+  2022-11-06 17:17:18 App\Mail\TestMail ......................... 16.27ms FAIL
+  2022-11-06 17:17:18 App\Mail\TestMail .......................... 5.54ms FAIL
+  2022-11-06 17:17:18 App\Mail\TestMail .......................... 5.72ms FAIL
+  2022-11-06 17:20:51 App\Mail\TestMail ......................... 22.21ms FAIL
+  2022-11-06 17:20:51 App\Mail\TestMail .......................... 6.73ms FAIL
+  2022-11-06 17:20:51 App\Mail\TestMail .......................... 6.46ms FAIL
+  2022-11-06 17:32:01 App\Mail\TestMail ......................... 12.56ms FAIL
+  2022-11-06 17:32:01 App\Mail\TestMail .......................... 9.60ms FAIL
+  2022-11-06 17:32:01 App\Mail\TestMail .......................... 5.44ms FAIL
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+  2022-11-06 18:16:29 App\Mail\TestMail ......................... 18.77ms FAIL
+  2022-11-06 18:16:29 App\Mail\TestMail .......................... 6.25ms FAIL
+  2022-11-06 18:16:29 App\Mail\TestMail .......................... 4.54ms FAIL
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+  2022-11-06 18:34:46 App\Mail\TestMail ......................... 12.07ms FAIL
+  2022-11-06 18:34:46 App\Mail\TestMail .......................... 6.28ms FAIL
+  2022-11-06 18:34:46 App\Mail\TestMail .......................... 4.15ms FAIL
+  2022-11-06 18:37:20 App\Mail\TestMail .......................... 9.18ms FAIL
+  2022-11-06 18:37:20 App\Mail\TestMail .......................... 4.92ms FAIL
+  2022-11-06 18:37:20 App\Mail\TestMail .......................... 3.95ms FAIL
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+
+
+   INFO  Processing jobs from the [default] queue.  
+

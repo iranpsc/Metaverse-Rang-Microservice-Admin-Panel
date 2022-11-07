@@ -15,6 +15,8 @@ class ColorOptions extends Component
     public $asset, $amount, $phoneVerification, $access_password;
     public $admin;
 
+    protected $paginationTheme = 'bootstrap';
+
     protected $rules = [
         'phoneVerification' => 'required|numeric',
         'access_password' => 'required',

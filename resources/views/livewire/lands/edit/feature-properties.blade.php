@@ -1,5 +1,5 @@
 <div>
-    <x-modals.modal id="modal-{{ explode('+', $feature->properties->id)[1] }}" title="ویرایش اطلاعات ملک">
+    <x-modals.modal id="modal-{{ explode('-', $feature->properties->id)[1] }}" title="ویرایش اطلاعات ملک">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif

@@ -16,7 +16,7 @@
                 </x-slot:headers>
                 @foreach ($properties as $property)
                     <tr>
-                        <td>{{ explode('+', $property->id)[1] - 10000 }}</td>
+                        <td>{{ explode('-', $property->id)[1] - 10000 }}</td>
                         <td>{{ $property->id }}</td>
                         <td>{{ $property->area }}</td>
                         <td>{{ $property->density }}</td>
@@ -26,7 +26,7 @@
                         <td>{{ $property->feature->map->publisher_name }}</td>
                         <td>
                             <x-buttons.btn-primary data-bs-toggle="modal"
-                                data-bs-target="#modal-{{ explode('+', $property->id)[1] }}">ویرایش
+                                data-bs-target="#modal-{{ explode('-', $property->id)[1] }}">ویرایش
                             </x-buttons.btn-primary>
 
                             <x-buttons.btn-success data-bs-toggle="modal"
