@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\DB;
 use App\Http\Livewire\Citizens\Citizens;
 use App\Http\Livewire\Dashboard\Dashboard;
 use App\Http\Livewire\Employees\Employees;
@@ -39,4 +38,5 @@ Route::middleware(['auth:admin', 'check.ip'])->group(function () {
 });
 
 require_once(__DIR__ . '/auth.php');
+
 

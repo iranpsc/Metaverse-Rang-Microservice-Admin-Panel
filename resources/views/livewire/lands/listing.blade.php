@@ -16,11 +16,7 @@
                 </x-slot:headers>
                 @foreach ($properties as $property)
                     <tr>
-<<<<<<< HEAD:resources/views/livewire/lands/listing.blade.php
                         <td>{{ explode('-', $property->id)[1] - 10000 }}</td>
-=======
-                        <td>{{ explode('+', $property->id)[1] - 10000 }}</td>
->>>>>>> 51772f767bde2c5d056c84a5b641826c37b42783:resources/views/livewire/lands/listing.blade.php
                         <td>{{ $property->id }}</td>
                         <td>{{ $property->area }}</td>
                         <td>{{ $property->density }}</td>
@@ -30,11 +26,7 @@
                         <td>{{ $property->feature->map->publisher_name }}</td>
                         <td>
                             <x-buttons.btn-primary data-bs-toggle="modal"
-<<<<<<< HEAD:resources/views/livewire/lands/listing.blade.php
                                 data-bs-target="#modal-{{ explode('-', $property->id)[1] }}">ویرایش
-=======
-                                data-bs-target="#modal-{{ explode('+', $property->id)[1] }}">ویرایش
->>>>>>> 51772f767bde2c5d056c84a5b641826c37b42783:resources/views/livewire/lands/listing.blade.php
                             </x-buttons.btn-primary>
 
                             <x-buttons.btn-success data-bs-toggle="modal"
