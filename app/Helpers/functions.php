@@ -8,16 +8,16 @@ use function PHPUnit\Framework\returnSelf;
 function getDynastyMessageTitle($type)
 {
     switch ($type) {
-        case 'requester':
+        case 'requester_confirmation_message':
             return 'پیام تایید درخواست کننده';
             break;
-        case 'reciever':
+        case 'reciever_message':
             return 'پیام دریافت کننده درخواست';
             break;
-        case 'requester_accept':
+        case 'reciever_accept_message':
             return 'پیام تایید پذیرش پیوستن به سلسله';
             break;
-        case 'reciever_accept':
+        case 'requester_accept_message':
             return 'پیام ارسالی به درخواست کننده مبنی بر پذیرش درخواست';
             break;
         case 'dynasty_prize':
