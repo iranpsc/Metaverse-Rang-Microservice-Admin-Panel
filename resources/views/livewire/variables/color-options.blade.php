@@ -80,9 +80,9 @@
                     <td>
                         <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#edit-package-modal-{{$option->id}}">بروز رسانی</x-buttons.btn-primary>
                         <x-buttons.btn-danger title="deletePackage" class="confirm" id="{{ $option->id }}">حذف</x-buttons.btn-danger>
+                        <livewire:variables.edit.edit-options :option="$option" :wire:key="'edit-option-'.$option->id">
                     </td>
                 </tr>
-                <livewire:variables.edit.edit-options :option="$option" :wire:key="'edit-option-'.$option->id">
             @endforeach
         </x-tables.table>
         {{ $options->links() }}
