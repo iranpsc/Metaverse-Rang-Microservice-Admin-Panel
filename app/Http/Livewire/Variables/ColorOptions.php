@@ -9,9 +9,12 @@ use App\Helpers\SMS;
 use App\Models\Admin;
 use App\Models\Variable;
 use Illuminate\Support\Facades\Auth;
+use Livewire\WithPagination;
 
 class ColorOptions extends Component
 {
+    use WithPagination;
+
     public $asset, $amount, $phoneVerification, $access_password;
     public $admin;
 
@@ -94,7 +97,7 @@ class ColorOptions extends Component
     {
         return view('livewire.variables.color-options', [
             'variables' => Variable::all('asset'),
-            'options'   => Option::paginate(10, ['*'], 'package-listing')
+            'options'   => Option::paginate(1, ['*'], 'package-listing')
         ]);
     }
 }
