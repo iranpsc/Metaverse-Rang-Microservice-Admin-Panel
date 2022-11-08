@@ -97,7 +97,7 @@ class ColorOptions extends Component
     {
         return view('livewire.variables.color-options', [
             'variables' => Variable::all('asset'),
-            'options'   => Option::paginate(1, ['*'], 'package-listing')
+            'options'   => Option::paginate(10, ['*'], 'package-listing')
         ]);
     }
 }
