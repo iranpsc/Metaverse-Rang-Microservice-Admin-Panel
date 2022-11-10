@@ -16,7 +16,7 @@
             @enderror
         </x-forms.group>
         <x-slot:footer>
-            <x-buttons.btn-success wire:click="save">ثبت</x-buttons.btn-success>
+            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بازگشت</x-buttons.btn-danger>
         </x-slot:footer>
     </x-modals.modal>

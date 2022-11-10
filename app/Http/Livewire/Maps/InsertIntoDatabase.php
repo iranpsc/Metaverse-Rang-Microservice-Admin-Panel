@@ -45,7 +45,7 @@ class InsertIntoDatabase extends Component
             return;
         }
         $verifyCode = random_int(10000, 99999);
-        Cache::put('maps-verify-code-' . $this->admin->id, $verifyCode, now()->addMinutes(5));
+        Cache::put('maps-verify-code-' . $this->admin->id, Hash::make($verifyCode), now()->addMinutes(5));
         $result = SMS::send($this->admin->phone, $verifyCode);
 
         if(is_array($result)) {
@@ -69,7 +69,7 @@ class InsertIntoDatabase extends Component
 
         $cachedCode = Cache::get('maps-verify-code-' . $this->admin->id);
 
-        if (!$cachedCode || $cachedCode != $this->code) {
+        if (!$cachedCode || Hash::check($cachedCode, $this->code)) {
             $this->addError('code', 'کد تایید وارد شده صحیح نیست');
         } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
             $this->addError('accessPassword', 'رمز دسترسی صحیح نیست');

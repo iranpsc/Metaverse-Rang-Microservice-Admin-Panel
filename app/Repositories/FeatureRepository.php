@@ -11,7 +11,7 @@ class FeatureRepository
     public function __construct()
     {
         $this->features = Feature::with('properties', 'geometry.coordinates', 'owner')
-            ->get();
+            ->lazy();
     }
 
     public function all()
@@ -22,7 +22,7 @@ class FeatureRepository
     public function sold()
     {
         return $this->features->reject(function($feature) {
-            return $feature->owner->code == 'hm-20000';
+            return $feature->owner->code === 'hm-2000000';
         });
     }
 }

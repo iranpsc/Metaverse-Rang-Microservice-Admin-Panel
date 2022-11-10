@@ -155,7 +155,7 @@
             </div>
         </div>
         <x-slot:footer>
-            <x-buttons.btn-primary wire:click="save">ثبت</x-buttons.btn-primary>
+            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بازگشت</x-buttons.btn-danger>
         </x-slot:footer>
     </x-modals.modal>

@@ -55,8 +55,7 @@ class Listing extends Component
 
         $polygons_total_area = 0;
 
-        foreach ($fileContents['features'] as $feature)
-        {
+        foreach ($fileContents['features'] as $feature) {
             $polygons_total_area += ($feature['properties']['area'] * $feature['properties']['density']);
         }
 

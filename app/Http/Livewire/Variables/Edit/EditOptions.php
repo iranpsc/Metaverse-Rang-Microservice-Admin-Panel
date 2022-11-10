@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Session;
 use App\Helpers\SMS;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class EditOptions extends Component
 {
@@ -41,7 +42,7 @@ class EditOptions extends Component
     {
         $verify_code = random_int(100000, 999999);
 
-        Session::put('verify_code', $verify_code);
+        Session::put('verify_code', Hash::make($verify_code));
 
         $result = SMS::send($this->admin->phone, $verify_code);
         if(is_array($result)) {
@@ -57,7 +58,7 @@ class EditOptions extends Component
 
         $this->validate();
 
-        if ($this->phoneVerification != Session::get('verify_code')) {
+        if (! Hash::check($this->phoneVerification, Session::get('verify_code'))) {
             $this->addError('phoneVerification', 'کد تایید وارد شده صحیح نمی باشد');
         } else if (!password_verify($this->access_password, $this->admin->access_password)) {
             $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
