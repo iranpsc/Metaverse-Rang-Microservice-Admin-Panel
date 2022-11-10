@@ -48,4 +48,9 @@ class Option extends Model
         return $this->hasMany(VariableChangeLog::class);
     }
 
+    public function image()
+    {
+        return $this->morphOne(Image::class, 'imageable');
+    }
+
 }

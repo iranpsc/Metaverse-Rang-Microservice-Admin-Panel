@@ -11,12 +11,13 @@ use App\Models\Variable;
 use Illuminate\Support\Facades\Auth;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Hash;
+use Livewire\WithFileUploads;
 
 class ColorOptions extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
-    public $asset, $amount, $phoneVerification, $access_password;
+    public $asset, $amount, $image, $phoneVerification, $access_password;
     public $admin;
 
     protected $paginationTheme = 'bootstrap';
@@ -24,6 +25,7 @@ class ColorOptions extends Component
     protected $rules = [
         'phoneVerification' => 'required|numeric',
         'access_password' => 'required',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp',
         'amount' => 'required|integer|min:1',
         'asset' => 'required|in:red,blue,yellow,psc,irr'
     ];
@@ -35,7 +37,9 @@ class ColorOptions extends Component
         'amount.numberic' => 'مقدار عددی برای قیمت وارد کنید',
         'amount.min' => 'کمترین مقدار قیمت 1 است',
         'asset.required' => 'رنگ را انتخاب کنید',
-        'asset.in' => 'گزینه انتخاب شده معتبر نمی باشد'
+        'asset.in' => 'گزینه انتخاب شده معتبر نمی باشد',
+        'image.image' => 'فرمت فایل صحیح نیست',
+        'image.mimes' => 'فرمت فایل صحیح نیست',
     ];
 
     protected $listeners = [
@@ -71,11 +75,21 @@ class ColorOptions extends Component
         } else if (!password_verify($this->access_password, $this->admin->access_password)) {
             $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
         } else {
-            Option::create([
+            $option = Option::create([
                 'asset' => $this->asset,
                 'amount' => $this->amount,
                 'code' => random_int(100000, 999999)
             ]);
+
+            if($this->image)
+            {
+                $url = env('FTP_ENDPOINT') . $this->image->store('public/packages', 'ftp');
+
+                $option->image()->create([
+                    'url' => $url,
+                ]);
+            }
+
             $this->resetExcept('admin');
             Session::forget('verify_code');
             session()->flash('success', 'پکیج رنگ وارد شد');
@@ -90,6 +104,7 @@ class ColorOptions extends Component
     public function delete(Option $option) {
         $this->emitSelf('packageDeleted');
         $this->emit('packageDeleted');
+        $option->image->delete();
         $option->priceChangeLogs()->delete();
         $option->delete();
     }
@@ -98,7 +113,7 @@ class ColorOptions extends Component
     {
         return view('livewire.variables.color-options', [
             'variables' => Variable::all('asset'),
-            'options'   => Option::paginate(10, ['*'], 'package-listing')
+            'options'   => Option::paginate(10)
         ]);
     }
 }

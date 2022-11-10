@@ -8,10 +8,13 @@ use App\Helpers\SMS;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Livewire\WithFileUploads;
 
 class EditOptions extends Component
 {
-    public $option, $asset, $amount, $phoneVerification, $access_password, $note, $admin;
+    use WithFileUploads;
+
+    public $option, $asset, $amount, $image, $phoneVerification, $access_password, $note, $admin;
 
     public function mount($option)
     {
@@ -25,7 +28,8 @@ class EditOptions extends Component
         'phoneVerification' => 'required|numeric',
         'access_password' => 'required',
         'amount' => 'required|numeric|min:1',
-        'note' => 'required'
+        'note' => 'required',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp',
     ];
 
     protected $messages = [
@@ -35,7 +39,9 @@ class EditOptions extends Component
         'amount.numeric' => 'مقدار عددی برای قیمت وارد کنید',
         'amount.min' => 'کمترین مقدار قیمت 1 است',
         'asset.required' => 'رنگ را انتخاب کنید',
-        'note.required' => 'دلیل بروزرسانی را وارد کنید'
+        'note.required' => 'دلیل بروزرسانی را وارد کنید',
+        'image.image' => 'فرمت فایل صحیح نیست',
+        'image.mimes' => 'فرمت فایل صحیح نیست',
     ];
 
     public function sendSMS()
@@ -45,8 +51,8 @@ class EditOptions extends Component
         Session::put('verify_code', Hash::make($verify_code));
 
         $result = SMS::send($this->admin->phone, $verify_code);
-        if(is_array($result)) {
-            foreach($result as $r) {
+        if (is_array($result)) {
+            foreach ($result as $r) {
                 session()->flash('success', $r->statustext);
             }
         } else {
@@ -54,11 +60,12 @@ class EditOptions extends Component
         }
     }
 
-    public function update() {
+    public function update()
+    {
 
         $this->validate();
 
-        if (! Hash::check($this->phoneVerification, Session::get('verify_code'))) {
+        if (!Hash::check($this->phoneVerification, Session::get('verify_code'))) {
             $this->addError('phoneVerification', 'کد تایید وارد شده صحیح نمی باشد');
         } else if (!password_verify($this->access_password, $this->admin->access_password)) {
             $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
@@ -76,6 +83,21 @@ class EditOptions extends Component
                 'note' => $this->note,
             ]);
 
+            if ($this->image) {
+                $url = env('FTP_ENDPOINT') . $this->image->store('public/packages', 'ftp');
+
+                if($this->option->image) {
+                    $this->option->image->update([
+                        'url' => $url,
+                    ]);
+                } else {
+                    $this->option->image()->create([
+                        'url' => $url,
+                    ]);
+                }
+
+            }
+
             Session::forget('verify_code');
             $this->emitUp('packageUpdated');
             $this->emit('packageUpdated');
@@ -83,7 +105,8 @@ class EditOptions extends Component
         }
     }
 
-    public function updated($prop) {
+    public function updated($prop)
+    {
         $this->validateOnly($prop);
     }
 

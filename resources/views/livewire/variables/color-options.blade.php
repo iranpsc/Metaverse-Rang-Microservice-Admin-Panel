@@ -22,8 +22,16 @@
         </x-forms.group>
 
         <x-forms.group label="تعداد" for="amount">
-            <x-forms.input id="amount" wire:model="amount" placeholder="تعداد را وارد کنید"/>
+            <x-forms.input id="amount" wire:model="amount" placeholder="تعداد را وارد کنید" />
             @error('amount')
+                <span class="form-text text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <x-forms.group label="تصویر" for="image">
+            <x-forms.input type="file" id="image" wire:model="image" />
+            <span class="text-success" wire:loading wire:target="image">در حال بارگذاری ...</span>
+            @error('image')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
@@ -35,8 +43,7 @@
                 </x-buttons.btn-success>
             </div>
             <div class="col-sm-8">
-                <x-forms.input wire:model="phoneVerification"
-                    placeholder="تایید پیامکی"/>
+                <x-forms.input wire:model="phoneVerification" placeholder="تایید پیامکی" />
                 @error('phoneVerification')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
@@ -45,7 +52,7 @@
         </div>
 
         <x-forms.group label="رمز دسترسی" for="access_password">
-            <x-forms.input type="password" id="access_password" wire:model="access_password" placeholder="رمز دسترسی"/>
+            <x-forms.input type="password" id="access_password" wire:model="access_password" placeholder="رمز دسترسی" />
             @error('access_password')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
@@ -65,6 +72,7 @@
                 <th>قیمت بسته</th>
                 <th>تعداد</th>
                 <th>تاریخ و ساعت بروزرسانی</th>
+                <th>تصویر</th>
                 <th>علت تغییر</th>
                 <th>ملاحضات</th>
             </x-slot:headers>
@@ -76,10 +84,17 @@
                     <td>{{ \App\Models\Variable::getRate($option->asset) * $option->amount }}</td>
                     <td>{{ $option->amount }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($option->update_at) }}</td>
+                    <th>
+                        @if ($option->image)
+                            <a href="{{ $option->image->url }}" target="_blank" class="btn btn-primary btn-sm round">مشاهده</a>
+                        @endif
+                    </th>
                     <td>{{ $option->note }}</td>
                     <td>
-                        <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#edit-package-modal-{{$option->id}}">بروز رسانی</x-buttons.btn-primary>
-                        <x-buttons.btn-danger title="deletePackage" class="confirm" id="{{ $option->id }}">حذف</x-buttons.btn-danger>
+                        <x-buttons.btn-primary data-bs-toggle="modal"
+                            data-bs-target="#edit-package-modal-{{ $option->id }}">بروز رسانی</x-buttons.btn-primary>
+                        <x-buttons.btn-danger title="deletePackage" class="confirm" id="{{ $option->id }}">حذف
+                        </x-buttons.btn-danger>
                         <livewire:variables.edit.edit-options :option="$option" :wire:key="'edit-option-'.$option->id">
                     </td>
                 </tr>

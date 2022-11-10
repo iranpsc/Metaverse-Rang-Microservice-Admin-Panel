@@ -11,6 +11,14 @@
             @enderror
         </x-forms.group>
 
+        <x-forms.group label="تصویر" for="image-{{ $option->id }}">
+            <x-forms.input type="file" id="image-{{ $option->id }}" wire:model="image" placeholder="تصویر بسته" />
+            <span class="text-success" wire:loading wire:target="image-{{ $option->id }}">در حال بارگذاری ...</span>
+            @error('image')
+                <span class="form-text text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
         <x-forms.group for="note-{{ $option->id }}" label="یادداشت">
             <textarea id="note-{{ $option->id }}" cols="30" rows="3" class="form-control rounded" placeholder="یادداشت"
                 wire:model="note"></textarea>
