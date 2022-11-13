@@ -1,0 +1,28 @@
+{
+    "ip_ranges": {
+        "from": "5.182.44.114",
+        "to": "8.195.48.118"
+    },
+    "api-allowed-ips": [
+        {
+            "ip": "127.0.0.0",
+            "created_date": "1401\/08\/22",
+            "created_hour": "11:08:14",
+            "created_by": "Hossein Ghadiri"
+        }
+    ],
+    "admin-allowed-ips": [
+        {
+            "ip": "127.0.0.0",
+            "created_date": "1401\/08\/22",
+            "created_hour": "11:08:47",
+            "created_by": "Hossein Ghadiri"
+        },
+        {
+            "ip": "5.182.44.114",
+            "created_date": "1401\/08\/22",
+            "created_hour": "12:08:28",
+            "created_by": "Hossein Ghadiri"
+        }
+    ]
+}

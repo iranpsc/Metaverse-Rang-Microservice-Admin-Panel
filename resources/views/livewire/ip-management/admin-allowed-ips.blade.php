@@ -1,0 +1,72 @@
+<div>
+    {{-- To attain knowledge, add things every day; To attain wisdom, subtract things every day. --}}
+    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#admin-ip-modal">اضافه کردن IP
+    </x-buttons.btn-primary>
+    <x-modals.modal id="admin-ip-modal" title="تعریف آی پی دسترسی پنل ادمین">
+        @if (session('success'))
+            <x-alerts.success>{{ session('success') }}</x-alerts.success>
+        @endif
+        @if (session('error'))
+            <x-alerts.success>{{ session('error') }}</x-alerts.success>
+        @endif
+        <x-forms.group for="ip" label="آی پی">
+            <div class="row">
+                @for ($i = 0; $i < 4; $i++)
+                    <div class="col">
+                        <x-forms.input wire:model="allowedIp.{{ 3 - $i }}" />
+                        @error('allowedIp.' . (3 - $i))
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                @endfor
+            </div>
+        </x-forms.group>
+        <div class="form-group row">
+            <div class="col-sm-4">
+                <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendCode">ارسال کد تایید
+                </x-buttons.btn-success>
+            </div>
+            <div class="col-sm-8">
+                <x-forms.input wire:model="code" />
+                @error('code')
+                    <span class="text-danger">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+        <x-forms.group for="access-password" label="رمز دسترسی">
+            <x-forms.input type="password" id="access-password" wire:model="accessPassword" />
+            @error('accessPassword')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+        <x-slot name="footer">
+            <x-buttons.btn-info wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-info>
+            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+        </x-slot>
+    </x-modals.modal>
+    @if (count($allowedIps) > 0)
+        <x-tables.table>
+            <x-slot name="headers">
+                <th>آی پی</th>
+                <th>تاریخ ایجاد</th>
+                <th>ساعت ایجاد</th>
+                <th>ایجاد کننده</th>
+            </x-slot>
+            @foreach ($allowedIps as $key => $allowedIp)
+                <tr>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $allowedIp['ip'] }}</td>
+                    <td>{{ $allowedIp['created_date'] }}</td>
+                    <td>{{ $allowedIp['created_hour'] }}</td>
+                    <td>{{ $allowedIp['created_by'] }}</td>
+                    <td>
+                        <x-buttons.btn-danger class="confirm" id="{{ $key }}" title="deleteAdminIp">حذف
+                        </x-buttons.btn-danger>
+                    </td>
+                </tr>
+            @endforeach
+        </x-tables.table>
+    @else
+        <x-alerts.danger>آی پی تعریف نشده است</x-alerts.danger>
+    @endif
+</div>
