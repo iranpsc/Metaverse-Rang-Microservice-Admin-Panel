@@ -84,7 +84,7 @@ class EditOptions extends Component
             ]);
 
             if ($this->image) {
-                $url = env('FTP_ENDPOINT') . $this->image->store('public/packages', 'ftp');
+                $url = env('FTP_ENDPOINT') . $this->image->store('public/packages');
 
                 if($this->option->image) {
                     $this->option->image->update([

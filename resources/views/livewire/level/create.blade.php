@@ -9,6 +9,15 @@
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
+
+        <x-forms.group label="تصویر" for="image">
+            <x-forms.input type="file" id="image" wire:model="image" />
+            <span class="text-success" wire:loading wire:target="image">در حال بارگذاری ...</span>
+            @error('image')
+                <span class="form-text text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
         <x-forms.group for="slug" label="اسلاگ">
             <x-forms.input id="slug" wire:model="slug" />
             @error('slug')
