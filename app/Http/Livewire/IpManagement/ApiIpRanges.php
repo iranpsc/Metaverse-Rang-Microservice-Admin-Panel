@@ -7,32 +7,43 @@ use Illuminate\Support\Facades\Cache;
 use App\Helpers\SMS;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Morilog\Jalali\Jalalian;
 
 class ApiIpRanges extends Component
 {
-    public $ip_ranges = [], $from = [], $to = [], $code, $accessPassword;
+    public $ip_ranges = [],
+        $ip_range = [],
+        $starting_ip = [],
+        $ending_ip = [],
+        $title, $code, $accessPassword;
 
-    protected $listeners = ['api-ip-ranges-updated' => '$refresh'];
+    protected $listeners = [
+        'ipRangeCreated' => '$refresh',
+        'deleteIpRange' => 'deleteIp',
+        'ipRangeDeleted' => '$refresh',
+    ];
 
     protected $rules = [
-        'from.*' => 'required|integer|min:0|max:255',
-        'to.*' => 'required|integer|min:0|max:255',
+        'title' => 'required|string',
+        'starting_ip.*' => 'required|integer|min:0|max:255',
+        'ending_ip.*' => 'required|integer|min:0|max:255',
         'code' => 'required|integer|min:6',
         'accessPassword' => 'required',
     ];
 
     protected $messages = [
+        'title.required' => 'عنوان را وارد کنید',
         'code.required' => 'کد تایید را وارد کنید',
         'code.integer' => 'کد تایید صحیح نمی باشد',
         'code.min' => 'کد تایید صحیح نمی باشد',
-        'from.*.required' => 'مقداری تعیین کنید',
-        'from.*.integer' => 'مقدار صحیح نمی باشد',
-        'from.*.min' => 'مقدار صحیح نمی باشد',
-        'from.*.max' => 'مقدار صحیح نمی باشد',
-        'to.*.required' => 'مقداری تعیین کنید',
-        'to.*.integer' => 'مقدار صحیح نمی باشد',
-        'to.*.min' => 'مقدار صحیح نمی باشد',
-        'to.*.max' => 'مقدار صحیح نمی باشد',
+        'starting_ip.*.required' => 'مقداری تعیین کنید',
+        'starting_ip.*.integer' => 'مقدار صحیح نمی باشد',
+        'starting_ip.*.min' => 'مقدار صحیح نمی باشد',
+        'starting_ip.*.max' => 'مقدار صحیح نمی باشد',
+        'ending_ip.*.required' => 'مقداری تعیین کنید',
+        'ending_ip.*.integer' => 'مقدار صحیح نمی باشد',
+        'ending_ip.*.min' => 'مقدار صحیح نمی باشد',
+        'ending_ip.*.max' => 'مقدار صحیح نمی باشد',
         'accessPassword.required' => 'رمز دسترسی را وارد کنید',
     ];
 
@@ -43,11 +54,9 @@ class ApiIpRanges extends Component
             $ips = file_get_contents(storage_path('/ip-management/ips.json'));
             $ips = json_decode($ips, true);
 
-            if(array_key_exists('ip_ranges', $ips))
-            {
+            if (array_key_exists('ip_ranges', $ips)) {
                 $this->ip_ranges = $ips['ip_ranges'];
             }
-
         }
     }
 
@@ -83,34 +92,38 @@ class ApiIpRanges extends Component
             $this->addError('accessPassword', 'رمز دسترسی صحیح نیست');
         } else {
             $erros = [];
-            for ($i = 0; $i < count($this->from); $i++) {
-                if ($this->from[$i] > $this->to[$i]) {
-                    array_push($erros, ['to.' . $i => 'مقدار صحیح نمی باشد']);
-                    $this->addError('to.' . $i, 'مقدار صحیح نمی باشد');
+            for ($i = 0; $i < count($this->starting_ip); $i++) {
+                if ($this->starting_ip[$i] > $this->ending_ip[$i]) {
+                    array_push($erros, ['ending_ip.' . $i => 'مقدار صحیح نمی باشد']);
+                    $this->addError('ending_ip.' . $i, 'مقدار صحیح نمی باشد');
                 }
             }
 
             if (!empty($erros)) {
                 return;
             } else {
-                $this->ip_ranges = [
-                    'from' => implode('.', $this->from),
-                    'to' => implode('.', $this->to)
-                ];
-
-                if (!file_exists(storage_path('/ip-management/ips.json'))) {
-                    $ips['ip_ranges'] = $this->ip_ranges;
-                    file_put_contents(storage_path('/ip-management/ips.json'), json_encode($ips));
-                } else {
+                if (file_exists(storage_path('/ip-management/ips.json'))) {
                     $ips = file_get_contents(storage_path('/ip-management/ips.json'));
                     $ips = json_decode($ips, true);
-                    $ips['ip_ranges'] = $this->ip_ranges;
-                    file_put_contents(storage_path('/ip-management/ips.json'), json_encode($ips));
+                } else {
+                    $ips = [];
                 }
+
+                $this->ip_range = [
+                    'title' => $this->title,
+                    'starting_ip' => implode('.', $this->starting_ip),
+                    'ending_ip' => implode('.', $this->ending_ip),
+                    'created_date' => Jalalian::forge(now())->format('Y/m/d'),
+                    'created_hour' => Jalalian::forge(now())->format('H:m:s'),
+                    'created_by' => $this->admin->name,
+                ];
+                array_push($this->ip_ranges, $this->ip_range);
+                $ips['ip_ranges'] = $this->ip_ranges;
+                file_put_contents(storage_path('/ip-management/ips.json'), json_encode($ips));
                 session()->flash('success', 'رنج آی پی تعریف شد');
-                $this->reset(['code', 'accessPassword']);
+                $this->reset(['code', 'accessPassword', 'starting_ip', 'ending_ip', 'title']);
                 Cache::delete('ips-verify-code-' . $this->admin->id);
-                $this->emitSelf('api-ip-ranges-updated');
+                $this->emitSelf('ipRangeCreated');
             }
         }
     }
@@ -118,6 +131,19 @@ class ApiIpRanges extends Component
     public function updated($prop)
     {
         $this->validateOnly($prop);
+    }
+
+    public function deleteIp($key)
+    {
+        $ips = file_get_contents(storage_path('/ip-management/ips.json'));
+        $ips = json_decode($ips, true);
+        unset($ips['ip_ranges'][$key]);
+        file_put_contents(
+            storage_path('/ip-management/ips.json'),
+            json_encode($ips)
+        );
+        $this->emitSelf('ipRangeDeleted');
+        session()->flash('success', 'آی پی حذف شد');
     }
 
     public function render()

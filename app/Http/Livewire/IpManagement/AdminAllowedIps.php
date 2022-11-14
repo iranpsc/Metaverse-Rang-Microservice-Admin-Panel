@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminAllowedIps extends Component
 {
-    public $allowedIps = [], $allowedIp = [], $code, $accessPassword, $admin;
+    public $allowedIps = [], $allowedIp = [], $title, $code, $accessPassword, $admin;
 
     protected $listeners = [
         'newIpAdded' => '$refresh',
@@ -20,12 +20,14 @@ class AdminAllowedIps extends Component
     ];
 
     protected $rules = [
+        'title' => 'required|string',
         'code' => 'required|integer|min:6',
         'accessPassword' => 'required',
         'allowedIp.*' => 'required|integer|min:0|max:255',
     ];
 
     protected $messages = [
+        'title.required' => 'عنوان را وارد کنید',
         'code.required' => 'کد تایید را وارد کنید',
         'code.integer' => 'کد تایید صحیح نمی باشد',
         'code.min' => 'کد تایید صحیح نمی باشد',
@@ -79,8 +81,13 @@ class AdminAllowedIps extends Component
         } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
             $this->addError('accessPassword', 'رمز دسترسی صحیح نیست');
         } else {
-            $ips = file_get_contents(storage_path('/ip-management/ips.json'));
-            $ips = json_decode($ips, true);
+            if(file_exists(storage_path('/ip-management/ips.json'))) {
+                $ips = file_get_contents(storage_path('/ip-management/ips.json'));
+                $ips = json_decode($ips, true);
+            } else {
+                $ips = [];
+            }
+            $allowedIpToSave['title'] = $this->title;
             $allowedIpToSave['ip'] = implode('.', $this->allowedIp);
             $allowedIpToSave['created_date'] = Jalalian::forge(now())->format('Y/m/d');
             $allowedIpToSave['created_hour'] = Jalalian::forge(now())->format('H:m:s');

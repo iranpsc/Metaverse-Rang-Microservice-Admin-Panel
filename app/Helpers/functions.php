@@ -1,9 +1,8 @@
 <?php
 
 namespace App\Helpers;
-use Illuminate\Support\Carbon;
 
-use function PHPUnit\Framework\returnSelf;
+use Illuminate\Support\Carbon;
 
 function getDynastyMessageTitle($type)
 {
@@ -35,9 +34,9 @@ function getRelationTitle($member)
         case 'mother':
             return 'مادر';
             break;
-            case 'life_partner':
-                return 'همسر';
-                break;
+        case 'life_partner':
+            return 'همسر';
+            break;
         case 'brother':
             return 'برادر';
             break;
@@ -56,7 +55,8 @@ function getRelationTitle($member)
     }
 }
 
-function getAssetColor($asset) {
+function getAssetColor($asset)
+{
     switch ($asset) {
         case 'red':
             return 'قرمز';
@@ -80,8 +80,9 @@ function getAssetColor($asset) {
     }
 }
 
-function getTicketPriorityTitle($importance) {
-    switch($importance) {
+function getTicketPriorityTitle($importance)
+{
+    switch ($importance) {
         case 0:
             return 'متوسط';
             break;
@@ -92,8 +93,6 @@ function getTicketPriorityTitle($importance) {
             return 'کم';
             break;
     }
-
-
 }
 
 function convertDateToCarbon($date)
@@ -103,4 +102,18 @@ function convertDateToCarbon($date)
     $date = Carbon::parse($date)->format('Y-m-d');
     $date = \Morilog\Jalali\CalendarUtils::createCarbonFromFormat('Y-m-d', $date)->format('Y-m-d');
     return $date;
+}
+
+function checkIp(string $starting_ip, string $ending_ip, $ip)
+{
+    $starting_ip = explode('.', $starting_ip);
+    $ending_ip = explode('.', $ending_ip);
+    $i = 0;
+    do {
+        if ($ip[$i] < $starting_ip[$i] || $ip[$i] > $ending_ip[$i]) {
+            return false;
+        }
+        $i++;
+    } while ($i < count($ip));
+    return true;
 }

@@ -1,27 +1,7 @@
 <div>
     {{-- If you look to others for fulfillment, you will never truly be fulfilled. --}}
-
-    @if (empty($ip_ranges))
-        <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#api-ip-range-modal">تعریف رنج IP
-        </x-buttons.btn-primary>
-    @else
-        <x-tables.table>
-            <x-slot name="headers">
-                <th>از آی پی</th>
-                <th>تا آی پی</th>
-                <th>ملاحضات</th>
-            </x-slot>
-            <tr>
-                <td>1</td>
-                <td>{{ $ip_ranges['from'] }}</td>
-                <td>{{ $ip_ranges['to'] }}</td>
-                <td>
-                    <x-buttons.btn-info data-bs-toggle="modal" data-bs-target="#api-ip-range-modal">ویرایش
-                    </x-buttons.btn-info>
-                </td>
-            </tr>
-        </x-tables.table>
-    @endif
+    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#api-ip-range-modal">تعریف رنج IP
+    </x-buttons.btn-primary>
     <x-modals.modal id="api-ip-range-modal" title="تعریف رنج آی پی Api">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
@@ -29,24 +9,30 @@
         @if (session('error'))
             <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
         @endif
-        <x-forms.group for="from" label="آی پی شروع">
+        <x-forms.group  for="title" label="عنوان">
+            <x-forms.input wire:model="title"/>
+            @error('title')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-fomrs.gourp>
+        <x-forms.group for="starting_ip" label="آی پی شروع">
             <div class="row">
                 @for ($i = 0; $i < 4; $i++)
                     <div class="col">
-                        <x-forms.input wire:model="from.{{ 3 - $i }}" />
-                        @error('from.' . (3 - $i))
+                        <x-forms.input wire:model="starting_ip.{{ 3 - $i }}" />
+                        @error('starting_ip.' . (3 - $i))
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
                 @endfor
             </div>
         </x-forms.group>
-        <x-forms.group for="to" label="آی پی پایانی">
+        <x-forms.group for="ending_ip" label="آی پی پایانی">
             <div class="row">
                 @for ($i = 0; $i < 4; $i++)
                     <div class="col">
-                        <x-forms.input wire:model="to.{{ 3 - $i }}" />
-                        @error('to.' . (3 - $i))
+                        <x-forms.input wire:model="ending_ip.{{ 3 - $i }}" />
+                        @error('ending_ip.' . (3 - $i))
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
@@ -76,4 +62,34 @@
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot>
     </x-modals.modal>
+    @if (count($ip_ranges) > 0)
+        <x-tables.table>
+            <x-slot name="headers">
+                <th>عنوان</th>
+                <th>از آی پی</th>
+                <th>تا آی پی</th>
+                <th>تاریخ ایجاد</th>
+                <th>ساعت ایجاد</th>
+                <th>ایجاد کننده</th>
+                <th>ملاحضات</th>
+            </x-slot>
+            @foreach ($ip_ranges as $key => $ip_range)
+                <tr>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $ip_range['title'] }}</td>
+                    <td>{{ $ip_range['starting_ip'] }}</td>
+                    <td>{{ $ip_range['ending_ip'] }}</td>
+                    <td>{{ $ip_range['created_date'] }}</td>
+                    <td>{{ $ip_range['created_hour'] }}</td>
+                    <td>{{ $ip_range['created_by'] }}</td>
+                    <td>
+                        <x-buttons.btn-danger class="confirm" id="{{ $key }}" title="deleteIpRange">حذف
+                        </x-buttons.btn-danger>
+                    </td>
+                </tr>
+            @endforeach
+        </x-tables.table>
+    @else
+        <x-alerts.danger>رنچ آی پی تعریف نشده است</x-alerts.danger>
+    @endif
 </div>
