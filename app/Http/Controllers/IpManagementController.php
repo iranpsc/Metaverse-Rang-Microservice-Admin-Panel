@@ -16,7 +16,7 @@ class IpManagementController extends Controller
             $ips = file_get_contents(storage_path('/ip-management/ips.json'));
             $ips = json_decode($ips, true);
 
-            if (array_key_exists('api-allowed-ips', $ips)) {
+            if (array_key_exists('api-allowed-ips', $ips) && ! empty($ips['api-allowed-ips'])) {
                 $api_allowed_ips = $ips['api-allowed-ips'];
                 foreach ($api_allowed_ips as $api_allowed_ip) {
                     $api_allowed_ip = ip2long($api_allowed_ip['ip']);
@@ -29,7 +29,7 @@ class IpManagementController extends Controller
                 }
             }
 
-            if (array_key_exists('ip_ranges', $ips)) {
+            if (array_key_exists('ip_ranges', $ips) && ! empty($ips['ip_ranges'])) {
                 $ip_ranges = $ips['ip_ranges'];
                 foreach ($ip_ranges as $ip_range) {
                     if (checkIp($ip_range['starting_ip'], $ip_range['ending_ip'], $ip)) {
@@ -39,17 +39,11 @@ class IpManagementController extends Controller
                         ]);
                     }
                 }
-                return response()->json([
-                    'code' => 403,
-                    'status' => 'Not allowed'
-                ]);
             }
-        } else {
-            return response()->json([
-                'ip' => $ip,
-                'code' => 403,
-                'status' => 'Not allowed'
-            ]);
         }
+        return response()->json([
+            'code' => 403,
+            'status' => 'Not allowed'
+        ]);
     }
 }
