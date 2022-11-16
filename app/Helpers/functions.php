@@ -106,14 +106,8 @@ function convertDateToCarbon($date)
 
 function checkIp(string $starting_ip, string $ending_ip, $ip)
 {
-    $starting_ip = explode('.', $starting_ip);
-    $ending_ip = explode('.', $ending_ip);
-    $i = 0;
-    do {
-        if ($ip[$i] < $starting_ip[$i] || $ip[$i] > $ending_ip[$i]) {
-            return false;
-        }
-        $i++;
-    } while ($i < count($ip));
-    return true;
+    $starting_ip = ip2long($starting_ip);
+    $ending_ip = ip2long($ending_ip);
+    if ($ip >= $starting_ip && $ip <= $ending_ip)  return true;
+    return false;
 }

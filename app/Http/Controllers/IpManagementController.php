@@ -10,8 +10,7 @@ class IpManagementController extends Controller
 {
     public function checkIp(Request $request)
     {
-        $ip = $request->input('ip');
-        $ip = explode('.', $ip);
+        $ip = ip2long($request->input('ip'));
 
         if (file_exists(storage_path('/ip-management/ips.json'))) {
             $ips = file_get_contents(storage_path('/ip-management/ips.json'));
@@ -20,10 +19,9 @@ class IpManagementController extends Controller
             if (array_key_exists('api-allowed-ips', $ips)) {
                 $api_allowed_ips = $ips['api-allowed-ips'];
                 foreach ($api_allowed_ips as $api_allowed_ip) {
-                    $api_allowed_ip = explode('.', $api_allowed_ip['ip']);
-                    if (!array_diff($ip, $api_allowed_ip)) {
+                    $api_allowed_ip = ip2long($api_allowed_ip['ip']);
+                    if ($ip === $api_allowed_ip) {
                         return response()->json([
-                            'ip' => implode('.', $ip),
                             'code' => 200,
                             'status' => 'allowed'
                         ]);
@@ -34,18 +32,16 @@ class IpManagementController extends Controller
             if (array_key_exists('ip_ranges', $ips)) {
                 $ip_ranges = $ips['ip_ranges'];
                 foreach ($ip_ranges as $ip_range) {
-                    if (!checkIp($ip_range['starting_ip'], $ip_range['ending_ip'], $ip)) {
+                    if (checkIp($ip_range['starting_ip'], $ip_range['ending_ip'], $ip)) {
                         return response()->json([
-                            'ip' => implode('.', $ip),
-                            'code' => 403,
-                            'status' => 'Not allowed'
+                            'code' => 200,
+                            'status' => 'Allowed'
                         ]);
                     }
                 }
                 return response()->json([
-                    'ip' => $ip,
-                    'code' => 200,
-                    'status' => 'Allowed'
+                    'code' => 403,
+                    'status' => 'Not allowed'
                 ]);
             }
         } else {
