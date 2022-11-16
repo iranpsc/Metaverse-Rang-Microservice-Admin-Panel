@@ -16,11 +16,23 @@ class BlockIpMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if( ! in_array($request->ip(), ['37.156.11.126', '127.0.0.1']))
-        {
-            abort(403, 'Access Denied');
+        $allowedIps = [];
+        if (file_exists(storage_path('/ip-management/ips.json'))) {
+            $ips = file_get_contents(storage_path('/ip-management/ips.json'));
+            $ips = json_decode($ips, true);
+            if (array_key_exists('admin-allowed-ips', $ips)) {
+                $allowedIps = $ips['admin-allowed-ips'];
+            }
         }
-
-        return $next($request);
+        if (count($allowedIps) == 0) {
+            abort(403, 'Access Denied');
+        } else {
+            for ($i = 0; $i < count($allowedIps); $i++) {
+                if (! strcmp($request->ip(), $allowedIps[$i]['ip'])) {
+                    abort(403, 'Access Denied');
+                }
+            }
+            return $next($request);
+        }
     }
 }

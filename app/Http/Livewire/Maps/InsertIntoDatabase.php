@@ -39,7 +39,7 @@ class InsertIntoDatabase extends Component
     }
 
     public function sendCode()
-    {;
+    {
         if (Cache::get('maps-verify-code-' . $this->admin->id)) {
             session()->flash('error', 'کد تایید قبلا برای شما ارسال شده است');
             return;
