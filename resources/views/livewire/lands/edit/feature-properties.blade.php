@@ -32,6 +32,13 @@
             @enderror
         </x-forms.group>
 
+        <x-forms.group for="rgb-{{ $feature->id }}" label="قیمت گذاری">
+            <x-forms.input id="rgb-{{ $feature->id }}" wire:model="rgb" />
+            @error('rgb')
+                <span class="text-danger form-text">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
         <div class="row form-group">
             <div class="col-sm-4">
                 <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendSMS">ارسال پیامک تایید</x-buttons.btn-success>
@@ -54,7 +61,7 @@
             </div>
         </div>
         <x-slot:footer>
-            <x-buttons.btn-primary wire:click="save">ثبت</x-buttons.btn-primary>
+            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot:footer>
     </x-modals.modal>
