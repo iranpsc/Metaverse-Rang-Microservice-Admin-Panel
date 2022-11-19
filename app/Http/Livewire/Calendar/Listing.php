@@ -7,6 +7,7 @@ use Livewire\Component;
 use App\Models\Calendar;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Morilog\Jalali\Jalalian;
 
 class Listing extends Component
 {
@@ -59,6 +60,8 @@ class Listing extends Component
 
     public function save() {
         $this->validate();
+        $this->start_date = Jalalian::forge($this->start_date)->format('Y-m-d');
+        $this->end_date = Jalalian::forge($this->end_date)->format('Y-m-d');
         $event = Calendar::create([
             'title' => $this->title,
             'content' => $this->content,

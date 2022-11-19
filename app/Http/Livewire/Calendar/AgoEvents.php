@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Calendar;
 
 use Livewire\Component;
+use Morilog\Jalali\Jalalian;
 
 class AgoEvents extends Component
 {
@@ -10,7 +11,7 @@ class AgoEvents extends Component
 
     public function mount($events) {
         $this->events = $events->reject(function($event) {
-            return $event->end_date > now();
+            return $event->end_date > Jalalian::now();
         });
     }
     public function render()

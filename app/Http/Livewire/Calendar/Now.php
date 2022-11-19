@@ -4,6 +4,7 @@ namespace App\Http\Livewire\Calendar;
 
 use App\Models\Calendar;
 use Livewire\Component;
+use Morilog\Jalali\Jalalian;
 
 class Now extends Component
 {
@@ -11,7 +12,7 @@ class Now extends Component
 
     public function mount($events) {
         $this->events = $events->reject(function($event) {
-            return $event->start_date > now() || $event->end_date < now();
+            return $event->start_date > Jalalian::now() || $event->end_date < Jalalian::now();
         });
     }
     public function update($id) {
