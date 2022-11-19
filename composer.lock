@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "372259086a6c0db9196fdaeb62236720",
+    "content-hash": "88052688f96ade6e13774628f86d5b36",
     "packages": [
         {
             "name": "beberlei/assert",
@@ -2125,16 +2125,16 @@
         },
         {
             "name": "league/flysystem-ftp",
-            "version": "3.4.0",
+            "version": "3.10.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/flysystem-ftp.git",
-                "reference": "770e6efcaa6fcf487642206fffa018bbd109e7e7"
+                "reference": "475d526de342b4a166e64c11ccabbda027c9e716"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/flysystem-ftp/zipball/770e6efcaa6fcf487642206fffa018bbd109e7e7",
-                "reference": "770e6efcaa6fcf487642206fffa018bbd109e7e7",
+                "url": "https://api.github.com/repos/thephpleague/flysystem-ftp/zipball/475d526de342b4a166e64c11ccabbda027c9e716",
+                "reference": "475d526de342b4a166e64c11ccabbda027c9e716",
                 "shasum": ""
             },
             "require": {
@@ -2169,7 +2169,7 @@
                 "ftpd"
             ],
             "support": {
-                "source": "https://github.com/thephpleague/flysystem-ftp/tree/3.4.0"
+                "source": "https://github.com/thephpleague/flysystem-ftp/tree/3.10.3"
             },
             "funding": [
                 {
@@ -2185,7 +2185,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-09-16T20:20:16+00:00"
+            "time": "2022-10-26T18:15:09+00:00"
         },
         {
             "name": "league/mime-type-detection",

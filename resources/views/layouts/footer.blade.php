@@ -99,6 +99,28 @@
 <script src="{{ asset('assets/plugins/datepicker/jquery.ui.datepicker-cc-fa.js') }}"></script>
 <script src="{{ asset('assets/js/pages/calendar-ui.js') }}"></script>
 <script src="{{ asset('assets/js/sweetalert2@11.js') }}"></script>
+
+{{-- <script src="https://cdn.ckeditor.com/ckeditor5/35.3.0/classic/ckeditor.js"></script>
+
+<script>
+    ClassicEditor
+        .create(document.querySelector('#editor'), {
+            language: {
+                ui: 'en',
+                content: 'fa'
+            },
+            resize_dir: 'both'
+        })
+
+</script> --}}
+
+
+
+<!-- END PAGE JAVASCRIPT -->
+
+<!-- BEGIN PAGE JAVASCRIPT -->
+<script src="{{ asset('assets/plugins/clockpicker/dist/bootstrap-clockpicker.min.js') }}"></script>
+<script src="{{ asset('assets/js/pages/clock.js') }}"></script>
 <!-- END PAGE JAVASCRIPT -->
 
 <script>

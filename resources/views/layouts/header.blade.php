@@ -8,6 +8,8 @@
     <meta name="fontiran.com:license" content="NE29X">
     <link rel="shortcut icon" href="assets/images/logo-rgb.png">
 
+
+    <script src="https://cdn.ckeditor.com/ckeditor5/34.0.0/classic/ckeditor.js"></script>
     <!-- BEGIN CSS -->
     <link href="{{ asset('assets/plugins/bootstrap/bootstrap5/css/bootstrap.rtl.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/plugins/metisMenu/dist/metisMenu.min.css') }}" rel="stylesheet">
@@ -23,6 +25,10 @@
     <link rel="stylesheet" href="{{ asset('assets/plugins/data-table/DataTables-1.10.16/css/jquery.dataTables.css') }}">
     <link href="{{asset('assets/plugins/datepicker/jquery.ui.datepicker1.8-all.css')}}" rel="stylesheet">
     <!-- END CSS -->
+
+     <!-- BEGIN PAGE CSS -->
+     <link href="{{ asset('assets/plugins/clockpicker/dist/bootstrap-clockpicker.min.css') }}" rel="stylesheet">
+     <!-- END PAGE CSS -->
 
     @livewireStyles
 

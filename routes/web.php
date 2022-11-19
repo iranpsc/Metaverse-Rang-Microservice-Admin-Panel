@@ -10,6 +10,7 @@ use App\Http\Livewire\Support\Support;
 use App\Http\Livewire\Variables\Variables;
 use App\Http\Livewire\Dynasty\Listing as DynastyListing;
 use App\Http\Livewire\Maps\Listing as MapListing;
+use App\Http\Livewire\Calendar\Listing as CalendarListing;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +36,7 @@ Route::middleware(['auth:admin', 'check.ip'])->group(function () {
     Route::get('/maps', MapListing::class)->name('map-management');
     Route::get('/employees', Employees::class)->name('employees');
     Route::get('/dynasty', DynastyListing::class)->name('dynasty');
+    Route::get('/calendar', CalendarListing::class)->name('calendar');
 });
 
 require_once(__DIR__ . '/auth.php');

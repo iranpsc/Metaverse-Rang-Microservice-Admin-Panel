@@ -118,6 +118,12 @@
                     <span>مدیریت سطح</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('calendar') }}">
+                    <span class="fa fa-cart-plus"></span>
+                    <span>تقویم</span>
+                </a>
+            </li>
         </ul><!-- /#side-menu -->
     </div><!-- /.side-menu-container -->
 </div><!-- /#sidebar -->
