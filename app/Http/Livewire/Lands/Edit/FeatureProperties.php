@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 class FeatureProperties extends Component
 {
     public $feature, $phoneVerification, $access_password;
-    public $properties_id, $area, $density, $karbari, $address, $admin;
+    public $properties_id, $area, $density, $karbari, $address, $rgb, $admin;
 
     public function mount($feature) {
         $this->admin = Auth::guard('admin')->user();
@@ -20,6 +20,7 @@ class FeatureProperties extends Component
         $this->density = $feature->properties->density;
         $this->karbari = $feature->properties->karbari;
         $this->address = $feature->properties->address;
+        $this->rgb = $feature->properties->rgb;
     }
 
     protected $rules = [
@@ -29,6 +30,7 @@ class FeatureProperties extends Component
         'density' => 'required|numeric',
         'karbari' => 'required|string',
         'address' => 'required|string',
+        'rgb' => 'required|string',
     ];
 
     protected $messages = [
@@ -41,7 +43,9 @@ class FeatureProperties extends Component
         'density.numeric' => 'مقدار عددی برای تراکم وارد کنید',
         'karbari.required' => 'کاربری را وارد کنید',
         'karbari.string' => 'مقدار حروفی برای کاربری وارد کنید',
-        'address.required' => 'آدرس را وارد کنید'
+        'address.required' => 'آدرس را وارد کنید',
+        'rgb.required' => 'وضعیت قیمت گذاری را مشخص کنید',
+        'rgb.string' => 'قیمت گذاری صحیح نیست '
     ];
 
     public function sendSMS()
@@ -77,6 +81,7 @@ class FeatureProperties extends Component
                 'density' => $this->density,
                 'karbari' => $this->karbari,
                 'address' => $this->address,
+                'rgb' => $this->rgb,
             ]);
             session()->flash('success', 'مشخصات ملک با موفقیت بروزرسانی شد');
             $this->emitUp('featureUpdated');

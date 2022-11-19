@@ -33,6 +33,7 @@ class Dashboard extends Component
         ];
         $this->dynasties = Dynasty::count();
         $this->features = [
+            'all' => $featureRepository->all()->count(),
             'sold' => $featureRepository->sold()->count()
         ];
         $this->referrals = Referral::count();

@@ -119,6 +119,12 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('ip-management') }}">
+                    <span class="fa fa-cart-plus"></span>
+                    <span>مدیریت IP</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('calendar') }}">
                     <span class="fa fa-cart-plus"></span>
                     <span>تقویم</span>
