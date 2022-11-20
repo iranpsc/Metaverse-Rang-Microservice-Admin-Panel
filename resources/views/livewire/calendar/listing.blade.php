@@ -61,14 +61,14 @@
         </x-forms.group>
 
         <x-forms.group for="start_time" label="ساعت شروع">
-            <x-forms.input class="clockpicker-now" type="time" id="start_time" wire:model="start_time" />
+            <x-forms.input type="time" id="start_time" wire:model="start_time" />
             @error('start_time')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
 
         <x-forms.group for="end_time" label="ساعت پایان">
-            <x-forms.input class="clockpicker-now" type="time" id="end_time" wire:model="end_time" />
+            <x-forms.input type="time" id="end_time" wire:model="end_time" />
             @error('end_time')
                 <span class="text-danger">{{ $message }}</span>
             @enderror

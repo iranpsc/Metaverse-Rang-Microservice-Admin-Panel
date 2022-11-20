@@ -18,6 +18,7 @@ class Calendar extends Model
         'end_time',
         'views',
         'color',
+        'writer'
     ];
 
     public function image()

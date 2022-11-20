@@ -23,6 +23,7 @@ return new class extends Migration
             $table->time('end_time');
             $table->unsignedBigInteger('views')->default(0);
             $table->string('color');
+            $table->string('writer');
             $table->timestamps();
         });
     }

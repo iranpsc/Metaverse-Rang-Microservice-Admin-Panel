@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Calendar;
 use Faker\Extension\ColorExtension;
 use Livewire\Component;
 use App\Models\Calendar;
+use Illuminate\Support\Facades\Auth;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Morilog\Jalali\Jalalian;
@@ -70,6 +71,7 @@ class Listing extends Component
             'start_time' => $this->start_time,
             'end_time' => $this->end_time,
             'color' => $this->color,
+            'writer' => Auth::guard('admin')->user()->name,
         ]);
         $url = env('FTP_ENDPOINT') . $this->image->store('public/calendar');
         $event->image()->create(['url' => $url]);
