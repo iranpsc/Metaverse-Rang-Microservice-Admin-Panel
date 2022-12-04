@@ -41,12 +41,13 @@
                 <td>{{ $question->code }}</td>
                 <td>{{ \Morilog\Jalali\Jalalian::forge($question->created_at)->format('Y/m/d') }}</td>
                 <td>
-                    <x-buttons.btn-success>نمایش</x-buttons.btn-success>
+                    <x-buttons.btn-success data-bs-target="#show-question-modal-{{$question->id}}" data-bs-toggle="modal">نمایش</x-buttons.btn-success>
                     <x-buttons.btn-primary data-bs-target="#edit-question-modal-{{$question->id}}" data-bs-toggle="modal">ویرایش</x-buttons.btn-primary>
                     <x-buttons.btn-danger wire:click="delete({{ $question }})">حذف</x-buttons.btn-danger>
                 </td>
             </tr>
-            @livewire('challenge.edit-question', ['question' => $question], key('question-'.$question->id))
+            @livewire('challenge.edit-question', ['question' => $question], key('question-'.$question->code))
+            @livewire('challenge.show-question', ['question' => $question], key('question-'.$question->id))
         @empty
             <x-alerts.danger>هیچ داده ای یافت نشد</x-alerts.danger>
         @endforelse
