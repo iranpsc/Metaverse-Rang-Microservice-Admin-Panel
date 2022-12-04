@@ -94,6 +94,12 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('challenge') }}">
+                    <span class="fa fa-question-circle"></span>
+                    <span>چالش ها</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('dynasty') }}">
                     <span class="icon-note"></span>
                     <span>مدیریت سلسله</span>

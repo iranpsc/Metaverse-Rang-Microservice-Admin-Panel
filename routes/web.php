@@ -3,6 +3,8 @@
 use App\Http\Controllers\Dynasty\DynastyMessageController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Livewire\Challenge\Questions;
+use App\Http\Livewire\Challenge\QuestionsList;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DynastyController;
@@ -49,9 +51,8 @@ Route::middleware('auth:admin')->group(function() {
     Route::get('/employees', Employees::class)->name('employees');
     Route::get('/import-maps', [MapController::class, 'readAndCreateFromJsFileUsingName'])
     ->name('import-maps');
-
     Route::get('/dynasty', [DynastyController::class, 'index'])->name('dynasty');
-
+    Route::get('/challenge', QuestionsList::class)->name('challenge');
     Route::controller(DynastyMessageController::class)->prefix('/dynasty-messages')->group(function (){
         Route::get('/',App\Http\Livewire\Dynasty\DynastyMessages::class)->name('dynasty.messages');
     });
