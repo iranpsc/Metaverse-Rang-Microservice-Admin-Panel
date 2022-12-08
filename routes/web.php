@@ -13,6 +13,7 @@ use App\Http\Livewire\Dynasty\Listing as DynastyListing;
 use App\Http\Livewire\IpManagement\IpManagement;
 use App\Http\Livewire\Maps\Listing as MapListing;
 use App\Http\Livewire\Calendar\Listing as CalendarListing;
+use App\Http\Livewire\Reports\Listing as ReportsListing;
 use Illuminate\Http\Request;
 
 /*
@@ -41,6 +42,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/dynasty', DynastyListing::class)->name('dynasty');
     Route::get('/calendar', CalendarListing::class)->name('calendar');
     Route::get('/ip-management', IpManagement::class)->name('ip-management');
+    Route::get('/reports', ReportsListing::class)->name('reports');
 });
 
 require_once(__DIR__ . '/auth.php');

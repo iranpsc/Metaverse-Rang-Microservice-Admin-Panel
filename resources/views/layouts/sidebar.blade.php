@@ -130,6 +130,12 @@
                     <span>تقویم</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('reports') }}">
+                    <span class="fa fa-cart-plus"></span>
+                    <span>گزارشات کاربران</span>
+                </a>
+            </li>
         </ul><!-- /#side-menu -->
     </div><!-- /.side-menu-container -->
 </div><!-- /#sidebar -->
