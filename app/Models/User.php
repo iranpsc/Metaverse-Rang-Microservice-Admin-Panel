@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Challenge\UserChallengePrizes;
+use App\Models\Challenge\UserQuestionAnswer;
 use App\Models\Challenge\UserQuestionPrizes;
 use App\Models\Level\UserLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -149,6 +150,14 @@ class User extends Authenticatable
     public function userChallengePrizes(): HasMany
     {
         return $this->hasMany(UserChallengePrizes::class);
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function userQuestionAnswer(): HasMany
+    {
+        return $this->hasMany(related: UserQuestionAnswer::class);
     }
 
 

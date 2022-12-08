@@ -19,11 +19,22 @@ class QuestionsList extends Component
 
     public $questionsFile;
 
-
     protected $paginationTheme = 'bootstrap';
+
+    public function mount()
+    {
+        $lastCode = Question::latest('id')->pluck('code')->first();
+        $code = explode('-', $lastCode);
+        $this->code = 'que-rgb-' . (int)$code[2] + 1;
+    }
 
     public function delete(Question $question)
     {
+        if (!empty($question->answers)) {
+            foreach ($question->answers as $answer) {
+                $answer->delete();
+            }
+        }
         $question->delete();
         session()->flash('question-deleted', 'سوال موردنظر حذف گردید');
     }
@@ -103,7 +114,7 @@ class QuestionsList extends Component
     public function render()
     {
         return view('livewire.challenge.questions-list', [
-            'questions' => Question::orderBy('id','DESC')->paginate(10, ['*'], 'questionsPage'),
+            'questions' => Question::orderBy('id', 'DESC')->paginate(10, ['*'], 'questionsPage'),
         ])
             ->extends('layouts.app')
             ->section('content');

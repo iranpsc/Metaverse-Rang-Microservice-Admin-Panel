@@ -2,8 +2,10 @@
 
 namespace App\Models\Challenge;
 
+use App\Models\Admin;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -38,5 +40,21 @@ class Question extends Model
     public function questionPrizes(): HasMany
     {
         return $this->hasMany(QuestionPrize::class);
+    }
+
+    /**
+     * @return BelongsTo
+     */
+    public function admin(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class);
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function userQuestionAnswer(): HasMany
+    {
+        return $this->hasMany(UserQuestionAnswer::class);
     }
 }

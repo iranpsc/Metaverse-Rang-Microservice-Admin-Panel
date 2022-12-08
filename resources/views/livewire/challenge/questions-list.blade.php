@@ -17,7 +17,7 @@
             @enderror
         </x-forms.group>
         <x-forms.group for="code" label="کد سوال">
-            <x-forms.input wire:model="code" id="code"/>
+            <x-forms.input wire:model="code" id="code" readonly/>
             @error('code')
             <span class="text-danger">{{ $message }}</span>
             @enderror

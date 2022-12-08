@@ -5,6 +5,7 @@ namespace App\Models\Challenge;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class QuestionAnswer extends Model
@@ -30,5 +31,10 @@ class QuestionAnswer extends Model
     public function correctAnswer(): HasOne
     {
         return $this->hasOne(CorrectAnswer::class);
+    }
+
+    public function userQuestionAnswer(): HasMany
+    {
+        return $this->hasMany(UserQuestionAnswer::class);
     }
 }
