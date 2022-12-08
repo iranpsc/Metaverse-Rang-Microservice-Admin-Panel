@@ -10,21 +10,14 @@ class VariableChangeLog extends Model
     use HasFactory;
 
     protected $fillable = [
-        'variable_id',
-        'option_id',
         'changer_name',
-        'previous_price',
-        'current_price',
+        'previous_value',
+        'current_value',
         'note',
     ];
 
-    public function variable()
+    public function changeable()
     {
-        return $this->belongsTo(Variable::class);
-    }
-
-    public function option()
-    {
-        return $this->belongsTo(Option::class);
+        return $this->morphTo('changeable');
     }
 }

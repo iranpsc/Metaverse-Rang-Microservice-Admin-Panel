@@ -45,7 +45,7 @@ class Option extends Model
 
     public function priceChangeLogs()
     {
-        return $this->hasMany(VariableChangeLog::class);
+        return $this->morphMany(VariableChangeLog::class, 'changeable');
     }
 
     public function image()

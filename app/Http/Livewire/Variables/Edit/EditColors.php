@@ -63,8 +63,8 @@ class EditColors extends Component
 
             $this->asset->priceChangeLogs()->create([
                 'changer_name' => $this->admin->name,
-                'previous_price' => $this->asset->price,
-                'current_price' => $this->price,
+                'previous_value' => $this->asset->price,
+                'current_value' => $this->price,
                 'note' => $this->note,
             ]);
 

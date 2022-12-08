@@ -95,6 +95,44 @@
                             data-bs-target="#edit-package-modal-{{ $option->id }}">بروز رسانی</x-buttons.btn-primary>
                         <x-buttons.btn-danger title="deletePackage" class="confirm" id="{{ $option->id }}">حذف
                         </x-buttons.btn-danger>
+                        @if ($option->priceChangeLogs->count() > 0)
+                        <x-buttons.btn-info data-bs-toggle="modal"
+                            data-bs-target="#option-history-{{ $option->id }}">تاریخچه تغییرات
+                        </x-buttons.btn-info>
+                        <x-modals.modal size="modal-xl" id="option-history-{{ $option->id }}"
+                            title="تاریخچه تغییرات">
+                            <x-tables.table>
+                                <x-slot name="headers">
+                                    <th>کد بسته</th>
+                                    <th>تاریخ تغییر</th>
+                                    <th>ساعت تغییر</th>
+                                    <th>تغییر دهنده</th>
+                                    <th>وضعیت گذشته</th>
+                                    <th>وضعیت حال</th>
+                                    <th>توضیحات</th>
+                                </x-slot>
+                                    <tbody>
+                                        @foreach ($option->priceChangeLogs as $changeLog)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $option->code }}</td>
+                                                <td>{{ \Morilog\Jalali\Jalalian::forge($changeLog->created_at)->format('Y/m/d') }}
+                                                </td>
+                                                <td>{{ \Morilog\Jalali\Jalalian::forge($changeLog->created_at)->format('H:m:s') }}
+                                                </td>
+                                                <td>{{ $changeLog->changer_name }}</td>
+                                                <td>{{ $changeLog->previous_value }}</td>
+                                                <td>{{ $changeLog->current_value }}</td>
+                                                <td>{{ $changeLog->note }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                            </x-tables.table>
+                            <x-slot:footer>
+                                <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+                            </x-slot:footer>
+                        </x-modals.modal>
+                    @endif
                         <livewire:variables.edit.edit-options :option="$option" :wire:key="'edit-option-'.$option->id">
                     </td>
                 </tr>

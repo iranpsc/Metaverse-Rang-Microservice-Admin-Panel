@@ -44,6 +44,6 @@ class Variable extends Model
 
     public function priceChangeLogs()
     {
-        return $this->hasMany(VariableChangeLog::class);
+        return $this->morphMany(VariableChangeLog::class, 'changeable');
     }
 }

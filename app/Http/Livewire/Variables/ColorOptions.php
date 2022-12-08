@@ -104,7 +104,7 @@ class ColorOptions extends Component
     public function delete(Option $option) {
         $this->emitSelf('packageDeleted');
         $this->emit('packageDeleted');
-        $option->image->delete();
+        $option->image()->delete();
         $option->priceChangeLogs()->delete();
         $option->delete();
     }
@@ -113,7 +113,7 @@ class ColorOptions extends Component
     {
         return view('livewire.variables.color-options', [
             'variables' => Variable::all('asset'),
-            'options'   => Option::paginate(10)
+            'options'   => Option::with('priceChangeLogs')->paginate(10)
         ]);
     }
 }

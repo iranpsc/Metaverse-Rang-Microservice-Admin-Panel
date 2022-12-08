@@ -136,6 +136,12 @@
                     <span>گزارشات کاربران</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('system-variables') }}">
+                    <span class="fa fa-cart-plus"></span>
+                    <span>متغیرهای سیستم</span>
+                </a>
+            </li>
         </ul><!-- /#side-menu -->
     </div><!-- /.side-menu-container -->
 </div><!-- /#sidebar -->

@@ -31,7 +31,7 @@ class Listing extends Component
 
     protected $listeners = [
         'deleteMap' => 'delete',
-        'pmapDeleted' => '$refresh',
+        'mapDeleted' => '$refresh',
         'mapsInsertedToDatabase' => '$refresh'
     ];
 

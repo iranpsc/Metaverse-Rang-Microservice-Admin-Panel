@@ -72,8 +72,8 @@ class EditOptions extends Component
         } else {
             $this->option->priceChangeLogs()->create([
                 'changer_name' => $this->admin->name,
-                'previous_price' => $this->option->amount,
-                'current_price' => $this->amount,
+                'previous_value' => $this->option->amount,
+                'current_value' => $this->amount,
                 'note' => $this->note,
             ]);
 

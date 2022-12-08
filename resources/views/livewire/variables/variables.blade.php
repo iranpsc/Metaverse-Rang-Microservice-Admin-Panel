@@ -4,13 +4,7 @@
             <a href="#tab1" class="nav-link active" data-bs-toggle="tab">بسته ها</a>
         </li>
         <li class="nav-item">
-            <a href="#tab2" class="nav-link" data-bs-toggle="tab">تاریخچه تغییرات بسته ها</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#tab3">ارزها</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#tab4">تاریخچه تغییرات قیمت ارزها</a>
+            <a class="nav-link" data-bs-toggle="tab" href="#tab2">ارزها</a>
         </li>
     </ul>
     <div class="tab-content">
@@ -18,13 +12,7 @@
             <livewire:variables.color-options>
         </div>
         <div id="tab2" class="tab-pane fade">
-            <livewire:variables.packages-change-logs>
-        </div>
-        <div id="tab3" class="tab-pane fade">
             <livewire:variables.colors-price>
-        </div>
-        <div id="tab4" class="tab-pane fade">
-            <livewire:variables.variables-change-logs>
         </div>
     </div>
 </div>

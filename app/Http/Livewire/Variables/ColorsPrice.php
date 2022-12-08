@@ -16,9 +16,11 @@ class ColorsPrice extends Component
 
     public $admin, $phoneVerification;
     public $access_password;
+    public $variables;
 
     public function mount()
     {
+        $this->variables = Variable::with('priceChangeLogs')->get();
         $this->admin = Auth::guard('admin')->user();
     }
 
@@ -99,8 +101,6 @@ class ColorsPrice extends Component
 
     public function render()
     {
-        return view('livewire.variables.colors-price', [
-            'variables' => Variable::lazy()
-        ]);
+        return view('livewire.variables.colors-price');
     }
 }
