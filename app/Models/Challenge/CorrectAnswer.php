@@ -18,6 +18,11 @@ class CorrectAnswer extends Model
     /**
      * @return BelongsTo
      */
+    public function question(): BelongsTo
+    {
+        return $this->belongsTo(Question::class);
+    }
+
     public function answer(): BelongsTo
     {
         return $this->belongsTo(QuestionAnswer::class);

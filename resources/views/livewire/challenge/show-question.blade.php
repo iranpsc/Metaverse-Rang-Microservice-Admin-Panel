@@ -15,18 +15,12 @@
 
                 <div class="col-sm-12">
                     <x-forms.group for="code" label="لیست پاسخ های سوال">
-                        <span>سسسس</span>
-                        <span>سسسس</span>
-                        <span>سسسس</span>
-                        <span>سسسس</span>
+                        @foreach( $question->answers as $answer)
+                        <span class="badge badge-info">{{ $answer->answer }}</span>
+                        @endforeach
                     </x-forms.group>
                 </div>
 
-                <div class="col-sm-12">
-                    <x-forms.group for="code" label="بهترین پاسخ">
-                        <span>سسس</span>
-                    </x-forms.group>
-                </div>
 
             </div>
             <x-slot:footer>

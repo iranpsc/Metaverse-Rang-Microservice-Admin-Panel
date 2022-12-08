@@ -9,6 +9,9 @@ use App\Models\Variable;
 use App\Repositories\FeatureRepository;
 use App\Repositories\OrderRepository;
 use App\Repositories\UserRepository;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 
 class DashboardController extends Controller
 {
@@ -26,7 +29,10 @@ class DashboardController extends Controller
         $this->orderRepository = $orderRepository;
     }
 
-    public function index()
+    /**
+     * @return Factory|View|Application
+     */
+    public function index(): Factory|View|Application
     {
         return view('dashboard', [
             'users' => [

@@ -3,8 +3,8 @@
 use App\Http\Controllers\Dynasty\DynastyMessageController;
 use App\Http\Controllers\MapController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Livewire\Challenge\Questions;
 use App\Http\Livewire\Challenge\QuestionsList;
+use App\Models\Challenge\QuestionTime;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DynastyController;
@@ -37,7 +37,6 @@ Route::middleware('auth:admin')->group(function() {
         Route::get('/dashboard', 'index')->name('dashboard');
     });
 
-
     Route::get('/citizens', Citizens::class)->name('citizens');
 
     Route::get('/lands', Lands::class)->name('lands');
@@ -56,6 +55,7 @@ Route::middleware('auth:admin')->group(function() {
     Route::controller(DynastyMessageController::class)->prefix('/dynasty-messages')->group(function (){
         Route::get('/',App\Http\Livewire\Dynasty\DynastyMessages::class)->name('dynasty.messages');
     });
+    Route::get('/answer-time',\App\Http\Livewire\Challenge\AnswersTime::class);
 
 });
 
@@ -64,6 +64,13 @@ Route::controller(AuthController::class)->group(function() {
     Route::get('/login', 'showLoginForm')->name('showLoginForm');
     Route::post('/login', 'login')->name('login');
     Route::get('/logout', 'logout')->name('logout');
+});
+
+Route::get('/questions-truncate',function (){
+    \App\Models\Challenge\Question::truncate();
+    \App\Models\Challenge\QuestionAnswer::truncate();
+    \App\Models\Challenge\QuestionFile::truncate();
+    \App\Models\Challenge\CorrectAnswer::truncate();
 });
 
 Route::get('truncate', function () {
@@ -78,3 +85,12 @@ Route::get('truncate', function () {
     DB::table('polygons')->truncate();
     return redirect()->back()->with('success', 'دیتابیس با موفقیت ریست شد');
 })->name('empty-and-reset-database');
+
+
+Route::get('/question-answers',function (){
+    $question = \App\Models\Challenge\Question::find(1);
+    $correctAnswerId = \App\Models\Challenge\QuestionFile::where('question_code',$question->code)->first();
+    $answers = $question->answers;
+    dd($answers[$correctAnswerId->id - 1]);
+//        return response()->json($question->answers);
+});
