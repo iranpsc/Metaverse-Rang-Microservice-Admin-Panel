@@ -4,13 +4,17 @@ namespace App\Http\Livewire\Level;
 
 use Livewire\Component;
 use App\Models\Level\Level;
+use Livewire\WithFileUploads;
 
 class Create extends Component
 {
-    public $name, $score, $slug;
+    use WithFileUploads;
+
+    public $name, $score, $slug, $image;
 
     protected $rules = [
         'name' => 'required|string|unique:levels',
+        'image' => 'required|image|mimes:jpg,png,bmp,jpeg',
         'slug' => 'required|string|unique:levels',
         'score' => 'required|min:0|integer'
     ];
@@ -19,6 +23,8 @@ class Create extends Component
         'name.required' => 'نام سطح را وارد کنید',
         'name.string' => 'نام سطح صحیح نیست',
         'name.unique' => 'این نام قبلا استفاده شده است',
+        'image.required' => 'تصویر را بارگذاری کنید',
+        'image.mimes' => 'فرمت تصویر صحیح نمی باشد',
         'slug.required' => 'اسلاگ را وارد کنید',
         'slug.uinque' => 'این اسلاگ قبلا استفاده شده است',
         'score.required' => 'امتیاز سطح را وارد کنید',
@@ -27,11 +33,13 @@ class Create extends Component
 
     public function save() {
         $this->validate();
-        Level::create([
+        $level = Level::create([
             'name' => $this->name,
             'slug' => $this->slug,
             'score' => $this->score
         ]);
+        $url = env('FTP_ENDPOINT') . $this->image->store('public/level/' . $level->id);
+        $level->image()->create(['url' => $url]);
         session()->flash('success', 'سطح ایجاد شد');
         $this->reset('name', 'slug', 'score');
         $this->emitUp('levelCreated');

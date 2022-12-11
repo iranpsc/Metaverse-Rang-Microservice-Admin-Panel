@@ -7,12 +7,8 @@
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
 
-        @if (session()->has('error'))
-            <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
-        @endif
-
         <x-forms.group for="asset" label="رنگ">
-            <x-forms.select wire:model="asset">
+            <x-forms.select id="asset" wire:model="asset">
                 <option selected>ارز را انتخاب کنید</option>
                 @forelse ($variables as $variable)
                     <option value="{{ $variable->asset }}">{{ \App\Helpers\getAssetColor($variable->asset) }}</option>
@@ -25,23 +21,29 @@
             @enderror
         </x-forms.group>
 
-        <x-forms.group label="تعداد" for="package-color">
-            <x-forms.input type="text" id="package-color" wire:model="amount" placeholder="تعداد را وارد کنید"
-                class="only-number" />
+        <x-forms.group label="تعداد" for="amount">
+            <x-forms.input id="amount" wire:model="amount" placeholder="تعداد را وارد کنید" />
             @error('amount')
+                <span class="form-text text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <x-forms.group label="تصویر" for="image">
+            <x-forms.input type="file" id="image" wire:model="image" />
+            <span class="text-success" wire:loading wire:target="image">در حال بارگذاری ...</span>
+            @error('image')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
 
         <div class="row form-group">
             <div class="col-sm-4">
-                <a href="javascript:void(0)" class="btn btn-success btn-block btn-sm rounded" wire:click="sendSMS">
+                <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendSMS">
                     ارسال پیامک تایید
-                </a>
+                </x-buttons.btn-success>
             </div>
             <div class="col-sm-8">
-                <input type="text" class="form-control rounded only-number" wire:model="phoneVerification"
-                    placeholder="تایید پیامکی">
+                <x-forms.input wire:model="phoneVerification" placeholder="تایید پیامکی" />
                 @error('phoneVerification')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
@@ -50,16 +52,15 @@
         </div>
 
         <x-forms.group label="رمز دسترسی" for="access_password">
-            <x-forms.input type="password" id="access_password" wire:model="access_password" placeholder="رمز دسترسی"
-                class="only-number" />
+            <x-forms.input type="password" id="access_password" wire:model="access_password" placeholder="رمز دسترسی" />
             @error('access_password')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
 
         <x-slot:footer>
+            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
-            <x-buttons.btn-primary wire:click="save">ثبت</x-buttons.btn-primary>
         </x-slot:footer>
     </x-modals.modal>
 
@@ -71,6 +72,7 @@
                 <th>قیمت بسته</th>
                 <th>تعداد</th>
                 <th>تاریخ و ساعت بروزرسانی</th>
+                <th>تصویر</th>
                 <th>علت تغییر</th>
                 <th>ملاحضات</th>
             </x-slot:headers>
@@ -82,16 +84,62 @@
                     <td>{{ \App\Models\Variable::getRate($option->asset) * $option->amount }}</td>
                     <td>{{ $option->amount }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($option->update_at) }}</td>
+                    <th>
+                        @if ($option->image)
+                            <a href="{{ $option->image->url }}" target="_blank" class="btn btn-primary btn-sm round">مشاهده</a>
+                        @endif
+                    </th>
                     <td>{{ $option->note }}</td>
                     <td>
-                        <x-buttons.btn-danger wire:click="delete({{ $option->id }})">حذف</x-buttons.btn-danger>
-                        <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#edit-package-modal-{{$option->id}}">بروز رسانی</x-buttons.btn-primary>
+                        <x-buttons.btn-primary data-bs-toggle="modal"
+                            data-bs-target="#edit-package-modal-{{ $option->id }}">بروز رسانی</x-buttons.btn-primary>
+                        <x-buttons.btn-danger title="deletePackage" class="confirm" id="{{ $option->id }}">حذف
+                        </x-buttons.btn-danger>
+                        @if ($option->priceChangeLogs->count() > 0)
+                        <x-buttons.btn-info data-bs-toggle="modal"
+                            data-bs-target="#option-history-{{ $option->id }}">تاریخچه تغییرات
+                        </x-buttons.btn-info>
+                        <x-modals.modal size="modal-xl" id="option-history-{{ $option->id }}"
+                            title="تاریخچه تغییرات">
+                            <x-tables.table>
+                                <x-slot name="headers">
+                                    <th>کد بسته</th>
+                                    <th>تاریخ تغییر</th>
+                                    <th>ساعت تغییر</th>
+                                    <th>تغییر دهنده</th>
+                                    <th>وضعیت گذشته</th>
+                                    <th>وضعیت حال</th>
+                                    <th>توضیحات</th>
+                                </x-slot>
+                                    <tbody>
+                                        @foreach ($option->priceChangeLogs as $changeLog)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $option->code }}</td>
+                                                <td>{{ \Morilog\Jalali\Jalalian::forge($changeLog->created_at)->format('Y/m/d') }}
+                                                </td>
+                                                <td>{{ \Morilog\Jalali\Jalalian::forge($changeLog->created_at)->format('H:m:s') }}
+                                                </td>
+                                                <td>{{ $changeLog->changer_name }}</td>
+                                                <td>{{ $changeLog->previous_value }}</td>
+                                                <td>{{ $changeLog->current_value }}</td>
+                                                <td>{{ $changeLog->note }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                            </x-tables.table>
+                            <x-slot:footer>
+                                <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+                            </x-slot:footer>
+                        </x-modals.modal>
+                    @endif
+                        <livewire:variables.edit.edit-options :option="$option" :wire:key="'edit-option-'.$option->id">
                     </td>
                 </tr>
-                @livewire('variables.edit.edit-options', ['option' => $option], key('options-'.$option->id))
             @endforeach
         </x-tables.table>
+        {{ $options->links() }}
     @else
-        <x-alerts.danger>پکیجی تعریف نشده است</x-alert>
+        <x-alerts.danger>پکیجی تعریف نشده است</x-alerts.danger>
     @endif
 </div>

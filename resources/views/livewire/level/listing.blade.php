@@ -8,6 +8,7 @@
                     <th>نام سطح</th>
                     <th>امتیاز مورد نیاز</th>
                     <th>اسلاگ</th>
+                    <th>تصویر</th>
                     <th>اقدامات</th>
                 </x-slot>
                 @foreach ($levels as $key => $level)
@@ -16,6 +17,13 @@
                         <td>{{ $level->name }}</td>
                         <td>{{ $level->score }}</td>
                         <td>{{ $level->slug }}</td>
+                        <td>
+                            @if ($level->image)
+                                <a target="_blank" href="{{ $level->image?->url }}" class="btn btn-primary btn-sm round">مشاهده</a>
+                            @else
+                                -----
+                            @endif
+                        </td>
                         <td>
                             @if (!empty($level->prize))
                                 <x-buttons.btn-primary
@@ -27,7 +35,7 @@
                             @endif
                             <x-buttons.btn-success data-bs-target="#edit-level-modal-{{ $key }}"
                                 data-bs-toggle="modal">ویرایش</x-buttons.btn-success>
-                            <x-buttons.btn-danger wire:click="delete('{{ $level->id }}')">حذف
+                            <x-buttons.btn-danger class="confirm" id="{{ $level->id }}" title="deleteLevel">حذف
                             </x-buttons.btn-danger>
                             @livewire('level.update', ['level' => $level, 'key' => $key], key('update-' . $key))
                             @livewire('level.create-prize', ['level' => $level, 'key' => $key], key('create-prize-' . $key))

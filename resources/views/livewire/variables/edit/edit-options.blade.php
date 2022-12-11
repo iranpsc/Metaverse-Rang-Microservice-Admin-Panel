@@ -4,28 +4,34 @@
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
 
-        <x-forms.group label="تعداد" for="package-color">
-            <x-forms.input type="text" id="package-color" wire:model="amount" placeholder="تعداد را وارد کنید"
-                class="only-number" />
+        <x-forms.group label="تعداد" for="amount-{{ $option->id }}">
+            <x-forms.input id="amount-{{ $option->id }}" wire:model="amount" placeholder="تعداد را وارد کنید" />
             @error('amount')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
 
-        <div class="form-group">
-            <label for="note">یادداشت</label>
-            <textarea id="note" cols="30" rows="3" class="form-control rounded" placeholder="یادداشت" wire:model="note"></textarea>
-        </div>
+        <x-forms.group label="تصویر" for="image-{{ $option->id }}">
+            <x-forms.input type="file" id="image-{{ $option->id }}" wire:model="image" placeholder="تصویر بسته" />
+            <span class="text-success" wire:loading wire:target="image-{{ $option->id }}">در حال بارگذاری ...</span>
+            @error('image')
+                <span class="form-text text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <x-forms.group for="note-{{ $option->id }}" label="یادداشت">
+            <textarea id="note-{{ $option->id }}" cols="30" rows="3" class="form-control rounded" placeholder="یادداشت"
+                wire:model="note"></textarea>
+        </x-forms.group>
 
         <div class="row form-group">
             <div class="col-sm-4">
-                <a href="javascript:void(0)" class="btn btn-success btn-block btn-sm rounded" wire:click="sendSMS">
+                <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendSMS">
                     ارسال پیامک تایید
-                </a>
+                </x-buttons.btn-success>
             </div>
             <div class="col-sm-8">
-                <input type="text" class="form-control rounded only-number" wire:model="phoneVerification"
-                    placeholder="تایید پیامکی">
+                <x-forms.input wire:model="phoneVerification" placeholder="تایید پیامکی" />
                 @error('phoneVerification')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
@@ -33,17 +39,17 @@
 
         </div>
 
-        <x-forms.group label="رمز دسترسی" for="access_password">
-            <x-forms.input type="password" id="access_password" wire:model="access_password" placeholder="رمز دسترسی"
-                class="only-number" />
+        <x-forms.group label="رمز دسترسی" for="edit-option-access-password-{{ $option->id }}">
+            <x-forms.input type="password" id="edit-option-access-password-{{ $option->id }}"
+                wire:model="access_password" placeholder="رمز دسترسی" />
             @error('access_password')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
 
         <x-slot:footer>
+            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="update">ثبت</x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
-            <x-buttons.btn-primary wire:click="update">ثبت</x-buttons.btn-primary>
         </x-slot:footer>
     </x-modals.modal>
 </div>

@@ -35,7 +35,7 @@ class Variable extends Model
     ];
 
     public static function getRate($asset) {
-        return self::firstWhere('asset', $asset)->price;
+        return self::firstWhere('asset', $asset)->price ?? 0;
     }
 
     public function option() {
@@ -44,6 +44,6 @@ class Variable extends Model
 
     public function priceChangeLogs()
     {
-        return $this->hasMany(VariableChangeLog::class);
+        return $this->morphMany(VariableChangeLog::class, 'changeable');
     }
 }

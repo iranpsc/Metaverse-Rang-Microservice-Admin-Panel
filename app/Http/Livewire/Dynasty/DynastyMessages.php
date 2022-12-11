@@ -7,53 +7,54 @@ use Livewire\Component;
 
 class DynastyMessages extends Component
 {
-    public $dynastyMessages;
-    public DynastyMessage $message;
+    public $type, $content;
 
-    public function mount()
-    {
-        $this->dynastyMessages = DynastyMessage::all();
-    }
-
-    public function __construct()
-    {
-        $this->message = new DynastyMessage;
-    }
+    protected $listeners = [
+        'deleteDynastyMessage' => 'delete',
+        'messageCreated' => '$refresh',
+        'messageUpdated' => '$refresh',
+        'messageDeleted' => '$refresh',
+    ];
 
     protected $rules = [
-        'message.type' => 'required|in:requester,reciever,requester_accept,reciever_accept,dynasty_prize',
-        'message.message' => 'required|string',
+        'type' => 'required|in:requester_confirmation_message,reciever_message,reciever_accept_message,requester_accept_message|unique:dynasty_messages',
+        'content' => 'required|string',
     ];
 
     protected $messages = [
-        'message.type.required' => 'نوع پیام را مشخص کنید',
-        'message.type.in' => 'انتخاب نا معتبر',
-        'message.message.required' => 'متن پیام را وارد کنید'
+        'type.required' => 'نوع پیام را مشخص کنید',
+        'type.in' => 'انتخاب نا معتبر',
+        'type.unique' => 'این پیام قبلا تعریف شده است',
+        'content.required' => 'متن پیام را وارد کنید'
     ];
 
     public function save()
     {
         $this->validate();
-        $this->message->save();
-        $this->resetExcept($this->dynastyMessages);
+        DynastyMessage::create([
+            'type' => $this->type,
+            'message' => $this->content
+        ]);
         session()->flash('success', 'پیام ایجاد گردید');
-        $this->dynastyMessages = DynastyMessage::all();
+        $this->reset();
+        $this->emitSelf('messageCreated');
     }
 
     public function updated($prop) {
         $this->validateOnly($prop);
     }
 
-    public function delete(DynastyMessage $dynastyMessage)
+    public function delete($id)
     {
-       $dynastyMessage->delete();
-        session()->flash('success', 'پیام حذف شد');
-        $this->dynastyMessages = DynastyMessage::all();
+        DynastyMessage::destroy($id);
+        $this->emitSelf('messageDeleted');
     }
 
 
     public function render()
     {
-        return view('livewire.dynasty.dynasty-messages');
+        return view('livewire.dynasty.dynasty-messages', [
+            'dynastyMessages' => DynastyMessage::lazy()
+        ]);
     }
 }

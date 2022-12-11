@@ -1,23 +1,22 @@
 <?php
 
 namespace App\Helpers;
-use Illuminate\Support\Carbon;
 
-use function PHPUnit\Framework\returnSelf;
+use Illuminate\Support\Carbon;
 
 function getDynastyMessageTitle($type)
 {
     switch ($type) {
-        case 'requester':
+        case 'requester_confirmation_message':
             return 'پیام تایید درخواست کننده';
             break;
-        case 'reciever':
+        case 'reciever_message':
             return 'پیام دریافت کننده درخواست';
             break;
-        case 'requester_accept':
+        case 'reciever_accept_message':
             return 'پیام تایید پذیرش پیوستن به سلسله';
             break;
-        case 'reciever_accept':
+        case 'requester_accept_message':
             return 'پیام ارسالی به درخواست کننده مبنی بر پذیرش درخواست';
             break;
         case 'dynasty_prize':
@@ -35,22 +34,29 @@ function getRelationTitle($member)
         case 'mother':
             return 'مادر';
             break;
-            case 'life_partner':
-                return 'همسر';
-                break;
+        case 'life_partner':
+            return 'همسر';
+            break;
         case 'brother':
             return 'برادر';
             break;
         case 'sister':
             return 'خواهر';
             break;
-        case 'ofspring':
+        case 'offspring':
             return 'فرزند';
+            break;
+        case 'wife':
+            return 'زن';
+            break;
+        case 'husband':
+            return 'شوهر';
             break;
     }
 }
 
-function getAssetColor($asset) {
+function getAssetColor($asset)
+{
     switch ($asset) {
         case 'red':
             return 'قرمز';
@@ -74,8 +80,9 @@ function getAssetColor($asset) {
     }
 }
 
-function getTicketPriorityTitle($importance) {
-    switch($importance) {
+function getTicketPriorityTitle($importance)
+{
+    switch ($importance) {
         case 0:
             return 'متوسط';
             break;
@@ -86,8 +93,6 @@ function getTicketPriorityTitle($importance) {
             return 'کم';
             break;
     }
-
-
 }
 
 function convertDateToCarbon($date)
@@ -97,4 +102,12 @@ function convertDateToCarbon($date)
     $date = Carbon::parse($date)->format('Y-m-d');
     $date = \Morilog\Jalali\CalendarUtils::createCarbonFromFormat('Y-m-d', $date)->format('Y-m-d');
     return $date;
+}
+
+function checkIp(string $starting_ip, string $ending_ip, $ip)
+{
+    $starting_ip = ip2long($starting_ip);
+    $ending_ip = ip2long($ending_ip);
+    if ($ip >= $starting_ip && $ip <= $ending_ip)  return true;
+    return false;
 }

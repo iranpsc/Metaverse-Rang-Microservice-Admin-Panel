@@ -3,22 +3,23 @@
 namespace App\Http\Livewire\Variables\Edit;
 
 use Livewire\Component;
-use App\Models\Admin;
 use Illuminate\Support\Facades\Session;
 use App\Helpers\SMS;
-use App\Models\VariableChangeLog;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class EditColors extends Component
 {
     public $price, $note, $asset;
 
     public $phoneVerification;
-    public $access_password;
+    public $access_password, $admin;
 
     public function mount($asset)
     {
         $this->asset = $asset;
         $this->price = $asset->price;
+        $this->admin = Auth::guard('admin')->user();
     }
 
     protected $rules = [
@@ -39,14 +40,12 @@ class EditColors extends Component
     {
         $verify_code = random_int(100000, 999999);
 
-        Session::put('verify_code', $verify_code);
+        Session::put('verify_code', Hash::make($verify_code));
 
-        $admin = Admin::first();
-
-        $result = SMS::send($admin->phone, $verify_code);
+        $result = SMS::send($this->admin->phone, $verify_code);
         if(is_array($result)) {
             foreach($result as $r) {
-                session()->flash('success', 'کد تایید با موفقیت ارسال شد');
+                session()->flash('success', $r->statustext);
             }
         } else {
             session()->flash('error', explode(":", $result)[1]);
@@ -56,18 +55,16 @@ class EditColors extends Component
     public function update() {
 
         $this->validate();
-        $this->admin = Admin::first();
-
-        if ($this->phoneVerification != Session::get('verify_code')) {
+        if (! Hash::check($this->phoneVerification, Session::get('verify_code'))) {
             $this->addError('phoneVerification', 'کد تایید وارد شده صحیح نمی باشد');
         } else if (!password_verify($this->access_password, $this->admin->access_password)) {
             $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
         } else {
 
             $this->asset->priceChangeLogs()->create([
-                'changer_name' => auth()->user()->name,
-                'previous_price' => $this->asset->price,
-                'current_price' => $this->price,
+                'changer_name' => $this->admin->name,
+                'previous_value' => $this->asset->price,
+                'current_value' => $this->price,
                 'note' => $this->note,
             ]);
 
@@ -76,10 +73,10 @@ class EditColors extends Component
                 'note' => $this->note
             ]);
 
-            $this->resetErrorBag();
-            $this->resetValidation();
             Session::forget('verify_code');
             session()->flash('success', 'ارز بروزرسانی شد');
+            $this->emitUp('currencyUpdated');
+            $this->emit('currencyUpdated');
         }
     }
 

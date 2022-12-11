@@ -16,6 +16,25 @@ class BlockIpMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        return $next($request);
+        $allowedIps = [];
+        $ip = ip2long($request->ip());
+        if (file_exists(storage_path('/ip-management/ips.json'))) {
+            $ips = file_get_contents(storage_path('/ip-management/ips.json'));
+            $ips = json_decode($ips, true);
+            if (array_key_exists('admin-allowed-ips', $ips)) {
+                $allowedIps = $ips['admin-allowed-ips'];
+            }
+        }
+        if (count($allowedIps) == 0) {
+            abort(403, 'Access Denied');
+        } else {
+            for ($i = 0; $i < count($allowedIps); $i++) {
+                $allowedIp = ip2long($allowedIps[$i]['ip']);
+                if ($ip === $allowedIp) {
+                    return $next($request);
+                }
+            }
+            abort(403, 'Access Denied');
+        }
     }
 }

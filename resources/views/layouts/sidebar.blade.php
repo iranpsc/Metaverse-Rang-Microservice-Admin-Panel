@@ -70,6 +70,12 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('access-management') }}">
+                    <span class="icon-user"></span>
+                    <span>مدیریت دسترسی ها</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('lands') }}">
                     <span class="icon-user"></span>
                     <span>زمین ها</span>
@@ -113,7 +119,7 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('map-files') }}">
+                <a href="{{ route('map-management') }}">
                     <span class="fa fa-cart-plus"></span>
                     <span>مدیریت نقشه ها</span>
                 </a>
@@ -122,6 +128,30 @@
                 <a href="{{ route('level') }}">
                     <span class="fa fa-cart-plus"></span>
                     <span>مدیریت سطح</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('ip-management') }}">
+                    <span class="fa fa-cart-plus"></span>
+                    <span>مدیریت IP</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('calendar') }}">
+                    <span class="fa fa-cart-plus"></span>
+                    <span>تقویم</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('reports') }}">
+                    <span class="fa fa-cart-plus"></span>
+                    <span>گزارشات کاربران</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('system-variables') }}">
+                    <span class="fa fa-cart-plus"></span>
+                    <span>متغیرهای سیستم</span>
                 </a>
             </li>
         </ul><!-- /#side-menu -->

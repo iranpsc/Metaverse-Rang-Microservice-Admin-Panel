@@ -9,6 +9,15 @@
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
+
+        <x-forms.group label="تصویر" for="image-{{ $key++ }}">
+            <x-forms.input type="file" id="image-{{ $key++ }}" wire:model="image" />
+            <span class="text-success" wire:loading wire:target="image">در حال بارگذاری ...</span>
+            @error('image')
+                <span class="form-text text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
         <x-forms.group for="score-{{ $key++ }}" label="امتیاز مورد نیاز">
             <x-forms.input id="score{{ $key++ }}" wire:model="score" />
             @error('score')
@@ -16,7 +25,7 @@
             @enderror
         </x-forms.group>
         <x-slot:footer>
-            <x-buttons.btn-success wire:click="save">ثبت</x-buttons.btn-success>
+            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بازگشت</x-buttons.btn-danger>
         </x-slot:footer>
     </x-modals.modal>

@@ -7,15 +7,25 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Session;
 use App\Helpers\SMS;
 use App\Models\Admin;
+use App\Models\Variable;
+use Illuminate\Support\Facades\Auth;
+use Livewire\WithPagination;
+use Illuminate\Support\Facades\Hash;
+use Livewire\WithFileUploads;
 
 class ColorOptions extends Component
 {
-    public $options, $variables, $asset, $amount, $phoneVerification, $access_password;
+    use WithPagination, WithFileUploads;
+
+    public $asset, $amount, $image, $phoneVerification, $access_password;
     public $admin;
+
+    protected $paginationTheme = 'bootstrap';
 
     protected $rules = [
         'phoneVerification' => 'required|numeric',
         'access_password' => 'required',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp',
         'amount' => 'required|integer|min:1',
         'asset' => 'required|in:red,blue,yellow,psc,irr'
     ];
@@ -27,29 +37,31 @@ class ColorOptions extends Component
         'amount.numberic' => 'مقدار عددی برای قیمت وارد کنید',
         'amount.min' => 'کمترین مقدار قیمت 1 است',
         'asset.required' => 'رنگ را انتخاب کنید',
-        'asset.in' => 'گزینه انتخاب شده معتبر نمی باشد'
+        'asset.in' => 'گزینه انتخاب شده معتبر نمی باشد',
+        'image.image' => 'فرمت فایل صحیح نیست',
+        'image.mimes' => 'فرمت فایل صحیح نیست',
     ];
 
     protected $listeners = [
+        'deletePackage' => 'delete',
         'packageCreated' => '$refresh',
+        'packageUpdated' => '$refresh',
         'packageDeleted' => '$refresh'
     ];
 
     public function mount()
     {
-        $this->admin = Admin::where('role', 'super-admin')->first();
+        $this->admin = Auth::guard('admin')->user();
     }
 
     public function sendSMS()
     {
         $verify_code = random_int(100000, 999999);
-
-        Session::put('verify_code', $verify_code);
-
+        Session::put('verify_code', Hash::make($verify_code));
         $result = SMS::send($this->admin->phone, $verify_code);
         if(is_array($result)) {
             foreach($result as $r) {
-                session()->flash('success', 'کد تایید با موفقیت ارسال شد');
+                session()->flash('success', $r->statustext);
             }
         } else {
             session()->flash('error', explode(":", $result)[1]);
@@ -58,20 +70,27 @@ class ColorOptions extends Component
 
     public function save() {
         $this->validate();
-
-        if ($this->phoneVerification != Session::get('verify_code')) {
+        if (! Hash::check($this->phoneVerification, Session::get('verify_code'))) {
             $this->addError('phoneVerification', 'کد تایید وارد شده صحیح نمی باشد');
         } else if (!password_verify($this->access_password, $this->admin->access_password)) {
             $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
         } else {
-            Option::create([
+            $option = Option::create([
                 'asset' => $this->asset,
                 'amount' => $this->amount,
                 'code' => random_int(100000, 999999)
             ]);
 
-            $this->resetErrorBag();
-            $this->resetValidation();
+            if($this->image)
+            {
+                $url = env('FTP_ENDPOINT') . $this->image->store('public/packages');
+
+                $option->image()->create([
+                    'url' => $url,
+                ]);
+            }
+
+            $this->resetExcept('admin');
             Session::forget('verify_code');
             session()->flash('success', 'پکیج رنگ وارد شد');
             $this->emitSelf('packageCreated');
@@ -82,15 +101,19 @@ class ColorOptions extends Component
         $this->validateOnly($propertyName);
     }
 
-    public function delete($id) {
+    public function delete(Option $option) {
         $this->emitSelf('packageDeleted');
-        $this->emitTo('packages-change-logs', 'delete-change-logs', $id);
-        Option::destroy($id);
-        session()->flash('success', 'بسته حذف شد');
+        $this->emit('packageDeleted');
+        $option->image()->delete();
+        $option->priceChangeLogs()->delete();
+        $option->delete();
     }
 
     public function render()
     {
-        return view('livewire.variables.color-options');
+        return view('livewire.variables.color-options', [
+            'variables' => Variable::all('asset'),
+            'options'   => Option::with('priceChangeLogs')->paginate(10)
+        ]);
     }
 }

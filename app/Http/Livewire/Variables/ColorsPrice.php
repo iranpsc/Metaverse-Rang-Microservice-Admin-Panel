@@ -6,20 +6,30 @@ use Livewire\Component;
 use App\Models\Variable;
 use Illuminate\Support\Facades\Session;
 use App\Helpers\SMS;
-use App\Models\Admin;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class ColorsPrice extends Component
 {
     public $price;
-    public $asset, $variables;
+    public $asset;
 
     public $admin, $phoneVerification;
     public $access_password;
+    public $variables;
 
     public function mount()
     {
-        $this->admin = Admin::where('role', 'super-admin')->first();
+        $this->variables = Variable::with('priceChangeLogs')->get();
+        $this->admin = Auth::guard('admin')->user();
     }
+
+    protected $listeners = [
+        'deleteCurrency' => 'delete',
+        'currencyCreated' => '$refresh',
+        'currencyUpdated' => '$refresh',
+        'currencyDeleted' => '$refresh',
+    ];
 
     protected $rules = [
         'phoneVerification' => 'required|numeric',
@@ -43,12 +53,12 @@ class ColorsPrice extends Component
     {
         $verify_code = random_int(100000, 999999);
 
-        Session::put('verify_code', $verify_code);
+        Session::put('verify_code', Hash::make($verify_code));
 
         $result = SMS::send($this->admin->phone, $verify_code);
         if (is_array($result)) {
             foreach ($result as $r) {
-                session()->flash('success', 'کد تایید با موفقیت ارسال شد');
+                session()->flash('success', $r->statustext);
             }
         } else {
             session()->flash('error', explode(":", $result)[1]);
@@ -60,7 +70,7 @@ class ColorsPrice extends Component
 
         $this->validate();
 
-        if ($this->phoneVerification != Session::get('verify_code')) {
+        if (! Hash::check($this->phoneVerification, Session::get('verify_code'))) {
             $this->addError('phoneVerification', 'کد تایید وارد شده صحیح نمی باشد');
         } else if (!password_verify($this->access_password, $this->admin->access_password)) {
             $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
@@ -70,23 +80,23 @@ class ColorsPrice extends Component
                 'price' => $this->price,
             ]);
 
-            $this->resetErrorBag();
-            $this->resetValidation();
             Session::forget('verify_code');
             session()->flash('success', 'قیمت رنگ با موفقیت وارد شد');
-            $this->variables = Variable::all();
+            $this->resetExcept('admin');
+            $this->emitSelf('currencyCreated');
         }
     }
 
-    public function updated($propertyName)
+    public function updated($prop)
     {
-        $this->validateOnly($propertyName);
+        $this->validateOnly($prop);
     }
 
-    public function delete($id) {
-        Variable::destroy($id);
-        $this->variables = Variable::all();
-        $this->emitTo('variables-change-logs','delete-variables-change-logs', $id);
+    public function delete(Variable $variable) {
+        $variable->priceChangeLogs()->delete();
+        $variable->delete();
+        $this->emitSelf('currencyDeleted');
+        $this->emit('currencyDeleted');
     }
 
     public function render()
