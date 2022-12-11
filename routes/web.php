@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\IpManagementController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Livewire\Citizens\Citizens;
 use App\Http\Livewire\Dashboard\Dashboard;
@@ -15,7 +14,7 @@ use App\Http\Livewire\Maps\Listing as MapListing;
 use App\Http\Livewire\Calendar\Listing as CalendarListing;
 use App\Http\Livewire\Reports\Listing as ReportsListing;
 use App\Http\Livewire\SystemVariables\Listing as SystemVariablesListing;
-use Illuminate\Http\Request;
+use App\Http\Livewire\AccessManagement\Listing as AccessManagementListing;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,9 +44,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/ip-management', IpManagement::class)->name('ip-management');
     Route::get('/reports', ReportsListing::class)->name('reports');
     Route::get('/system-variables', SystemVariablesListing::class)->name('system-variables');
+    Route::get('/access-management', AccessManagementListing::class)->name('access-management');
 });
 
 require_once(__DIR__ . '/auth.php');
-
-
-

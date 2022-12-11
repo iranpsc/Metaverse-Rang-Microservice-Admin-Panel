@@ -70,6 +70,12 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('access-management') }}">
+                    <span class="icon-user"></span>
+                    <span>مدیریت دسترسی ها</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('lands') }}">
                     <span class="icon-user"></span>
                     <span>زمین ها</span>

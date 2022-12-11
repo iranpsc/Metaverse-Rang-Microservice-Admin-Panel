@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Http\Livewire\AccessManagement;
+
+use Livewire\Component;
+use Spatie\Permission\Models\Role;
+
+class UpdatePermission extends Component
+{
+    public $title, $name, $permission;
+    public $addedRoles = [];
+
+    protected $rules = [
+        'title' => 'required|string',
+        'name' => 'required|string|min:2',
+    ];
+
+    protected $messages = [
+        'title.required' => 'عنوان دسترسی را وارد کنید',
+        'name.required' => 'نام دسترسی را وارد کنید'
+    ];
+
+    protected $listeners = [
+        'removePermissionRole' => 'removeRole',
+        'permissionRoleRemoved' => '$refresh'
+    ];
+
+    public function mount($permission) {
+        $this->title = $permission->title;
+        $this->name = $permission->name;
+    }
+
+    public function update()
+    {
+        $this->validate();
+        $this->permission->update([
+            'title' => $this->title,
+            'name' => $this->name,
+        ]);
+        if(count($this->addedRoles) > 0) {
+            $this->permission->assignRole($this->addedRoles);
+        }
+        session()->flash('success', 'دسترسی بروزرسانی شد.');
+        $this->emitUp('permissionUpdated');
+    }
+
+    public function removeRole(Role $role)
+    {
+        $this->permission->removeRole($role);
+        $this->emitSelf('permissionRoleRemoved');
+    }
+
+    public function updated($prop) {
+        $this->validateOnly($prop);
+    }
+    public function render()
+    {
+        return view('livewire.access-management.update-permission', [
+            'roles' => Role::whereNotIn('name', $this->permission->roles->pluck('name'))->get(),
+        ]);
+    }
+}

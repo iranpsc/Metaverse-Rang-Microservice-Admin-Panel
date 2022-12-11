@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\Dynasty;
 
-use App\Models\Dynasty\Permission;
+use App\Models\Dynasty\DynastyPermission;
 use Livewire\Component;
 
 class Permissions extends Component
@@ -13,7 +13,7 @@ class Permissions extends Component
 
     public function mount()
     {
-        $this->permissions = Permission::first();
+        $this->permissions = DynastyPermission::first();
         $this->BFR  = $this->permissions->BFR  ? $this->permissions->BFR  : 0;
         $this->SF   = $this->permissions->SF   ? $this->permissions->SF   : 0;
         $this->W    = $this->permissions->W    ? $this->permissions->W    : 0;
@@ -28,7 +28,7 @@ class Permissions extends Component
 
     public function update()
     {
-        Permission::updateOrCreate(
+        DynastyPermission::updateOrCreate(
             [
                 'id' => 1,
             ],
