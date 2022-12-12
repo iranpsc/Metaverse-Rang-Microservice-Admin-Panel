@@ -78,8 +78,8 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $admin->name }}</td>
-                    <td>{{ json_decode($admin->getRoleTitles())[0] }}</td>
-                    <td>{{ json_decode($admin->permissions->pluck('title'))[0] }}</td>
+                    <td>{{ json_decode($admin->getRoleTitles())[0] ?? "" }}</td>
+                    <td>{{ json_decode($admin->permissions->pluck('title'))[0] ?? "" }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($admin->created_at)->format('Y/m/d') }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($admin->created_at)->format('H:m:s') }}</td>
                     <td>
