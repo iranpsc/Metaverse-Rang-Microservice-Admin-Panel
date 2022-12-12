@@ -68,7 +68,9 @@ class EmployeeRolePermission extends Component
 
     public function delete(Admin $admin) {
         if($admin->roles) {
-            $admin->removeRole($admin->roles);
+            foreach($admin->roles as $role) {
+                $admin->removeRole($role);
+            }
         }
         if($admin->getDirectPermissions()) {
             $admin->revokePermissionTo($admin->getDirectPermissions());
