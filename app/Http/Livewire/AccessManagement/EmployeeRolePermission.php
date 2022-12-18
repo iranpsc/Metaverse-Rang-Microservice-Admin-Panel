@@ -14,7 +14,6 @@ class EmployeeRolePermission extends Component
     public $password, $accessPassword, $employee;
     public $addedRoles = [];
     public $addedPermissions = [];
-    public $userRole;
 
     protected $rules = [
         'employee' => 'required',
@@ -32,7 +31,7 @@ class EmployeeRolePermission extends Component
         'adminCreated' => '$refresh',
         'adminUpdated' => '$refresh',
         'adminDeleted' => '$refresh',
-        'deleteAdmin' => 'delete'
+        'deleteAdmin'  => 'delete'
     ];
 
     public function updated($prop)
@@ -43,7 +42,7 @@ class EmployeeRolePermission extends Component
     public function save()
     {
         $this->validate();
-        if (empty($this->addedRoles) && empty($this->addedPermissions)) {
+        if(empty($this->addedRoles) && empty($this->addedPermissions)) {
             $this->addError('noRolesOrPermissionsSelected', 'حداقل یک مسئولیت یا دسترسی به این کارمند اختصاص دهید!');
         } else {
             $employee = Employee::select(['fname', 'lname', 'email', 'phone'])->where('id', $this->employee)->first();
@@ -67,27 +66,25 @@ class EmployeeRolePermission extends Component
         }
     }
 
-    public function delete(Admin $admin)
-    {
-        if ($admin->roles) {
-            foreach ($admin->roles as $role) {
+    public function delete(Admin $admin) {
+        if($admin->roles) {
+            foreach($admin->roles as $role) {
                 $admin->removeRole($role);
             }
         }
-        if ($admin->getDirectPermissions()) {
+        if($admin->getDirectPermissions()) {
             $admin->revokePermissionTo($admin->getDirectPermissions());
         }
         $admin->delete();
         session()->flash('success', 'کارمند حذف شد!');
         $this->emitSelf('adminDeleted');
     }
-
     public function render()
     {
         return view('livewire.access-management.employee-role-permission', [
-            'admins' => Admin::with(['roles', 'permissions'])->lazy(),
-            'employees' => Employee::select(['id', 'fname', 'lname'])->get(),
-            'roles' => Role::whereNotIn('name', ['Super Admin'])->get(),
+            'admins'      => Admin::with(['roles', 'permissions'])->lazy(),
+            'employees'   => Employee::select(['id', 'fname', 'lname'])->get(),
+            'roles'       => Role::whereNotIn('name', ['Super Admin'])->get(),
             'permissions' => Permission::lazy(),
         ]);
     }
