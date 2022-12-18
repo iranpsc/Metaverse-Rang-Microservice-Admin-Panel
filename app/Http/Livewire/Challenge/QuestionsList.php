@@ -15,7 +15,7 @@ class QuestionsList extends Component
 {
     use WithFileUploads, WithPagination;
 
-    public $title, $code, $file;
+    public $title, $code, $file, $image;
 
     public $questionsFile;
 
@@ -23,9 +23,9 @@ class QuestionsList extends Component
 
     public function mount()
     {
-        $lastCode = Question::latest('id')->pluck('code')->first();
-        $code = explode('-', $lastCode);
-        $this->code = 'que-rgb-' . (int)$code[2] + 1;
+//        $lastCode = Question::latest('id')->pluck('code')->first();
+//        $code = explode('-', $lastCode);
+//        $this->code = 'que-rgb-' . (int)$code[2] + 1;
     }
 
     public function delete(Question $question)
@@ -41,6 +41,7 @@ class QuestionsList extends Component
 
     public function upload()
     {
+
         $this->validate([
             'questionsFile' => 'required|file|mimes:xlsx,csv'
         ], [
@@ -58,6 +59,9 @@ class QuestionsList extends Component
                 'code' => $questionFile->question_code,
             ]);
 
+            $url = env('FTP_ENDPOINT') . 'public/challenge/questions' . $questionFile->question_image;
+            $question->image()->create(['url' => $url]);
+
             $question->answers()->createMany([
                 [
                     'answer' => $questionFile->answer_one,
@@ -72,15 +76,36 @@ class QuestionsList extends Component
                     'answer' => $questionFile->answer_four
                 ]
             ]);
-
             $correctAnswer = QuestionFile::where('question_code', $question->code)->first();
             $answer = $question->answers[(int)$correctAnswer->correct_answer - 1];
             CorrectAnswer::create([
                 'question_id' => $question->id,
                 'question_answer_id' => $answer->id
             ]);
+            $columnIndex = 1;
+            $columnName = "";
+            foreach ($question->answers as $answer) {
+                switch ($columnIndex) {
+                    case 1 :
+                        $columnName = "answer_one_image";
+                        break;
+                    case 2 :
+                        $columnName = "answer_two_image";
+                        break;
+                    case 3:
+                        $columnName = "answer_tree_image";
+                        break;
+                    case 4:
+                        $columnName = "answer_four_image";
+                        break;
+                }
+                $column = $questionFile->$columnName;
 
-
+                $answer->image()->create([
+                    'url' => env('FTP_ENDPOINT') . 'public/challenge/answers/' . $column ?? 'no-image.png',
+                ]);
+                $columnIndex++;
+            }
         }
         $this->reset('questionsFile');
         session()->flash('success', 'سوالات با موفقیت بارگزاری شدند');

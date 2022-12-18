@@ -26,6 +26,7 @@ return new class extends Migration {
             $table->string('answer_four_image');
             $table->string('answer_four');
             $table->string('correct_answer');
+            $table->string('admin_id');
             $table->timestamps();
         });
     }

@@ -1,20 +1,20 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Livewire\AccessManagement\Listing as AccessManagementListing;
+use App\Http\Livewire\Calendar\Listing as CalendarListing;
 use App\Http\Livewire\Citizens\Citizens;
 use App\Http\Livewire\Dashboard\Dashboard;
+use App\Http\Livewire\Dynasty\Listing as DynastyListing;
 use App\Http\Livewire\Employees\Employees;
+use App\Http\Livewire\IpManagement\IpManagement;
 use App\Http\Livewire\Lands\Lands;
 use App\Http\Livewire\Level\Listing as LevelListing;
-use App\Http\Livewire\Support\Support;
-use App\Http\Livewire\Variables\Variables;
-use App\Http\Livewire\Dynasty\Listing as DynastyListing;
-use App\Http\Livewire\IpManagement\IpManagement;
 use App\Http\Livewire\Maps\Listing as MapListing;
-use App\Http\Livewire\Calendar\Listing as CalendarListing;
 use App\Http\Livewire\Reports\Listing as ReportsListing;
+use App\Http\Livewire\Support\Support;
 use App\Http\Livewire\SystemVariables\Listing as SystemVariablesListing;
-use App\Http\Livewire\AccessManagement\Listing as AccessManagementListing;
+use App\Http\Livewire\Variables\Variables;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,8 +30,9 @@ use App\Http\Livewire\AccessManagement\Listing as AccessManagementListing;
 
 Route::redirect('/', '/dashboard');
 
-Route::middleware('auth:admin')->group(function () {
+Route::middleware('auth:admin')->group(callback: function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
+    Route::get('/challenge', App\Http\Livewire\Challenge\QuestionsList::class)->name('challenge');
     Route::get('/citizens', Citizens::class)->name('citizens');
     Route::get('/lands', Lands::class)->name('lands');
     Route::get('/variables', Variables::class)->name('variables');
@@ -45,6 +46,13 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/reports', ReportsListing::class)->name('reports');
     Route::get('/system-variables', SystemVariablesListing::class)->name('system-variables');
     Route::get('/access-management', AccessManagementListing::class)->name('access-management');
+});
+Route::get('/truncate-questions',function (){
+    \App\Models\Challenge\QuestionFile::truncate();
+    \App\Models\Challenge\Question::truncate();
+    \App\Models\Challenge\QuestionAnswer::truncate();
+    \App\Models\Challenge\CorrectAnswer::truncate();
+    \App\Models\Image::truncate();
 });
 
 require_once(__DIR__ . '/auth.php');

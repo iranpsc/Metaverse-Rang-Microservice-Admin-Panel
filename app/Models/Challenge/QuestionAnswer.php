@@ -2,11 +2,13 @@
 
 namespace App\Models\Challenge;
 
+use App\Models\Image;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class QuestionAnswer extends Model
 {
@@ -36,5 +38,13 @@ class QuestionAnswer extends Model
     public function userQuestionAnswer(): HasMany
     {
         return $this->hasMany(UserQuestionAnswer::class);
+    }
+
+    /**
+     * @return MorphOne
+     */
+    public function image()
+    {
+        return $this->morphOne(Image::class , 'imageable');
     }
 }

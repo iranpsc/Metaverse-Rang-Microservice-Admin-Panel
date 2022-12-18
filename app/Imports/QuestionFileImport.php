@@ -28,8 +28,9 @@ class QuestionFileImport implements ToModel
             'answer_three_image' => $row[7],
             'answer_three' => $row[8],
             'answer_four_image' => $row[9],
-            'correct_answer' => $row[11],
             'answer_four' => $row[10],
+            'correct_answer' => $row[11],
+            'admin_id' => $row[12],
         ]);
     }
 }
