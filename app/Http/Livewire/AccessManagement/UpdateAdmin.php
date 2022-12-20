@@ -25,7 +25,11 @@ class UpdateAdmin extends Component
             $this->admin->givePermissionTo($this->addedDirectPermissions);
         }
         if(count($this->addedRoles) > 0) {
-            $this->admin->assignRole($this->addedRoles);
+            foreach ($this->addedRoles as $role)
+            {
+                $adminRole = Role::where('id',$role)->first();
+                $this->admin->assignRole($adminRole);
+            }
         }
         session()->flash('success', 'دسترسی ها و مسئولیت های کارمند بروزرسانی شد!');
         $this->emitUp('adminUpdated');

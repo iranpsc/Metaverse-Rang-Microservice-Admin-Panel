@@ -81,6 +81,9 @@ class AdminAllowedIps extends Component
         } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
             $this->addError('accessPassword', 'رمز دسترسی صحیح نیست');
         } else {
+            if(!dir(storage_path('/ip-management'))) {
+                mkdir(storage_path('/ip-management'));
+            }
             if(file_exists(storage_path('/ip-management/ips.json'))) {
                 $ips = file_get_contents(storage_path('/ip-management/ips.json'));
                 $ips = json_decode($ips, true);

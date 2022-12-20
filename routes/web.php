@@ -27,27 +27,26 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-
 Route::redirect('/', '/dashboard');
 
 Route::middleware('auth:admin')->group(callback: function () {
-    Route::get('/dashboard', Dashboard::class)->name('dashboard');
-    Route::get('/challenge', App\Http\Livewire\Challenge\QuestionsList::class)->name('challenge');
-    Route::get('/citizens', Citizens::class)->name('citizens');
-    Route::get('/lands', Lands::class)->name('lands');
-    Route::get('/variables', Variables::class)->name('variables');
-    Route::get('/support', Support::class)->name('support');
-    Route::get('/level', LevelListing::class)->name('level');
-    Route::get('/maps', MapListing::class)->name('map-management');
-    Route::get('/employees', Employees::class)->name('employees');
-    Route::get('/dynasty', DynastyListing::class)->name('dynasty');
-    Route::get('/calendar', CalendarListing::class)->name('calendar');
-    Route::get('/ip-management', IpManagement::class)->name('ip-management');
-    Route::get('/reports', ReportsListing::class)->name('reports');
-    Route::get('/system-variables', SystemVariablesListing::class)->name('system-variables');
-    Route::get('/access-management', AccessManagementListing::class)->name('access-management');
+        Route::get('/dashboard', Dashboard::class)->name('dashboard');
+        Route::get('/challenge', App\Http\Livewire\Challenge\QuestionsList::class)->name('challenge');
+        Route::get('/citizens', Citizens::class)->name('citizens');
+        Route::get('/lands', Lands::class)->name('lands');
+        Route::get('/variables', Variables::class)->name('variables');
+        Route::get('/support', Support::class)->name('support');
+        Route::get('/level', LevelListing::class)->name('level');
+        Route::get('/maps', MapListing::class)->name('map-management');
+        Route::get('/employees', Employees::class)->name('employees');
+        Route::get('/dynasty', DynastyListing::class)->name('dynasty');
+        Route::get('/calendar', CalendarListing::class)->name('calendar');
+        Route::get('/ip-management', IpManagement::class)->name('ip-management');
+        Route::get('/reports', ReportsListing::class)->name('reports');
+        Route::get('/system-variables', SystemVariablesListing::class)->name('system-variables');
+        Route::get('/access-management', AccessManagementListing::class)->name('access-management');
 });
-Route::get('/truncate-questions',function (){
+Route::get('/truncate-questions', function () {
     \App\Models\Challenge\QuestionFile::truncate();
     \App\Models\Challenge\Question::truncate();
     \App\Models\Challenge\QuestionAnswer::truncate();

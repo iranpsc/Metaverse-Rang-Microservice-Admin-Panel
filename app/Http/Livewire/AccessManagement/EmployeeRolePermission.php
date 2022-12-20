@@ -6,11 +6,14 @@ use App\Models\Admin;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
+use Livewire\WithPagination;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class EmployeeRolePermission extends Component
 {
+    use WithPagination;
+
     public $password, $accessPassword, $employee;
     public $addedRoles = [];
     public $addedPermissions = [];
@@ -42,7 +45,8 @@ class EmployeeRolePermission extends Component
     public function save()
     {
         $this->validate();
-        if(empty($this->addedRoles) && empty($this->addedPermissions)) {
+//        && empty($this->addedPermissions)
+        if(empty($this->addedRoles)) {
             $this->addError('noRolesOrPermissionsSelected', 'حداقل یک مسئولیت یا دسترسی به این کارمند اختصاص دهید!');
         } else {
             $employee = Employee::select(['fname', 'lname', 'email', 'phone'])->where('id', $this->employee)->first();
@@ -55,7 +59,11 @@ class EmployeeRolePermission extends Component
                 'active' => 1
             ]);
             if (count($this->addedRoles) > 0) {
-                $admin->assignRole($this->addedRoles);
+                foreach ($this->addedRoles as $role)
+                {
+                    $adminRole = Role::where('id',$role)->first();
+                    $admin->assignRole($adminRole);
+                }
             }
             if (count($this->addedPermissions)) {
                 $admin->givePermissionTo($this->addedPermissions);
@@ -82,9 +90,9 @@ class EmployeeRolePermission extends Component
     public function render()
     {
         return view('livewire.access-management.employee-role-permission', [
-            'admins'      => Admin::with(['roles', 'permissions'])->lazy(),
+            'admins'      => Admin::with(['roles', 'permissions'])->paginate(10),
             'employees'   => Employee::select(['id', 'fname', 'lname'])->get(),
-            'roles'       => Role::whereNotIn('name', ['Super Admin'])->get(),
+            'roles'       => Role::whereNotIn('name', ['Super-Admin'])->get(),
             'permissions' => Permission::lazy(),
         ]);
     }

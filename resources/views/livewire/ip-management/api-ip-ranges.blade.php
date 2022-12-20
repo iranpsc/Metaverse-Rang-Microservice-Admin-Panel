@@ -1,5 +1,6 @@
 <div>
     {{-- If you look to others for fulfillment, you will never truly be fulfilled. --}}
+    @can('Define-Range-IP')
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#api-ip-range-modal">تعریف رنج IP
     </x-buttons.btn-primary>
     <x-modals.modal id="api-ip-range-modal" title="تعریف رنج آی پی Api">
@@ -62,6 +63,7 @@
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot>
     </x-modals.modal>
+    @endcan
     @if (count($ip_ranges) > 0)
         <x-tables.table>
             <x-slot name="headers">

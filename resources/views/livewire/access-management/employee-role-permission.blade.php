@@ -1,9 +1,12 @@
 <div>
+    @can('Assign-Permission-To-Role')
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-admin-modal">ایجاد کاربر
     </x-buttons.btn-primary>
+    @endcan
     @if (session('success'))
         <x-alerts.success>{{ session('success') }}</x-alerts.success>
     @endif
+        @can('Assign-Permission-To-Role')
     <x-modals.modal id="create-admin-modal" title="ایجاد کاربر">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
@@ -45,20 +48,21 @@
         @empty
             <x-alerts.danger>مسئولیتی تعریف نشده است!</x-alerts.danger>
         @endforelse
-        <p class="modal-text">کدام دسترسی ها را به این کارمند می دهید؟</p>
-        @forelse ($permissions as $permission)
-            <div class="input-group">
-                <input class="normal" value="{{ $permission->id }}" wire:model="addedPermissions" type="checkbox" id="employee-permissions-{{$permission->id}}">
-                <label for="employee-permissions-{{$permission->id}}">{{ $permission->title }}</label>
-            </div>
-        @empty
-            <x-alerts.danger>دسترسی تعریف نشده است!</x-alerts.danger>
-        @endforelse
+{{--        <p class="modal-text">کدام دسترسی ها را به این کارمند می دهید؟</p>--}}
+{{--        @forelse ($permissions as $permission)--}}
+{{--            <div class="input-group">--}}
+{{--                <input class="normal" value="{{ $permission->id }}" wire:model="addedPermissions" type="checkbox" id="employee-permissions-{{$permission->id}}">--}}
+{{--                <label for="employee-permissions-{{$permission->id}}">{{ $permission->title }}</label>--}}
+{{--            </div>--}}
+{{--        @empty--}}
+{{--            <x-alerts.danger>دسترسی تعریف نشده است!</x-alerts.danger>--}}
+{{--        @endforelse--}}
         <x-slot name="footer">
             <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot>
     </x-modals.modal>
+        @endcan
     @if ($admins->count() > 0)
         <x-tables.table>
             <x-slot name="headers">
@@ -71,7 +75,7 @@
             </x-slot>
             @foreach ($admins as $admin)
                 @php
-                    if ($admin->hasRole('Super Admin')) {
+                    if ($admin->hasRole('Super-Admin')) {
                         continue;
                     }
                 @endphp
@@ -92,6 +96,7 @@
                 </tr>
             @endforeach
         </x-tables.table>
+        {{ $admins->links() }}
     @else
         <x-alerts.danger>مسئولیتی تعریف نشده است!</x-alerts.danger>
     @endif

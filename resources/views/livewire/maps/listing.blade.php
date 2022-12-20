@@ -1,5 +1,6 @@
 <div>
     {{-- Care about people's approval and you will be their prisoner. --}}
+    @can('Upload-Maps')
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#upload-map-modal">بارگزاری نقشه
     </x-buttons.btn-primary>
     <x-modals.modal id="upload-map-modal" title="بارگزاری فایل نقشه">
@@ -24,7 +25,7 @@
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot>
     </x-modals.modal>
-
+    @endcan
     @if ($maps->count() > 0)
         <x-tables.table>
             <x-slot name="headers">

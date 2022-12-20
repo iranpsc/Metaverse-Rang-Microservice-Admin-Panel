@@ -63,97 +63,126 @@
                     <span>داشبورد</span>
                 </a>
             </li>
+            @role('Citizen-Management|Super-Admin')
             <li>
                 <a href="{{ route('citizens') }}">
                     <span class="icon-user"></span>
                     <span>شهروندان</span>
                 </a>
             </li>
+            @endrole
+            @role('Access-Management|Super-Admin')
             <li>
                 <a href="{{ route('access-management') }}">
                     <span class="icon-user"></span>
                     <span>مدیریت دسترسی ها</span>
                 </a>
             </li>
+            @endrole
+            @role('Lands-Management|Super-Admin')
             <li>
                 <a href="{{ route('lands') }}">
                     <span class="icon-user"></span>
                     <span>زمین ها</span>
                 </a>
             </li>
+            @endrole
+            @role('Employee-Management|Super-Admin')
             <li>
                 <a href="{{ route('employees') }}">
                     <span class="fa fa-users"></span>
                     <span>مدیریت کارکنان</span>
                 </a>
             </li>
+            @endrole
+            @role('Support-Management|Super-Admin')
             <li>
                 <a href="{{ route('support') }}">
                     <span class="fa fa-envelope-o"></span>
                     <span>پشتیبانی</span>
                 </a>
             </li>
+            @endrole
+            @role('Shop-Management|Super-Admin')
             <li>
                 <a href="{{ route('variables') }}">
                     <span class="icon-note"></span>
                     <span>محصولات فروشگاه</span>
                 </a>
             </li>
+            @endrole
+            @role('Challenge-Management|Super-Admin')
             <li>
                 <a href="{{ route('challenge') }}">
                     <span class="fa fa-question-circle"></span>
                     <span>چالش ها</span>
                 </a>
             </li>
+            @endrole
+            @role('Dynasty-Management|Super-Admin')
             <li>
                 <a href="{{ route('dynasty') }}">
                     <span class="icon-note"></span>
                     <span>مدیریت سلسله</span>
                 </a>
             </li>
-
+            @endrole
+            @role('Analyze-Management|Super-Admin')
             <li>
                 <a href="#">
                     <span class="icon-note"></span>
                     <span>آمار سراسری</span>
                 </a>
             </li>
+            @endrole
+            @role('Maps-Management|Super-Admin')
             <li>
                 <a href="{{ route('map-management') }}">
                     <span class="fa fa-cart-plus"></span>
                     <span>مدیریت نقشه ها</span>
                 </a>
             </li>
+            @endrole
+            @role('Level-Management|Super-Admin')
             <li>
                 <a href="{{ route('level') }}">
                     <span class="fa fa-cart-plus"></span>
                     <span>مدیریت سطح</span>
                 </a>
             </li>
+            @endrole
+            @role('IP-Management|Super-Admin')
             <li>
                 <a href="{{ route('ip-management') }}">
                     <span class="fa fa-cart-plus"></span>
                     <span>مدیریت IP</span>
                 </a>
             </li>
+            @endrole
+            @role('Calendar-Management|Super-Admin')
             <li>
                 <a href="{{ route('calendar') }}">
                     <span class="fa fa-cart-plus"></span>
                     <span>تقویم</span>
                 </a>
             </li>
+            @endrole
+            @role('User-Reports-Management|Super-Admin')
             <li>
                 <a href="{{ route('reports') }}">
                     <span class="fa fa-cart-plus"></span>
                     <span>گزارشات کاربران</span>
                 </a>
             </li>
+            @endrole
+            @role('System-Variables-Management|Super-Admin')
             <li>
                 <a href="{{ route('system-variables') }}">
                     <span class="fa fa-cart-plus"></span>
                     <span>متغیرهای سیستم</span>
                 </a>
             </li>
+            @endrole
         </ul><!-- /#side-menu -->
     </div><!-- /.side-menu-container -->
 </div><!-- /#sidebar -->

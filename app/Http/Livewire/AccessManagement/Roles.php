@@ -3,11 +3,16 @@
 namespace App\Http\Livewire\AccessManagement;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class Roles extends Component
 {
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
     public $title, $name;
     public $addedPermissions = [];
 
@@ -34,9 +39,14 @@ class Roles extends Component
         $role = Role::create([
             'title' => $this->title,
             'name' => $this->name,
+            'guard_name' => 'web'
         ]);
         if(count($this->addedPermissions) > 0) {
-            $role->syncPermissions($this->addedPermissions);
+            foreach ($this->addedPermissions as $permission)
+            {
+                $userPermission = Permission::where('id',$permission)->first();
+            $role->syncPermissions($permission);
+            }
         }
         session()->flash('success', 'مسئولیت ایجاد شد.');
         $this->emitSelf('roleCreated');
@@ -57,7 +67,7 @@ class Roles extends Component
     public function render()
     {
         return view('livewire.access-management.roles', [
-            'roles' => Role::whereNotIn('name', ['Super Admin'])
+            'roles' => Role::whereNotIn('name', ['Super-Admin'])
             ->with('permissions')->paginate(10, '*', 'roles-listing'),
             'permissions' => Permission::lazy(),
         ]);

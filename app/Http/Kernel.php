@@ -65,6 +65,16 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'role' => \Spatie\Permission\Middlewares\RoleMiddleware::class,
+        'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
+        'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
 //        'check.ip' => \App\Http\Middleware\BlockIpMiddleware::class,
+    ];
+
+    protected $middlewarePriority = [
+        \App\Http\Middleware\Authenticate::class,
+        \Spatie\Permission\Middlewares\RoleMiddleware::class,
+        \Spatie\Permission\Middlewares\PermissionMiddleware::class,
+        \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class
     ];
 }

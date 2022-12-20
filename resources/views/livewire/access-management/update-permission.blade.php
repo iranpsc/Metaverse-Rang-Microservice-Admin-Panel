@@ -33,7 +33,7 @@
         @endif
         <p class="modal-text">به کدام مسئولیت ها این دسترسی را اضافه می کنید؟</p>
         @forelse ($roles as $role)
-            @if ($role->name != 'Super Admin')
+            @if ($role->name != 'Super-Admin')
                 <div class="input-group">
                     <input class="normal" value="{{ $role->id }}" wire:model="addedRoles" type="checkbox" id="permission-{{$role->id}}">
                     <label for="permission-{{$role->id}}">{{ $role->title }}</label>
