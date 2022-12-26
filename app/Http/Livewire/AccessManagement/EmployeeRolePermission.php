@@ -4,6 +4,7 @@ namespace App\Http\Livewire\AccessManagement;
 
 use App\Models\Admin;
 use App\Models\Employee\Employee;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
@@ -42,7 +43,7 @@ class EmployeeRolePermission extends Component
     public function save()
     {
         $this->validate();
-        if(empty($this->addedRoles) && empty($this->addedPermissions)) {
+        if (empty($this->addedRoles) && empty($this->addedPermissions)) {
             $this->addError('noRolesOrPermissionsSelected', 'حداقل یک مسئولیت یا دسترسی به این کارمند اختصاص دهید!');
         } else {
             $employee = Employee::select(['fname', 'lname', 'email', 'phone'])->where('id', $this->employee)->first();
@@ -66,13 +67,14 @@ class EmployeeRolePermission extends Component
         }
     }
 
-    public function delete(Admin $admin) {
-        if($admin->roles) {
-            foreach($admin->roles as $role) {
+    public function delete(Admin $admin)
+    {
+        if ($admin->roles) {
+            foreach ($admin->roles as $role) {
                 $admin->removeRole($role);
             }
         }
-        if($admin->getDirectPermissions()) {
+        if ($admin->getDirectPermissions()) {
             $admin->revokePermissionTo($admin->getDirectPermissions());
         }
         $admin->delete();
@@ -82,12 +84,14 @@ class EmployeeRolePermission extends Component
     public function render()
     {
         return view('livewire.access-management.employee-role-permission', [
-            'admins'      => Admin::with(['roles', 'permissions'])->lazy(),
+            'admins'      => Admin::whereNotIn('id', [Auth::id()])
+                ->with(['roles', 'permissions'])
+                ->lazy(),
             'employees'   => Employee::select(['id', 'fname', 'lname'])->get(),
             'roles'       => Role::whereNotIn('name', ['super-admin'])->get(),
             'permissions' => Permission::lazy(),
         ])
-        ->extends('layouts.app')
-        ->section('content');
+            ->extends('layouts.app')
+            ->section('content');
     }
 }

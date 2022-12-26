@@ -64,6 +64,7 @@
                 </tr>
             @endforeach
         </x-tables.table>
+        {{ $permissions->links() }}
     @else
         <x-alerts.danger>مسئولیتی تعریف نشده است!</x-alerts.danger>
     @endif

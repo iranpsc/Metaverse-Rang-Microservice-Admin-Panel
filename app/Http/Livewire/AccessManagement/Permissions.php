@@ -3,13 +3,18 @@
 namespace App\Http\Livewire\AccessManagement;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
 class Permissions extends Component
 {
+    use WithPagination;
+
     public $title, $name;
     public $addedRoles = [];
+
+    protected $paginationTheme = 'bootstrap';
 
     protected $rules = [
         'title' => 'required|string',

@@ -24,21 +24,23 @@
                 @foreach ($permission->roles as $permissionRole)
                     <li>
                         <span>{{ $permissionRole->title }}</span>
-                        <x-buttons.btn-danger id="{{ $permissionRole->id }}" class="confirm" title="removePermissionRole">حذف</x-buttons.btn-danger>
+                        <x-buttons.btn-danger id="{{ $permissionRole->id }}" class="confirm" title="removePermissionRole">
+                            حذف</x-buttons.btn-danger>
                     </li>
                 @endforeach
             </ul>
         @else
-            <x-alerts.danger>این دسترسی به هیچ  مسئولیتی داده نشده است!</x-alert.info>
+            <x-alerts.danger>این دسترسی به هیچ مسئولیتی داده نشده است!</x-alert.info>
         @endif
         <p class="modal-text">به کدام مسئولیت ها این دسترسی را اضافه می کنید؟</p>
         @forelse ($roles as $role)
-            @if ($role->name != 'Super Admin')
+            @unless($role->name == 'super-admin')
                 <div class="input-group">
-                    <input class="normal" value="{{ $role->id }}" wire:model="addedRoles" type="checkbox" id="permission-{{$role->id}}">
-                    <label for="permission-{{$role->id}}">{{ $role->title }}</label>
+                    <input class="normal" value="{{ $role->id }}" wire:model="addedRoles" type="checkbox"
+                        id="permission-{{ $role->id }}">
+                    <label for="permission-{{ $role->id }}">{{ $role->title }}</label>
                 </div>
-            @endif
+            @endunless
         @empty
             <x-alerts.danger>نقشی تعریف نشده است!</x-alerts.danger>
         @endforelse

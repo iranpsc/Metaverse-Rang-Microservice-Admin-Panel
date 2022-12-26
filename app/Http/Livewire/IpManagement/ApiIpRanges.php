@@ -148,6 +148,8 @@ class ApiIpRanges extends Component
 
     public function render()
     {
-        return view('livewire.ip-management.api-ip-ranges');
+        return view('livewire.ip-management.api-ip-ranges')
+        ->extends('layouts.app')
+        ->section('content');
     }
 }
