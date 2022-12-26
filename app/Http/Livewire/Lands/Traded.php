@@ -24,6 +24,8 @@ class Traded extends Component
             'trades' => Trade::with('feature', 'buyer', 'seller', 'commision')
             ->whereNot('seller_id', 1)
             ->paginate('10', '*', 'traded-lands')
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

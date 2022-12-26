@@ -28,6 +28,8 @@ class Prices extends Component
                 'geometry.coordinates'
             ])
                 ->paginate(10, '*', 'lands-price')
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

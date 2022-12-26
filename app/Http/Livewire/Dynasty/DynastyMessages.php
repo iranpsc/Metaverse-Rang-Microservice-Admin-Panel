@@ -55,6 +55,8 @@ class DynastyMessages extends Component
     {
         return view('livewire.dynasty.dynasty-messages', [
             'dynastyMessages' => DynastyMessage::lazy()
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

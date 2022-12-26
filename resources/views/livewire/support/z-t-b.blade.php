@@ -1,6 +1,6 @@
 <div>
     @if ($tickets->count() > 0)
-        <x-tables.table id="z-t-b">
+        <x-tables.table>
             <x-slot:headers>
                 <th>کد پیام</th>
                 <th>تاریخ ارسال</th>
@@ -145,12 +145,8 @@
                 </x-modals.modal>
             @endforeach
         </x-tables.table>
+        {{ $tickets->links() }}
     @else
         <x-alerts.danger>تیکتی دریافت نشده است</x-alerts.danger>
     @endif
-    @push('js')
-        <script>
-            $("#z-t-b").DataTable()
-        </script>
-    @endpush
 </div>

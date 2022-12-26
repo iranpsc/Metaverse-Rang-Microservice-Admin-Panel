@@ -3,13 +3,18 @@
 namespace App\Http\Livewire\AccessManagement;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class Roles extends Component
 {
+    use WithPagination;
+
     public $title, $name;
     public $addedPermissions = [];
+
+    protected $paginationTheme = 'bootstrap';
 
     protected $rules = [
         'title' => 'required|string',
@@ -57,9 +62,11 @@ class Roles extends Component
     public function render()
     {
         return view('livewire.access-management.roles', [
-            'roles' => Role::whereNotIn('name', ['Super Admin'])
+            'roles' => Role::whereNotIn('name', ['super-admin'])
             ->with('permissions')->paginate(10, '*', 'roles-listing'),
             'permissions' => Permission::lazy(),
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

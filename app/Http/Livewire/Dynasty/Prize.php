@@ -81,6 +81,8 @@ class Prize extends Component
     {
         return view('livewire.dynasty.prize', [
             'prizes' => DynastyPrize::paginate(10)
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

@@ -110,6 +110,8 @@ class Listing extends Component
     {
         return view('livewire.employees.listing', [
             'employees' => $this->employees ?? Employee::paginate(10, '*', 'listing')
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

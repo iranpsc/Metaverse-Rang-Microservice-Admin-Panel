@@ -53,8 +53,10 @@ class Permissions extends Component
     public function render()
     {
         return view('livewire.access-management.permissions', [
-            'roles' => Role::lazy(),
+            'roles' => Role::whereNotIn('name', ['super-admin'])->lazy(),
             'permissions' => Permission::with('roles')->paginate(10, '*', 'permissions-listing')
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

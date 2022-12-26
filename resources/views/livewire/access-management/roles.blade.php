@@ -4,7 +4,7 @@
     @if (session('success'))
         <x-alerts.success>{{ session('success') }}</x-alerts.success>
     @endif
-    <x-modals.modal id="create-role-modal" title="ایجاد مسئولیت">
+    <x-modals.modal id="create-role-modal" size="modal-xl" title="ایجاد مسئولیت">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
@@ -60,6 +60,7 @@
                 </tr>
             @endforeach
         </x-tables.table>
+        {{ $roles->links() }}
     @else
         <x-alerts.danger>مسئولیتی تعریف نشده است!</x-alerts.danger>
     @endif
