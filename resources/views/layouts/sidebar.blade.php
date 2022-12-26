@@ -71,43 +71,43 @@
                 <ul>
                     <li>
                         <a href="{{ route('citizens.registration-info') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-id-card-o"></i>
                             <span>مشخصات ثبت نام</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('citizens.kyc') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-check-square"></i>
                             <span>احراز هویت</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('citizens.bank-accounts') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-bank"></i>
                             <span>حساب های بانکی</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('citizens.deposits') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-money"></i>
                             <span>واریزی ها</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('citizens.withdraws') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-dollar"></i>
                             <span>برداشت ها</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('citizens.profile-details') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-user-circle-o"></i>
                             <span>جزئیات پروفایل</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('citizens.assets') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-credit-card-alt"></i>
                             <span>دارایی ها</span>
                         </a>
                     </li>
@@ -115,43 +115,43 @@
             </li>
             <li>
                 <a href="#" class="dropdown-toggle">
-                    <i class="icon-notebook"></i>
+                    <i class="fa fa-cube"></i>
                     <span>زمین ها</span>
                 </a>
                 <ul>
                     <li>
                         <a href="{{ route('features.all') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-cubes"></i>
                             <span>کل زمین ها</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('features.prices') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-money"></i>
                             <span>قیمت زمین ها</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('features.sold') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-area-chart"></i>
                             <span>زمین های فروخته شده</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('features.trades') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-exchange"></i>
                             <span>مبادله زمین</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('features.priced') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-dollar"></i>
                             <span>قیمت گذاری زمین</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('features.pricing-limits') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-bar-chart"></i>
                             <span>محدودیت قیمت گذاری</span>
                         </a>
                     </li>
@@ -165,19 +165,19 @@
                 <ul>
                     <li>
                         <a href="{{ route('access-management.employees') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-handshake-o"></i>
                             <span>مسئولیت ها و دسترسی های کارمندان</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('access-management.roles') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-address-book-o"></i>
                             <span>مسئولیت ها</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('access-management.permissions') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-check-square"></i>
                             <span>دسترسی ها</span>
                         </a>
                     </li>
@@ -185,43 +185,43 @@
             </li>
             <li>
                 <a href="#" class="dropdown-toggle">
-                    <i class="icon-user"></i>
+                    <i class="fa fa-user-circle-o"></i>
                     <span>مدیریت کارکنان</span>
                 </a>
                 <ul>
                     <li>
                         <a href="{{ route('employees.info') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-address-card"></i>
                             <span>مشخصات حقیقی</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('employees.bank-info') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-bank"></i>
                             <span>اطلاعات بانکی</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('employees.documents') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="icon-docs"></i>
                             <span>اسناد</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('employees.salary') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-money"></i>
                             <span>حقوق و دستمزد</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('employees.time-card') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-hourglass-end"></i>
                             <span>کارت زمان</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('employees.tasks') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-hand-paper-o"></i>
                             <span>وظایف محوله</span>
                         </a>
                     </li>
@@ -229,25 +229,25 @@
             </li>
             <li>
                 <a href="#" class="dropdown-toggle">
-                    <i class="icon-user"></i>
+                    <i class="icon-phone"></i>
                     <span>پشتیبانی</span>
                 </a>
                 <ul>
                     <li>
                         <a href="{{ route('support.citizens-safety') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-universal-access"></i>
                             <span>امنیت شهروندان</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('support.technical-support') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-cogs"></i>
                             <span>پشتیبانی فنی</span>
                         </a>
                     </li>
                     <li>
                         <a href="{{ route('support.investment') }}" class="">
-                            <i class="icon-settings"></i>
+                            <i class="fa fa-dollar"></i>
                             <span>سرمایه گذاری</span>
                         </a>
                     </li>
