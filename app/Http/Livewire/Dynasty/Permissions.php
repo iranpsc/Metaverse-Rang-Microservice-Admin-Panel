@@ -51,6 +51,8 @@ class Permissions extends Component
 
     public function render()
     {
-        return view('livewire.dynasty.permissions');
+        return view('livewire.dynasty.permissions')
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

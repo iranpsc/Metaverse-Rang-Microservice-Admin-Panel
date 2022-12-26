@@ -64,46 +64,258 @@
                 </a>
             </li>
             <li>
-                <a href="{{ route('citizens') }}">
-                    <span class="icon-user"></span>
+                <a href="#" class="dropdown-toggle">
+                    <i class="icon-user"></i>
                     <span>شهروندان</span>
                 </a>
+                <ul>
+                    <li>
+                        <a href="{{ route('citizens.registration-info') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>مشخصات ثبت نام</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('citizens.kyc') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>احراز هویت</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('citizens.bank-accounts') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>حساب های بانکی</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('citizens.deposits') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>واریزی ها</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('citizens.withdraws') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>برداشت ها</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('citizens.profile-details') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>جزئیات پروفایل</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('citizens.assets') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>دارایی ها</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
             <li>
-                <a href="{{ route('access-management') }}">
-                    <span class="icon-user"></span>
-                    <span>مدیریت دسترسی ها</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ route('lands') }}">
-                    <span class="icon-user"></span>
+                <a href="#" class="dropdown-toggle">
+                    <i class="icon-notebook"></i>
                     <span>زمین ها</span>
                 </a>
+                <ul>
+                    <li>
+                        <a href="{{ route('features.all') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>کل زمین ها</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('features.prices') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>قیمت زمین ها</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('features.sold') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>زمین های فروخته شده</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('features.trades') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>مبادله زمین</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('features.priced') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>قیمت گذاری زمین</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('features.pricing-limits') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>محدودیت قیمت گذاری</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
             <li>
-                <a href="{{ route('employees') }}">
-                    <span class="fa fa-users"></span>
+                <a href="#" class="dropdown-toggle">
+                    <i class="icon-key"></i>
+                    <span>مدیریت دسترسی ها</span>
+                </a>
+                <ul>
+                    <li>
+                        <a href="{{ route('access-management.employees') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>مسئولیت ها و دسترسی های کارمندان</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('access-management.roles') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>مسئولیت ها</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('access-management.permissions') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>دسترسی ها</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <a href="#" class="dropdown-toggle">
+                    <i class="icon-user"></i>
                     <span>مدیریت کارکنان</span>
                 </a>
+                <ul>
+                    <li>
+                        <a href="{{ route('employees.info') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>مشخصات حقیقی</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('employees.bank-info') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>اطلاعات بانکی</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('employees.documents') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>اسناد</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('employees.salary') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>حقوق و دستمزد</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('employees.time-card') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>کارت زمان</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('employees.tasks') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>وظایف محوله</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
             <li>
-                <a href="{{ route('support') }}">
-                    <span class="fa fa-envelope-o"></span>
+                <a href="#" class="dropdown-toggle">
+                    <i class="icon-user"></i>
                     <span>پشتیبانی</span>
                 </a>
+                <ul>
+                    <li>
+                        <a href="{{ route('support.citizens-safety') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>امنیت شهروندان</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('support.technical-support') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>پشتیبانی فنی</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('support.investment') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>سرمایه گذاری</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('support.inspection') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>بازرسی</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('support.protection') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>حراست</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('support.ztb-management') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>مدیریت کل ز.ت.ب</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
             <li>
-                <a href="{{ route('variables') }}">
-                    <span class="icon-note"></span>
-                    <span>محصولات فروشگاه</span>
+                <a href="#" class="dropdown-toggle">
+                    <i class="icon-store"></i>
+                    <span>فروشگاه</span>
                 </a>
+                <ul>
+                    <li>
+                        <a href="{{ route('store.packages') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>فروشگاه</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('store.currencies') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>ارزها</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
             <li>
-                <a href="{{ route('dynasty') }}">
-                    <span class="icon-note"></span>
-                    <span>مدیریت سلسله</span>
+                <a href="#" class="dropdown-toggle">
+                    <i class="icon-store"></i>
+                    <span>سلسله</span>
                 </a>
+                <ul>
+                    <li>
+                        <a href="{{ route('dynasty.prizes') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>پیام های سلسله</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('dynasty.messages') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>پیام های سلسله</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('dynasty.permissions') }}" class="">
+                            <i class="icon-settings"></i>
+                            <span>دسترسی ها</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
 
             <li>

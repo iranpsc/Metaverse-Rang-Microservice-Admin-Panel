@@ -34,6 +34,8 @@ class Listing extends Component
             ->orderBy('id', 'asc')
             ->paginate(10, ['*'], 'lands-listing')
             : $this->properties
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

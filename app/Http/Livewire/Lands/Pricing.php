@@ -19,6 +19,8 @@ class Pricing extends Component
             'pricings' => SellFeatureRequest::with('feature')
             ->where('status', 0)
             ->paginate(10, '*', 'pricing-lands')
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

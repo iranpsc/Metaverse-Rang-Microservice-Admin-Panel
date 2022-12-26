@@ -8,6 +8,8 @@ class Salary extends Component
 {
     public function render()
     {
-        return view('livewire.employees.salary');
+        return view('livewire.employees.salary')
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

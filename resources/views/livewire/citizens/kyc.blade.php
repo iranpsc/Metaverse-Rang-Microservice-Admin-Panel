@@ -24,23 +24,15 @@
                     <td>
                         <button type="button" class="btn round btn-primary btn-sm" data-bs-toggle="modal"
                             data-bs-target="#modal-kyc-{{ $kyc->id }}">مشاهده</button>
-                        <livewire:citizens.kyc.details :kyc="$kyc" :wire:key="$kyc->id">
+                        <livewire:citizens.kyc.details :kyc="$kyc" :wire:key="'kyc-'.$kyc->id">
                     </td>
                     <td>
                         @php
-                            switch ($kyc->status) {
-                                case 1:
-                                    echo '<span class="badge badge-success">تایید شده</span>';
-                                    break;
-
-                                case 0:
-                                    echo '<span class="badge badge-warning">درحال پردازش</span>';
-                                    break;
-
-                                case -1:
-                                    echo '<span class="badge badge-danger">رد شده</span>';
-                                    break;
-                            }
+                            echo match($kyc->status) {
+                                1 => '<span class="badge badge-success">تایید شده</span>',
+                                0 => '<span class="badge badge-warning">درحال پردازش</span>',
+                                -1 => '<span class="badge badge-danger">رد شده</span>'
+                            };
                         @endphp
                     </td>
                 </tr>

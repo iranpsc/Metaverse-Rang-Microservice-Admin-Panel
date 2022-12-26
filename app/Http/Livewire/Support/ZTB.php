@@ -6,18 +6,15 @@ use App\Models\Ticket;
 use Livewire\Component;
 use App\Notifications\TicketResponded;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class ZTB extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
-    public $tickets, $response, $attachment, $department, $importance;
+    public $response, $attachment, $department, $importance;
 
-    public function mount($tickets) {
-        $this->tickets = $tickets->reject(function($ticket) {
-            return $ticket->department != 'ztb';
-        });
-    }
+    protected $paginationTheme = 'bootstrap';
 
     protected $rules = [
         'response' => 'required|string',
@@ -72,6 +69,13 @@ class ZTB extends Component
     }
     public function render()
     {
-        return view('livewire.support.z-t-b');
+        return view('livewire.support.z-t-b', [
+            'tickets' => Ticket::with('responses')
+                ->whereIn('department', ['ztb'])
+                ->orderBy('status')
+                ->orderBy('importance', 'desc')->paginate(10)
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

@@ -6,19 +6,15 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Ticket;
 use App\Notifications\TicketResponded;
+use Livewire\WithPagination;
 
 class CitizensSafety extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
-    public $tickets, $response, $attachment, $department, $importance;
+    public $response, $attachment, $department, $importance;
 
-    public function mount($tickets)
-    {
-        $this->tickets = $tickets->reject(function ($ticket) {
-            return $ticket->department != 'citizens_safety';
-        });
-    }
+    protected $paginationTheme = 'bootstrap';
 
     protected $rules = [
         'response' => 'required|string',
@@ -76,6 +72,13 @@ class CitizensSafety extends Component
     }
     public function render()
     {
-        return view('livewire.support.citizens-safety');
+        return view('livewire.support.citizens-safety', [
+            'tickets' => Ticket::with('responses')
+                ->whereIn('department', ['citizens_safety'])
+                ->orderBy('status')
+                ->orderBy('importance', 'desc')->paginate(10)
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

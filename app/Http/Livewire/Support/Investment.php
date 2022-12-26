@@ -6,18 +6,15 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Ticket;
 use App\Notifications\TicketResponded;
+use Livewire\WithPagination;
 
 class Investment extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
-    public $tickets, $response, $attachment, $department, $importance;
+    public $response, $attachment, $department, $importance;
 
-    public function mount($tickets) {
-        $this->tickets = $tickets->reject(function($ticket) {
-            return $ticket->department != 'investment';
-        });
-    }
+    protected $paginationTheme = 'bootstrap';
 
     protected $rules = [
         'response' => 'required|string',
@@ -72,6 +69,13 @@ class Investment extends Component
     }
     public function render()
     {
-        return view('livewire.support.investment');
+        return view('livewire.support.investment', [
+            'tickets' => Ticket::with('responses')
+                ->whereIn('department', ['investment'])
+                ->orderBy('status')
+                ->orderBy('importance', 'desc')->paginate(10)
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

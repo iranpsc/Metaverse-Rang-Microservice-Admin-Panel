@@ -23,6 +23,8 @@ class Sold extends Component
             'trades' => Trade::with('feature', 'buyer')
             ->where('seller_id', 1)
             ->paginate(10, '*', 'sold-lands')
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

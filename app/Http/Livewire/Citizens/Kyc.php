@@ -21,6 +21,8 @@ class Kyc extends Component
 
     public function render()
     {
-        return view('livewire.citizens.kyc');
+        return view('livewire.citizens.kyc')
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

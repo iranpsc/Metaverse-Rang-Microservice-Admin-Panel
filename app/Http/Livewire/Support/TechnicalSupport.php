@@ -6,18 +6,15 @@ use App\Models\Ticket;
 use App\Notifications\TicketResponded;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class TechnicalSupport extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
-    public $tickets, $response, $attachment, $department, $importance;
+    public $response, $attachment, $department, $importance;
 
-    public function mount($tickets) {
-        $this->tickets = $tickets->reject(function($ticket) {
-            return $ticket->department != 'technical_support';
-        });
-    }
+    protected $paginationTheme = 'bootstrap';
 
     protected $rules = [
         'response' => 'required|string',
@@ -29,14 +26,16 @@ class TechnicalSupport extends Component
         'attachment.mimes' => 'فرمت فایل انتخاب شده معتبر نمی باشد'
     ];
 
-    public function updated($propertyName) {
+    public function updated($propertyName)
+    {
         $this->validateOnly($propertyName);
     }
 
-    public function sendResponse(Ticket $ticket) {
+    public function sendResponse(Ticket $ticket)
+    {
         $this->validate();
 
-        if($this->attachment) {
+        if ($this->attachment) {
             $path = env('FTP_ENDPOINT') . $this->attachment->store('/tickets/ticketResponses/' . $ticket->id);
         } else {
             $path = "";
@@ -59,7 +58,8 @@ class TechnicalSupport extends Component
         session()->flash('success', 'پاسخ تیکت ارسال شد');
     }
 
-    public function sendTo(Ticket $ticket) {
+    public function sendTo(Ticket $ticket)
+    {
         $ticket->update([
             'department' => $this->department,
             'importance' => $this->importance
@@ -69,6 +69,13 @@ class TechnicalSupport extends Component
 
     public function render()
     {
-        return view('livewire.support.technical-support');
+        return view('livewire.support.technical-support', [
+            'tickets' => Ticket::with('responses')
+                ->whereIn('department', ['technical_support'])
+                ->orderBy('status')
+                ->orderBy('importance', 'desc')->paginate(10)
+        ])
+            ->extends('layouts.app')
+            ->section('content');
     }
 }

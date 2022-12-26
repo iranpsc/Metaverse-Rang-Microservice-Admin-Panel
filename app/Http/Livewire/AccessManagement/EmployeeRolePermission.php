@@ -84,8 +84,10 @@ class EmployeeRolePermission extends Component
         return view('livewire.access-management.employee-role-permission', [
             'admins'      => Admin::with(['roles', 'permissions'])->lazy(),
             'employees'   => Employee::select(['id', 'fname', 'lname'])->get(),
-            'roles'       => Role::whereNotIn('name', ['Super Admin'])->get(),
+            'roles'       => Role::whereNotIn('name', ['super-admin'])->get(),
             'permissions' => Permission::lazy(),
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }
