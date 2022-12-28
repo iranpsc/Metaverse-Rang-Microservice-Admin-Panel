@@ -22,13 +22,14 @@
     <link href="{{ asset('assets/plugins/iCheck/skins/square/_all.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/colors.css') }}" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('assets/plugins/data-table/DataTables-1.10.16/css/jquery.dataTables.css') }}">
-    <link href="{{asset('assets/plugins/datepicker/jquery.ui.datepicker1.8-all.css')}}" rel="stylesheet">
+    <link rel="stylesheet"
+        href="{{ asset('assets/plugins/data-table/DataTables-1.10.16/css/jquery.dataTables.css') }}">
+    <link href="{{ asset('assets/plugins/datepicker/jquery.ui.datepicker1.8-all.css') }}" rel="stylesheet">
     <!-- END CSS -->
 
-     <!-- BEGIN PAGE CSS -->
-     <link href="{{ asset('assets/plugins/clockpicker/dist/bootstrap-clockpicker.min.css') }}" rel="stylesheet">
-     <!-- END PAGE CSS -->
+    <!-- BEGIN PAGE CSS -->
+    <link href="{{ asset('assets/plugins/clockpicker/dist/bootstrap-clockpicker.min.css') }}" rel="stylesheet">
+    <!-- END PAGE CSS -->
 
     @livewireStyles
 
@@ -79,7 +80,7 @@
                         <a href="#messages" class="btn">
                             <i class="icon-envelope"></i>
                             <span class="badge badge-primary">
-                                {{ count(Auth::user()->unreadNotifications)}}
+                                {{ count(Auth::user()->unreadNotifications) }}
                             </span>
                         </a>
                     </li>
@@ -189,7 +190,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="#change-password-modal" data-bs-toggle="modal">
+                                <a href="{{ route('password.change') }}">
                                     <i class="icon-key"></i>
                                     تغییر رمز عبور
                                 </a>
@@ -197,17 +198,23 @@
                             <li class="divider"></li>
                             <li>
                                 <a href="chat.html">
-                                    <span class="badge badge-primary float-end"> {{ count(Auth::user()->unreadNotifications)}} </span>
+                                    <span class="badge badge-primary float-end">
+                                        {{ count(Auth::user()->unreadNotifications) }} </span>
                                     <i class="icon-envelope"></i>
                                     تیکت های جدید
                                 </a>
                             </li>
                             <li class="divider"></li>
                             <li>
-                                <a href="{{ route('logout') }}">
-                                    <i class="icon-power"></i>
-                                    خروج
+                                <a href="{{ route('logout') }}"
+                                    onclick="event.preventDefault();
+                                                     document.getElementById('logout-form').submit();">
+                                    {{ __('خروج') }}
                                 </a>
+
+                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                    @csrf
+                                </form>
                             </li>
                         </ul>
                     </li>

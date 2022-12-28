@@ -3,8 +3,6 @@
 <!-- BEGIN WRAPPER -->
 <div id="wrapper">
     {{-- CHANGE PASSWORD MODAL --}}
-    @livewire('auth.change-password')
-    {{-- CHANGE PASSWORD MODAL --}}
     @include('layouts.sidebar')
     <!-- BEGIN PAGE CONTENT -->
     <div id="page-content">
