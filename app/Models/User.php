@@ -2,8 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Challenge\UserChallengePrizes;
+use App\Models\Challenge\UserQuestionAnswer;
+use App\Models\Challenge\UserQuestionPrizes;
 use App\Models\Level\UserLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -137,6 +141,23 @@ class User extends Authenticatable
 
     public function activities() {
         return $this->hasMany(UserActivity::class);
+    }
+
+
+    /**
+     * @return HasMany
+     */
+    public function userChallengePrizes(): HasMany
+    {
+        return $this->hasMany(UserChallengePrizes::class);
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function userQuestionAnswer(): HasMany
+    {
+        return $this->hasMany(related: UserQuestionAnswer::class);
     }
 
 

@@ -15,7 +15,7 @@
                     <td>{{ $user->activities->sum('total') }}</td>
                     <td>{{ $user->followers->count() }}</td>
                     <td>--</td>
-                    <td>{{ $user->log->score }}</td>
+                    <td>{{ $user->log->score ?? 0 }}</td>
                 </tr>
             @endforeach
         </x-tables.table>
