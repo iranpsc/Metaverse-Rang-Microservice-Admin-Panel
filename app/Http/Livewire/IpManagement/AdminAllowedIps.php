@@ -124,6 +124,8 @@ class AdminAllowedIps extends Component
     }
     public function render()
     {
-        return view('livewire.ip-management.admin-allowed-ips');
+        return view('livewire.ip-management.admin-allowed-ips')
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

@@ -145,12 +145,8 @@
                 </x-modals.modal>
             @endforeach
         </x-tables.table>
+        {{ $tickets->links() }}
     @else
         <x-alerts.danger>تیکتی دریافت نشده است</x-alerts.danger>
     @endif
-    @push('js')
-        <script>
-            $("#citizens-safety").DataTable()
-        </script>
-    @endpush
 </div>

@@ -8,6 +8,8 @@ class Bank extends Component
 {
     public function render()
     {
-        return view('livewire.employees.bank');
+        return view('livewire.employees.bank')
+        ->extends('layouts.app')
+        ->section('content');;
     }
 }

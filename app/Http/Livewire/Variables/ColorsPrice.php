@@ -101,6 +101,8 @@ class ColorsPrice extends Component
 
     public function render()
     {
-        return view('livewire.variables.colors-price');
+        return view('livewire.variables.colors-price')
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

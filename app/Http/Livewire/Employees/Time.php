@@ -8,6 +8,8 @@ class Time extends Component
 {
     public function render()
     {
-        return view('livewire.employees.time');
+        return view('livewire.employees.time')
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

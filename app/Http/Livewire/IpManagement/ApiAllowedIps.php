@@ -122,6 +122,8 @@ class ApiAllowedIps extends Component
 
     public function render()
     {
-        return view('livewire.ip-management.api-allowed-ips');
+        return view('livewire.ip-management.api-allowed-ips')
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

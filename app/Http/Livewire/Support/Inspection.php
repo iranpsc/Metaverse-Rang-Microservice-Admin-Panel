@@ -6,18 +6,15 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Ticket;
 use App\Notifications\TicketResponded;
+use Livewire\WithPagination;
 
 class Inspection extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
-    public $tickets, $response, $attachment, $department, $importance;
+    public $response, $attachment, $department, $importance;
 
-    public function mount($tickets) {
-        $this->tickets = $tickets->reject(function($ticket) {
-            return $ticket->department != 'inspection';
-        });
-    }
+    protected $paginationTheme = 'bootstrap';
 
     protected $rules = [
         'response' => 'required|string',
@@ -72,6 +69,13 @@ class Inspection extends Component
     }
     public function render()
     {
-        return view('livewire.support.inspection');
+        return view('livewire.support.inspection', [
+            'tickets' => Ticket::with('responses')
+                ->whereIn('department', ['technical_support'])
+                ->orderBy('status')
+                ->orderBy('importance', 'desc')->paginate(10)
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

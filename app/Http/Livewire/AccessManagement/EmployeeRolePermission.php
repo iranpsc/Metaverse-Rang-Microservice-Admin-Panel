@@ -4,16 +4,14 @@ namespace App\Http\Livewire\AccessManagement;
 
 use App\Models\Admin;
 use App\Models\Employee\Employee;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
-use Livewire\WithPagination;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class EmployeeRolePermission extends Component
 {
-    use WithPagination;
-
     public $password, $accessPassword, $employee;
     public $addedRoles = [];
     public $addedPermissions = [];
@@ -45,8 +43,7 @@ class EmployeeRolePermission extends Component
     public function save()
     {
         $this->validate();
-//        && empty($this->addedPermissions)
-        if(empty($this->addedRoles)) {
+        if (empty($this->addedRoles) && empty($this->addedPermissions)) {
             $this->addError('noRolesOrPermissionsSelected', 'حداقل یک مسئولیت یا دسترسی به این کارمند اختصاص دهید!');
         } else {
             $employee = Employee::select(['fname', 'lname', 'email', 'phone'])->where('id', $this->employee)->first();
@@ -59,11 +56,7 @@ class EmployeeRolePermission extends Component
                 'active' => 1
             ]);
             if (count($this->addedRoles) > 0) {
-                foreach ($this->addedRoles as $role)
-                {
-                    $adminRole = Role::where('id',$role)->first();
-                    $admin->assignRole($adminRole);
-                }
+                $admin->assignRole($this->addedRoles);
             }
             if (count($this->addedPermissions)) {
                 $admin->givePermissionTo($this->addedPermissions);
@@ -74,13 +67,14 @@ class EmployeeRolePermission extends Component
         }
     }
 
-    public function delete(Admin $admin) {
-        if($admin->roles) {
-            foreach($admin->roles as $role) {
+    public function delete(Admin $admin)
+    {
+        if ($admin->roles) {
+            foreach ($admin->roles as $role) {
                 $admin->removeRole($role);
             }
         }
-        if($admin->getDirectPermissions()) {
+        if ($admin->getDirectPermissions()) {
             $admin->revokePermissionTo($admin->getDirectPermissions());
         }
         $admin->delete();
@@ -90,10 +84,14 @@ class EmployeeRolePermission extends Component
     public function render()
     {
         return view('livewire.access-management.employee-role-permission', [
-            'admins'      => Admin::with(['roles', 'permissions'])->paginate(10),
+            'admins'      => Admin::whereNotIn('id', [Auth::id()])
+                ->with(['roles', 'permissions'])
+                ->lazy(),
             'employees'   => Employee::select(['id', 'fname', 'lname'])->get(),
-            'roles'       => Role::whereNotIn('name', ['Super-Admin'])->get(),
+            'roles'       => Role::whereNotIn('name', ['super-admin'])->get(),
             'permissions' => Permission::lazy(),
-        ]);
+        ])
+            ->extends('layouts.app')
+            ->section('content');
     }
 }

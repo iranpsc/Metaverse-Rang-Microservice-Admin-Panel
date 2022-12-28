@@ -11,10 +11,10 @@ class Roles extends Component
 {
     use WithPagination;
 
-    protected $paginationTheme = 'bootstrap';
-
     public $title, $name;
     public $addedPermissions = [];
+
+    protected $paginationTheme = 'bootstrap';
 
     protected $rules = [
         'title' => 'required|string',
@@ -39,14 +39,9 @@ class Roles extends Component
         $role = Role::create([
             'title' => $this->title,
             'name' => $this->name,
-            'guard_name' => 'web'
         ]);
         if(count($this->addedPermissions) > 0) {
-            foreach ($this->addedPermissions as $permission)
-            {
-                $userPermission = Permission::where('id',$permission)->first();
-            $role->syncPermissions($permission);
-            }
+            $role->syncPermissions($this->addedPermissions);
         }
         session()->flash('success', 'مسئولیت ایجاد شد.');
         $this->emitSelf('roleCreated');
@@ -67,9 +62,11 @@ class Roles extends Component
     public function render()
     {
         return view('livewire.access-management.roles', [
-            'roles' => Role::whereNotIn('name', ['Super-Admin'])
+            'roles' => Role::whereNotIn('name', ['super-admin'])
             ->with('permissions')->paginate(10, '*', 'roles-listing'),
             'permissions' => Permission::lazy(),
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }

@@ -16,6 +16,8 @@ class Assets extends Component
     {
         return view('livewire.citizens.assets', [
             'assets' => Asset::with('user', 'user.features')->paginate(10)
-        ]);
+        ])
+        ->extends('layouts.app')
+        ->section('content');
     }
 }
