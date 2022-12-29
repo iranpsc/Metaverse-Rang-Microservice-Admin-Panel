@@ -35,4 +35,9 @@ class Kyc extends Model
     public function user() {
         return $this->belongsTo(User::class);
     }
+
+    public function errors()
+    {
+        return $this->morphMany(KycError::class, 'errorable');
+    }
 }

@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Models\Challenge\UserChallengePrizes;
 use App\Models\Challenge\UserQuestionAnswer;
-use App\Models\Challenge\UserQuestionPrizes;
 use App\Models\Level\UserLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -158,6 +157,11 @@ class User extends Authenticatable
     public function userQuestionAnswer(): HasMany
     {
         return $this->hasMany(related: UserQuestionAnswer::class);
+    }
+
+    public function bankAccounts()
+    {
+        return $this->morphMany(Bankaccount::class, 'bankable');
     }
 
 

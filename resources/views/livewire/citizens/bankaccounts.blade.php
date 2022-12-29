@@ -1,30 +1,36 @@
 <div>
     <x-forms.search-box wire:model="searchTerm" placeholder="نام یا نام خانوادگی را وارد کنید"></x-forms.search-box>
-    @if ($kycs->count() > 0)
+    @if ($bankAccounts->count() > 0)
         <x-tables.table>
             <x-slot:headers>
                 <th>نام</th>
                 <th>نام خانوادگی</th>
                 <th>نام بانک</th>
                 <th>شماره شبا</th>
+                <th>شماره کارت</th>
                 <th>وضعیت</th>
+                <th>ملاحضات</th>
             </x-slot:headers>
-            @foreach ($kycs as $kyc)
+            @foreach ($bankAccounts as $bankAccount)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td>{{ $kyc->lname }}</td>
-                    <td>{{ $kyc->fname }}</td>
-                    <td>{{ $kyc->bank }}</td>
-                    <td>{{ $kyc->shaba }}</td>
+                    <td>{{ $bankAccount->bankable->kyc->fname ?? $bankAccount->bankable->name }}</td>
+                    <td>{{ $bankAccount->bankable->kyc->lname ?? '' }}</td>
+                    <td>{{ $bankAccount->bank_name }}</td>
+                    <td>{{ $bankAccount->shaba_num }}</td>
+                    <td>{{ $bankAccount->card_num }}</td>
                     <td>
                         @php
-                            switch ($kyc->status) {
+                            switch ($bankAccount->status) {
+                                case 2:
+                                    echo '<span class="badge badge-warning">اصلاح شده</span>';
+                                    break;
                                 case 1:
                                     echo '<span class="badge badge-success">تایید شده</span>';
                                     break;
 
                                 case 0:
-                                    echo '<span class="badge badge-warning">درحال پردازش</span>';
+                                    echo '<span class="badge badge-warning">درحال بررسی</span>';
                                     break;
 
                                 case -1:
@@ -33,6 +39,101 @@
                             }
                         @endphp
                     </td>
+                    <td>
+                        <x-buttons.btn-primary class="my-2" data-bs-toggle="modal"
+                            data-bs-target="#view-bank-accounts-modal-{{ $bankAccount->id }}">مشاهده
+                        </x-buttons.btn-primary>
+                        <x-modals.modal id="view-bank-accounts-modal-{{ $bankAccount->id }}" title="جزئیات حساب بانکی">
+                            @if (session('success'))
+                                <x-alerts.success>{{ session('success') }}</x-alerts.success>
+                            @endif
+                            @if (session('error'))
+                                <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
+                            @endif
+                            <x-tables.table>
+                                <x-slot name="headers">
+                                    <th>عنوان</th>
+                                    <th>مقدار</th>
+                                    @unless ($bankAccount->status === 1)
+                                    <th>بررسی</th>
+                                    @endunless
+                                </x-slot>
+                                <tr>
+                                    <td>1</td>
+                                    <td>نام بانک</td>
+                                    <td>{{ $bankAccount->bank_name }}</td>
+                                    @unless ($bankAccount->status === 1)
+                                        <td class="form-box">
+                                            <button class="btn btn-danger btn-sm round reject">وارد کردن دلیل اشکال</button>
+                                            <div class="textarea">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <textarea wire:model.defer="bank_name_err" class="form-control rounded" cols="20" rows="2"></textarea>
+                                                    </div>
+                                                    <div class="card-footer">
+                                                        <button class="btn btn-primary round btn-sm save"
+                                                            wire:click="save_errors('bank_name_err', {{$bankAccount}})">ثبت</button>
+                                                        <button class="btn btn-danger round btn-sm close-btn">بستن</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    @endunless
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>شماره شبا</td>
+                                    <td>{{ $bankAccount->shaba_num }}</td>
+                                    @unless ($bankAccount->status === 1)
+                                    <td class="form-box">
+                                        <button class="btn btn-danger btn-sm round reject">وارد کردن دلیل اشکال</button>
+                                        <div class="textarea">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <textarea wire:model.defer="shaba_num_err" class="form-control rounded" cols="20" rows="2"></textarea>
+                                                </div>
+                                                <div class="card-footer">
+                                                    <button class="btn btn-primary round btn-sm save"
+                                                        wire:click="save_errors('shaba_num_err', {{$bankAccount}})">ثبت</button>
+                                                    <button class="btn btn-danger round btn-sm close-btn">بستن</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    @endunless
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>شماره کارت</td>
+                                    <td>{{ $bankAccount->card_num }}</td>
+                                     @unless ($bankAccount->status === 1)
+                                     <td class="form-box">
+                                         <button class="btn btn-danger btn-sm round reject">وارد کردن دلیل اشکال</button>
+                                        <div class="textarea">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <textarea wire:model.defer="card_num_err" class="form-control rounded" cols="20" rows="2"></textarea>
+                                                </div>
+                                                <div class="card-footer">
+                                                    <button class="btn btn-primary round btn-sm save"
+                                                    wire:click="save_errors('card_num_err', {{$bankAccount}})">ثبت</button>
+                                                    <button class="btn btn-danger round btn-sm close-btn">بستن</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    @endunless
+                                </tr>
+                            </x-tables.table>
+                            <x-slot name="footer">
+                                @unless ($bankAccount->status == 1)
+                                    <button class="mx-auto btn btn-primary round"
+                                        wire:click="save({{$bankAccount}})">ثبت</button>
+                                @endunless
+                                <button class="btn btn-danger round mx-auto" data-bs-dismiss="modal">بستن</button>
+                            </x-slot>
+                        </x-modals.modal>
+                    </td>
                 </tr>
             @endforeach
         </x-tables.table>
@@ -40,3 +141,36 @@
         <x-alerts.danger>حسباب بانکی ثبت نشده است</x-alerts.danger>
     @endif
 </div>
+
+@push('js')
+    <script>
+        $('.reject').on('click', function(e) {
+            let el = event.target;
+            let parent = $(el).parent();
+            $(parent).children('.textarea').css('display', 'block');
+        })
+
+        $('.close-btn').on('click', function(event) {
+            let el = event.target;
+            $(el).parent().parent().parent().css('display', 'none');
+        })
+    </script>
+@endpush
+
+@push('css')
+    <style>
+        .form-box {
+            position: relative;
+            overflow: none;
+        }
+
+        .textarea {
+            width: 100%;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            z-index: 100;
+            display: none;
+        }
+    </style>
+@endpush

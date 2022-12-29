@@ -29,8 +29,9 @@
                     <td>
                         @php
                             echo match($kyc->status) {
+                                2 => '<span class="badge badge-warning">اصلاح شده</span>',
                                 1 => '<span class="badge badge-success">تایید شده</span>',
-                                0 => '<span class="badge badge-warning">درحال پردازش</span>',
+                                0 => '<span class="badge badge-warning">بررسی نشده</span>',
                                 -1 => '<span class="badge badge-danger">رد شده</span>'
                             };
                         @endphp

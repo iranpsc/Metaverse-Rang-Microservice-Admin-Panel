@@ -32,7 +32,7 @@ class KycDeniedNotification extends Notification
      */
     public function via($notifiable)
     {
-        return ['mail', 'database'];
+        return ['database'];
     }
 
     /**
@@ -58,6 +58,9 @@ class KycDeniedNotification extends Notification
     public function toArray($notifiable)
     {
         return [
+            'related-to' => 'kyc',
+            'sender-image' => 'https://dl.qzparadise.ir/public/metarang/logo.png',
+            'sender-name' => 'متارنگ',
             'message' => $this->message,
         ];
     }
