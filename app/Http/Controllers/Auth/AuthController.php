@@ -37,7 +37,7 @@ class AuthController extends Controller
             ]);
         }
 
-        if($user->active == 0) {
+        if(!$user->active) {
             return back()->with('error', [
                 'type' => 'danger',
                 'message' => 'کاربر مسدود است'

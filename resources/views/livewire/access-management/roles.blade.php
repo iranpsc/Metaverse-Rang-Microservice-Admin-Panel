@@ -22,10 +22,15 @@
         </x-forms.group>
         <p class="modal-text">کدام دسترسی ها را به این مسئولیت می دهید؟</p>
         @forelse ($permissions as $permission)
-            <div class="input-group">
-                <input class="normal" value="{{ $permission->id }}" wire:model="addedPermissions" type="checkbox" id="role-permissions-{{$permission->id}}">
-                <label for="role-permissions-{{$permission->id}}">{{ $permission->title }}</label>
+
+        <div class="row">
+            <div class="col-sm-3">
+                <div class="input-group">
+                    <input class="normal" value="{{ $permission->id }}" wire:model="addedPermissions" type="checkbox" id="role-permissions-{{$permission->id}}">
+                    <label for="role-permissions-{{$permission->id}}">{{ $permission->title }}</label>
+                </div>
             </div>
+        </div>
         @empty
             <x-alerts.danger>نقشی تعریف نشده است!</x-alerts.danger>
         @endforelse
