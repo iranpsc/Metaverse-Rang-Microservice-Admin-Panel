@@ -2,7 +2,6 @@
 
 namespace App\Http\Livewire\Citizens\Kyc;
 
-use App\Models\KycError;
 use App\Notifications\KycDeniedNotification;
 use Livewire\Component;
 
@@ -24,47 +23,47 @@ class Details extends Component
     public $prove_picture_err;
     public $resume_err;
 
-    public $errors = [];
+    public $kyc_errors = [];
 
     public function save_errors($input)
     {
 
         switch ($input) {
             case 'fname_err':
-                array_push($this->errors, ['fname_err' => $this->fname_err]);
+                array_push($this->kyc_errors, ['fname' => $this->fname_err]);
                 break;
             case 'lname_err':
-                array_push($this->errors, ['lname_err' => $this->lname_err]);
+                array_push($this->kyc_errors, ['lname' => $this->lname_err]);
                 break;
             case 'father_name_err':
-                array_push($this->errors, ['father_name_err' => $this->father_name_err]);
+                array_push($this->kyc_errors, ['father_name' => $this->father_name_err]);
                 break;
             case 'melli_code_err':
-                array_push($this->errors, ['melli_code_err' => $this->melli_code_err]);
+                array_push($this->kyc_errors, ['melli_code' => $this->melli_code_err]);
                 break;
             case 'province_err':
-                array_push($this->errors, ['province_err' => $this->province_err]);
+                array_push($this->kyc_errors, ['province' => $this->province_err]);
                 break;
             case 'city_err':
-                array_push($this->errors, ['city_err' => $this->city_err]);
+                array_push($this->kyc_errors, ['city' => $this->city_err]);
                 break;
             case 'number_err':
-                array_push($this->errors, ['number_err' => $this->number_err]);
+                array_push($this->kyc_errors, ['number' => $this->number_err]);
                 break;
             case 'postal_code_err':
-                array_push($this->errors, ['postal_code_err' => $this->postal_code_err]);
+                array_push($this->kyc_errors, ['postal_code' => $this->postal_code_err]);
                 break;
             case 'address_err':
-                array_push($this->errors, ['address_err' => $this->address_err]);
+                array_push($this->kyc_errors, ['address' => $this->address_err]);
                 break;
             case 'melli_card_err':
-                array_push($this->errors, ['melli_card_err' => $this->melli_card_err]);
+                array_push($this->kyc_errors, ['melli_card' => $this->melli_card_err]);
                 break;
             case 'prove_picture_err':
-                array_push($this->errors, ['prove_picture_err' => $this->prove_picture_err]);
+                array_push($this->kyc_errors, ['prove_picture' => $this->prove_picture_err]);
                 break;
             case 'resume_err':
-                array_push($this->errors, ['resume_err' => $this->resume_err]);
+                array_push($this->kyc_errors, ['resume' => $this->resume_err]);
                 break;
         }
     }
@@ -72,15 +71,13 @@ class Details extends Component
 
     public function save()
     {
-        if (!empty($this->errors)) {
-
-            $kycErr = KycError::firstOrCreate(['kyc_id' => $this->kyc->id]);
-
-            for ($i = 0; $i < count($this->errors); $i++) {
-                $arr = $this->errors[$i];
+        if (!empty($this->kyc_errors)) {
+            for ($i = 0; $i < count($this->kyc_errors); $i++) {
+                $arr = $this->kyc_errors[$i];
                 foreach ($arr as $key => $value) {
-                    $kycErr->update([
-                        $key => $value,
+                    $this->kyc->errors()->create([
+                        'key' => $key,
+                        'value' => $value
                     ]);
                 }
             }

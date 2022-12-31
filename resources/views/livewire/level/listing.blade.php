@@ -1,7 +1,10 @@
-    <div>
+<div>
+    @can('Define-Level')
         <x-buttons.btn-success class="mb-2" data-bs-toggle="modal" data-bs-target="#create-level">تعریف سطح
         </x-buttons.btn-success>
         @livewire('level.create', key('create-level'))
+    @endcan
+    @can('Show-Level')
         @if ($levels->count() > 0)
             <x-tables.table>
                 <x-slot name="headers">
@@ -18,29 +21,45 @@
                         <td>{{ $level->score }}</td>
                         <td>{{ $level->slug }}</td>
                         <td>
+                            @can('Show-Level')
                             @if ($level->image)
-                                <a target="_blank" href="{{ $level->image?->url }}" class="btn btn-primary btn-sm round">مشاهده</a>
+                                <a target="_blank" href="{{ $level->image?->url }}"
+                                   class="btn btn-primary btn-sm round">مشاهده</a>
                             @else
                                 -----
                             @endif
+                            @endcan
                         </td>
                         <td>
+                            @can('Define-Level-Prizes')
                             @if (!empty($level->prize))
                                 <x-buttons.btn-primary
                                     data-bs-target="#edit-prizes-modal-{{ $key }}"
-                                    data-bs-toggle="modal">ویرایش جوایز</x-buttons.btn-primary>
+                                    data-bs-toggle="modal">ویرایش جوایز
+                                </x-buttons.btn-primary>
                             @else
                                 <x-buttons.btn-primary data-bs-target="#create-prizes-modal-{{ $key }}"
-                                    data-bs-toggle="modal">تعریف جوایز</x-buttons.btn-primary>
+                                                       data-bs-toggle="modal">تعریف جوایز
+                                </x-buttons.btn-primary>
                             @endif
+                            @endcan
+                            @can('Edit-Level')
                             <x-buttons.btn-success data-bs-target="#edit-level-modal-{{ $key }}"
-                                data-bs-toggle="modal">ویرایش</x-buttons.btn-success>
+                                                   data-bs-toggle="modal">ویرایش
+                            </x-buttons.btn-success>
+                                @endcan
+                                @can('Delete-Level')
                             <x-buttons.btn-danger class="confirm" id="{{ $level->id }}" title="deleteLevel">حذف
                             </x-buttons.btn-danger>
+                                @endcan
+                                @can('Edit-Level')
                             @livewire('level.update', ['level' => $level, 'key' => $key], key('update-' . $key))
-                            @livewire('level.create-prize', ['level' => $level, 'key' => $key], key('create-prize-' . $key))
+                                @endcan
+                            @livewire('level.create-prize', ['level' => $level, 'key' => $key], key('create-prize-' .
+                            $key))
                             @if (!empty($level->prize))
-                                @livewire('level.edit-prize', ['level' => $level, 'key' => $key], key('edit-prize-' . $key))
+                                @livewire('level.edit-prize', ['level' => $level, 'key' => $key], key('edit-prize-' .
+                                $key))
                             @endif
                         </td>
                     </tr>
@@ -50,5 +69,6 @@
         @else
             <x-alerts.danger>سطحی تعریف نشده است</x-alerts.danger>
         @endif
-    </div>
+    @endcan
+</div>
 

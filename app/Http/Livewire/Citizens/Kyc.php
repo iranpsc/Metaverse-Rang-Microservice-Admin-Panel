@@ -11,11 +11,11 @@ class Kyc extends Component
 
     public function __construct()
     {
-        $this->kycs = ModelKyc::latest()->get();
+        $this->kycs = ModelKyc::with('errors')->latest()->get();
     }
 
     public function updated() {
-        $this->kycs = ModelKyc::where('melli_code', 'like', '%' . $this->searchTerm . '%')
+        $this->kycs = ModelKyc::with('errors')->where('melli_code', 'like', '%' . $this->searchTerm . '%')
         ->get();
     }
 
