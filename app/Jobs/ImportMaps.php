@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\MapManagement\Polygon;
+use App\Models\Map;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -20,11 +20,9 @@ class ImportMaps implements ShouldQueue, ShouldBeUnique
      * @return void
      */
 
-    private $map;
-
-    public function __construct($map)
+    public function __construct(private Map $map)
     {
-        $this->map = $map;
+        //
     }
 
     /**
@@ -54,7 +52,7 @@ class ImportMaps implements ShouldQueue, ShouldBeUnique
                     'owner_id' => 1,
                 ]);
                 $stability = $feature['properties']['density'] * $feature['properties']['area'];
-                $features_property = \App\Models\FeatureProperties::create([
+                \App\Models\FeatureProperties::create([
                     'id' => $feature['properties']['id'],
                     'feature_id' => $feature_db->id,
                     'address' => $feature['properties']['address'] ?? '',

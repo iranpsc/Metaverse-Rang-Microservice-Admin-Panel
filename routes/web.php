@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Auth\ChangePasswordController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Livewire\Dashboard\Dashboard;
 use App\Http\Livewire\Employees\Listing as EmployeesInfo;
 use App\Http\Livewire\Employees\Bank as EmployeesBankInfo;
@@ -59,7 +61,7 @@ use App\Http\Livewire\IpManagement\ApiIpRanges;
 
 Route::redirect('/', '/dashboard');
 
-Route::middleware('auth:admin')->group(function () {
+Route::middleware(['auth:admin', 'verified'])->group(function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
     Route::prefix('citizens')->as('citizens.')->group(function () {
         Route::get('/registration-info', RegistrationInfo::class)
@@ -197,4 +199,12 @@ Route::middleware('auth:admin')->group(function () {
         ->name('system-variables');
 });
 
-require_once(__DIR__ . '/auth.php');
+Auth::routes([
+    'register' => false,
+]);
+
+Route::controller(ChangePasswordController::class)
+    ->prefix('password')->name('password.')->group(function () {
+        Route::get('/change', 'showChangeForm')->name('change');
+        Route::post('/change', 'change')->name('change.submit');
+    });

@@ -2,10 +2,13 @@
 <html lang="fa" dir="rtl">
 
 <head>
-    <title>پنل مدیریت سامانه متارنگ</title>
+    <title>قالب مدیریتی مدیران</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="assets/images/logo-rgb.png">
+    <meta name="description" content="قالب مدیریت ایرانی مدیران ">
+    <meta name="keywords"
+        content="قالب مدیریت, قالب داشبورد, قالب ادمین, قالب مدیران, قالب مدیریت راستچین , قالب ایرانی مدیریت, پوسته مدیریت, قالب ادمین داشبورد سایت, قالب مدیریتی, مدیران, قالب مدیریت مدیران, پنل مدیریت, پنل مدیریت مدرن, قالب ادمین متریال, قالب مدیریت بوت استرپ, قالب ادمین بوتسترپ, قالب ادمین سایت, پوسته مدیریتی ایرانی, قالب مدیرتی مدیران ایرانی, بهترین قالب مدیریت, قالب مدیریت ریسپانسیو, قالب مدیریت ارزان, قالب admin">
+    <link rel="shortcut icon" href="assets/images/favicon.png">
 
     <!-- BEGIN CSS -->
     <link href="{{ asset('assets/plugins/bootstrap/bootstrap5/css/bootstrap.rtl.min.css') }}" rel="stylesheet">
@@ -36,13 +39,21 @@
         <div class="container-fluid">
             <div class="row">
 
-                <div class="col-md-12 round">
-                    <div class="logo-con m-t-10 m-b-10">
-                        <img src="{{ asset('assets/images/logo-rgb.png') }}"
-                            class="light-logo center-block img-responsive" style="width:15%; height:15%" alt="logo">
-                    </div><!-- /.logo-con -->
-
-                    <h2 class="text-center m-b-20">وارد شوید</h2>
+                <div class="col-md-12">
+                    <p class="text-center m-t-30 m-b-40">
+                        <i class="icon-lock-open border img-circle font-xxxlg p-20"></i>
+                    </p>
+                    <h2 class="text-center">بازیابی رمز عبور</h2>
+                    @if (session('status'))
+                        <div class="alert alert-success" role="alert">
+                            {{ session('status') }}
+                        </div>
+                    @else
+                        <div class="alert alert-info text-center m-t-10 m-b-20">
+                            <i class="icon-comments"></i>
+                            ایمیل خود را برای بازیابی کلمه عبور وارد نمائید.
+                        </div>
+                    @endif
                     <hr>
                     @if ($errors->any())
                         <ul class="alert alert-danger">
@@ -51,50 +62,34 @@
                             @endforeach
                         </ul>
                     @endif
-                    <form id="form" class="m-t-30 m-b-30" action="{{ route('login') }}" method="POST"
-                        role="form">
+
+                    <form id="forget-form" method="POST" action="{{ route('password.email') }}">
                         @csrf
                         <div class="form-group">
-                            <label for="email" class="sr-only">رایانامه</label>
+                            <label class="sr-only control-label" for="email">رایانامه</label>
                             <div class="input-group round">
                                 <span class="input-group-addon">
                                     <i class="icon-envelope"></i>
                                 </span>
-                                <input id="email" class="form-control ltr text-left" type="email" name="email"
-                                    value="{{ old('email') }}">
-                            </div><!-- /.input-group -->
+                                <input type="email" class="form-control round ltr text-left" id="email"
+                                    name="email" placeholder="مثال:info@site.com" value="{{ old('email') }}"
+                                    required>
+                            </div><!-- /.input-group-->
                         </div><!-- /.form-group -->
                         <div class="form-group">
-                            <label for="password" class="sr-only">رمز عبور</label>
-                            <div class="input-group round">
-                                <span class="input-group-addon">
-                                    <i class="icon-key"></i>
-                                </span>
-                                <input id="password" class="form-control ltr text-left" type="password"
-                                    name="password">
-                            </div><!-- /.input-group -->
-                        </div><!-- /.form-group -->
-                        <p>
-                            <button class="btn btn-info btn-round btn-block" type="submit">
-                                <i class="icon-paper-plane font-lg"></i>
-                                ورود
+                            <button type="submit" class="btn btn-info btn-round btn-block m-t-20" name="signup"
+                                value="Sign up">
+                                <i class="icon-envelope-letter"></i>
+                                ارسال ایمیل بازیابی
                             </button>
-                        </p>
-                        <br>
-                        <p>
-                            <input class="form-check-input" type="checkbox" name="remember" id="remember"
-                                {{ old('remember') ? 'checked' : '' }}>
-
-                            <label class="form-check-label" for="remember">
-                                {{ __('مرا بخاطر بسپار') }}
-                            </label>
-                        </p>
+                        </div><!-- /.form-group -->
                     </form>
-                    @if (Route::has('password.request'))
-                        <a class="btn btn-link" href="{{ route('password.request') }}">
-                            {{ __('رمز عبورم را فراموش کرده ام') }}
-                        </a>
-                    @endif
+
+                    <hr class="m-b-30">
+                    <a href="{{ route('login') }}" class="btn btn-warning btn-round btn-block m-b-10">
+                        <i class="icon-user-following"></i>
+                        صفحه ورود
+                    </a>
                 </div><!-- /.col-md-12 -->
             </div><!-- /.row -->
         </div><!-- /.container-fluid -->
@@ -114,7 +109,7 @@
     <script src="{{ asset('assets/js/core.js') }}"></script>
 
     <!-- BEGIN PAGE JAVASCRIPT -->
-    <script src="{{ asset('assets/js/pages/login.js') }}"></script>
+    <script src="assets/js/pages/forget.js"></script>
     <!-- END PAGE JAVASCRIPT -->
 
 </body>
