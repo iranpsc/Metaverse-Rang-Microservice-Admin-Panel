@@ -395,7 +395,7 @@
              @endhasanyrole
              @hasanyrole('statistics-management|super-admin')
                  <li>
-                     <a href="#">
+                     <a href="{{ route('statistics') }}">
                          <span class="icon-note"></span>
                          <span>آمار سراسری</span>
                      </a>

@@ -43,7 +43,7 @@ use App\Http\Livewire\Lands\FeaturePricingLimits;
 use App\Http\Livewire\IpManagement\ApiAllowedIps;
 use App\Http\Livewire\IpManagement\AdminAllowedIps;
 use App\Http\Livewire\IpManagement\ApiIpRanges;
-
+use App\Http\Livewire\Statistics\Statistics;
 
 /*
 |--------------------------------------------------------------------------
@@ -195,6 +195,9 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/system-variables', SystemVariablesListing::class)
         ->middleware('can:manage-system-variables')
         ->name('system-variables');
+
+    Route::get('/statistics', Statistics::class)->name('statistics');
 });
+
 
 require_once(__DIR__ . '/auth.php');
