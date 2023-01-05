@@ -201,10 +201,6 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
     Route::get('/statistics', Statistics::class)->name('statistics');
 });
 
-<<<<<<< HEAD
-
-require_once(__DIR__ . '/auth.php');
-=======
 Auth::routes([
     'register' => false,
 ]);
@@ -214,4 +210,3 @@ Route::controller(ChangePasswordController::class)
         Route::get('/change', 'showChangeForm')->name('change');
         Route::post('/change', 'change')->name('change.submit');
     });
->>>>>>> 7706d8ffc6271fa07d8b0a1e70e0f8e6b21e34aa
