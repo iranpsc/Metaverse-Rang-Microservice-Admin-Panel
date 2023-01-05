@@ -13,7 +13,9 @@ class Deposits extends Component
     public $searchTerm;
     private $payments;
 
-    public function updated() {
+    protected $paginationTheme = 'bootstrap';
+
+    public function updatedSearchTerm() {
         $this->payments = Payment::where('ref_id', 'like', '%' . $this->searchTerm . '%')
         ->paginate(10);
         $this->resetPage();
