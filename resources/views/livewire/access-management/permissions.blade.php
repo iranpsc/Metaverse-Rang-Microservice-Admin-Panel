@@ -24,8 +24,12 @@
             @enderror
         </x-forms.group>
         <p>به کدام مسئولیت ها این دسترسی را می دهید؟</p>
+
+        <div class="conteriner-fluide">
+            <div class="row">
         @forelse ($roles as $role)
-            @if ($role->name !== 'Super-Admin')
+        <div class="col-md-3">
+            @if ($role->name !== 'super-admin')
                 <div class="input-group">
                     <input class="normal" value="{{ $role->id }}" wire:model="addedRoles" type="checkbox"
                            id="role-{{ $role->id }}">
@@ -34,7 +38,12 @@
             @endif
         @empty
             <x-alerts.danger>نقشی تعریف نشده است!</x-alerts.danger>
+        </div>
         @endforelse
+            </div>
+        </div>
+
+
         <x-slot name="footer">
             <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>

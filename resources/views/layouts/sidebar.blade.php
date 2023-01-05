@@ -74,7 +74,7 @@
                          @can('view-registration-info')
                              <li>
                                  <a href="{{ route('citizens.registration-info') }}" class="">
-                                     <i class="icon-settings"></i>
+                                     <i class="fa fa-address-card"></i>
                                      <span>مشخصات ثبت نام</span>
                                  </a>
                              </li>
@@ -82,7 +82,7 @@
                          @can('verify-kyc')
                              <li>
                                  <a href="{{ route('citizens.kyc') }}" class="">
-                                     <i class="icon-settings"></i>
+                                     <i class="fa fa-check-circle"></i>
                                      <span>احراز هویت</span>
                                  </a>
                              </li>
@@ -90,7 +90,7 @@
                          @can('verify-bank-accounts')
                              <li>
                                  <a href="{{ route('citizens.bank-accounts') }}" class="">
-                                     <i class="icon-settings"></i>
+                                     <i class="fa fa-bank"></i>
                                      <span>حساب های بانکی</span>
                                  </a>
                              </li>
@@ -98,7 +98,7 @@
                          @can('view-deposits')
                              <li>
                                  <a href="{{ route('citizens.deposits') }}" class="">
-                                     <i class="icon-settings"></i>
+                                     <i class="fa fa-money"></i>
                                      <span>واریزی ها</span>
                                  </a>
                              </li>
@@ -106,7 +106,7 @@
                          @can('view-withdraws')
                              <li>
                                  <a href="{{ route('citizens.withdraws') }}" class="">
-                                     <i class="icon-settings"></i>
+                                     <i class="fa fa-dollar"></i>
                                      <span>برداشت ها</span>
                                  </a>
                              </li>
@@ -114,7 +114,7 @@
                          @can('view-profile-details')
                              <li>
                                  <a href="{{ route('citizens.profile-details') }}" class="">
-                                     <i class="icon-settings"></i>
+                                     <i class="fa fa-user-circle"></i>
                                      <span>جزئیات پروفایل</span>
                                  </a>
                              </li>
@@ -122,7 +122,7 @@
                          @can('view-assets')
                              <li>
                                  <a href="{{ route('citizens.assets') }}" class="">
-                                     <i class="icon-settings"></i>
+                                     <i class="fa fa-pie-chart"></i>
                                      <span>دارایی ها</span>
                                  </a>
                              </li>
@@ -133,48 +133,58 @@
              @hasanyrole('features-management|super-admin')
                  <li>
                      <a href="#" class="dropdown-toggle">
-                         <i class="icon-notebook"></i>
+                         <i class="fa fa-cube"></i>
                          <span>زمین ها</span>
                      </a>
                      <ul>
-                         @can('edit-features-info')
+                         @can('manage-features-info')
                              <li>
                                  <a href="{{ route('features.all') }}" class="">
-                                     <i class="icon-settings"></i>
+                                     <i class="fa fa-cubes"></i>
                                      <span>کل زمین ها</span>
                                  </a>
                              </li>
                          @endcan
-                         <li>
-                             <a href="{{ route('features.prices') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>قیمت زمین ها</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('features.sold') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>زمین های فروخته شده</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('features.trades') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>مبادله زمین</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('features.priced') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>قیمت گذاری زمین</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('features.pricing-limits') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>محدودیت قیمت گذاری</span>
-                             </a>
-                         </li>
+                         @can('view-features-prices')
+                             <li>
+                                 <a href="{{ route('features.prices') }}" class="">
+                                     <i class="fa fa-dollar"></i>
+                                     <span>قیمت زمین ها</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('view-sold-features')
+                             <li>
+                                 <a href="{{ route('features.sold') }}" class="">
+                                     <i class="fa fa-money"></i>
+                                     <span>زمین های فروخته شده</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('view-features-trades')
+                             <li>
+                                 <a href="{{ route('features.trades') }}" class="">
+                                     <i class="fa fa-exchange"></i>
+                                     <span>مبادله زمین</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('view-priced-features')
+                             <li>
+                                 <a href="{{ route('features.priced') }}" class="">
+                                     <i class="fa fa-won"></i>
+                                     <span>قیمت گذاری زمین</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('manage-pricing-limits')
+                             <li>
+                                 <a href="{{ route('features.pricing-limits') }}" class="">
+                                     <i class="fa fa-bar-chart"></i>
+                                     <span>محدودیت قیمت گذاری</span>
+                                 </a>
+                             </li>
+                         @endcan
                      </ul>
                  </li>
              @endhasanyrole
@@ -185,21 +195,22 @@
                          <span>مدیریت دسترسی ها</span>
                      </a>
                      <ul>
+
                          <li>
                              <a href="{{ route('access-management.employees') }}" class="">
-                                 <i class="icon-settings"></i>
+                                 <i class="fa fa-user-plus"></i>
                                  <span>مسئولیت ها و دسترسی های کارمندان</span>
                              </a>
                          </li>
                          <li>
                              <a href="{{ route('access-management.roles') }}" class="">
-                                 <i class="icon-settings"></i>
+                                 <i class="fa fa-handshake-o"></i>
                                  <span>مسئولیت ها</span>
                              </a>
                          </li>
                          <li>
                              <a href="{{ route('access-management.permissions') }}" class="">
-                                 <i class="icon-settings"></i>
+                                 <i class="fa fa-gears"></i>
                                  <span>دسترسی ها</span>
                              </a>
                          </li>
@@ -209,148 +220,182 @@
              @hasanyrole('employees-management|super-admin')
                  <li>
                      <a href="#" class="dropdown-toggle">
-                         <i class="icon-user"></i>
+                         <i class="fa fa-user"></i>
                          <span>مدیریت کارکنان</span>
                      </a>
                      <ul>
-                         <li>
-                             <a href="{{ route('employees.info') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>مشخصات حقیقی</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('employees.bank-info') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>اطلاعات بانکی</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('employees.documents') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>اسناد</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('employees.salary') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>حقوق و دستمزد</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('employees.time-card') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>کارت زمان</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('employees.tasks') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>وظایف محوله</span>
-                             </a>
-                         </li>
+                         @can('manage-employee-info')
+                             <li>
+                                 <a href="{{ route('employees.info') }}" class="">
+                                     <i class="fa fa-drivers-license-o"></i>
+                                     <span>مشخصات حقیقی</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('manage-employee-bank-accounts')
+                             <li>
+                                 <a href="{{ route('employees.bank-info') }}" class="">
+                                     <i class="fa fa-bank"></i>
+                                     <span>اطلاعات بانکی</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('manage-employee-documents')
+                             <li>
+                                 <a href="{{ route('employees.documents') }}" class="">
+                                     <i class="icon-docs"></i>
+                                     <span>اسناد</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('manage-employee-salary')
+                             <li>
+                                 <a href="{{ route('employees.salary') }}" class="">
+                                     <i class="fa fa-money"></i>
+                                     <span>حقوق و دستمزد</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('manage-employee-time-card')
+                             <li>
+                                 <a href="{{ route('employees.time-card') }}" class="">
+                                     <i class="fa fa-hourglass-end"></i>
+                                     <span>کارت زمان</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('manage-employee-tasks')
+                             <li>
+                                 <a href="{{ route('employees.tasks') }}" class="">
+                                     <i class="fa fa-handshake-o"></i>
+                                     <span>وظایف محوله</span>
+                                 </a>
+                             </li>
+                         @endcan
                      </ul>
                  </li>
              @endhasanyrole
              @hasanyrole('support-management|super-admin')
                  <li>
                      <a href="#" class="dropdown-toggle">
-                         <i class="icon-user"></i>
+                         <i class="fa fa-phone"></i>
                          <span>پشتیبانی</span>
                      </a>
                      <ul>
-                         <li>
-                             <a href="{{ route('support.citizens-safety') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>امنیت شهروندان</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('support.technical-support') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>پشتیبانی فنی</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('support.investment') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>سرمایه گذاری</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('support.inspection') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>بازرسی</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('support.protection') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>حراست</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('support.ztb-management') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>مدیریت کل ز.ت.ب</span>
-                             </a>
-                         </li>
+                         @can('respond-to-citziens-safety-tickets')
+                             <li>
+                                 <a href="{{ route('support.citizens-safety') }}" class="">
+                                     <i class="fa fa-universal-access"></i>
+                                     <span>امنیت شهروندان</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('respond-to-technical-support-tickets')
+                             <li>
+                                 <a href="{{ route('support.technical-support') }}" class="">
+                                     <i class="fa fa fa-gears"></i>
+                                     <span>پشتیبانی فنی</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('respond-to-investment-tickets')
+                             <li>
+                                 <a href="{{ route('support.investment') }}" class="">
+                                     <i class="fa fa-line-chart"></i>
+                                     <span>سرمایه گذاری</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('respond-to-inspection-tickets')
+                             <li>
+                                 <a href="{{ route('support.inspection') }}" class="">
+                                     <i class="fa fa-shield"></i>
+                                     <span>بازرسی</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('respond-to-protection-tickets')
+                             <li>
+                                 <a href="{{ route('support.protection') }}" class="">
+                                     <i class="fa fa-user-secret"></i>
+                                     <span>حراست</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('respond-to-ztb-management-tickets')
+                             <li>
+                                 <a href="{{ route('support.ztb-management') }}" class="">
+                                     <i class="fa fa-gavel"></i>
+                                     <span>مدیریت کل ز.ت.ب</span>
+                                 </a>
+                             </li>
+                         @endcan
                      </ul>
                  </li>
              @endhasanyrole
              @hasanyrole('store-management|super-admin')
                  <li>
                      <a href="#" class="dropdown-toggle">
-                         <i class="icon-store"></i>
+                         <i class="fa fa-shopping-cart"></i>
                          <span>فروشگاه</span>
                      </a>
                      <ul>
-                         <li>
-                             <a href="{{ route('store.packages') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>فروشگاه</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('store.currencies') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>ارزها</span>
-                             </a>
-                         </li>
+                         @can('manage-packages')
+                             <li>
+                                 <a href="{{ route('store.packages') }}" class="">
+                                     <i class="fa fa-shopping-cart"></i>
+                                     <span>فروشگاه</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('manage-currencies')
+                             <li>
+                                 <a href="{{ route('store.currencies') }}" class="">
+                                     <i class="fa fa-euro"></i>
+                                     <span>ارزها</span>
+                                 </a>
+                             </li>
+                         @endcan
                      </ul>
                  </li>
              @endhasanyrole
              @hasanyrole('dynasty-management|super-admin')
                  <li>
                      <a href="#" class="dropdown-toggle">
-                         <i class="icon-store"></i>
+                         <i class="fa fa-users"></i>
                          <span>سلسله</span>
                      </a>
                      <ul>
-                         <li>
-                             <a href="{{ route('dynasty.prizes') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>پیام های سلسله</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('dynasty.messages') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>پیام های سلسله</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('dynasty.permissions') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>دسترسی ها</span>
-                             </a>
-                         </li>
+                         @can('manage-dynasty-prizes')
+                             <li>
+                                 <a href="{{ route('dynasty.prizes') }}" class="">
+                                     <i class="fa fa-money"></i>
+                                     <span>جوایزه سلسله </span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('manage-dynasty-messages')
+                             <li>
+                                 <a href="{{ route('dynasty.messages') }}" class="">
+                                     <i class="fa fa-comment"></i>
+                                     <span>پیام های سلسله</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('manage-dynasty-permissions')
+                             <li>
+                                 <a href="{{ route('dynasty.permissions') }}" class="">
+                                     <i class="fa fa-check-square"></i>
+                                     <span>دسترسی ها</span>
+                                 </a>
+                             </li>
+                         @endcan
                      </ul>
                  </li>
              @endhasanyrole
              @hasanyrole('statistics-management|super-admin')
                  <li>
-                     <a href="#">
+                     <a href="{{ route('statistics') }}">
                          <span class="icon-note"></span>
                          <span>آمار سراسری</span>
                      </a>
@@ -359,7 +404,7 @@
              @hasanyrole('maps-management|super-admin')
                  <li>
                      <a href="{{ route('map-management') }}">
-                         <span class="fa fa-cart-plus"></span>
+                         <span class="fa fa-map"></span>
                          <span>مدیریت نقشه ها</span>
                      </a>
                  </li>
@@ -367,7 +412,7 @@
              @hasanyrole('level-management|super-admin')
                  <li>
                      <a href="{{ route('level') }}">
-                         <span class="fa fa-cart-plus"></span>
+                         <span class="fa fa-level-up"></span>
                          <span>مدیریت سطح</span>
                      </a>
                  </li>
@@ -375,14 +420,14 @@
              @hasanyrole('ip-management|super-admin')
                  <li>
                      <a href="#" class="dropdown-toggle">
-                         <i class="icon-store"></i>
+                         <i class="fa fa-wifi"></i>
                          <span>مدیریت IP</span>
                      </a>
                      <ul>
                          @can('manage-ip-ranges')
                              <li>
                                  <a href="{{ route('ip.ranges') }}" class="">
-                                     <i class="icon-settings"></i>
+                                     <i class="fa fa-signal"></i>
                                      <span>رنج آی پی</span>
                                  </a>
                              </li>
@@ -390,7 +435,7 @@
                          @can('manage-api-allowed-ips')
                              <li>
                                  <a href="{{ route('ip.api') }}" class="">
-                                     <i class="icon-settings"></i>
+                                     <i class="fa fa-sort-amount-asc"></i>
                                      <span>دسترسی های Api</span>
                                  </a>
                              </li>
@@ -398,7 +443,7 @@
                          @can('manage-admin-allowed-ips')
                              <li>
                                  <a href="{{ route('ip.admin') }}" class="">
-                                     <i class="icon-settings"></i>
+                                     <i class="fa fa-sign-in"></i>
                                      <span>دسترسی پنل ادمین</span>
                                  </a>
                              </li>
@@ -409,13 +454,13 @@
              @hasanyrole('calendar-management|super-admin')
                  <li>
                      <a href="{{ route('calendar') }}">
-                         <span class="fa fa-cart-plus"></span>
+                         <span class="fa fa-calendar"></span>
                          <span>تقویم</span>
                      </a>
                  </li>
                  <li>
                      <a href="{{ route('reports') }}">
-                         <span class="fa fa-cart-plus"></span>
+                         <span class="fa fa-eye"></span>
                          <span>گزارشات کاربران</span>
                      </a>
                  </li>
@@ -423,7 +468,7 @@
              @hasanyrole('system-variables-management|super-admin')
                  <li>
                      <a href="{{ route('system-variables') }}">
-                         <span class="fa fa-cart-plus"></span>
+                         <span class="fa fa-puzzle-piece"></span>
                          <span>متغیرهای سیستم</span>
                      </a>
                  </li>

@@ -79,7 +79,7 @@ class CreatePrize extends Component
         $this->prize->judge_entry = $this->judge_entry ?? 0;
         $this->prize->satisfaction = $this->satisfaction;
         $this->prize->effect = $this->effect;
-        $this->prize->upload_feature_image = $this->upload_feature_image ?? 0;
+        $this->prize->upload_feature_image = $this->upload_feature_image ?? 0; 
         $this->prize->delete_feature_image = $this->delete_feature_image ?? 0;
         $this->prize->save();
         session()->flash('success', 'جوایز سطح با موفقیت ثبت شد');

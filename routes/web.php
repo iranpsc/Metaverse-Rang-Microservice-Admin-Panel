@@ -45,7 +45,7 @@ use App\Http\Livewire\Lands\FeaturePricingLimits;
 use App\Http\Livewire\IpManagement\ApiAllowedIps;
 use App\Http\Livewire\IpManagement\AdminAllowedIps;
 use App\Http\Livewire\IpManagement\ApiIpRanges;
-
+use App\Http\Livewire\Statistics\Statistics;
 
 /*
 |--------------------------------------------------------------------------
@@ -197,8 +197,14 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
     Route::get('/system-variables', SystemVariablesListing::class)
         ->middleware('can:manage-system-variables')
         ->name('system-variables');
+
+    Route::get('/statistics', Statistics::class)->name('statistics');
 });
 
+<<<<<<< HEAD
+
+require_once(__DIR__ . '/auth.php');
+=======
 Auth::routes([
     'register' => false,
 ]);
@@ -208,3 +214,4 @@ Route::controller(ChangePasswordController::class)
         Route::get('/change', 'showChangeForm')->name('change');
         Route::post('/change', 'change')->name('change.submit');
     });
+>>>>>>> 7706d8ffc6271fa07d8b0a1e70e0f8e6b21e34aa
