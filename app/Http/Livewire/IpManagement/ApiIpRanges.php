@@ -15,7 +15,7 @@ class ApiIpRanges extends Component
         $ip_range = [],
         $starting_ip = [],
         $ending_ip = [],
-        $title, $code, $accessPassword;
+        $title, $code, $accessPassword, $admin;
 
     protected $listeners = [
         'ipRangeCreated' => '$refresh',

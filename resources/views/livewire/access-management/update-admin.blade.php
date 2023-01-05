@@ -32,7 +32,7 @@
 {{--        @endif--}}
         <p class="modal-text">کدام مسئولیت ها را به این کارمند اضافه می کنید؟</p>
         @forelse ($roles as $role)
-            @if ($role->name == 'Super-Admin')
+            @if ($role->name == 'super-admin')
                 @continue
             @endif
             <div class="input-group">

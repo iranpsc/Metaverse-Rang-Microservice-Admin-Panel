@@ -379,24 +379,30 @@
                          <span>مدیریت IP</span>
                      </a>
                      <ul>
-                         <li>
-                             <a href="{{ route('ip.ranges') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>رنج آی پی</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('ip.api') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>دسترسی های Api</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('ip.admin') }}" class="">
-                                 <i class="icon-settings"></i>
-                                 <span>دسترسی پنل ادمین</span>
-                             </a>
-                         </li>
+                         @can('manage-ip-ranges')
+                             <li>
+                                 <a href="{{ route('ip.ranges') }}" class="">
+                                     <i class="icon-settings"></i>
+                                     <span>رنج آی پی</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('manage-api-allowed-ips')
+                             <li>
+                                 <a href="{{ route('ip.api') }}" class="">
+                                     <i class="icon-settings"></i>
+                                     <span>دسترسی های Api</span>
+                                 </a>
+                             </li>
+                         @endcan
+                         @can('manage-admin-allowed-ips')
+                             <li>
+                                 <a href="{{ route('ip.admin') }}" class="">
+                                     <i class="icon-settings"></i>
+                                     <span>دسترسی پنل ادمین</span>
+                                 </a>
+                             </li>
+                         @endcan
                      </ul>
                  </li>
              @endhasanyrole
