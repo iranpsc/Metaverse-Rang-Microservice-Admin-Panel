@@ -473,6 +473,26 @@
                      </a>
                  </li>
              @endhasanyrole
+             <li>
+                 <a href="#" class="dropdown-toggle">
+                     <i class="fa fa-music"></i>
+                     <span>مدیریت موسیقی سراسری</span>
+                 </a>
+                 <ul>
+                     <li>
+                         <a href="{{ route('music') }}" class="">
+                             <i class="fa fa-list"></i>
+                             <span>لیست آهنگ ها</span>
+                         </a>
+                     </li>
+                     <li>
+                         <a href="{{ route('music.categories') }}" class="">
+                             <i class="fa fa-category"></i>
+                             <span>دسته بندی ها</span>
+                         </a>
+                     </li>
+                 </ul>
+             </li>
          </ul><!-- /#side-menu -->
      </div><!-- /.side-menu-container -->
  </div><!-- /#sidebar -->
