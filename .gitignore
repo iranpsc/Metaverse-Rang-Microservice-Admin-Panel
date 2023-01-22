@@ -15,3 +15,5 @@ yarn-error.log
 /.idea
 /.vscode
 /storage/ip-management/ips.json
+admin-laravel-worker.conf
+admin-worker.log
