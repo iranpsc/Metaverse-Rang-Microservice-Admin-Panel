@@ -185,6 +185,14 @@
                                  </a>
                              </li>
                          @endcan
+                         @can('manage-feature-limits')
+                             <li>
+                                 <a href="{{ route('features.limits') }}" class="">
+                                     <i class="fa fa-bar-chart"></i>
+                                     <span>محدودیت املاک</span>
+                                 </a>
+                             </li>
+                         @endcan
                      </ul>
                  </li>
              @endhasanyrole

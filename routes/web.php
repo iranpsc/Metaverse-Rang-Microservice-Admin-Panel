@@ -45,6 +45,7 @@ use App\Http\Livewire\Lands\FeaturePricingLimits;
 use App\Http\Livewire\IpManagement\ApiAllowedIps;
 use App\Http\Livewire\IpManagement\AdminAllowedIps;
 use App\Http\Livewire\IpManagement\ApiIpRanges;
+use App\Http\Livewire\Lands\Limits;
 use App\Http\Livewire\Statistics\Statistics;
 use App\Http\Livewire\Music\Listing as MusicListing;
 use App\Http\Livewire\Music\Categories as MusicCategories;
@@ -107,6 +108,9 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
         Route::get('/pricing-limits', FeaturePricingLimits::class)
             ->middleware('can:edit-pricing-limits')
             ->name('pricing-limits');
+        Route::get('/limits', Limits::class)
+            ->middleware('can:manage-feature-limits')
+            ->name('limits');
     });
     Route::prefix('access-management')->middleware('can:manage-access')
         ->as('access-management.')->group(function () {
