@@ -6,12 +6,17 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
 use App\Helpers\SMS;
-use Morilog\Jalali\Jalalian;
+use App\Models\Ip;
 use Illuminate\Support\Facades\Auth;
+use Livewire\WithPagination;
 
 class AdminAllowedIps extends Component
 {
-    public $allowedIps = [], $allowedIp = [], $title, $code, $accessPassword, $admin;
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
+    public $allowedIp = [], $title, $code, $accessPassword, $admin;
 
     protected $listeners = [
         'newIpAdded' => '$refresh',
@@ -41,21 +46,10 @@ class AdminAllowedIps extends Component
     public function mount()
     {
         $this->admin = Auth::guard('admin')->user();
-        if (file_exists(storage_path('/ip-management/ips.json'))) {
-            $ips = file_get_contents(storage_path('/ip-management/ips.json'));
-            $ips = json_decode($ips, true);
-            if (array_key_exists('admin-allowed-ips', $ips)) {
-                $this->allowedIps = $ips['admin-allowed-ips'];
-            }
-        }
     }
 
     public function sendCode()
     {
-        if (Cache::get('ips-verify-code-' . $this->admin->id)) {
-            session()->flash('error', 'کد تایید قبلا برای شما ارسال شده است');
-            return;
-        }
         $verifyCode = random_int(100000, 999999);
         Cache::put('ips-verify-code-' . $this->admin->id, Hash::make($verifyCode), now()->addMinutes(5));
         $this->reset('code');
@@ -67,6 +61,7 @@ class AdminAllowedIps extends Component
             }
         } else {
             session()->flash('error', explode(":", $result)[1]);
+            Cache::delete('ips-verify-code-' . $this->admin->id);
         }
     }
 
@@ -81,25 +76,13 @@ class AdminAllowedIps extends Component
         } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
             $this->addError('accessPassword', 'رمز دسترسی صحیح نیست');
         } else {
-            if(!dir(storage_path('/ip-management'))) {
-                mkdir(storage_path('/ip-management'));
-            }
-            if(file_exists(storage_path('/ip-management/ips.json'))) {
-                $ips = file_get_contents(storage_path('/ip-management/ips.json'));
-                $ips = json_decode($ips, true);
-            } else {
-                $ips = [];
-            }
-            $allowedIpToSave['title'] = $this->title;
-            $allowedIpToSave['ip'] = implode('.', $this->allowedIp);
-            $allowedIpToSave['created_date'] = Jalalian::forge(now())->format('Y/m/d');
-            $allowedIpToSave['created_hour'] = Jalalian::forge(now())->format('H:m:s');
-            $allowedIpToSave['created_by'] = $this->admin->name;
-            array_push($this->allowedIps, $allowedIpToSave);
-            $ips['admin-allowed-ips'] = $this->allowedIps;
-            file_put_contents(storage_path('/ip-management/ips.json'), json_encode($ips));
+            $ip = new Ip();
+            $ip->title = $this->title;
+            $ip->type = 'admin';
+            $ip->from = ip2long(implode('.', $this->allowedIp));
+            $ip->save();
             session()->flash('success', 'آی پی وارد شد');
-            $this->reset(['code', 'accessPassword']);
+            $this->reset(['code', 'accessPassword', 'allowedIp', 'title']);
             Cache::delete('ips-verify-code-' . $this->admin->id);
             $this->emitSelf('newIpAdded');
         }
@@ -110,21 +93,17 @@ class AdminAllowedIps extends Component
         $this->validateOnly($prop);
     }
 
-    public function deleteIp($key)
+    public function deleteIp(Ip $ip)
     {
-        $ips = file_get_contents(storage_path('/ip-management/ips.json'));
-        $ips = json_decode($ips, true);
-        unset($ips['admin-allowed-ips'][$key]);
-        file_put_contents(
-            storage_path('/ip-management/ips.json'),
-            json_encode($ips)
-        );
+        $ip->delete();
         $this->emitSelf('ipDeleted');
         session()->flash('success', 'آی پی حذف شد');
     }
     public function render()
     {
-        return view('livewire.ip-management.admin-allowed-ips')
+        return view('livewire.ip-management.admin-allowed-ips',[
+            'allowedIps' => Ip::whereType('admin')->simplePaginate(10)
+        ])
         ->extends('layouts.app')
         ->section('content');
     }

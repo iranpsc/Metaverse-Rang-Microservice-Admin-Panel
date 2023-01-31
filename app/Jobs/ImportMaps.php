@@ -32,7 +32,7 @@ class ImportMaps implements ShouldQueue, ShouldBeUnique
      */
     public function handle()
     {
-        $file = file_get_contents(public_path('/storage/maps/' . $this->map->fileName));
+        $file = file_get_contents(public_path('/uploads/maps/' . $this->map->fileName));
         $request = json_decode(explode('=', $file)[1], true);
 
         if ($request) {

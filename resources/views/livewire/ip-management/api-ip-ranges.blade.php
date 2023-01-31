@@ -119,37 +119,25 @@
                 <th>تا آی پی</th>
                 <th>تاریخ ایجاد</th>
                 <th>ساعت ایجاد</th>
-                <th>ایجاد کننده</th>
                 <th>ملاحضات</th>
             </x-slot>
-            @foreach ($ip_ranges as $key => $ip_range)
+            @foreach ($ip_ranges as $ip_range)
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ $ip_range['title'] }}</td>
-                    <td>{{ $ip_range['starting_ip'] }}</td>
-                    <td>{{ $ip_range['ending_ip'] }}</td>
-                    <td>{{ $ip_range['created_date'] }}</td>
-                    <td>{{ $ip_range['created_hour'] }}</td>
-                    <td>{{ $ip_range['created_by'] }}</td>
+                    <td>{{ $ip_range->id }}</td>
+                    <td>{{ $ip_range->title }}</td>
+                    <td>{{ long2ip($ip_range->from) }}</td>
+                    <td>{{ long2ip($ip_range->to) }}</td>
+                    <td>{{ \Morilog\Jalali\Jalalian::forge($ip_range->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ \Morilog\Jalali\Jalalian::forge($ip_range->created_at)->format('H:m:s') }}</td>
                     <td>
-                        <x-buttons.btn-danger class="confirm" id="{{ $key }}" title="deleteIpRange">حذف
+                        <x-buttons.btn-danger class="confirm" id="{{ $ip_range->id }}" title="deleteIpRange">حذف
                         </x-buttons.btn-danger>
                     </td>
                 </tr>
             @endforeach
         </x-tables.table>
+        {{ $ip_ranges->links() }}
     @else
         <x-alerts.danger>رنچ آی پی تعریف نشده است</x-alerts.danger>
     @endif
-    @push('js')
-        <script>
-            tableMain = $('#ips-table').DataTable({
-                "columnDefs": [{
-                    "targets": 4,
-                    "orderable": false
-                }],
-                "pageLength": 10
-            });
-        </script>
-    @endpush
 </div>

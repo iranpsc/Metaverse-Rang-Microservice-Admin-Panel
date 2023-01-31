@@ -7,7 +7,7 @@
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
         @if (session('error'))
-            <x-alerts.success>{{ session('error') }}</x-alerts.success>
+            <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
         @endif
 
         <x-forms.group for="title" label="عنوان">
@@ -58,24 +58,23 @@
                 <th>آی پی</th>
                 <th>تاریخ ایجاد</th>
                 <th>ساعت ایجاد</th>
-                <th>ایجاد کننده</th>
                 <th>ملاحضات</th>
             </x-slot>
-            @foreach ($allowedIps as $key => $allowedIp)
+            @foreach ($allowedIps as $allowedIp)
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ $allowedIp['title'] }}</td>
-                    <td>{{ $allowedIp['ip'] }}</td>
-                    <td>{{ $allowedIp['created_date'] }}</td>
-                    <td>{{ $allowedIp['created_hour'] }}</td>
-                    <td>{{ $allowedIp['created_by'] }}</td>
+                    <td>{{ $allowedIp->id }}</td>
+                    <td>{{ $allowedIp->title }}</td>
+                    <td>{{ $allowedIp->from }}</td>
+                    <td>{{ \Morilog\Jalali\Jalalian::forge($allowedIp->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ \Morilog\Jalali\Jalalian::forge($allowedIp->created_at)->format('H:m:s') }}</td>
                     <td>
-                        <x-buttons.btn-danger class="confirm" id="{{ $key }}" title="deleteApiIp">حذف
+                        <x-buttons.btn-danger class="confirm" id="{{ $allowedIp->id }}" title="deleteApiIp">حذف
                         </x-buttons.btn-danger>
                     </td>
                 </tr>
             @endforeach
         </x-tables.table>
+        {{ $allowedIps->links() }}
     @else
         <x-alerts.danger>آی پی تعریف نشده است</x-alerts.danger>
     @endif

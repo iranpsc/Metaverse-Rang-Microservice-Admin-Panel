@@ -2,48 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Ip;
 use Illuminate\Http\Request;
-
-use function App\Helpers\checkIp;
 
 class IpManagementController extends Controller
 {
-    public function checkIp(Request $request)
+    public function __invoke(Request $request)
     {
-        $ip = ip2long($request->input('ip'));
+        $request->validate(['ip' => 'required|ipv4']);
 
-        if (file_exists(storage_path('/ip-management/ips.json'))) {
-            $ips = file_get_contents(storage_path('/ip-management/ips.json'));
-            $ips = json_decode($ips, true);
+        $ip = ip2long($request->ip);
 
-            if (array_key_exists('api-allowed-ips', $ips) && ! empty($ips['api-allowed-ips'])) {
-                $api_allowed_ips = $ips['api-allowed-ips'];
-                foreach ($api_allowed_ips as $api_allowed_ip) {
-                    $api_allowed_ip = ip2long($api_allowed_ip['ip']);
-                    if ($ip === $api_allowed_ip) {
-                        return response()->json([
-                            'code' => 200,
-                            'status' => 'allowed'
-                        ]);
-                    }
-                }
-            }
+        $status = Ip::where('type', 'api')
+            ->where('from', $ip)
+            ->orWhere('to', $ip)
+            ->exists();
 
-            if (array_key_exists('ip_ranges', $ips) && ! empty($ips['ip_ranges'])) {
-                $ip_ranges = $ips['ip_ranges'];
-                foreach ($ip_ranges as $ip_range) {
-                    if (checkIp($ip_range['starting_ip'], $ip_range['ending_ip'], $ip)) {
-                        return response()->json([
-                            'code' => 200,
-                            'status' => 'Allowed'
-                        ]);
-                    }
-                }
-            }
+        if (!$status) {
+            $status = Ip::where('type', 'range')
+                ->where('from', $ip)
+                ->orWhere('to', $ip)
+                ->exists();
         }
-        return response()->json([
-            'code' => 403,
-            'status' => 'Not allowed'
-        ]);
+
+        if (!$status) {
+            $status = Ip::where('type', 'range')
+                ->where('from', '<', $ip)
+                ->where('to', '>', $ip)
+                ->exists();
+        }
+        return response()->noContent($status ? 200 : 401);
     }
 }
