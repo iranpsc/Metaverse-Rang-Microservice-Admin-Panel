@@ -5,16 +5,20 @@ namespace App\Http\Livewire\IpManagement;
 use Livewire\Component;
 use Illuminate\Support\Facades\Cache;
 use App\Helpers\SMS;
+use App\Jobs\ImportIpRanges;
+use App\Models\Ip;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\WithFileUploads;
-use Morilog\Jalali\Jalalian;
+use Livewire\WithPagination;
 
 class ApiIpRanges extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
-    public $ip_ranges = [],
+    protected $paginationTheme = 'bootstrap';
+
+    public
         $ip_range = [],
         $starting_ip = [],
         $ending_ip = [],
@@ -54,14 +58,6 @@ class ApiIpRanges extends Component
     public function mount()
     {
         $this->admin = Auth::guard('admin')->user();
-        if (file_exists(storage_path('/ip-management/ips.json'))) {
-            $ips = file_get_contents(storage_path('/ip-management/ips.json'));
-            $ips = json_decode($ips, true);
-
-            if (array_key_exists('ip_ranges', $ips)) {
-                $this->ip_ranges = $ips['ip_ranges'];
-            }
-        }
     }
 
     public function sendCode()
@@ -96,35 +92,23 @@ class ApiIpRanges extends Component
         } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
             $this->addError('accessPassword', 'رمز دسترسی صحیح نیست');
         } else {
-            $erros = [];
+            $errors = [];
             for ($i = 0; $i < count($this->starting_ip); $i++) {
                 if ($this->starting_ip[$i] > $this->ending_ip[$i]) {
-                    array_push($erros, ['ending_ip.' . $i => 'مقدار صحیح نمی باشد']);
+                    array_push($errors, ['ending_ip.' . $i => 'مقدار صحیح نمی باشد']);
                     $this->addError('ending_ip.' . $i, 'مقدار صحیح نمی باشد');
                 }
             }
 
-            if (!empty($erros)) {
+            if (!empty($errors)) {
                 return;
             } else {
-                if (file_exists(storage_path('/ip-management/ips.json'))) {
-                    $ips = file_get_contents(storage_path('/ip-management/ips.json'));
-                    $ips = json_decode($ips, true);
-                } else {
-                    $ips = [];
-                }
-
-                $this->ip_range = [
-                    'title' => $this->title,
-                    'starting_ip' => implode('.', $this->starting_ip),
-                    'ending_ip' => implode('.', $this->ending_ip),
-                    'created_date' => Jalalian::forge(now())->format('Y/m/d'),
-                    'created_hour' => Jalalian::forge(now())->format('H:m:s'),
-                    'created_by' => $this->admin->name,
-                ];
-                array_push($this->ip_ranges, $this->ip_range);
-                $ips['ip_ranges'] = $this->ip_ranges;
-                file_put_contents(storage_path('/ip-management/ips.json'), json_encode($ips));
+                $ip = new Ip();
+                $ip->title = $this->title;
+                $ip->type = 'range';
+                $ip->from = ip2long(implode('.',$this->starting_ip));
+                $ip->to = ip2long(implode('.',$this->ending_ip));
+                $ip->save();
                 session()->flash('success', 'رنج آی پی تعریف شد');
                 $this->reset(['code', 'accessPassword', 'starting_ip', 'ending_ip', 'title']);
                 Cache::delete('ips-verify-code-' . $this->admin->id);
@@ -132,6 +116,7 @@ class ApiIpRanges extends Component
             }
         }
     }
+
 
     public function import()
     {
@@ -164,42 +149,12 @@ class ApiIpRanges extends Component
         } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
             $this->addError('accessPassword', 'رمز دسترسی صحیح نیست');
         } else {
-
             $fileName =  $this->file->getClientOriginalName();
-
-            $this->file->storePubliclyAs('ip-ranges', $fileName, 'public');
-
-            $file = file_get_contents(public_path('storage/ip-ranges/' . $fileName));
-
-            $imported_ips = preg_split('/\s+/', $file);
-            $imported_ips = implode('-', $imported_ips);
-            $imported_ips = explode('-', $imported_ips);
-
-            if (file_exists(storage_path('/ip-management/ips.json'))) {
-                $ips = file_get_contents(storage_path('/ip-management/ips.json'));
-                $ips = json_decode($ips, true);
-            } else {
-                $ips = [];
-            }
-
-            for ($i = 0; $i < count($imported_ips) - 1; $i += 2) {
-                $this->ip_range = [
-                    'title' => $this->title,
-                    'starting_ip' => $imported_ips[$i],
-                    'ending_ip' => $imported_ips[$i + 1],
-                    'created_date' => Jalalian::forge(now())->format('Y/m/d'),
-                    'created_hour' => Jalalian::forge(now())->format('H:m:s'),
-                    'created_by' => $this->admin->name,
-                ];
-                array_push($this->ip_ranges, $this->ip_range);
-            }
-
-            $ips['ip_ranges'] = $this->ip_ranges;
-            file_put_contents(storage_path('/ip-management/ips.json'), json_encode($ips));
+            $this->file->storePubliclyAs('ip', $fileName, 'public');
+            ImportIpRanges::dispatch($fileName, $this->title);
             session()->flash('success', 'درون ریزی با موفقیت انجام شد.');
             $this->reset(['code', 'accessPassword', 'file', 'title']);
             Cache::delete('ips-verify-code-' . $this->admin->id);
-            $this->emitSelf('ipRangeCreated');
         }
     }
 
@@ -208,37 +163,23 @@ class ApiIpRanges extends Component
         $this->validateOnly($prop);
     }
 
-    public function deleteIp($key)
+    public function deleteIp(Ip $ip)
     {
-        $ips = file_get_contents(storage_path('/ip-management/ips.json'));
-        $ips = json_decode($ips, true);
-        unset($ips['ip_ranges'][$key]);
-        file_put_contents(
-            storage_path('/ip-management/ips.json'),
-            json_encode($ips)
-        );
+        $ip->delete();
         $this->emitSelf('ipRangeDeleted');
         session()->flash('success', 'آی پی حذف شد');
     }
 
     public function flushIpRanges()
     {
-        if (!file_exists(storage_path('ip-management/ips.json'))) return;
-
-        $ips = file_get_contents(storage_path('/ip-management/ips.json'));
-        $ips = json_decode($ips, true);
-
-        if (array_key_exists('ip_ranges', $ips)) {
-            unset($ips['ip_ranges']);
-            file_put_contents(storage_path('ip-management/ips.json'), json_encode($ips));
-            $this->emitSelf('ipRangeDeleted');
-            session()->flash('success', 'Range Ip Flushed Successfully.');
-        }
+        Ip::where('type', 'range')->delete();
     }
 
     public function render()
     {
-        return view('livewire.ip-management.api-ip-ranges')
+        return view('livewire.ip-management.api-ip-ranges', [
+            'ip_ranges' => Ip::simplePaginate(10)
+        ])
             ->extends('layouts.app')
             ->section('content');
     }
