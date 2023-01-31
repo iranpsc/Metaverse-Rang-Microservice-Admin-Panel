@@ -79,7 +79,7 @@ class AdminAllowedIps extends Component
             $ip = new Ip();
             $ip->title = $this->title;
             $ip->type = 'admin';
-            $ip->from = implode('.', $this->allowedIp);
+            $ip->from = ip2long(implode('.', $this->allowedIp));
             $ip->save();
             session()->flash('success', 'آی پی وارد شد');
             $this->reset(['code', 'accessPassword', 'allowedIp', 'title']);
