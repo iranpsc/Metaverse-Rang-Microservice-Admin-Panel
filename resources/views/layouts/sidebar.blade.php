@@ -501,6 +501,26 @@
                      </li>
                  </ul>
              </li>
+             <li>
+                 <a href="#" class="dropdown-toggle">
+                     <i class="fa fa-video"></i>
+                     <span>فیلم های آموزشی</span>
+                 </a>
+                 <ul>
+                     <li>
+                         <a href="{{ route('videos') }}" class="">
+                             <i class="fa fa-list"></i>
+                             <span>ویدیوها</span>
+                         </a>
+                     </li>
+                     <li>
+                         <a href="{{ route('video.categories') }}" class="">
+                             <i class="fa fa-list"></i>
+                             <span>دسته بندی ویدئوها</span>
+                         </a>
+                     </li>
+                 </ul>
+             </li>
          </ul><!-- /#side-menu -->
      </div><!-- /.side-menu-container -->
  </div><!-- /#sidebar -->

@@ -49,6 +49,8 @@ use App\Http\Livewire\Lands\Limits;
 use App\Http\Livewire\Statistics\Statistics;
 use App\Http\Livewire\Music\Listing as MusicListing;
 use App\Http\Livewire\Music\Categories as MusicCategories;
+use App\Http\Livewire\Videos\Listing as VideoListing;
+use App\Http\Livewire\Videos\Categories as VideoCategories;
 
 /*
 |--------------------------------------------------------------------------
@@ -210,6 +212,9 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
         Route::get('/', MusicListing::class)->name('music');
         Route::get('/categories', MusicCategories::class)->name('music.categories');
     });
+
+    Route::get('/videos', VideoListing::class)->name('videos');
+    Route::get('/video-categories', VideoCategories::class)->name('video.categories');
 
 });
 
