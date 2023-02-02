@@ -126,6 +126,17 @@ class FeatureLimits extends Component
             }
         }
     }
+
+    public function updatedUnder18BuyLimit()
+    {
+        $this->verifiedKycLimit = true;
+    }
+
+    public function updatedMoreThan18BuyLimit()
+    {
+        $this->verifiedKycLimit = true;
+    }
+
     public function render()
     {
         return view('livewire.lands.edit.feature-limits');
