@@ -46,10 +46,6 @@ class Listing extends Component
 
     public function sendSMS()
     {
-        if (Cache::get('videos-verify-code-' . $this->admin->id)) {
-            session()->flash('error', 'کد تایید قبلا برای شما ارسال شده است');
-            return;
-        }
         $verifyCode = random_int(10000, 99999);
         Cache::put('videos-verify-code-' . $this->admin->id, Hash::make($verifyCode), now()->addMinutes(2));
         $result = SMS::send($this->admin->phone, $verifyCode);
@@ -60,6 +56,7 @@ class Listing extends Component
             }
         } else {
             session()->flash('error', explode(":", $result)[1]);
+            Cache::forget('videos-verify-code-' . $this->admin->id);
         }
     }
 
@@ -81,7 +78,7 @@ class Listing extends Component
 
         $cachedCode = Cache::get('videos-verify-code-' . $this->admin->id);
 
-        if (!$cachedCode || !Hash::check($cachedCode, $this->code)) {
+        if (!$cachedCode || !Hash::check($this->code, $cachedCode)) {
             $this->addError('code', 'کد تایید وارد شده صحیح نیست');
         } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
             $this->addError('accessPassword', 'رمز دسترسی صحیح نیست');
@@ -93,25 +90,28 @@ class Listing extends Component
 
             if (!empty($this->category) && !empty($this->subCategory)) {
                 $this->subCategory = VideoSubCategory::whereId($this->subCategory)->first();
+
+                $videoUrl = $this->video->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $videoName, 'public');
+                $imageUrl = $this->image->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $imageName, 'public');
+
                 $this->subCategory->videos()->create([
                     'title' => $this->title,
                     'description' => $this->description,
                     'creator_code' => $this->creator_code,
-                    'fileName' => $videoName,
-                    'image' => $imageName,
+                    'fileName' => $videoUrl,
+                    'image' => $imageUrl,
                 ]);
-                $this->video->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug . '/', $videoName, 'public');
-                $this->image->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug . '/', $imageName, 'public');
+
             } else {
+                $videoUrl = $this->video->storePubliclyAs('tutorials/' . $this->category->slug, $videoName, 'public');
+                $imageUrl = $this->image->storePubliclyAs('tutorials/' . $this->category->slug, $imageName, 'public');
                 $this->category->videos()->create([
                     'title' => $this->title,
                     'description' => $this->description,
                     'creator_code' => $this->creator_code,
-                    'fileName' => $videoName,
-                    'image' => $imageName,
+                    'fileName' => $videoUrl,
+                    'image' => $imageUrl,
                 ]);
-                $this->video->storePubliclyAs('tutorials/' . $this->category->slug . '/', $videoName, 'public');
-                $this->image->storePubliclyAs('tutorials/' . $this->category->slug . '/', $imageName, 'public');
             }
 
             $this->resetExcept(['success', 'videos', 'videoCategories', 'admin']);
@@ -123,29 +123,8 @@ class Listing extends Component
 
     public function deleteVideo(Video $video)
     {
-        if ($video->categoriable instanceof VideoSubCategory) {
-            unlink(
-                public_path(
-                    'uploads/tutorials/' . $video->categoriable->category->slug . '/' . $video->categoriable->slug . '/' . $video->image
-                )
-            );
-            unlink(
-                public_path(
-                    'uploads/tutorials/' . $video->categoriable->category->slug . '/' . $video->categoriable->slug . '/' . $video->fileName
-                )
-            );
-        } else {
-            unlink(
-                public_path(
-                    'uploads/tutorials/' . $video->categoriable->slug . '/' . $video->image
-                )
-            );
-            unlink(
-                public_path(
-                    'uploads/tutorials/' . $video->categoriable->slug . '/' . $video->fileName
-                )
-            );
-        }
+        unlink(public_path('uploads/'.$video->fileName));
+        unlink(public_path('uploads/'.$video->image));
         $video->delete();
         $this->emitSelf('videoDeleted');
         session()->flash('success', 'ویدیو حذف شد.');

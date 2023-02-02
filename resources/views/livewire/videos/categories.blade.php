@@ -84,7 +84,7 @@
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $category->name }}</td>
                             <td>{{ $category->slug }}</td>
-                            <td><a href="{{ asset('uploads/tutorials/'. $category->slug . '/' . $category->image) }}"
+                            <td><a href="{{ asset('uploads/'.$category->image) }}"
                                     target="_blank" class="btn btn-primary btn-sm round">مشاهده</a></td>
                             <td>{{ \Morilog\Jalali\Jalalian::forge($category->created_at)->format('Y/m/d') }}
                             </td>
@@ -112,7 +112,7 @@
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $item->name }}</td>
                                     <td>{{ $item->slug }}</td>
-                                    <td><a href="{{ asset('uploads/tutorials/'. $category->slug .'/' . $item->slug . '/' . $item->image) }}"
+                                    <td><a href="{{ asset('uploads/'. $item->image) }}"
                                             target="_blank" class="btn btn-primary btn-sm round">مشاهده</a></td>
                                     <td>{{ \Morilog\Jalali\Jalalian::forge($item->created_at)->format('Y/m/d') }}
                                     </td>

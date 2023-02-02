@@ -122,26 +122,12 @@
                     <td>{{ $video->title }}</td>
                     <td>{{ $video->categoriable->name }}</td>
                     <td>
-                        @if ($video->categoriable instanceof \App\Models\VideoCategory)
-                            <a target="_blank"
-                                href="{{ asset('uploads/tutorials/' . $video->categoriable->slug . '/' . $video->image) }}"
-                                class="btn btn-sm btn-primary round">مشاهده</a>
-                        @else
-                            <a target="_blank"
-                                href="{{ asset('uploads/tutorials/' . $video->categoriable->category->slug . '/' . $video->categoriable->slug . '/' . $video->image) }}"
-                                class="btn btn-sm btn-primary round">مشاهده</a>
-                        @endif
+                        <a target="_blank" href="{{ asset('uploads/' . $video->image) }}"
+                            class="btn btn-sm btn-primary round">مشاهده</a>
                     </td>
                     <td>
-                        @if ($video->categoriable instanceof \App\Models\VideoCategory)
-                            <a target="_blank"
-                                href="{{ asset('uploads/tutorials/' . $video->categoriable->slug . '/' . $video->fileName) }}"
-                                class="btn btn-sm btn-primary round">مشاهده</a>
-                        @else
-                            <a target="_blank"
-                                href="{{ asset('uploads/tutorials/' . $video->categoriable->category->slug . '/' . $video->categoriable->slug . '/' . $video->fileName) }}"
-                                class="btn btn-sm btn-primary round">مشاهده</a>
-                        @endif
+                        <a target="_blank" href="{{ asset('uploads/' . $video->fileName) }}"
+                            class="btn btn-sm btn-primary round">مشاهده</a>
                     </td>
                     <td>{{ $video->creator_code }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($video->created_at)->format('Y/m/d') }}</td>
