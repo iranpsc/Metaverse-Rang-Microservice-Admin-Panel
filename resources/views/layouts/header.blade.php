@@ -31,6 +31,8 @@
     <link href="{{ asset('assets/plugins/clockpicker/dist/bootstrap-clockpicker.min.css') }}" rel="stylesheet">
     <!-- END PAGE CSS -->
 
+    <link rel="stylesheet" href="{{ asset('assets/plugins/persian-datepicker/css/persian-datepicker.min.css') }}">
+
     @livewireStyles
 
     @stack('css')

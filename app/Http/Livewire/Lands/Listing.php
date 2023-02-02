@@ -23,19 +23,19 @@ class Listing extends Component
         $this->properties = FeatureProperties::with('feature', 'feature.geometry.coordinates')
             ->where('id', 'like', '%' . $this->search . '%')
             ->orderBy('id', 'asc')
-            ->paginate(10, ['*'], 'lands-listing');
+            ->simplePaginate(10);
     }
 
     public function render()
     {
         return view('livewire.lands.listing', [
             'properties' => is_null($this->properties) ?
-            FeatureProperties::with('feature', 'feature.geometry.coordinates')
-            ->orderBy('id', 'asc')
-            ->paginate(10, ['*'], 'lands-listing')
-            : $this->properties
+                FeatureProperties::with('feature', 'feature.geometry.coordinates')
+                ->orderBy('id', 'asc')
+                ->simplePaginate(10)
+                : $this->properties
         ])
-        ->extends('layouts.app')
-        ->section('content');
+            ->extends('layouts.app')
+            ->section('content');
     }
 }

@@ -99,6 +99,9 @@
 <script src="{{ asset('assets/plugins/datepicker/jquery.ui.datepicker-cc-fa.js') }}"></script>
 <script src="{{ asset('assets/js/pages/calendar-ui.js') }}"></script>
 <script src="{{ asset('assets/js/sweetalert2@11.js') }}"></script>
+<script src="{{ asset('assets/plugins/persian-date/persian-date.min.js') }}"></script>
+<script src="{{ asset('assets/plugins/persian-datepicker/js/persian-datepicker.min.js') }}"></script>
+<script src="{{ asset('assets/js/pages/calendar.js') }}"></script>
 
 {{-- <script src="https://cdn.ckeditor.com/ckeditor5/35.3.0/classic/ckeditor.js"></script>
 
