@@ -70,15 +70,10 @@
                 <div class="row">
                     <div class="col-8">محدود شده به قیمت ثابت</div>
                     <div class="col-4">
-                        <div class="input-group">
-                            <span class="input-group-addon">
-                                <i>PSC</i>
-                            </span>
-                            <x-forms.input wire:model="price"/>
-                            @error('price')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
+                        <x-forms.input wire:model="price"/>
+                        @error('price')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
             </div>
