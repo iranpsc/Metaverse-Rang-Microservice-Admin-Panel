@@ -1,0 +1,507 @@
+  2023-01-31 22:19:49 App\Notifications\LogedInNotification .......... RUNNING
+  2023-01-31 22:19:49 App\Notifications\LogedInNotification ..... 35.01ms FAIL
+  2023-01-31 22:19:49 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:19:49 App\Events\UserStatusChanged ............... 6.78ms FAIL
+  2023-01-31 22:19:49 App\Notifications\LogedInNotification .......... RUNNING
+  2023-01-31 22:19:49 App\Notifications\LogedInNotification ...... 5.83ms FAIL
+  2023-01-31 22:19:49 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:19:49 App\Events\UserStatusChanged ............... 6.57ms FAIL
+  2023-01-31 22:19:49 App\Notifications\LogedInNotification .......... RUNNING
+  2023-01-31 22:19:49 App\Notifications\LogedInNotification ...... 6.89ms FAIL
+  2023-01-31 22:19:49 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:19:49 App\Events\UserStatusChanged ............... 3.79ms FAIL
+  2023-01-31 22:22:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:22:05 App\Events\UserStatusChanged ............... 8.34ms FAIL
+  2023-01-31 22:22:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:22:05 App\Events\UserStatusChanged ............... 4.70ms FAIL
+  2023-01-31 22:22:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:22:05 App\Events\UserStatusChanged ............... 4.44ms FAIL
+  2023-01-31 22:41:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:41:16 App\Events\UserStatusChanged ............... 7.91ms FAIL
+  2023-01-31 22:41:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:41:16 App\Events\UserStatusChanged ............... 6.61ms FAIL
+  2023-01-31 22:41:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:41:16 App\Events\UserStatusChanged ............... 4.43ms FAIL
+  2023-01-31 22:41:22 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:41:22 App\Events\UserStatusChanged ............... 7.90ms FAIL
+  2023-01-31 22:41:22 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:41:22 App\Events\UserStatusChanged ............... 9.70ms FAIL
+  2023-01-31 22:41:22 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:41:22 App\Events\UserStatusChanged ............... 4.12ms FAIL
+  2023-01-31 22:53:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:53:05 App\Events\UserStatusChanged .............. 11.34ms FAIL
+  2023-01-31 22:53:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:53:05 App\Events\UserStatusChanged ............... 9.70ms FAIL
+  2023-01-31 22:53:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-01-31 22:53:05 App\Events\UserStatusChanged .............. 10.35ms FAIL
+  2023-02-01 18:30:45 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 18:30:45 App\Events\UserStatusChanged .............. 18.58ms FAIL
+  2023-02-01 18:30:45 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 18:30:45 App\Events\UserStatusChanged ............... 5.92ms FAIL
+  2023-02-01 18:30:45 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 18:30:45 App\Events\UserStatusChanged ............... 5.72ms FAIL
+  2023-02-01 19:25:17 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 19:25:17 App\Events\UserStatusChanged .............. 29.59ms FAIL
+  2023-02-01 19:25:17 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 19:25:17 App\Events\UserStatusChanged .............. 15.18ms FAIL
+  2023-02-01 19:25:17 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 19:25:17 App\Events\UserStatusChanged ............... 5.22ms FAIL
+  2023-02-01 20:17:41 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 20:17:41 App\Events\UserStatusChanged ............... 9.73ms FAIL
+  2023-02-01 20:17:41 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 20:17:41 App\Events\UserStatusChanged ............... 5.80ms FAIL
+  2023-02-01 20:17:41 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 20:17:41 App\Events\UserStatusChanged ............... 6.06ms FAIL
+  2023-02-01 20:23:34 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 20:23:34 App\Events\UserStatusChanged .............. 15.47ms FAIL
+  2023-02-01 20:23:34 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 20:23:34 App\Events\UserStatusChanged ............... 5.29ms FAIL
+  2023-02-01 20:23:34 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 20:23:34 App\Events\UserStatusChanged ............... 5.80ms FAIL
+  2023-02-01 20:56:50 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 20:56:50 App\Events\UserStatusChanged ............... 8.85ms FAIL
+  2023-02-01 20:56:50 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 20:56:50 App\Events\UserStatusChanged ............... 5.14ms FAIL
+  2023-02-01 20:56:50 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 20:56:50 App\Events\UserStatusChanged ............... 4.99ms FAIL
+  2023-02-01 21:19:46 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 21:19:46 App\Events\UserStatusChanged ............... 6.83ms FAIL
+  2023-02-01 21:19:46 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 21:19:46 App\Events\UserStatusChanged ............... 7.63ms FAIL
+  2023-02-01 21:19:46 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 21:19:46 App\Events\UserStatusChanged ............... 5.83ms FAIL
+  2023-02-01 21:21:15 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 21:21:15 App\Events\UserStatusChanged .............. 11.98ms FAIL
+  2023-02-01 21:21:15 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 21:21:15 App\Events\UserStatusChanged ............... 5.89ms FAIL
+  2023-02-01 21:21:15 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 21:21:15 App\Events\UserStatusChanged ............... 5.83ms FAIL
+  2023-02-01 21:23:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 21:23:04 App\Events\UserStatusChanged ............... 6.69ms FAIL
+  2023-02-01 21:23:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 21:23:04 App\Events\UserStatusChanged ............... 6.32ms FAIL
+  2023-02-01 21:23:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 21:23:04 App\Events\UserStatusChanged ............... 4.24ms FAIL
+  2023-02-01 22:39:32 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 22:39:32 App\Events\UserStatusChanged .............. 16.25ms FAIL
+  2023-02-01 22:39:32 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 22:39:32 App\Events\UserStatusChanged ............... 6.12ms FAIL
+  2023-02-01 22:39:32 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 22:39:32 App\Events\UserStatusChanged ............... 4.01ms FAIL
+  2023-02-01 23:04:11 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:04:11 App\Events\UserStatusChanged .............. 10.03ms FAIL
+  2023-02-01 23:04:11 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:04:11 App\Events\UserStatusChanged ............... 7.70ms FAIL
+  2023-02-01 23:04:11 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:04:11 App\Events\UserStatusChanged ............... 6.80ms FAIL
+  2023-02-01 23:05:32 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:05:32 App\Events\UserStatusChanged ............... 9.64ms FAIL
+  2023-02-01 23:05:32 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:05:32 App\Events\UserStatusChanged ............... 7.36ms FAIL
+  2023-02-01 23:05:32 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:05:32 App\Events\UserStatusChanged ............... 6.12ms FAIL
+  2023-02-01 23:05:35 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:05:35 App\Events\UserStatusChanged ............... 8.80ms FAIL
+  2023-02-01 23:05:35 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:05:35 App\Events\UserStatusChanged ............... 4.57ms FAIL
+  2023-02-01 23:05:35 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:05:35 App\Events\UserStatusChanged ............... 5.66ms FAIL
+  2023-02-01 23:08:03 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:08:03 App\Events\UserStatusChanged ............... 8.72ms FAIL
+  2023-02-01 23:08:03 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:08:03 App\Events\UserStatusChanged ............... 4.39ms FAIL
+  2023-02-01 23:08:03 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:08:03 App\Events\UserStatusChanged ............... 4.89ms FAIL
+  2023-02-01 23:11:00 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:11:00 App\Events\UserStatusChanged .............. 10.56ms FAIL
+  2023-02-01 23:11:00 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:11:00 App\Events\UserStatusChanged ............... 9.39ms FAIL
+  2023-02-01 23:11:00 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:11:00 App\Events\UserStatusChanged ............... 9.29ms FAIL
+  2023-02-01 23:13:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:13:04 App\Events\UserStatusChanged ............... 8.18ms FAIL
+  2023-02-01 23:13:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:13:04 App\Events\UserStatusChanged ............... 5.14ms FAIL
+  2023-02-01 23:13:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:13:04 App\Events\UserStatusChanged ............... 4.12ms FAIL
+  2023-02-01 23:24:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:24:37 App\Events\UserStatusChanged .............. 11.28ms FAIL
+  2023-02-01 23:24:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:24:37 App\Events\UserStatusChanged ............... 4.92ms FAIL
+  2023-02-01 23:24:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:24:37 App\Events\UserStatusChanged ............... 5.21ms FAIL
+  2023-02-01 23:32:50 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:32:50 App\Events\UserStatusChanged .............. 10.90ms FAIL
+  2023-02-01 23:32:50 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:32:50 App\Events\UserStatusChanged ............... 4.72ms FAIL
+  2023-02-01 23:32:50 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:32:50 App\Events\UserStatusChanged ............... 5.01ms FAIL
+  2023-02-01 23:36:03 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:36:03 App\Events\UserStatusChanged .............. 11.99ms FAIL
+  2023-02-01 23:36:03 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:36:03 App\Events\UserStatusChanged ............... 6.98ms FAIL
+  2023-02-01 23:36:03 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:36:03 App\Events\UserStatusChanged ............... 4.64ms FAIL
+  2023-02-01 23:40:12 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:40:12 App\Events\UserStatusChanged ............... 8.47ms FAIL
+  2023-02-01 23:40:12 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:40:12 App\Events\UserStatusChanged ............... 6.06ms FAIL
+  2023-02-01 23:40:12 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:40:12 App\Events\UserStatusChanged ............... 4.05ms FAIL
+  2023-02-01 23:40:43 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:40:43 App\Events\UserStatusChanged ............... 9.34ms FAIL
+  2023-02-01 23:40:43 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:40:43 App\Events\UserStatusChanged ............... 6.33ms FAIL
+  2023-02-01 23:40:43 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:40:43 App\Events\UserStatusChanged ............... 4.57ms FAIL
+  2023-02-01 23:41:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:41:04 App\Events\UserStatusChanged ............... 9.00ms FAIL
+  2023-02-01 23:41:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:41:04 App\Events\UserStatusChanged ............... 5.42ms FAIL
+  2023-02-01 23:41:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:41:04 App\Events\UserStatusChanged ............... 5.06ms FAIL
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification ..... 34.05ms FAIL
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification ...... 7.25ms FAIL
+  2023-02-01 23:41:28 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:41:28 App\Events\UserStatusChanged ............... 5.50ms FAIL
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification ...... 5.51ms FAIL
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification ...... 6.30ms FAIL
+  2023-02-01 23:41:28 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:41:28 App\Events\UserStatusChanged ............... 4.59ms FAIL
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification ...... 5.97ms FAIL
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-01 23:41:28 App\Notifications\LogedInNotification ...... 5.76ms FAIL
+  2023-02-01 23:41:28 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:41:28 App\Events\UserStatusChanged ............... 4.15ms FAIL
+  2023-02-01 23:42:13 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:42:13 App\Events\UserStatusChanged ............... 8.09ms FAIL
+  2023-02-01 23:42:13 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:42:13 App\Events\UserStatusChanged .............. 10.13ms FAIL
+  2023-02-01 23:42:13 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:42:13 App\Events\UserStatusChanged ............... 4.79ms FAIL
+  2023-02-01 23:43:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:16 App\Events\UserStatusChanged .............. 13.54ms FAIL
+  2023-02-01 23:43:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:16 App\Events\UserStatusChanged ............... 5.04ms FAIL
+  2023-02-01 23:43:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:16 App\Events\UserStatusChanged ............... 4.79ms FAIL
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ............... 5.72ms FAIL
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ............... 4.12ms FAIL
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ............... 4.20ms FAIL
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ............... 5.45ms FAIL
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ............... 3.79ms FAIL
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:22 App\Events\UserStatusChanged ............... 4.16ms FAIL
+  2023-02-01 23:43:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:37 App\Events\UserStatusChanged ............... 8.74ms FAIL
+  2023-02-01 23:43:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:37 App\Events\UserStatusChanged ............... 6.69ms FAIL
+  2023-02-01 23:43:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:37 App\Events\UserStatusChanged ............... 5.09ms FAIL
+  2023-02-01 23:43:46 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:46 App\Events\UserStatusChanged ............... 4.82ms FAIL
+  2023-02-01 23:43:46 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:46 App\Events\UserStatusChanged ............... 4.52ms FAIL
+  2023-02-01 23:43:46 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:46 App\Events\UserStatusChanged ............... 3.87ms FAIL
+  2023-02-01 23:43:58 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:58 App\Events\UserStatusChanged ............... 6.77ms FAIL
+  2023-02-01 23:43:58 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:43:58 App\Notifications\GetOtpNotification ...... 11.50ms FAIL
+  2023-02-01 23:43:58 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:58 App\Events\UserStatusChanged ............... 4.79ms FAIL
+  2023-02-01 23:43:58 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:43:58 App\Notifications\GetOtpNotification ....... 5.34ms FAIL
+  2023-02-01 23:43:58 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:43:58 App\Events\UserStatusChanged ............... 3.97ms FAIL
+  2023-02-01 23:43:58 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:43:58 App\Notifications\GetOtpNotification ....... 5.62ms FAIL
+  2023-02-01 23:44:34 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:44:35 App\Events\UserStatusChanged ............... 9.90ms FAIL
+  2023-02-01 23:44:35 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:44:35 App\Events\UserStatusChanged ............... 6.40ms FAIL
+  2023-02-01 23:44:35 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:44:35 App\Events\UserStatusChanged ............... 4.89ms FAIL
+  2023-02-01 23:52:41 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:52:41 App\Events\UserStatusChanged ............... 7.40ms FAIL
+  2023-02-01 23:52:41 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:52:41 App\Events\UserStatusChanged ............... 5.23ms FAIL
+  2023-02-01 23:52:41 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:52:41 App\Events\UserStatusChanged ............... 4.59ms FAIL
+  2023-02-01 23:55:06 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:55:06 App\Events\UserStatusChanged .............. 13.78ms FAIL
+  2023-02-01 23:55:06 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:55:06 App\Events\UserStatusChanged ............... 8.51ms FAIL
+  2023-02-01 23:55:06 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:55:06 App\Events\UserStatusChanged ............... 7.90ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged .............. 30.83ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged .............. 12.06ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged .............. 14.70ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ...... 14.20ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ............... 7.18ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ....... 6.39ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ...... 10.87ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ............... 8.12ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ............... 7.97ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged .............. 11.36ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ...... 17.56ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged .............. 14.04ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ...... 14.98ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ....... 7.50ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ............... 5.54ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ...... 10.19ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ............... 7.71ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ............... 6.80ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ...... 10.74ms FAIL
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:56:37 App\Events\UserStatusChanged ............... 5.80ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ...... 10.96ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ....... 6.85ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ....... 7.24ms FAIL
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-01 23:56:37 App\Notifications\GetOtpNotification ....... 6.70ms FAIL
+  2023-02-01 23:59:06 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:59:06 App\Events\UserStatusChanged .............. 16.23ms FAIL
+  2023-02-01 23:59:06 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:59:06 App\Events\UserStatusChanged .............. 13.36ms FAIL
+  2023-02-01 23:59:06 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:59:06 App\Events\UserStatusChanged .............. 10.71ms FAIL
+  2023-02-01 23:59:24 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-01 23:59:24 App\Notifications\LogedInNotification ..... 18.98ms FAIL
+  2023-02-01 23:59:24 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-01 23:59:24 App\Notifications\LogedInNotification ...... 9.62ms FAIL
+  2023-02-01 23:59:24 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-01 23:59:24 App\Events\UserStatusChanged .............. 16.29ms FAIL
+  2023-02-01 23:59:24 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-01 23:59:24 App\Notifications\LogedInNotification ..... 29.28ms FAIL
+  2023-02-02 00:06:09 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:06:09 App\Events\UserStatusChanged ............... 9.52ms FAIL
+  2023-02-02 00:06:09 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:06:09 App\Events\UserStatusChanged ............... 5.32ms FAIL
+  2023-02-02 00:06:09 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:06:09 App\Events\UserStatusChanged ............... 5.14ms FAIL
+  2023-02-02 00:17:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:17:04 App\Events\UserStatusChanged ............... 7.63ms FAIL
+  2023-02-02 00:17:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:17:04 App\Events\UserStatusChanged ............... 4.66ms FAIL
+  2023-02-02 00:17:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:17:04 App\Events\UserStatusChanged ............... 3.51ms FAIL
+  2023-02-02 00:17:07 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:17:07 App\Events\UserStatusChanged .............. 10.33ms FAIL
+  2023-02-02 00:17:07 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:17:07 App\Events\UserStatusChanged ............... 5.26ms FAIL
+  2023-02-02 00:17:07 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:17:07 App\Events\UserStatusChanged ............... 5.00ms FAIL
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:05 App\Events\UserStatusChanged .............. 13.45ms FAIL
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ............... 6.10ms FAIL
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ............... 6.52ms FAIL
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ............... 4.58ms FAIL
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ............... 4.72ms FAIL
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ............... 4.41ms FAIL
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ............... 5.48ms FAIL
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ............... 4.58ms FAIL
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:05 App\Events\UserStatusChanged ............... 5.12ms FAIL
+  2023-02-02 00:23:35 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:35 App\Events\UserStatusChanged ............... 7.91ms FAIL
+  2023-02-02 00:23:35 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:35 App\Events\UserStatusChanged ............... 4.92ms FAIL
+  2023-02-02 00:23:35 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:23:35 App\Events\UserStatusChanged ............... 4.55ms FAIL
+  2023-02-02 00:24:23 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:24:23 App\Events\UserStatusChanged ............... 6.97ms FAIL
+  2023-02-02 00:24:23 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:24:23 App\Events\UserStatusChanged ............... 3.97ms FAIL
+  2023-02-02 00:24:23 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:24:23 App\Events\UserStatusChanged ............... 5.54ms FAIL
+  2023-02-02 00:25:23 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:25:23 App\Events\UserStatusChanged .............. 16.23ms FAIL
+  2023-02-02 00:25:23 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:25:23 App\Events\UserStatusChanged ............... 5.20ms FAIL
+  2023-02-02 00:25:23 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:25:23 App\Events\UserStatusChanged ............... 4.80ms FAIL
+  2023-02-02 00:25:30 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:25:30 App\Events\UserStatusChanged ............... 7.30ms FAIL
+  2023-02-02 00:25:30 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:25:30 App\Events\UserStatusChanged ............... 4.88ms FAIL
+  2023-02-02 00:25:30 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:25:30 App\Events\UserStatusChanged ............... 5.28ms FAIL
+  2023-02-02 00:25:33 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:25:33 App\Events\UserStatusChanged .............. 11.52ms FAIL
+  2023-02-02 00:25:33 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:25:33 App\Events\UserStatusChanged ............... 7.80ms FAIL
+  2023-02-02 00:25:33 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:25:33 App\Events\UserStatusChanged ............... 3.63ms FAIL
+  2023-02-02 00:27:18 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:27:18 App\Events\UserStatusChanged ............... 7.67ms FAIL
+  2023-02-02 00:27:18 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:27:18 App\Events\UserStatusChanged ............... 7.04ms FAIL
+  2023-02-02 00:27:18 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:27:18 App\Events\UserStatusChanged ............... 6.90ms FAIL
+  2023-02-02 00:34:26 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:34:26 App\Events\UserStatusChanged ............... 7.73ms FAIL
+  2023-02-02 00:34:26 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:34:26 App\Events\UserStatusChanged ............... 6.60ms FAIL
+  2023-02-02 00:34:26 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:34:26 App\Events\UserStatusChanged ............... 5.09ms FAIL
+  2023-02-02 00:37:15 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:37:15 App\Events\UserStatusChanged .............. 12.75ms FAIL
+  2023-02-02 00:37:15 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:37:15 App\Events\UserStatusChanged ............... 9.98ms FAIL
+  2023-02-02 00:37:15 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:37:15 App\Events\UserStatusChanged ............... 8.03ms FAIL
+  2023-02-02 00:40:10 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:40:10 App\Events\UserStatusChanged ............... 8.13ms FAIL
+  2023-02-02 00:40:10 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:40:10 App\Events\UserStatusChanged ............... 5.55ms FAIL
+  2023-02-02 00:40:10 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:40:10 App\Events\UserStatusChanged ............... 7.75ms FAIL
+  2023-02-02 00:52:03 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:52:03 App\Events\UserStatusChanged ............... 8.94ms FAIL
+  2023-02-02 00:52:03 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:52:03 App\Events\UserStatusChanged ............... 4.30ms FAIL
+  2023-02-02 00:52:03 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:52:03 App\Events\UserStatusChanged ............... 4.36ms FAIL
+  2023-02-02 00:52:27 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:52:27 App\Events\UserStatusChanged .............. 17.36ms FAIL
+  2023-02-02 00:52:27 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:52:28 App\Events\UserStatusChanged ............... 6.79ms FAIL
+  2023-02-02 00:52:28 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 00:52:28 App\Events\UserStatusChanged .............. 16.68ms FAIL
+  2023-02-02 01:24:11 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:24:11 App\Events\UserStatusChanged .............. 13.03ms FAIL
+  2023-02-02 01:24:11 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:24:11 App\Events\UserStatusChanged ............... 5.34ms FAIL
+  2023-02-02 01:24:11 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:24:11 App\Events\UserStatusChanged ............... 4.29ms FAIL
+  2023-02-02 01:27:08 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:27:08 App\Events\UserStatusChanged ............... 8.78ms FAIL
+  2023-02-02 01:27:08 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:27:08 App\Events\UserStatusChanged .............. 10.57ms FAIL
+  2023-02-02 01:27:08 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:27:08 App\Events\UserStatusChanged ............... 4.62ms FAIL
+  2023-02-02 01:30:03 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:30:04 App\Events\UserStatusChanged .............. 13.95ms FAIL
+  2023-02-02 01:30:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:30:04 App\Events\UserStatusChanged ............... 5.35ms FAIL
+  2023-02-02 01:30:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:30:04 App\Events\UserStatusChanged ............... 3.97ms FAIL
+  2023-02-02 01:33:08 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:33:08 App\Events\UserStatusChanged ............... 9.30ms FAIL
+  2023-02-02 01:33:08 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:33:08 App\Events\UserStatusChanged ............... 8.86ms FAIL
+  2023-02-02 01:33:08 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:33:08 App\Events\UserStatusChanged ............... 4.46ms FAIL
+  2023-02-02 01:44:11 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:44:11 App\Events\UserStatusChanged .............. 43.62ms FAIL
+  2023-02-02 01:48:24 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:48:24 App\Events\UserStatusChanged ............... 8.42ms FAIL
+  2023-02-02 01:48:24 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:48:24 App\Events\UserStatusChanged ............... 4.56ms FAIL
+  2023-02-02 01:50:52 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:50:52 App\Events\UserStatusChanged ............... 7.17ms FAIL
+  2023-02-02 01:50:52 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:50:52 App\Events\UserStatusChanged ............... 5.08ms FAIL
+  2023-02-02 01:50:52 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:50:52 App\Events\UserStatusChanged ............... 5.11ms FAIL
+  2023-02-02 01:50:58 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:50:58 App\Events\UserStatusChanged .............. 17.54ms FAIL
+  2023-02-02 01:50:58 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-02 01:50:58 App\Notifications\GetOtpNotification ...... 53.67ms FAIL
+  2023-02-02 01:50:58 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:50:58 App\Events\UserStatusChanged ............... 5.33ms FAIL
+  2023-02-02 01:50:58 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-02 01:50:58 App\Notifications\GetOtpNotification ...... 11.23ms FAIL
+  2023-02-02 01:50:58 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:50:58 App\Events\UserStatusChanged ............... 3.69ms FAIL
+  2023-02-02 01:50:58 App\Notifications\GetOtpNotification ........... RUNNING
+  2023-02-02 01:50:58 App\Notifications\GetOtpNotification ....... 7.73ms FAIL
+  2023-02-02 01:51:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:51:16 App\Events\UserStatusChanged ............... 8.60ms FAIL
+  2023-02-02 01:51:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:51:16 App\Events\UserStatusChanged ............... 4.12ms FAIL
+  2023-02-02 01:51:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:51:16 App\Events\UserStatusChanged ............... 3.57ms FAIL
+  2023-02-02 01:57:18 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:57:18 App\Events\UserStatusChanged .............. 11.12ms FAIL
+  2023-02-02 01:57:18 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:57:18 App\Events\UserStatusChanged ............... 7.42ms FAIL
+  2023-02-02 01:57:18 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 01:57:18 App\Events\UserStatusChanged ............... 5.13ms FAIL
+  2023-02-02 02:00:28 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 02:00:28 App\Events\UserStatusChanged ............... 8.06ms FAIL
+  2023-02-02 02:00:28 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 02:00:28 App\Events\UserStatusChanged ............... 4.38ms FAIL
+  2023-02-02 02:00:28 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 02:00:28 App\Events\UserStatusChanged ............... 3.46ms FAIL
+  2023-02-02 02:15:11 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-02 02:50:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 02:50:16 App\Events\UserStatusChanged .............. 27.00ms FAIL
+  2023-02-02 02:50:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 02:50:16 App\Events\UserStatusChanged ............... 4.93ms FAIL
+  2023-02-02 02:50:16 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 02:50:16 App\Events\UserStatusChanged ............... 4.69ms FAIL
+  2023-02-02 02:51:13 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 02:51:13 App\Events\UserStatusChanged ............... 9.01ms FAIL
+  2023-02-02 02:51:13 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 02:51:13 App\Events\UserStatusChanged .............. 13.69ms FAIL
+  2023-02-02 02:51:13 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 02:51:13 App\Events\UserStatusChanged ............... 6.16ms FAIL
+  2023-02-02 10:42:08 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-02 10:42:08 App\Notifications\LogedInNotification ..... 33.62ms FAIL
+  2023-02-02 10:42:08 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 10:42:08 App\Events\UserStatusChanged ............... 6.21ms FAIL
+  2023-02-02 10:42:08 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-02 10:42:08 App\Notifications\LogedInNotification ...... 6.08ms FAIL
+  2023-02-02 10:42:08 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 10:42:08 App\Events\UserStatusChanged ............... 4.21ms FAIL
+  2023-02-02 10:42:08 App\Notifications\LogedInNotification .......... RUNNING
+  2023-02-02 10:42:08 App\Notifications\LogedInNotification ...... 6.20ms FAIL
+  2023-02-02 10:42:08 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 10:42:08 App\Events\UserStatusChanged ............... 4.29ms FAIL
+  2023-02-02 11:12:34 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 11:12:34 App\Events\UserStatusChanged ............... 9.27ms FAIL
+  2023-02-02 11:12:34 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 11:12:34 App\Events\UserStatusChanged ............... 6.62ms FAIL
+  2023-02-02 11:12:34 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 11:12:34 App\Events\UserStatusChanged ............... 4.15ms FAIL
