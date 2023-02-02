@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Http\Livewire\Lands\Edit;
+
+use Livewire\Component;
+use App\Helpers\SMS;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Morilog\Jalali\Jalalian;
+use App\Models\FeatureProperties;
+
+use function App\Helpers\convertDateToCarbon;
+
+class FeatureLimits extends Component
+{
+    public $title, $startingId, $endingId,
+        $verifiedKycLimit = false,
+        $verifiedBankAccountLimit = false,
+        $notAllowedToBeSold = false,
+        $under18BuyLimit = false,
+        $moreThan18BuyLimit = false,
+        $dynastyOwnerBuyLimit = false,
+        $buyCountLimitForEachIndividual,
+        $price,
+        $startingDate,
+        $endingDate,
+        $code,
+        $accessPassword,
+        $admin,
+        $limit;
+
+    protected $rules = [
+        'title' => 'required|string',
+        'startingId' => 'required|string|exists:feature_properties,id',
+        'endingId' => 'required|string|exists:feature_properties,id',
+        'verifiedKycLimit' => 'nullable|boolean',
+        'verifiedBankAccountLimit' => 'nullable|boolean',
+        'notAllowedToBeSold' => 'nullable|boolean',
+        'under18BuyLimit' => 'nullable|boolean',
+        'moreThan18BuyLimit' => 'nullable|boolean',
+        'dynastyOwnerBuyLimit' => 'nullable|boolean',
+        'buyCountLimitForEachIndividual' => 'nullable|integer|min:0',
+        'price' => 'nullable|integer|min:0',
+        'startingDate' => 'required|shamsi_date',
+        'endingDate' => 'required|shamsi_date',
+        'code' => 'required|integer',
+        'accessPassword' => 'required',
+    ];
+
+    public function mount()
+    {
+        $this->admin = Auth::guard('admin')->user();
+        $this->title = $this->limit->title;
+        $this->startingId = $this->limit->start_id;
+        $this->endingId = $this->limit->end_id;
+        $this->verifiedKycLimit = $this->limit->verified_kyc_limit;
+        $this->verifiedBankAccountLimit = $this->limit->verified_bank_account_limit;
+        $this->notAllowedToBeSold = $this->limit->not_sellable;
+        $this->under18BuyLimit = $this->limit->under_18_limit;
+        $this->moreThan18BuyLimit = $this->limit->more_than_18_limit;
+        $this->dynastyOwnerBuyLimit = $this->limit->dynasty_owner_limit;
+        $this->buyCountLimitForEachIndividual = $this->limit->individual_buy_limit;
+        $this->price = $this->limit->price;
+        $this->startingDate = Jalalian::forge($this->limit->start_date)->format('Y/m/d');
+        $this->endingDate = Jalalian::forge($this->limit->end_date)->format('Y/m/d');
+    }
+
+    public function sendSMS()
+    {
+        $verify_code = random_int(100000, 999999);
+        Cache::put('feature.limits.verify.code.' . $this->admin->id, Hash::make($verify_code), now()->addMinutes(2));
+        $result = SMS::send($this->admin->phone, $verify_code);
+        if (is_array($result)) {
+            foreach ($result as $r) {
+                session()->flash('success', $r->statustext);
+            }
+        } else {
+            session()->flash('error', explode(":", $result)[1]);
+            Cache::forget('feature.limits.verify.code.' . $this->admin->id);
+        }
+    }
+
+    public function save()
+    {
+        $this->validate();
+
+        $cachedCode = Cache::get('feature.limits.verify.code.' . $this->admin->id);
+
+        if (!Hash::check($this->code, $cachedCode)) {
+            $this->addError('code', 'کد تایید وارد شده صحیح نمی باشد');
+        } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
+            $this->addError('accessPassword', 'رمز دسترسی صحیح نمی باشد');
+        } else {
+            $date_st = \Morilog\Jalali\CalendarUtils::convertNumbers($this->startingDate, true);
+            $date_ed = \Morilog\Jalali\CalendarUtils::convertNumbers($this->endingDate, true);
+            if ($this->endingId <= $this->startingId) {
+                $this->addError('endingId', 'مقدار نا معتبر است.');
+            } elseif ($date_st >= $date_ed) {
+                $this->addError('endingDate', 'مقدار نا معتبر است.');
+            } else {
+                $this->limit->title = $this->title;
+                $this->limit->start_id = $this->startingId;
+                $this->limit->end_id = $this->endingId;
+                $this->limit->verified_kyc_limit = $this->verifiedKycLimit;
+                $this->limit->verified_bank_account_limit = $this->verifiedBankAccountLimit;
+                $this->limit->not_sellable = $this->notAllowedToBeSold;
+                $this->limit->under_18_limit = $this->under18BuyLimit;
+                $this->limit->more_than_18_limit = $this->moreThan18BuyLimit;
+                $this->limit->dynasty_owner_limit = $this->dynastyOwnerBuyLimit;
+                $this->limit->individual_buy_limit = $this->buyCountLimitForEachIndividual;
+                $this->limit->start_date = convertDateToCarbon($this->startingDate);
+                $this->limit->end_date = convertDateToCarbon($this->endingDate);
+                $this->limit->save();
+
+                if (!empty($this->price)) {
+                    FeatureProperties::where('id', '>=', $this->startingId)
+                        ->where('id', '<=', $this->endingId)
+                        ->update(['stability' => intval(trim($this->price))]);
+                }
+
+                $this->reset(['code', 'accessPassword']);
+                Cache::forget('feature.limits.verify.code.' . $this->admin->id);
+                session()->flash('success', 'محدودیت ویرایش شد');
+                $this->emitUp('limitUpdated');
+            }
+        }
+    }
+    public function render()
+    {
+        return view('livewire.lands.edit.feature-limits');
+    }
+}

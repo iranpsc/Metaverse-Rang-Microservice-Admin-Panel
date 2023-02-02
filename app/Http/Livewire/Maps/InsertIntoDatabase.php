@@ -40,10 +40,6 @@ class InsertIntoDatabase extends Component
 
     public function sendCode()
     {
-        if (Cache::get('maps-verify-code-' . $this->admin->id)) {
-            session()->flash('error', 'کد تایید قبلا برای شما ارسال شده است');
-            return;
-        }
         $verifyCode = random_int(10000, 99999);
         Cache::put('maps-verify-code-' . $this->admin->id, Hash::make($verifyCode), now()->addMinutes(5));
         $result = SMS::send($this->admin->phone, $verifyCode);
@@ -69,7 +65,7 @@ class InsertIntoDatabase extends Component
 
         $cachedCode = Cache::get('maps-verify-code-' . $this->admin->id);
 
-        if (!$cachedCode || Hash::check($cachedCode, $this->code)) {
+        if (!$cachedCode || !Hash::check($this->code, $cachedCode)) {
             $this->addError('code', 'کد تایید وارد شده صحیح نیست');
         } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
             $this->addError('accessPassword', 'رمز دسترسی صحیح نیست');
@@ -78,6 +74,7 @@ class InsertIntoDatabase extends Component
             $map->update(['status' => 1]);
             session()->flash('success', 'اطلاعات با موفقیت وارد دیتابیس شد');
             Cache::delete('maps-verify-code-' . $this->admin->id);
+            $this->reset('code', 'accessPassword');
             $this->emitUp('mapsInsertedToDatabase');
         }
     }

@@ -43,9 +43,9 @@ class Listing extends Component
 
         $fileName =  $this->file->getClientOriginalName();
 
-        $this->file->storePubliclyAs('public/maps', $fileName);
+        $this->file->storePubliclyAs('maps', $fileName, 'public');
 
-        $fileContents = file_get_contents(public_path('storage/maps/' . $fileName));
+        $fileContents = file_get_contents(public_path('uploads/maps/' . $fileName));
 
         $fileContents = explode('=', $fileContents)[1];
 
@@ -93,7 +93,7 @@ class Listing extends Component
     public function render()
     {
         return view('livewire.maps.listing', [
-            'maps' => Map::paginate(10, ['*'], 'listing')
+            'maps' => Map::simplePaginate(10)
         ])
             ->extends('layouts.app')
             ->section('content');

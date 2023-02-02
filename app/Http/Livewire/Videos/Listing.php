@@ -81,7 +81,7 @@ class Listing extends Component
 
         $cachedCode = Cache::get('videos-verify-code-' . $this->admin->id);
 
-        if (!$cachedCode || Hash::check($cachedCode, $this->code)) {
+        if (!$cachedCode || !Hash::check($cachedCode, $this->code)) {
             $this->addError('code', 'کد تایید وارد شده صحیح نیست');
         } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
             $this->addError('accessPassword', 'رمز دسترسی صحیح نیست');
@@ -115,8 +115,9 @@ class Listing extends Component
             }
 
             $this->resetExcept(['success', 'videos', 'videoCategories', 'admin']);
-            $this->emitSelf('videoCreated');
             session()->flash('success', 'ویدیو بارگذاری شد.');
+            Cache::forget('videos-verify-code-' . $this->admin->id);
+            $this->emitSelf('videoCreated');
         }
     }
 

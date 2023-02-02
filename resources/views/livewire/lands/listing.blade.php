@@ -16,7 +16,7 @@
                 </x-slot:headers>
                 @foreach ($properties as $property)
                     <tr>
-                        <td>{{ explode('-', $property->id)[1] - 10000 }}</td>
+                        <td>{{ $loop->iteration }}</td>
                         <td>{{ $property->id }}</td>
                         <td>{{ $property->area }}</td>
                         <td>{{ $property->density }}</td>

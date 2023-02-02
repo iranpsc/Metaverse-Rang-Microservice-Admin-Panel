@@ -103,11 +103,3 @@ function convertDateToCarbon($date)
     $date = \Morilog\Jalali\CalendarUtils::createCarbonFromFormat('Y-m-d', $date)->format('Y-m-d');
     return $date;
 }
-
-function checkIp(string $starting_ip, string $ending_ip, $ip)
-{
-    $starting_ip = ip2long($starting_ip);
-    $ending_ip = ip2long($ending_ip);
-    if ($ip >= $starting_ip && $ip <= $ending_ip)  return true;
-    return false;
-}
