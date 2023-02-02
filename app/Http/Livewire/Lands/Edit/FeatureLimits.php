@@ -118,12 +118,21 @@ class FeatureLimits extends Component
                         ->where('id', '<=', $this->endingId)
                         ->each(function ($feature) {
                             if ($feature->karbari === 'm') {
-                                $feature->update(['rgb' => 'f']);
+                                $feature->update([
+                                    'rgb' => 'f',
+                                    'label' => 'locked',
+                                ]);
                             } elseif ($feature->karbari === 't') {
-                                $feature->update(['rgb' => 'm']);
+                                $feature->update([
+                                    'rgb' => 'm',
+                                    'label' => 'locked',
+                                ]);
                             }
                             if ($feature->karbari === 'a') {
-                                $feature->update(['rgb' => 'tt']);
+                                $feature->update([
+                                    'rgb' => 'tt',
+                                    'label' => 'locked',
+                                ]);
                             }
                         });
                 }
