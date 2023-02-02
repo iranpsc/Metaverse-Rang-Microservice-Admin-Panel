@@ -109,6 +109,7 @@ class FeatureLimits extends Component
                 $this->limit->more_than_18_limit = $this->moreThan18BuyLimit;
                 $this->limit->dynasty_owner_limit = $this->dynastyOwnerBuyLimit;
                 $this->limit->individual_buy_limit = $this->buyCountLimitForEachIndividual;
+                $this->limit->price = $this->price;
                 $this->limit->start_date = convertDateToCarbon($this->startingDate);
                 $this->limit->end_date = convertDateToCarbon($this->endingDate);
                 $this->limit->save();

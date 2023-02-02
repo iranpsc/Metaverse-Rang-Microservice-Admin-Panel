@@ -46,25 +46,24 @@ class Categories extends Component
         $this->slug = trim($this->slug);
 
         if(empty($this->parentCategory)) {
+            $url = $this->image->storePubliclyAs('tutorials/'.$this->slug, $imageName, 'public');
             VideoCategory::create([
                 'name' => $this->name,
                 'slug' => $this->slug,
                 'description' => $this->description,
-                'image' => $imageName,
+                'image' => $url,
             ]);
-            $this->image->storePubliclyAs('tutorials/'.$this->slug.'/', $imageName, 'public');
 
         } else {
 
             $parentCategory = VideoCategory::findOrFail($this->parentCategory);
-
+            $url = $this->image->storePubliclyAs('tutorials/'.$parentCategory->slug.'/'.$this->slug, $imageName, 'public');
             $parentCategory->subCategories()->create([
                 'name' => $this->name,
                 'slug' => $this->slug,
                 'description' => $this->description,
-                'image' => $imageName,
+                'image' => $url,
             ]);
-            $this->image->storePubliclyAs('tutorials/'.$parentCategory->slug.'/'.$this->slug.'/', $imageName, 'public');
         }
         session()->flash('success', 'دسته بندی ایجاد شد.');
         $this->reset('name', 'slug', 'image', 'parentCategory', 'description');
@@ -74,12 +73,10 @@ class Categories extends Component
     public function deleteCategory(VideoCategory $category)
     {
         foreach($category->subCategories as $item) {
-            unlink(public_path('uploads/tutorials/'. $category->slug . '/' . $item->slug.'/'.$item->image));
-            rmdir(public_path('uploads/tutorials/'. $category->slug . '/' .$item->slug));
+            unlink(public_path('uploads/'.$item->image));
             $item->delete();
         }
-        unlink(public_path('uploads/tutorials/'.$category->slug.'/'.$category->image));
-        rmdir(public_path('uploads/tutorials/'.$category->slug));
+        unlink(public_path('uploads/'.$category->image));
         session()->flash('success', 'دسته بندی حذف شد.');
         $category->delete();
         $this->emitSelf('categoryDeleted');

@@ -85,7 +85,7 @@ class Listing extends Component
 
     public function delete(Map $map)
     {
-        unlink(public_path('storage/maps/' . $map->fileName));
+        unlink(public_path('uploads/maps/' . $map->fileName));
         $map->delete();
         $this->emitSelf('mapDeleted');
     }
