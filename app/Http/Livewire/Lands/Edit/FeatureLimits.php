@@ -113,6 +113,21 @@ class FeatureLimits extends Component
                 $this->limit->end_date = convertDateToCarbon($this->endingDate);
                 $this->limit->save();
 
+                if (!empty($this->notAllowedToBeSold)) {
+                    FeatureProperties::where('id', '>=', $this->startingId)
+                        ->where('id', '<=', $this->endingId)
+                        ->each(function ($feature) {
+                            if ($feature->karbari === 'm') {
+                                $feature->update(['rgb' => 'f']);
+                            } elseif ($feature->karbari === 't') {
+                                $feature->update(['rgb' => 'm']);
+                            }
+                            if ($feature->karbari === 'a') {
+                                $feature->update(['rgb' => 'tt']);
+                            }
+                        });
+                }
+
                 if (!empty($this->price)) {
                     FeatureProperties::where('id', '>=', $this->startingId)
                         ->where('id', '<=', $this->endingId)
