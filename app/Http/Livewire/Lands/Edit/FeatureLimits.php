@@ -113,6 +113,30 @@ class FeatureLimits extends Component
                 $this->limit->end_date = convertDateToCarbon($this->endingDate);
                 $this->limit->save();
 
+                if (!empty($this->notAllowedToBeSold)) {
+                    FeatureProperties::where('id', '>=', $this->startingId)
+                        ->where('id', '<=', $this->endingId)
+                        ->each(function ($feature) {
+                            if ($feature->karbari === 'm') {
+                                $feature->update([
+                                    'rgb' => 'f',
+                                    'label' => 'locked',
+                                ]);
+                            } elseif ($feature->karbari === 't') {
+                                $feature->update([
+                                    'rgb' => 'm',
+                                    'label' => 'locked',
+                                ]);
+                            }
+                            if ($feature->karbari === 'a') {
+                                $feature->update([
+                                    'rgb' => 'tt',
+                                    'label' => 'locked',
+                                ]);
+                            }
+                        });
+                }
+
                 if (!empty($this->price)) {
                     FeatureProperties::where('id', '>=', $this->startingId)
                         ->where('id', '<=', $this->endingId)
@@ -126,6 +150,17 @@ class FeatureLimits extends Component
             }
         }
     }
+
+    public function updatedUnder18BuyLimit()
+    {
+        $this->verifiedKycLimit = true;
+    }
+
+    public function updatedMoreThan18BuyLimit()
+    {
+        $this->verifiedKycLimit = true;
+    }
+
     public function render()
     {
         return view('livewire.lands.edit.feature-limits');

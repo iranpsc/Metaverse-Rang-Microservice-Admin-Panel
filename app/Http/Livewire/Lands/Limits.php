@@ -77,7 +77,7 @@ class Limits extends Component
     {
         $this->validate();
 
-        $cachedCode = Cache::get('feature.limits.verify.code.'.$this->admin->id);
+        $cachedCode = Cache::get('feature.limits.verify.code.' . $this->admin->id);
 
         if (!$cachedCode || !Hash::check($this->code, $cachedCode)) {
             $this->addError('code', 'کد تایید وارد شده صحیح نمی باشد');
@@ -106,6 +106,41 @@ class Limits extends Component
                 $limit->start_date = convertDateToCarbon($this->startingDate);
                 $limit->end_date = convertDateToCarbon($this->endingDate);
                 $limit->save();
+                FeatureProperties::where('id', '>=', $this->startingId)
+                    ->where('id', '<=', $this->endingId)
+                    ->each(function ($feature) {
+                        if ($feature->karbari === 'm') {
+                            $feature->update(['rgb' => 'g']);
+                        } elseif ($feature->karbari === 't') {
+                            $feature->update(['rgb' => 'n']);
+                        }
+                        if ($feature->karbari === 'a') {
+                            $feature->update(['rgb' => 'uu']);
+                        }
+                    });
+                if (!empty($this->notAllowedToBeSold)) {
+                    FeatureProperties::where('id', '>=', $this->startingId)
+                        ->where('id', '<=', $this->endingId)
+                        ->each(function ($feature) {
+                            if ($feature->karbari === 'm') {
+                                $feature->update([
+                                    'rgb' => 'f',
+                                    'label' => 'locked',
+                                ]);
+                            } elseif ($feature->karbari === 't') {
+                                $feature->update([
+                                    'rgb' => 'm',
+                                    'label' => 'locked',
+                                ]);
+                            }
+                            if ($feature->karbari === 'a') {
+                                $feature->update([
+                                    'rgb' => 'tt',
+                                    'label' => 'locked',
+                                ]);
+                            }
+                        });
+                }
                 if (!empty($this->price)) {
                     FeatureProperties::where('id', '>=', $this->startingId)
                         ->where('id', '<=', $this->endingId)
