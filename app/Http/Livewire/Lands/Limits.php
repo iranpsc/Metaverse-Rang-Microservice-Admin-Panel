@@ -110,12 +110,21 @@ class Limits extends Component
                     ->where('id', '<=', $this->endingId)
                     ->each(function ($feature) {
                         if ($feature->karbari === 'm') {
-                            $feature->update(['rgb' => 'g']);
+                            $feature->update([
+                                'rgb' => 'g',
+                                'label' => ''
+                            ]);
                         } elseif ($feature->karbari === 't') {
-                            $feature->update(['rgb' => 'n']);
+                            $feature->update([
+                                'rgb' => 'n',
+                                'label' => ''
+                            ]);
                         }
                         if ($feature->karbari === 'a') {
-                            $feature->update(['rgb' => 'uu']);
+                            $feature->update([
+                                'rgb' => 'uu',
+                                'label' => ''
+                            ]);
                         }
                     });
                 if (!empty($this->notAllowedToBeSold)) {

@@ -144,6 +144,31 @@ class FeatureLimits extends Component
                         ->update(['stability' => intval(trim($this->price))]);
                 }
 
+                if(empty($this->notAllowedToBeSold)) {
+                    FeatureProperties::where('id', '>=', $this->startingId)
+                    ->where('id', '<=', $this->endingId)
+                    ->each(function ($feature) {
+                        if ($feature->karbari === 'm') {
+                            $feature->update([
+                                'rgb' => 'g',
+                                'label' => ''
+                            ]);
+                        } elseif ($feature->karbari === 't') {
+                            $feature->update([
+                                'rgb' => 'n',
+                                'label' => ''
+                            ]);
+                        }
+                        if ($feature->karbari === 'a') {
+                            $feature->update([
+                                'rgb' => 'uu',
+                                'label' => ''
+                            ]);
+                        }
+                    });
+                }
+
+
                 $this->reset(['code', 'accessPassword']);
                 Cache::forget('feature.limits.verify.code.' . $this->admin->id);
                 session()->flash('success', 'محدودیت ویرایش شد');
