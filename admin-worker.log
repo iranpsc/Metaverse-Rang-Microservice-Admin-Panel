@@ -569,3 +569,11 @@
   2023-02-02 18:15:58 App\Notifications\LogedInNotification ...... 7.73ms FAIL
   2023-02-02 18:15:58 App\Notifications\LogedInNotification .......... RUNNING
   2023-02-02 18:15:58 App\Notifications\LogedInNotification ...... 7.65ms FAIL
+  2023-02-02 20:52:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 20:52:04 App\Events\UserStatusChanged .............. 16.36ms FAIL
+  2023-02-02 20:52:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 20:52:04 App\Events\UserStatusChanged ............... 7.82ms FAIL
+  2023-02-02 20:52:04 App\Events\UserStatusChanged ................... RUNNING
+  2023-02-02 20:52:04 App\Events\UserStatusChanged ............... 5.89ms FAIL
+  2023-02-03 10:39:51 App\Jobs\ImportMaps ............................ RUNNING
+  2023-02-03 10:39:52 App\Jobs\ImportMaps ...................... 872.49ms DONE
