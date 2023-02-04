@@ -101,7 +101,7 @@ class Limits extends Component
                 $limit->under_18_limit = $this->under18BuyLimit;
                 $limit->more_than_18_limit = $this->moreThan18BuyLimit;
                 $limit->dynasty_owner_limit = $this->dynastyOwnerBuyLimit;
-                $limit->individual_buy_limit = $this->buyCountLimitForEachIndividual;
+                $limit->individual_buy_limit = $this->buyCountLimitForEachIndividual ?? 0;
                 $limit->price = intval($this->price);
                 $limit->start_date = convertDateToCarbon($this->startingDate);
                 $limit->end_date = convertDateToCarbon($this->endingDate);
