@@ -79,7 +79,7 @@ class Limits extends Component
 
         $cachedCode = Cache::get('feature.limits.verify.code.' . $this->admin->id);
 
-        if (!$cachedCode || !Hash::check($this->code, $cachedCode)) {
+        if (!Hash::check($this->code, $cachedCode)) {
             $this->addError('code', 'کد تایید وارد شده صحیح نمی باشد');
         } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
             $this->addError('accessPassword', 'رمز دسترسی صحیح نمی باشد');
@@ -102,10 +102,11 @@ class Limits extends Component
                 $limit->more_than_18_limit = $this->moreThan18BuyLimit;
                 $limit->dynasty_owner_limit = $this->dynastyOwnerBuyLimit;
                 $limit->individual_buy_limit = $this->buyCountLimitForEachIndividual;
-                $limit->price = trim($this->price);
+                $limit->price = intval($this->price);
                 $limit->start_date = convertDateToCarbon($this->startingDate);
                 $limit->end_date = convertDateToCarbon($this->endingDate);
                 $limit->save();
+
                 FeatureProperties::where('id', '>=', $this->startingId)
                     ->where('id', '<=', $this->endingId)
                     ->each(function ($feature) {
@@ -127,7 +128,7 @@ class Limits extends Component
                             ]);
                         }
                     });
-                if (!empty($this->notAllowedToBeSold)) {
+                if ($this->notAllowedToBeSold) {
                     FeatureProperties::where('id', '>=', $this->startingId)
                         ->where('id', '<=', $this->endingId)
                         ->each(function ($feature) {
@@ -150,7 +151,7 @@ class Limits extends Component
                             }
                         });
                 }
-                if (!empty($this->price)) {
+                if ($this->price >= 0) {
                     FeatureProperties::where('id', '>=', $this->startingId)
                         ->where('id', '<=', $this->endingId)
                         ->update(['stability' => intval(trim($this->price))]);
@@ -175,6 +176,30 @@ class Limits extends Component
 
     public function delete(FeatureLimit $featureLimit)
     {
+        FeatureProperties::where('id', '>=', $featureLimit->start_id)
+            ->where('id', '<=', $featureLimit->end_id)
+            ->each(function ($feature) {
+                if ($feature->karbari === 'm') {
+                    $feature->update([
+                        'rgb' => 'a',
+                        'label' => '',
+                        'stability' => $feature->area * $feature->density
+                    ]);
+                } elseif ($feature->karbari === 't') {
+                    $feature->update([
+                        'rgb' => 'h',
+                        'label' => '',
+                        'stability' => $feature->area * $feature->density
+                    ]);
+                }
+                if ($feature->karbari === 'a') {
+                    $feature->update([
+                        'rgb' => 'o',
+                        'label' => '',
+                        'stability' => $feature->area * $feature->density
+                    ]);
+                }
+            });
         $featureLimit->delete();
         $this->emitSelf('limitDeleted');
     }

@@ -15,12 +15,12 @@ use function App\Helpers\convertDateToCarbon;
 class FeatureLimits extends Component
 {
     public $title, $startingId, $endingId,
-        $verifiedKycLimit = false,
-        $verifiedBankAccountLimit = false,
-        $notAllowedToBeSold = false,
-        $under18BuyLimit = false,
-        $moreThan18BuyLimit = false,
-        $dynastyOwnerBuyLimit = false,
+        $verifiedKycLimit,
+        $verifiedBankAccountLimit,
+        $notAllowedToBeSold,
+        $under18BuyLimit,
+        $moreThan18BuyLimit,
+        $dynastyOwnerBuyLimit,
         $buyCountLimitForEachIndividual,
         $price,
         $startingDate,
@@ -114,7 +114,7 @@ class FeatureLimits extends Component
                 $this->limit->end_date = convertDateToCarbon($this->endingDate);
                 $this->limit->save();
 
-                if (!empty($this->notAllowedToBeSold)) {
+                if ($this->notAllowedToBeSold) {
                     FeatureProperties::where('id', '>=', $this->startingId)
                         ->where('id', '<=', $this->endingId)
                         ->each(function ($feature) {
@@ -138,13 +138,13 @@ class FeatureLimits extends Component
                         });
                 }
 
-                if (!empty($this->price)) {
+                if ($this->price >= 0) {
                     FeatureProperties::where('id', '>=', $this->startingId)
                         ->where('id', '<=', $this->endingId)
                         ->update(['stability' => intval(trim($this->price))]);
                 }
 
-                if(empty($this->notAllowedToBeSold)) {
+                if(!$this->notAllowedToBeSold) {
                     FeatureProperties::where('id', '>=', $this->startingId)
                     ->where('id', '<=', $this->endingId)
                     ->each(function ($feature) {
@@ -158,8 +158,7 @@ class FeatureLimits extends Component
                                 'rgb' => 'n',
                                 'label' => ''
                             ]);
-                        }
-                        if ($feature->karbari === 'a') {
+                        }elseif ($feature->karbari === 'a') {
                             $feature->update([
                                 'rgb' => 'uu',
                                 'label' => ''
