@@ -176,6 +176,30 @@ class Limits extends Component
 
     public function delete(FeatureLimit $featureLimit)
     {
+        FeatureProperties::where('id', '>=', $featureLimit->start_id)
+            ->where('id', '<=', $featureLimit->end_id)
+            ->each(function ($feature) {
+                if ($feature->karbari === 'm') {
+                    $feature->update([
+                        'rgb' => 'a',
+                        'label' => '',
+                        'stability' => $feature->area * $feature->density
+                    ]);
+                } elseif ($feature->karbari === 't') {
+                    $feature->update([
+                        'rgb' => 'h',
+                        'label' => '',
+                        'stability' => $feature->area * $feature->density
+                    ]);
+                }
+                if ($feature->karbari === 'a') {
+                    $feature->update([
+                        'rgb' => 'o',
+                        'label' => '',
+                        'stability' => $feature->area * $feature->density
+                    ]);
+                }
+            });
         $featureLimit->delete();
         $this->emitSelf('limitDeleted');
     }
