@@ -7,21 +7,21 @@ use App\Models\Kyc as ModelKyc;
 
 class Kyc extends Component
 {
-    public $searchTerm, $kycs;
+    public $searchTerm;
 
-    public function __construct()
-    {
-        $this->kycs = ModelKyc::with('errors')->latest()->get();
-    }
+    private $kycs;
 
-    public function updated() {
-        $this->kycs = ModelKyc::with('errors')->where('melli_code', 'like', '%' . $this->searchTerm . '%')
+    public function updatedSearchTerm() {
+        $this->kycs = ModelKyc::with('errors')
+        ->where('melli_code', 'like', '%' . $this->searchTerm . '%')
         ->get();
     }
 
     public function render()
     {
-        return view('livewire.citizens.kyc')
+        return view('livewire.citizens.kyc', [
+            'kycs' => $this->kycs ?? ModelKyc::with('errors')->simplePaginate(10)
+        ])
         ->extends('layouts.app')
         ->section('content');
     }

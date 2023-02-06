@@ -39,6 +39,7 @@
                 </tr>
             @endforeach
         </x-tables.table>
+        {{ $kycs->links() }}
     @else
         <x-alerts.danger>درخواست احراز هویتی ثبت نشده است</x-alerts.danger>
     @endif

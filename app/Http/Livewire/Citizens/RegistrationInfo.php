@@ -15,22 +15,17 @@ class RegistrationInfo extends Component
 
     protected $paginationTheme = 'bootstrap';
 
-    public function mount()
-    {
-        $this->users = User::paginate(10);
-    }
-
     public function updated() {
         $this->resetPage();
         $this->users = User::where('email', 'like', '%' . $this->searchTerm . '%')
         ->orWhere('name', 'like', '%' . $this->searchTerm . '%')
-        ->paginate(10);
+        ->simplePaginate(10);
     }
 
     public function render()
     {
         return view('livewire.citizens.registration-info', [
-            'users' => $this->users
+            'users' => $this->users ?? User::simplePaginate(10)
         ])
         ->extends('layouts.app')
         ->section('content');

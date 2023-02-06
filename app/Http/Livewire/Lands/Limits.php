@@ -77,13 +77,11 @@ class Limits extends Component
     {
         $this->validate();
 
-        // $cachedCode = Cache::get('feature.limits.verify.code.' . $this->admin->id);
-
-        // if (!Hash::check($this->code, $cachedCode)) {
-        //     $this->addError('code', 'کد تایید وارد شده صحیح نمی باشد');
-        // } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
-        //     $this->addError('accessPassword', 'رمز دسترسی صحیح نمی باشد');
-        // } else {
+        if (!Hash::check($this->code, Cache::get('feature.limits.verify.code.' . $this->admin->id))) {
+            $this->addError('code', 'کد تایید وارد شده صحیح نمی باشد');
+        } else if (!Hash::check($this->accessPassword, $this->admin->access_password)) {
+            $this->addError('accessPassword', 'رمز دسترسی صحیح نمی باشد');
+        } else {
             $date_st = \Morilog\Jalali\CalendarUtils::convertNumbers($this->startingDate, true);
             $date_ed = \Morilog\Jalali\CalendarUtils::convertNumbers($this->endingDate, true);
             if ($this->endingId < $this->startingId) {
@@ -161,7 +159,7 @@ class Limits extends Component
                 session()->flash('success', 'محدودیت وارد شد');
                 $this->emitSelf('limitCreated');
             }
-        // }
+        }
     }
 
     public function updatedUnder18BuyLimit()
