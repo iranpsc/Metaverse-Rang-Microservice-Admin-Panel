@@ -33,8 +33,8 @@ class Dashboard extends Component
         ];
         $this->dynasties = Dynasty::count();
         $this->features = [
-            'all' => $featureRepository->all()->count(),
-            'sold' => $featureRepository->sold()->count()
+            'all' => $featureRepository->all(),
+            'sold' => $featureRepository->sold()
         ];
         $this->referrals = Referral::count();
         $this->referral_amount = ReferralOrderHistory::sum('amount')  * Variable::getRate('psc');

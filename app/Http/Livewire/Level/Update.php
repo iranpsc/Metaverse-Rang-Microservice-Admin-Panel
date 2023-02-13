@@ -9,7 +9,7 @@ class Update extends Component
 {
     use WithFileUploads;
 
-    public $name, $score, $level, $key, $image;
+    public $name, $score, $level, $image;
 
     public function mount()
     {

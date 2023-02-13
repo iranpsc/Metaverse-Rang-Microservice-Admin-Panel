@@ -10,8 +10,6 @@ class Listing extends Component
 {
     use WithPagination;
 
-    private $levels;
-    public $search = '';
     protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
@@ -26,8 +24,7 @@ class Listing extends Component
 
     public function delete(Level $level)
     {
-        if ($level->prize)
-            $level->prize->delete();
+        $level->prize?->delete();
         $level->delete();
         $this->emitSelf('levelDeleted');
     }
@@ -35,7 +32,7 @@ class Listing extends Component
     public function render()
     {
         return view('livewire.level.listing', [
-            'levels' => $this->levels ?? Level::with('prize')->paginate(10, ['*'], 'listing')
+            'levels' => Level::with('prize')->simplePaginate(10)
         ])
             ->extends('layouts.app')
             ->section('content');

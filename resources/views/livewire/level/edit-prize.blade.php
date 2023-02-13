@@ -1,6 +1,6 @@
 <div>
     {{-- If you look to others for fulfillment, you will never truly be fulfilled. --}}
-    <x-modals.modal id="edit-prizes-modal-{{ $key }}" title="ویرایش جوایز سطح {{ $level->name }}">
+    <x-modals.modal id="edit-prizes-modal-{{ $level->id }}" title="ویرایش جوایز سطح {{ $level->name }}">
         @if (session()->has('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif

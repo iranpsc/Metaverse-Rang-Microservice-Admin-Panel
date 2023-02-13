@@ -7,10 +7,11 @@ use App\Models\Level\Level;
 
 class EditPrize extends Component
 {
-    public $level, $key, $prize;
+    public $level, $prize;
     public $psc, $blue, $red, $yellow, $union_license, $union_members_count;
     public $observing_license, $gate_license, $lawyer_license, $city_counsile_entry;
     public $special_residence_property, $property_on_area, $judge_entry, $satisfaction;
+    public $upload_feature_image;
     public $effect, $delete_feature_image;
 
     protected $rules = [
@@ -74,7 +75,6 @@ class EditPrize extends Component
         $this->effect                     = $this->prize->effect;
         $this->upload_feature_image       = $this->prize->upload_feature_image;
         $this->delete_feature_image       = $this->prize->delete_feature_image;
-
     }
 
     public function save()

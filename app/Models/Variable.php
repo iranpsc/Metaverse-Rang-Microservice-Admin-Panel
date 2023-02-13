@@ -34,6 +34,10 @@ class Variable extends Model
         'note'
     ];
 
+    protected $casts =[
+        'price' => 'int'
+    ];
+
     public static function getRate($asset) {
         return self::firstWhere('asset', $asset)->price ?? 0;
     }

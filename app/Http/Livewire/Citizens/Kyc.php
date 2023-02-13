@@ -20,7 +20,7 @@ class Kyc extends Component
     public function render()
     {
         return view('livewire.citizens.kyc', [
-            'kycs' => $this->kycs ?? ModelKyc::with('errors')->simplePaginate(10)
+            'kycs' => $this->kycs ?? ModelKyc::with(['errors', 'user'])->simplePaginate(10)
         ])
         ->extends('layouts.app')
         ->section('content');
