@@ -32,6 +32,7 @@ class EditOptions extends Component
         'code' => 'required|string',
         'note' => 'required',
         'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp',
+        'code' => 'required|string|unique:options,code'
     ];
 
     protected $messages = [
@@ -45,6 +46,7 @@ class EditOptions extends Component
         'image.image' => 'فرمت فایل صحیح نیست',
         'image.mimes' => 'فرمت فایل صحیح نیست',
         'code.required' => 'کد بسته را وارد کنید',
+        'code.unique' => 'کد بسته باید تکراری نباشد.'
     ];
 
     public function sendSMS()
@@ -90,7 +92,7 @@ class EditOptions extends Component
             if ($this->image) {
                 $url = env('FTP_ENDPOINT') . $this->image->store('public/packages');
 
-                if($this->option->image) {
+                if ($this->option->image) {
                     $this->option->image->update([
                         'url' => $url,
                     ]);
@@ -99,7 +101,6 @@ class EditOptions extends Component
                         'url' => $url,
                     ]);
                 }
-
             }
 
             Session::forget('verify_code');

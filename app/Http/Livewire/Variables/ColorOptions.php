@@ -27,7 +27,7 @@ class ColorOptions extends Component
         'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp',
         'amount' => 'required|integer|min:1',
         'asset' => 'required|in:red,blue,yellow,psc,irr',
-        'code' => 'required|string'
+        'code' => 'required|string|unique:options,code'
     ];
 
     protected $messages = [
@@ -40,7 +40,8 @@ class ColorOptions extends Component
         'asset.in' => 'گزینه انتخاب شده معتبر نمی باشد',
         'image.image' => 'فرمت فایل صحیح نیست',
         'image.mimes' => 'فرمت فایل صحیح نیست',
-        'code.required' => 'کد بسته را وارد کنید'
+        'code.required' => 'کد بسته را وارد کنید',
+        'code.unique' => 'کد بسته باید تکراری نباشد.'
     ];
 
     protected $listeners = [
