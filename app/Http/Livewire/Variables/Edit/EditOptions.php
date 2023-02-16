@@ -14,13 +14,14 @@ class EditOptions extends Component
 {
     use WithFileUploads;
 
-    public $option, $asset, $amount, $image, $phoneVerification, $access_password, $note, $admin;
+    public $option, $code, $asset, $amount, $image, $phoneVerification, $access_password, $note, $admin;
 
     public function mount($option)
     {
         $this->option = $option;
         $this->asset = $option->asset;
         $this->amount = $option->amount;
+        $this->code = $option->code;
         $this->admin = Auth::guard('admin')->user();
     }
 
@@ -28,6 +29,7 @@ class EditOptions extends Component
         'phoneVerification' => 'required|numeric',
         'access_password' => 'required',
         'amount' => 'required|numeric|min:1',
+        'code' => 'required|string',
         'note' => 'required',
         'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp',
     ];
@@ -42,6 +44,7 @@ class EditOptions extends Component
         'note.required' => 'دلیل بروزرسانی را وارد کنید',
         'image.image' => 'فرمت فایل صحیح نیست',
         'image.mimes' => 'فرمت فایل صحیح نیست',
+        'code.required' => 'کد بسته را وارد کنید',
     ];
 
     public function sendSMS()
@@ -81,6 +84,7 @@ class EditOptions extends Component
                 'asset' => $this->asset,
                 'amount' => $this->amount,
                 'note' => $this->note,
+                'code' => $this->code,
             ]);
 
             if ($this->image) {

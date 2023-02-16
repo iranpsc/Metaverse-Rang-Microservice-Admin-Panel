@@ -28,6 +28,13 @@
             @enderror
         </x-forms.group>
 
+        <x-forms.group label="کد بسته" for="code">
+            <x-forms.input id="code" wire:model="code" placeholder="کد بسته را وارد کنید" />
+            @error('code')
+                <span class="form-text text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
         <x-forms.group label="تصویر" for="image">
             <x-forms.input type="file" id="image" wire:model="image" />
             <span class="text-success" wire:loading wire:target="image">در حال بارگذاری ...</span>

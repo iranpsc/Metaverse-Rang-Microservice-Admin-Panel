@@ -16,7 +16,7 @@ class ColorOptions extends Component
 {
     use WithPagination, WithFileUploads;
 
-    public $asset, $amount, $image, $phoneVerification, $access_password;
+    public $asset, $amount, $image, $phoneVerification, $access_password, $code;
     public $admin;
 
     protected $paginationTheme = 'bootstrap';
@@ -26,7 +26,8 @@ class ColorOptions extends Component
         'access_password' => 'required',
         'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp',
         'amount' => 'required|integer|min:1',
-        'asset' => 'required|in:red,blue,yellow,psc,irr'
+        'asset' => 'required|in:red,blue,yellow,psc,irr',
+        'code' => 'required|string'
     ];
 
     protected $messages = [
@@ -39,6 +40,7 @@ class ColorOptions extends Component
         'asset.in' => 'گزینه انتخاب شده معتبر نمی باشد',
         'image.image' => 'فرمت فایل صحیح نیست',
         'image.mimes' => 'فرمت فایل صحیح نیست',
+        'code.required' => 'کد بسته را وارد کنید'
     ];
 
     protected $listeners = [
@@ -77,7 +79,7 @@ class ColorOptions extends Component
             $option = Option::create([
                 'asset' => $this->asset,
                 'amount' => $this->amount,
-                'code' => random_int(100000, 999999)
+                'code' => $this->code,
             ]);
 
             if($this->image)
