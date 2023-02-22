@@ -34,6 +34,7 @@ use App\Http\Livewire\SystemVariables\Listing as SystemVariablesListing;
 use App\Http\Livewire\AccessManagement\EmployeeRolePermission as EmployeesAccessManagement;
 use App\Http\Livewire\AccessManagement\Roles as EmployeesRoles;
 use App\Http\Livewire\AccessManagement\Permissions as EmployeesPermissions;
+use App\Http\Livewire\Challenge\QuestionsList;
 use App\Http\Livewire\Citizens\Assets;
 use App\Http\Livewire\Citizens\Bankaccounts;
 use App\Http\Livewire\Citizens\Deposits;
@@ -216,6 +217,7 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
     Route::get('/videos', VideoListing::class)->name('videos');
     Route::get('/video-categories', VideoCategories::class)->name('video.categories');
 
+    Route::get('challenge', QuestionsList::class)->name('challenge');
 });
 
 Auth::routes([
