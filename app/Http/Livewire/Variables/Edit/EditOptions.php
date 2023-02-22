@@ -32,7 +32,7 @@ class EditOptions extends Component
         'code' => 'required|string',
         'note' => 'required',
         'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp',
-        'code' => 'required|string|unique:options,code'
+        'code' => 'required|string'
     ];
 
     protected $messages = [
