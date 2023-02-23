@@ -14,23 +14,20 @@ class QuestionFileImport implements ToModel
      */
     public function model(array $row)
     {
-        if (!isset($row[4]) || !isset($row[6]) || !isset($row[8]) || !isset($row[10])) {
-            return null;
-        }
         return new QuestionFile([
-            'question_code' => $row[0],
+            'code' => $row[0],
             'question_image' => $row[1],
             'question' => $row[2],
-            'answer_one_image' => $row[3],
-            'answer_one' => $row[4],
-            'answer_two_image' => $row[5],
-            'answer_two' => $row[6],
-            'answer_three_image' => $row[7],
-            'answer_three' => $row[8],
-            'answer_four_image' => $row[9],
-            'answer_four' => $row[10],
+            'answer_1_image' => $row[3],
+            'answer_1' => $row[4],
+            'answer_2_image' => $row[5],
+            'answer_2' => $row[6],
+            'answer_3_image' => $row[7],
+            'answer_3' => $row[8],
+            'answer_4_image' => $row[9],
+            'answer_4' => $row[10],
             'correct_answer' => $row[11],
-            'admin_id' => $row[12],
+            'creator_code' => $row[12],
         ]);
     }
 }

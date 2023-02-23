@@ -483,6 +483,20 @@
              @endhasanyrole
              <li>
                  <a href="#" class="dropdown-toggle">
+                     <i class="fa fa-question"></i>
+                     <span>چالش پرسش و پاسخ</span>
+                 </a>
+                 <ul>
+                     <li>
+                         <a href="{{ route('challenge') }}" class="">
+                             <i class="fa fa-list"></i>
+                             <span>لیست سوالات</span>
+                         </a>
+                     </li>
+                 </ul>
+             </li>
+             <li>
+                 <a href="#" class="dropdown-toggle">
                      <i class="fa fa-music"></i>
                      <span>مدیریت موسیقی سراسری</span>
                  </a>
