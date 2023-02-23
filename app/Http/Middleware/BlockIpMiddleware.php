@@ -17,8 +17,11 @@ class BlockIpMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        return Ip::where('type', 'admin')
-            ->where('from', ip2long($request->ip()))
-            ->doesntExist() ? abort(401, 'UnAuthorize') : $next($request);
+        $ipWhiteList = [
+            '2.187.99.104',
+            '2.187.98.25',
+            '127.0.0.1'
+        ];
+        return !in_array($request->ip(), $ipWhiteList) ? abort(401, 'UnAuthorize') : $next($request);
     }
 }
