@@ -11,11 +11,7 @@ class Level extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'slug',
-        'score',
-    ];
+    protected $guraded = [];
 
 
     public function prize() {
