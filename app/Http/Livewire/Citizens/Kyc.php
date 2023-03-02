@@ -14,7 +14,7 @@ class Kyc extends Component
     public function updatedSearchTerm() {
         $this->kycs = ModelKyc::with('errors')
         ->where('melli_code', 'like', '%' . $this->searchTerm . '%')
-        ->get();
+        ->simplePaginate(10);
     }
 
     public function render()
