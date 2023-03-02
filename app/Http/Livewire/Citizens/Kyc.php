@@ -4,9 +4,12 @@ namespace App\Http\Livewire\Citizens;
 
 use Livewire\Component;
 use App\Models\Kyc as ModelKyc;
+use Livewire\WithPagination;
 
 class Kyc extends Component
 {
+    use WithPagination;
+
     public $searchTerm;
 
     private $kycs;
@@ -14,13 +17,13 @@ class Kyc extends Component
     public function updatedSearchTerm() {
         $this->kycs = ModelKyc::with('errors')
         ->where('melli_code', 'like', '%' . $this->searchTerm . '%')
-        ->simplePaginate(10);
+        ->paginate(10);
     }
 
     public function render()
     {
         return view('livewire.citizens.kyc', [
-            'kycs' => $this->kycs ?? ModelKyc::with(['errors', 'user'])->simplePaginate(10)
+            'kycs' => $this->kycs ?? ModelKyc::with(['errors', 'user'])->paginate(10)
         ])
         ->extends('layouts.app')
         ->section('content');
