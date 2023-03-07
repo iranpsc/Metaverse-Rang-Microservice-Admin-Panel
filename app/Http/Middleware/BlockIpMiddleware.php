@@ -19,7 +19,7 @@ class BlockIpMiddleware
     {
         $ipWhiteList = [
             '2.187.99.104',
-            '2.187.98.25',
+            '2.187.98.75',
             '127.0.0.1'
         ];
         return !in_array($request->ip(), $ipWhiteList) ? abort(401, 'UnAuthorize') : $next($request);
