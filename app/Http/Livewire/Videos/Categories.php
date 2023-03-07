@@ -74,9 +74,11 @@ class Categories extends Component
     {
         foreach($category->subCategories as $item) {
             unlink(public_path('uploads/'.$item->image));
+            rmdir(public_path('uploads/tutorials/'. $category->slug . '/' .$item->slug));
             $item->delete();
         }
         unlink(public_path('uploads/'.$category->image));
+        rmdir(public_path('uploads/tutorials/'.$category->slug));
         session()->flash('success', 'دسته بندی حذف شد.');
         $category->delete();
         $this->emitSelf('categoryDeleted');
@@ -84,7 +86,7 @@ class Categories extends Component
 
     public function deleteSubCategory(VideoSubCategory $videoSubCategory)
     {
-        unlink(public_path('uploads/tutorials/'. $videoSubCategory->category->slug . '/' . $videoSubCategory->slug.'/'.$videoSubCategory->image));
+        unlink(public_path('uploads/'.$videoSubCategory->image));
         rmdir(public_path('uploads/tutorials/'. $videoSubCategory->category->slug . '/' .$videoSubCategory->slug));
         $videoSubCategory->delete();
         session()->flash('success', 'دسته بندی حذف شد.');
