@@ -200,7 +200,7 @@
                 <tr>
                     <td>کارت ملی</td>
                     <td>
-                        <a href="{{ url($kyc->melli_card) }}" target="_blank">مشاهده</a>
+                        <a href="{{ $kyc->melli_card }}" target="_blank">مشاهده</a>
                     </td>
                     @unless ($kyc->status == 1)
                     <td class="form-box">
@@ -223,7 +223,7 @@
                 <tr>
                     <td>احراز مستند</td>
                     <td>
-                        <a href="{{ url($kyc->prove_picture) }}" target="_blank">مشاهده </a>
+                        <a href="{{ $kyc->prove_picture }}" target="_blank">مشاهده </a>
 
                     </td>
                     @unless ($kyc->status == 1)
@@ -248,7 +248,7 @@
                     <td>رزومه</td>
                     <td>
                         @if ($kyc->resume)
-                            <a href="{{ url($kyc->resume) }}" target="_blank">مشاهده</a>
+                            <a href="{{ $kyc->resume }}" target="_blank">مشاهده</a>
                         @endif
                     </td>
                     @unless ($kyc->status == 1)
