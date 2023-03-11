@@ -1,6 +1,6 @@
 <div>
     {{-- Success is as dangerous as failure. --}}
-    <x-modals.modal id="update-role-modal-{{$role->id}}" title="ویرایش مسئولیت">
+    <x-modals.modal size="modal-xl" id="update-role-modal-{{ $role->id }}" title="ویرایش مسئولیت">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
@@ -23,7 +23,8 @@
                 @foreach ($role->permissions as $rolePermissions)
                     <li>
                         <span>{{ $rolePermissions->title }}</span>
-                        <x-buttons.btn-danger id="{{ $rolePermissions->id }}" class="confirm" title="removeRolePermission">حذف</x-buttons.btn-danger>
+                        <x-buttons.btn-danger id="{{ $rolePermissions->id }}" class="confirm"
+                            title="removeRolePermission">حذف</x-buttons.btn-danger>
                     </li>
                 @endforeach
             </ul>
@@ -31,10 +32,17 @@
             <x-alerts.danger>هیچ دسترسی به این مسئولیت اختصاص داده نشده است!</x-alert.info>
         @endif
         <p class="modal-text">کدام دسترسی ها را به این مسئولیت می دهید؟</p>
-        @forelse ($permissions as $permission)
-            <div class="input-group">
-                <input class="normal" value="{{ $permission->id }}" wire:model="addedPermissions" type="checkbox" id="role-permissions-{{$permission->id}}">
-                <label for="role-permissions-{{$permission->id}}">{{ $permission->title }}</label>
+        @forelse ($permissions->chunk(4) as $permission)
+            <div class="row">
+                @foreach ($permission as $item)
+                    <div class="col-sm-3">
+                        <div class="input-group">
+                            <input class="normal" value="{{ $item->id }}" wire:model="addedPermissions"
+                                type="checkbox" id="role-permissions-{{ $item->id }}">
+                            <label for="role-permissions-{{ $item->id }}">{{ $item->title }}</label>
+                        </div>
+                    </div>
+                @endforeach
             </div>
         @empty
             <x-alerts.danger>نقشی تعریف نشده است!</x-alerts.danger>
@@ -45,4 +53,3 @@
         </x-slot>
     </x-modals.modal>
 </div>
-

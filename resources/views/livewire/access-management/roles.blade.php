@@ -21,16 +21,18 @@
             @enderror
         </x-forms.group>
         <p class="modal-text">کدام دسترسی ها را به این مسئولیت می دهید؟</p>
-        @forelse ($permissions as $permission)
-
-        <div class="row">
-            <div class="col-sm-3">
-                <div class="input-group">
-                    <input class="normal" value="{{ $permission->id }}" wire:model="addedPermissions" type="checkbox" id="role-permissions-{{$permission->id}}">
-                    <label for="role-permissions-{{$permission->id}}">{{ $permission->title }}</label>
-                </div>
+        @forelse ($permissions->chunk(4) as $permission)
+            <div class="row">
+                @foreach ($permission as $item)
+                    <div class="col-sm-3">
+                        <div class="input-group">
+                            <input class="normal" value="{{ $item->id }}" wire:model="addedPermissions"
+                                type="checkbox" id="role-permissions-{{ $item->id }}">
+                            <label for="role-permissions-{{ $item->id }}">{{ $item->title }}</label>
+                        </div>
+                    </div>
+                @endforeach
             </div>
-        </div>
         @empty
             <x-alerts.danger>نقشی تعریف نشده است!</x-alerts.danger>
         @endforelse
@@ -58,7 +60,8 @@
                     <td>
                         <x-buttons.btn-danger class="confirm" id="{{ $role->id }}" title="deleteRole">حذف
                         </x-buttons.btn-danger>
-                        <x-buttons.btn-primary data-bs-target="#update-role-modal-{{$role->id}}" data-bs-toggle="modal">بروزرسانی
+                        <x-buttons.btn-primary data-bs-target="#update-role-modal-{{ $role->id }}"
+                            data-bs-toggle="modal">بروزرسانی
                         </x-buttons.btn-primary>
                         <livewire:access-management.update-role :role="$role" :wire:key="'update-role-'.$role->id">
                     </td>

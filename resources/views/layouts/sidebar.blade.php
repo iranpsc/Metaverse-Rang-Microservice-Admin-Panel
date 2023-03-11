@@ -481,60 +481,66 @@
                      </a>
                  </li>
              @endhasanyrole
-             <li>
-                 <a href="#" class="dropdown-toggle">
-                     <i class="fa fa-question"></i>
-                     <span>چالش پرسش و پاسخ</span>
-                 </a>
-                 <ul>
-                     <li>
-                         <a href="{{ route('challenge') }}" class="">
-                             <i class="fa fa-list"></i>
-                             <span>لیست سوالات</span>
-                         </a>
-                     </li>
-                 </ul>
-             </li>
-             <li>
-                 <a href="#" class="dropdown-toggle">
-                     <i class="fa fa-music"></i>
-                     <span>مدیریت موسیقی سراسری</span>
-                 </a>
-                 <ul>
-                     <li>
-                         <a href="{{ route('music') }}" class="">
-                             <i class="fa fa-list"></i>
-                             <span>لیست آهنگ ها</span>
-                         </a>
-                     </li>
-                     <li>
-                         <a href="{{ route('music.categories') }}" class="">
-                             <i class="fa fa-category"></i>
-                             <span>دسته بندی ها</span>
-                         </a>
-                     </li>
-                 </ul>
-             </li>
-             <li>
-                 <a href="#" class="dropdown-toggle">
-                     <i class="fa fa-video"></i>
-                     <span>فیلم های آموزشی</span>
-                 </a>
-                 <ul>
-                     <li>
-                         <a href="{{ route('videos') }}" class="">
-                             <i class="fa fa-list"></i>
-                             <span>ویدیوها</span>
-                         </a>
-                     </li>
-                     <li>
-                         <a href="{{ route('video.categories') }}" class="">
-                             <i class="fa fa-list"></i>
-                             <span>دسته بندی ویدئوها</span>
-                         </a>
-                     </li>
-                 </ul>
-             </li>
+             @hasanyrole('challenge-management|super-admin')
+                 <li>
+                     <a href="#" class="dropdown-toggle">
+                         <i class="fa fa-question"></i>
+                         <span>چالش پرسش و پاسخ</span>
+                     </a>
+                     <ul>
+                         <li>
+                             <a href="{{ route('challenge') }}" class="">
+                                 <i class="fa fa-list"></i>
+                                 <span>لیست سوالات</span>
+                             </a>
+                         </li>
+                     </ul>
+                 </li>
+             @endhasanyrole
+             @hasanyrole('music-management|super-admin')
+                 <li>
+                     <a href="#" class="dropdown-toggle">
+                         <i class="fa fa-music"></i>
+                         <span>مدیریت موسیقی سراسری</span>
+                     </a>
+                     <ul>
+                         <li>
+                             <a href="{{ route('music') }}" class="">
+                                 <i class="fa fa-list"></i>
+                                 <span>لیست آهنگ ها</span>
+                             </a>
+                         </li>
+                         <li>
+                             <a href="{{ route('music.categories') }}" class="">
+                                 <i class="fa fa-category"></i>
+                                 <span>دسته بندی ها</span>
+                             </a>
+                         </li>
+                     </ul>
+                 </li>
+             @endhasanyrole
+             @hasanyrole('tutorials-management|super-admin')
+                 <li>
+                     <a href="#" class="dropdown-toggle">
+                         <i class="fa fa-video"></i>
+                         <span>فیلم های آموزشی</span>
+                     </a>
+                     <ul>
+                         <li>
+                             <a href="{{ route('videos') }}" class="">
+                                 <i class="fa fa-list"></i>
+                                 <span>ویدیوها</span>
+                             </a>
+                         </li>
+                         <li>
+                             <a href="{{ route('video.categories') }}" class="">
+                                 <i class="fa fa-list"></i>
+                                 <span>دسته بندی ویدئوها</span>
+                             </a>
+                         </li>
+                     </ul>
+                 </li>
+             @endhasanyrole
          </ul><!-- /#side-menu -->
      </div><!-- /.side-menu-container -->
  </div><!-- /#sidebar -->

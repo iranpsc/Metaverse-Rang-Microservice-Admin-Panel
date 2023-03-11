@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Permission\Traits\HasPermissions;
+use Illuminate\Support\Collection;
 
 class Admin extends Authenticatable
 {
@@ -34,4 +35,11 @@ class Admin extends Authenticatable
         'active',
         'access_password'
     ];
+
+    public function getRoleTitles(): Collection
+    {
+        $this->loadMissing('roles');
+
+        return $this->roles->pluck('name');
+    }
 }

@@ -209,15 +209,15 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
 
     Route::get('/statistics', Statistics::class)->name('statistics');
 
-    Route::prefix('music')->group(function() {
+    Route::prefix('music')->middleware('can:manage-musics')->group(function() {
         Route::get('/', MusicListing::class)->name('music');
         Route::get('/categories', MusicCategories::class)->name('music.categories');
     });
 
-    Route::get('/videos', VideoListing::class)->name('videos');
-    Route::get('/video-categories', VideoCategories::class)->name('video.categories');
+    Route::get('/videos', VideoListing::class)->middleware('can:manage-tutorials')->name('videos');
+    Route::get('/video-categories', VideoCategories::class)->middleware('can:manage-tutorials')->name('video.categories');
 
-    Route::get('challenge', QuestionsList::class)->name('challenge');
+    Route::get('challenge', QuestionsList::class)->middleware('can:manage-challenge')->name('challenge');
 });
 
 Auth::routes([
