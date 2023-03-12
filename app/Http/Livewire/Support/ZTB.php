@@ -7,6 +7,7 @@ use Livewire\Component;
 use App\Notifications\TicketResponded;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
 
 class ZTB extends Component
 {
@@ -42,12 +43,11 @@ class ZTB extends Component
         $ticket->responses()->create([
             'response' => $this->response,
             'attachment' => $path,
+            'responser_name' => Auth::user()->name,
+            'responser_id' => Auth::id(),
         ]);
 
-        $ticket->update([
-            'responser_name' => auth()->user()->name,
-            'status' => 1,
-        ]);
+        $ticket->update(['status' => 1]);
 
         $message = 'به تیکت شما به شماره ' . $ticket->code . 'پاسخ داده شد';
 

@@ -16,7 +16,6 @@ class Ticket extends Model
         'reciever_id',
         'attachment',
         'status',
-        'responser_name',
         'department',
         'importance'
     ];

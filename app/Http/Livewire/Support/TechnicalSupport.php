@@ -7,6 +7,7 @@ use App\Notifications\TicketResponded;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Auth;
 
 class TechnicalSupport extends Component
 {
@@ -36,7 +37,7 @@ class TechnicalSupport extends Component
         $this->validate();
 
         if ($this->attachment) {
-            $path = env('FTP_ENDPOINT') . $this->attachment->store('/tickets/ticketResponses/' . $ticket->id);
+            $path = env('FTP_ENDPOINT') . $this->attachment->store('/tickets/ticketResponses');
         } else {
             $path = "";
         }
@@ -44,12 +45,11 @@ class TechnicalSupport extends Component
         $ticket->responses()->create([
             'response' => $this->response,
             'attachment' => $path,
+            'responser_name' => Auth::user()->name,
+            'responser_id' => Auth::id(),
         ]);
 
-        $ticket->update([
-            'responser_name' => auth()->user()->name,
-            'status' => 1,
-        ]);
+        $ticket->update(['status' => 1]);
 
         $message = 'به تیکت شما به شماره ' . $ticket->code . 'پاسخ داده شد';
 

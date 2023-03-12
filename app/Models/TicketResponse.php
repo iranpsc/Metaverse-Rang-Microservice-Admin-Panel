@@ -12,7 +12,9 @@ class TicketResponse extends Model
     protected $fillable = [
         'response',
         'attachment',
-        'ticket_id'
+        'ticket_id',
+        'responser_name',
+        'responser_id',
     ];
 
     public function ticket() {
