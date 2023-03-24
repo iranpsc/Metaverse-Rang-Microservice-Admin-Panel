@@ -29,7 +29,7 @@ class Categories extends Component
         'slug' => 'required|string',
         'image' => 'required|image',
         'parentCategory' => 'nullable|integer|exists:video_categories,id',
-        'description' => 'required',
+        'description' => 'required|string|max:2000',
     ];
 
     protected $messages = [

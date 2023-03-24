@@ -105,54 +105,60 @@ class Limits extends Component
                 $limit->end_date = convertDateToCarbon($this->endingDate);
                 $limit->save();
 
-                FeatureProperties::where('id', '>=', $this->startingId)
-                    ->where('id', '<=', $this->endingId)
-                    ->each(function ($feature) {
-                        if ($feature->karbari === 'm') {
-                            $feature->update([
-                                'rgb' => 'g',
-                                'label' => ''
-                            ]);
-                        } elseif ($feature->karbari === 't') {
-                            $feature->update([
-                                'rgb' => 'n',
-                                'label' => ''
-                            ]);
-                        }
-                        if ($feature->karbari === 'a') {
-                            $feature->update([
-                                'rgb' => 'uu',
-                                'label' => ''
-                            ]);
-                        }
-                    });
                 if ($this->notAllowedToBeSold) {
                     FeatureProperties::where('id', '>=', $this->startingId)
                         ->where('id', '<=', $this->endingId)
+                        ->orderBy('id', 'asc')
                         ->each(function ($feature) {
-                            if ($feature->karbari === 'm') {
-                                $feature->update([
-                                    'rgb' => 'f',
-                                    'label' => 'locked',
-                                ]);
-                            } elseif ($feature->karbari === 't') {
-                                $feature->update([
-                                    'rgb' => 'm',
-                                    'label' => 'locked',
-                                ]);
-                            }
-                            if ($feature->karbari === 'a') {
-                                $feature->update([
-                                    'rgb' => 'tt',
-                                    'label' => 'locked',
-                                ]);
+                            if ($feature->owner === 'rgb') {
+                                if ($feature->karbari === 'm') {
+                                    $feature->update([
+                                        'rgb' => 'f',
+                                        'label' => 'locked',
+                                    ]);
+                                } elseif ($feature->karbari === 't') {
+                                    $feature->update([
+                                        'rgb' => 'm',
+                                        'label' => 'locked',
+                                    ]);
+                                }
+                                if ($feature->karbari === 'a') {
+                                    $feature->update([
+                                        'rgb' => 'tt',
+                                        'label' => 'locked',
+                                    ]);
+                                }
+
+                                if ($this->price >= 0) {
+                                    $feature->update(['stability' => intval(trim($this->price))]);
+                                }
                             }
                         });
-                }
-                if ($this->price >= 0) {
+                } else {
                     FeatureProperties::where('id', '>=', $this->startingId)
                         ->where('id', '<=', $this->endingId)
-                        ->update(['stability' => intval(trim($this->price))]);
+                        ->orderBy('id', 'asc')
+                        ->each(function ($feature) {
+                            if ($feature->owner === 'rgb') {
+                                if ($feature->karbari === 'm') {
+                                    $feature->update([
+                                        'rgb' => 'g',
+                                        'label' => ''
+                                    ]);
+                                } elseif ($feature->karbari === 't') {
+                                    $feature->update([
+                                        'rgb' => 'n',
+                                        'label' => ''
+                                    ]);
+                                }
+                                if ($feature->karbari === 'a') {
+                                    $feature->update([
+                                        'rgb' => 'uu',
+                                        'label' => ''
+                                    ]);
+                                }
+                            }
+                        });
                 }
                 $this->resetExcept('admin');
                 Cache::forget('feature.limits.verify.code.' . $this->admin->id);
@@ -175,27 +181,30 @@ class Limits extends Component
     public function delete(FeatureLimit $featureLimit)
     {
         FeatureProperties::where('id', '>=', $featureLimit->start_id)
+            ->orderBy('id', 'asc')
             ->where('id', '<=', $featureLimit->end_id)
             ->each(function ($feature) {
-                if ($feature->karbari === 'm') {
-                    $feature->update([
-                        'rgb' => 'a',
-                        'label' => '',
-                        'stability' => $feature->area * $feature->density
-                    ]);
-                } elseif ($feature->karbari === 't') {
-                    $feature->update([
-                        'rgb' => 'h',
-                        'label' => '',
-                        'stability' => $feature->area * $feature->density
-                    ]);
-                }
-                if ($feature->karbari === 'a') {
-                    $feature->update([
-                        'rgb' => 'o',
-                        'label' => '',
-                        'stability' => $feature->area * $feature->density
-                    ]);
+                if ($feature->owner === 'rgb') {
+                    if ($feature->karbari === 'm') {
+                        $feature->update([
+                            'rgb' => 'a',
+                            'label' => '',
+                            'stability' => $feature->area * $feature->density
+                        ]);
+                    } elseif ($feature->karbari === 't') {
+                        $feature->update([
+                            'rgb' => 'h',
+                            'label' => '',
+                            'stability' => $feature->area * $feature->density
+                        ]);
+                    }
+                    if ($feature->karbari === 'a') {
+                        $feature->update([
+                            'rgb' => 'o',
+                            'label' => '',
+                            'stability' => $feature->area * $feature->density
+                        ]);
+                    }
                 }
             });
         $featureLimit->delete();

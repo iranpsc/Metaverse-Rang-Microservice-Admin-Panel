@@ -62,7 +62,7 @@ class Listing extends Component
 
     protected $rules = [
         'title' => 'required',
-        'description' => 'required|max:500',
+        'description' => 'required|string|max:2000',
         'category' => 'nullable|integer|exists:video_categories,id',
         'subCategory' => 'nullable|integer|exists:video_sub_categories,id',
         'image' => 'required|image|max:1024',
