@@ -7,42 +7,42 @@ use App\Models\Variable;
 
 class OrderRepository
 {
-    private $orders, $variable;
+    private $orders, $variables;
 
     public function __construct()
     {
         $this->orders = Order::select(['asset', 'amount'])->get();
-        $this->variable = Variable::select(['asset', 'price'])->get();
+        $this->variables = Variable::select(['asset', 'price'])->get();
     }
 
     public function pscOrderAmount(): float|int
     {
-        return $this->orders->where('asset', 'psc')->sum('amount') *
-            $this->variable->where('asset', 'psc')->first()->price;
+        return $this->variables ? $this->orders->where('asset', 'psc')->sum('amount') *
+            $this->variables->where('asset', 'psc')->first()->price : 0;
     }
 
     public function yellowOrderAmount(): float|int
     {
-        return $this->orders->where('asset', 'yellow')->sum('amount') *
-            $this->variable->where('asset', 'yellow')->first()->price;
+        return $this->variables ? $this->orders->where('asset', 'yellow')->sum('amount') *
+            $this->variables->where('asset', 'yellow')->first()->price : 0;
     }
 
     public function blueOrderAmount(): float|int
     {
-        return $this->orders->where('asset', 'blue')->sum('amount') *
-            $this->variable->where('asset', 'blue')->first()->price;
+        return $this->variables ? $this->orders->where('asset', 'blue')->sum('amount') *
+            $this->variables->where('asset', 'blue')->first()->price : 0;
     }
 
     public function redOrderAmount(): float|int
     {
-        return $this->orders->where('asset', 'red')->sum('amount') *
-            $this->variable->where('asset', 'red')->first()->price;
+        return $this->variables ? $this->orders->where('asset', 'red')->sum('amount') *
+            $this->variables->where('asset', 'red')->first()->price : 0;
     }
 
     public function irrOrderAmount(): float|int
     {
-        return $this->orders->where('asset', 'irr')->sum('amount') *
-            $this->variable->where('asset', 'irr')->first()->price;
+        return $this->variables ? $this->orders->where('asset', 'irr')->sum('amount') *
+            $this->variables->where('asset', 'irr')->first()->price : 0;
     }
 
     public function totalOrderAmount(): float|int

@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Level;
 use Livewire\Component;
 use App\Models\Level\Level;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Str;
 
 class Create extends Component
 {
@@ -14,7 +15,7 @@ class Create extends Component
 
     protected $rules = [
         'name' => 'required|string|unique:levels',
-        'image' => 'required|image|mimes:jpg,png,bmp,jpeg',
+        'image' => 'nullable|image|mimes:jpg,png,bmp,jpeg',
         'slug' => 'required|string|unique:levels',
         'score' => 'required|min:0|integer'
     ];
@@ -38,8 +39,12 @@ class Create extends Component
             'slug' => $this->slug,
             'score' => $this->score
         ]);
-        $url = env('FTP_ENDPOINT') . $this->image->store('public/level/' . $level->id);
-        $level->image()->create(['url' => $url]);
+
+        if($this->image) {
+            $url = $this->image->storePublicly('levels', 'public');
+            $level->image()->create(['url' => $url]);
+        }
+
         session()->flash('success', 'سطح ایجاد شد');
         $this->reset('name', 'slug', 'score');
         $this->emitUp('levelCreated');

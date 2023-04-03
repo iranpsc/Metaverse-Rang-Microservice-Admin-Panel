@@ -11,7 +11,7 @@ class Level extends Model
 {
     use HasFactory;
 
-    protected $guraded = [];
+    protected $guarded = [];
 
 
     public function prize() {

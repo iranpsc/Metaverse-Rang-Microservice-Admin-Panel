@@ -23,7 +23,7 @@
                         <td>
                             @can('Show-Level')
                                 @if ($level->image)
-                                    <a target="_blank" href="{{ $level->image?->url }}"
+                                    <a target="_blank" href="{{ asset('uploads/' . $level->image->url) }}"
                                         class="btn btn-primary btn-sm round">مشاهده</a>
                                 @else
                                     -----
@@ -53,11 +53,11 @@
                             @endcan
                             @can('Edit-Level')
                                 <livewire:level.update :level="$level" :wire:key="'update-'.$level->id">
-                            @endcan
-                            <livewire:level.create-prize :level="$level" :wire:key="'create-prize-'.$level->id">
-                            @if (!empty($level->prize))
-                                <livewire:level.edit-prize :level="$level" :wire:key="'edit-prize-'.$level->id">
-                            @endif
+                                @endcan
+                                <livewire:level.create-prize :level="$level" :wire:key="'create-prize-'.$level->id">
+                                    @if (!empty($level->prize))
+                                        <livewire:level.edit-prize :level="$level" :wire:key="'edit-prize-'.$level->id">
+                                    @endif
                         </td>
                     </tr>
                 @endforeach

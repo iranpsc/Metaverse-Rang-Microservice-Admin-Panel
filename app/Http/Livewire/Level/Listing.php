@@ -25,6 +25,13 @@ class Listing extends Component
     public function delete(Level $level)
     {
         $level->prize?->delete();
+
+        if($level->image)
+        {
+            unlink(public_path('uploads/'.$level->image->url));
+            $level->image->delete();
+        }
+
         $level->delete();
         $this->emitSelf('levelDeleted');
     }
