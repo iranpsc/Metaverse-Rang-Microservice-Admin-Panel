@@ -21,14 +21,12 @@ class Listing extends Component
         'prizeUpdated' => '$refresh',
     ];
 
-
     public function delete(Level $level)
     {
         $level->prize?->delete();
 
-        if($level->image)
-        {
-            unlink(public_path('uploads/'.$level->image->url));
+        if ($level->image) {
+            unlink(public_path('uploads/' . $level->image->url));
             $level->image->delete();
         }
 
@@ -39,7 +37,7 @@ class Listing extends Component
     public function render()
     {
         return view('livewire.level.listing', [
-            'levels' => Level::with('prize')->simplePaginate(10)
+            'levels' => Level::with(['prize', 'image', 'generalInfo'])->paginate(10)
         ])
             ->extends('layouts.app')
             ->section('content');

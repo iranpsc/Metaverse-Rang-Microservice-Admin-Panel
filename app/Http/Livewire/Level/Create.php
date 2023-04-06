@@ -5,7 +5,6 @@ namespace App\Http\Livewire\Level;
 use Livewire\Component;
 use App\Models\Level\Level;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Str;
 
 class Create extends Component
 {
@@ -41,7 +40,7 @@ class Create extends Component
         ]);
 
         if($this->image) {
-            $url = $this->image->storePublicly('levels', 'public');
+            $url = $this->image->store('levels', 'public');
             $level->image()->create(['url' => $url]);
         }
 
@@ -53,6 +52,7 @@ class Create extends Component
     public function updated($prop) {
         $this->validateOnly($prop);
     }
+
     public function render()
     {
         return view('livewire.level.create');

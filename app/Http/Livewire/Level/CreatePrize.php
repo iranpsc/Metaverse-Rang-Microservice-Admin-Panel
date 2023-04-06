@@ -90,7 +90,6 @@ class CreatePrize extends Component
         $this->validateOnly($prop);
     }
 
-
     public function render()
     {
         return view('livewire.level.create-prize');

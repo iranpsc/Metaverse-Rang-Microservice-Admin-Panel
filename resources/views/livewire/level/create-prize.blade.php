@@ -1,5 +1,5 @@
 <div>
-    <x-modals.modal id="create-prizes-modal-{{ $level->id }}" title="تعریف جوایز سطح  {{ $level->name }}">
+    <x-modals.modal id="create-prizes-modal-{{ $level->id }}" size="modal-xl" title="تعریف جوایز سطح  {{ $level->name }}">
         @if (session()->has('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif

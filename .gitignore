@@ -17,3 +17,4 @@ yarn-error.log
 /storage/ip-management/ips.json
 admin-laravel-worker.conf
 admin-worker.log
+public/uploads

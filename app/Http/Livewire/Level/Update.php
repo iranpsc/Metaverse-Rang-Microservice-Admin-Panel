@@ -38,7 +38,7 @@ class Update extends Component
             'score' => $this->score,
         ]);
         if($this->image) {
-            $url = env('FTP_ENDPOINT') . $this->image->store('public/level/' . $this->level->id);
+            $url = $this->image->store('levels', 'public');
             if($this->level->image) {
                 $this->level->image->update(['url' => $url]);
             } else {
