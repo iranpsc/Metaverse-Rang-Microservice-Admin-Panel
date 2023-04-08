@@ -177,6 +177,7 @@ class ApiIpRanges extends Component
 
     public function updatedSearch()
     {
+        $this->search = ip2long($this->search);
         $this->ipRanges = Ip::whereType('range')->where('from', '>=', $this->search)
         ->where('to', '<=', $this->search)->first();
     }
