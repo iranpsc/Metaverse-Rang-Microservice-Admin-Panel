@@ -2,6 +2,12 @@
     {{-- If you look to others for fulfillment, you will never truly be fulfilled. --}}
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#api-ip-range-modal">تعریف رنج IP
     </x-buttons.btn-primary>
+    {{-- If you look to others for fulfillment, you will never truly be fulfilled. --}}
+    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#import-api-ip-range-modal">درون ریزی
+        رنج آی پی
+    </x-buttons.btn-primary>
+    <x-buttons.btn-danger wire:click="flushIpRanges">Flush</x-buttons.btn-danger>
+    <x-forms.search-box wire:model="search" />
     <x-modals.modal id="api-ip-range-modal" title="تعریف رنج آی پی Api">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
@@ -63,10 +69,6 @@
             </x-slot>
     </x-modals.modal>
 
-    {{-- If you look to others for fulfillment, you will never truly be fulfilled. --}}
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#import-api-ip-range-modal">درون ریزی
-        رنج آی پی
-    </x-buttons.btn-primary>
     <x-modals.modal id="import-api-ip-range-modal" title="درون ریزی رنج آی پی">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
@@ -79,38 +81,37 @@
             @error('title')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
-        </x-fomrs.gourp>
-        <x-forms.group for="import-file" label="فایل">
-            <x-forms.input type="file" wire:model="file" id="import-file" />
-            <span class="text-success" wire:loading wire:target="file">در حال بارگذاری ...</span>
-            @error('file')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-fomrs.gourp>
-            <div class="form-group row">
-                <div class="col-sm-4">
-                    <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendCode">ارسال کد تایید
-                    </x-buttons.btn-success>
-                </div>
-                <div class="col-sm-8">
-                    <x-forms.input wire:model="code" />
-                    @error('code')
-                        <span class="text-danger">{{ $message }}</span>
-                    @enderror
-                </div>
-            </div>
-            <x-forms.group for="access-password" label="رمز دسترسی">
-                <x-forms.input type="password" id="access-password" wire:model="accessPassword" />
-                @error('accessPassword')
+            </x-fomrs.gourp>
+            <x-forms.group for="import-file" label="فایل">
+                <x-forms.input type="file" wire:model="file" id="import-file" />
+                <span class="text-success" wire:loading wire:target="file">در حال بارگذاری ...</span>
+                @error('file')
                     <span class="text-danger">{{ $message }}</span>
                 @enderror
-            </x-forms.group>
-            <x-slot name="footer">
-                <x-buttons.btn-info wire:loading.attr="disabled" wire:click="import">ثبت</x-buttons.btn-info>
-                <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
-            </x-slot>
+                </x-fomrs.gourp>
+                <div class="form-group row">
+                    <div class="col-sm-4">
+                        <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendCode">ارسال کد تایید
+                        </x-buttons.btn-success>
+                    </div>
+                    <div class="col-sm-8">
+                        <x-forms.input wire:model="code" />
+                        @error('code')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+                <x-forms.group for="access-password" label="رمز دسترسی">
+                    <x-forms.input type="password" id="access-password" wire:model="accessPassword" />
+                    @error('accessPassword')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </x-forms.group>
+                <x-slot name="footer">
+                    <x-buttons.btn-info wire:loading.attr="disabled" wire:click="import">ثبت</x-buttons.btn-info>
+                    <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+                </x-slot>
     </x-modals.modal>
-    <x-buttons.btn-danger wire:click="flushIpRanges">Flush</x-buttons.btn-danger>
     @if (count($ip_ranges) > 0)
         <x-tables.table id="ips-table">
             <x-slot name="headers">

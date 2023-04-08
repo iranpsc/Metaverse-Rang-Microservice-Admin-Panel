@@ -22,7 +22,7 @@ class ApiIpRanges extends Component
         $ip_range = [],
         $starting_ip = [],
         $ending_ip = [],
-        $title, $code, $accessPassword, $admin, $file;
+        $title, $code, $accessPassword, $admin, $file, $ipRanges, $search;
 
     protected $listeners = [
         'ipRangeCreated' => '$refresh',
@@ -175,10 +175,16 @@ class ApiIpRanges extends Component
         Ip::where('type', 'range')->delete();
     }
 
+    public function updatedSearch()
+    {
+        $this->ipRanges = Ip::whereType('range')->where('from', '>=', $this->search)
+        ->where('to', '<=', $this->search)->first();
+    }
+
     public function render()
     {
         return view('livewire.ip-management.api-ip-ranges', [
-            'ip_ranges' => Ip::simplePaginate(10)
+            'ip_ranges' => $ipRanges ?? Ip::simplePaginate(10)
         ])
             ->extends('layouts.app')
             ->section('content');
