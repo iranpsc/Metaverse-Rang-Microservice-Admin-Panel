@@ -1,8 +1,8 @@
 <div>
-    <x-buttons.btn-success class="my-2" data-bs-toggle="modal" data-bs-target="#upload-video-modal">بارگذاری ویدئوظ
+    <x-buttons.btn-success class="my-2" data-bs-toggle="modal" data-bs-target="#upload-video-modal">بارگذاری ویدیو
     </x-buttons.btn-success>
 
-    <x-modals.modal size="modal-xl" id="upload-video-modal" title="تعریف بسته">
+    <x-modals.modal size="modal-xl" id="upload-video-modal" title="بارگذاری فیلم آموزشی">
         @if (session()->has('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
@@ -133,10 +133,12 @@
                     <td>{{ \Morilog\Jalali\Jalalian::forge($video->created_at)->format('Y/m/d') }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($video->created_at)->format('H:m:s') }}</td>
                     <td>
+                        <x-buttons.btn-primary data-bs-target="#edit-video-modal-{{$video->id}}" data-bs-toggle="modal">ویرایش</x-buttons.btn-primary>
                         <x-buttons.btn-danger title="deleteTrainingVideo" class="confirm" id="{{ $video->id }}">حذف
                         </x-buttons.btn-danger>
                     </td>
                 </tr>
+                <livewire:videos.edit-video :videoDb="$video" :wire:key="'edit-video'.$video->id">
             @endforeach
         </x-tables.table>
     @else

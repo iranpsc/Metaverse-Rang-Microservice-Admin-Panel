@@ -22,6 +22,7 @@ class Categories extends Component
         'deleteVideoCategory' => 'deleteCategory',
         'deleteVideoSubCategory' => 'deleteSubCategory',
         'categoryDeleted' => '$refresh',
+        'categoryUpdated' => '$refresh'
     ];
 
     protected $rules = [

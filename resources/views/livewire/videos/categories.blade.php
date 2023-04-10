@@ -1,7 +1,7 @@
 <div>
-    <x-buttons.btn-primary class="mb-2" data-bs-toggle="modal" data-bs-target="#create-music-category-modal">ایجاد دسته
+    <x-buttons.btn-primary class="mb-2" data-bs-toggle="modal" data-bs-target="#create-category-modal">ایجاد دسته
         بندی</x-buttons.btn-primary>
-    <x-modals.modal title="ایجاد دسته بندی موسیقی" id="create-music-category-modal">
+    <x-modals.modal title="ایجاد دسته بندی" id="create-category-modal">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
@@ -58,7 +58,7 @@
         <ul class="nav nav-tabs">
             @foreach ($categories as $index => $category)
                 <li class="nav-item">
-                    <a  class="nav-link @if ($index == 0) active @endif" href="{{ '#tab' . $index + 1 }}"
+                    <a class="nav-link @if ($index == 0) active @endif" href="{{ '#tab' . $index + 1 }}"
                         data-bs-toggle="tab">
                         <span>
                             {{ $category->name }}
@@ -84,17 +84,21 @@
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $category->name }}</td>
                             <td>{{ $category->slug }}</td>
-                            <td><a href="{{ asset('uploads/'.$category->image) }}"
-                                    target="_blank" class="btn btn-primary btn-sm round">مشاهده</a></td>
+                            <td><a href="{{ asset('uploads/' . $category->image) }}" target="_blank"
+                                    class="btn btn-primary btn-sm round">مشاهده</a></td>
                             <td>{{ \Morilog\Jalali\Jalalian::forge($category->created_at)->format('Y/m/d') }}
                             </td>
                             <td>{{ \Morilog\Jalali\Jalalian::forge($category->created_at)->format('H:m:s') }}
                             </td>
                             <td>
-                                <x-buttons.btn-danger class="confirm" title="deleteVideoCategory"
-                                    id="{{ $category->id }}">حذف</x-buttons.btn-danger>
+                                <x-buttons.btn-primary data-bs-toggle="modal"
+                                    data-bs-target="#edit-category-modal-{{ $category->id }}">ویرایش
+                                    </x-button.btn-primary>
+                                    <x-buttons.btn-danger class="confirm" title="deleteVideoCategory"
+                                        id="{{ $category->id }}">حذف</x-buttons.btn-danger>
                             </td>
                         </tr>
+                        <livewire:videos.edit-category :category="$category" :wire:key="'edit-category-'.$category->id">
                     </x-tables.table>
                     @if ($category->subCategories->count() > 0)
                         <p class="alert alert-info">زیر دسته ها</p>
@@ -112,17 +116,23 @@
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $item->name }}</td>
                                     <td>{{ $item->slug }}</td>
-                                    <td><a href="{{ asset('uploads/'. $item->image) }}"
-                                            target="_blank" class="btn btn-primary btn-sm round">مشاهده</a></td>
+                                    <td><a href="{{ asset('uploads/' . $item->image) }}" target="_blank"
+                                            class="btn btn-primary btn-sm round">مشاهده</a></td>
                                     <td>{{ \Morilog\Jalali\Jalalian::forge($item->created_at)->format('Y/m/d') }}
                                     </td>
                                     <td>{{ \Morilog\Jalali\Jalalian::forge($item->created_at)->format('H:m:s') }}
                                     </td>
                                     <td>
-                                        <x-buttons.btn-danger class="confirm" title="deleteVideoSubCategory"
-                                            id="{{ $item->id }}">حذف</x-buttons.btn-danger>
+
+                                        <x-buttons.btn-primary data-bs-toggle="modal"
+                                            data-bs-target="#edit-sub-category-modal-{{ $item->id }}">ویرایش
+                                            </x-button.btn-primary>
+                                            <x-buttons.btn-danger class="confirm" title="deleteVideoSubCategory"
+                                                id="{{ $item->id }}">حذف</x-buttons.btn-danger>
                                     </td>
                                 </tr>
+                                <livewire:videos.edit-sub-category :subCategory="$item"
+                                    :wire:key="'edit-sub-category-'.$item->id">
                             @endforeach
                         </x-tables.table>
                     @else

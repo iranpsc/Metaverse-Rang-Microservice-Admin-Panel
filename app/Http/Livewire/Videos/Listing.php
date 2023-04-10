@@ -69,7 +69,7 @@ class Listing extends Component
         'video' => 'required|file|mimes:mp4',
         'code' => 'required|integer',
         'accessPassword' => 'required',
-        'creator_code' => 'required|exists:users,code'
+        'creator_code' => 'required'
     ];
 
     public function save()
