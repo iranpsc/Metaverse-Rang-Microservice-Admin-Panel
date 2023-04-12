@@ -134,7 +134,7 @@ class Listing extends Component
     {
         return view('livewire.videos.listing', [
             'videoCategories' => $this->videoCategories ?? VideoCategory::all(),
-            'videos' => $this->videos ?? Video::with('categoriable')->get()
+            'videos' => $this->videos ?? Video::with(['categoriable', 'likes', 'dislikes'])->get()
         ])
             ->extends('layouts.app')
             ->section('content');

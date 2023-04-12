@@ -114,6 +114,9 @@
                 <th>ایجاد کننده</th>
                 <th>تاریخ ایجاد</th>
                 <th>ساعت ایجاد</th>
+                <th>تعداد بازدید</th>
+                <th>لایک ها</th>
+                <th>دیسلایک ها</th>
                 <th>ملاحضات</th>
             </x-slot:headers>
             @foreach ($videos as $video)
@@ -132,6 +135,9 @@
                     <td>{{ $video->creator_code }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($video->created_at)->format('Y/m/d') }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($video->created_at)->format('H:m:s') }}</td>
+                    <td>{{ $video->visits }}</td>
+                    <td>{{ $video->likes->count() }}</td>
+                    <td>{{ $video->dislikes->count() }}</td>
                     <td>
                         <x-buttons.btn-primary data-bs-target="#edit-video-modal-{{$video->id}}" data-bs-toggle="modal">ویرایش</x-buttons.btn-primary>
                         <x-buttons.btn-danger title="deleteTrainingVideo" class="confirm" id="{{ $video->id }}">حذف
