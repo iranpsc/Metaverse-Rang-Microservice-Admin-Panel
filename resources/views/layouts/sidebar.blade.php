@@ -15,7 +15,7 @@
          </div><!-- /.search-box -->
          <div class="user-box">
              <a href="#">
-                 <img src="assets/images/user/128.png" alt="عکس پروفایل" class="img-circle img-responsive">
+                 <img src="{{Auth::user()->image === 'noimage.png' ? 'assets/images/user/128.png' : Auth::user()->image}}" alt="عکس پروفایل" class="img-circle img-responsive">
              </a>
              <div class="user-details">
                  <h4>{{ Auth::user()->name }}</h4>

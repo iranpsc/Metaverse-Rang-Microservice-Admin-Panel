@@ -50,6 +50,7 @@ use App\Http\Livewire\Lands\Limits;
 use App\Http\Livewire\Statistics\Statistics;
 use App\Http\Livewire\Music\Listing as MusicListing;
 use App\Http\Livewire\Music\Categories as MusicCategories;
+use App\Http\Livewire\Panel\Profile;
 use App\Http\Livewire\Videos\Listing as VideoListing;
 use App\Http\Livewire\Videos\Categories as VideoCategories;
 
@@ -218,6 +219,8 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
     Route::get('/video-categories', VideoCategories::class)->middleware('can:manage-tutorials')->name('video.categories');
 
     Route::get('challenge', QuestionsList::class)->middleware('can:manage-challenge')->name('challenge');
+
+    Route::get('profile', Profile::class)->name('profile');
 });
 
 Auth::routes([

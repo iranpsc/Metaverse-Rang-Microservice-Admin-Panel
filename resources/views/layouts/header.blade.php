@@ -180,13 +180,14 @@
 
                     <li class="dropdown dropdown-user">
                         <a href="#" class="dropdown-toggle dropdown-hover" data-bs-toggle="dropdown">
-                            <img src="assets/images/user/48.png" alt="عکس پرفایل" class="img-circle img-responsive">
+                            <img src="{{ Auth::user()->image === 'noimage.png' ? 'assets/images/user/48.png' : Auth::user()->image }}"
+                                alt="عکس پرفایل" class="img-circle img-responsive">
                             <span>{{ Auth::user()->name }}</span>
                             <i class="icon-arrow-down"></i>
                         </a>
                         <ul class="dropdown-menu">
                             <li>
-                                <a href="edit_profile.html">
+                                <a href="{{ route('profile') }}">
                                     <i class="icon-note"></i>
                                     ویرایش پروفایل
                                 </a>
@@ -199,7 +200,7 @@
                             </li>
                             <li class="divider"></li>
                             <li>
-                                <a href="chat.html">
+                                <a href="{{ route('support.technical-support') }}">
                                     <span class="badge badge-primary float-end">
                                         {{ count(Auth::user()->unreadNotifications) }} </span>
                                     <i class="icon-envelope"></i>
@@ -214,7 +215,8 @@
                                     {{ __('خروج') }}
                                 </a>
 
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                <form id="logout-form" action="{{ route('logout') }}" method="POST"
+                                    class="d-none">
                                     @csrf
                                 </form>
                             </li>

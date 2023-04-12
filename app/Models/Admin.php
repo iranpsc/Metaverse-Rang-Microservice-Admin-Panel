@@ -33,7 +33,12 @@ class Admin extends Authenticatable
         'password',
         'phone',
         'active',
-        'access_password'
+        'access_password',
+        'image'
+    ];
+
+    protected $attributes = [
+        'image' => 'noimage.png'
     ];
 
     public function getRoleTitles(): Collection
