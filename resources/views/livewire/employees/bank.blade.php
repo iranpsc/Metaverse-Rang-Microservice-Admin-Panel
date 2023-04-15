@@ -1,20 +1,95 @@
 <div>
-    {{-- The whole world belongs to you. --}}
-    <x-forms.search-box></x-forms.search-box>
+    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#add-bank-account-modal">اضافه کردن حساب بانکی</x-buttons.btn-primary>
+    <x-modals.modal id="add-bank-account-modal" title="وارد کردن اطلاعات بانکی کارمندان">
 
-    <x-tables.table>
-        <x-slot:headers>
-         <th>نام پرستل</th>
-         <th>نام بانک</th>
-         <th>شماره شبا</th>
-         <th>شماره حساب</th>
-        </x-slot:headers>
-      
+        @if (session('success'))
+            <x-alerts.success>{{ session('success') }}</x-alerts.success>
+        @endif
 
+        <x-forms.group for="employee" label="انتخاب کارمند">
+            <select wire:model="employee" id="employee" class="form-control rounded">
+                <option selected>انتخاب کنید</option>
+                @forelse ($employees as $employee)
+                    <option value="{{ $employee->id }}">{{ $employee->fname . ' ' . $employee->lname }}</option>
+                @empty
+                    <option disabled>کارمندی تعریف نشده است</option>
+                @endforelse
+            </select>
+            @error('employee')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
 
+        <x-forms.group for="bank_name" label="نام بانک">
+            <x-forms.input wire:model="bank_name" id="bank_name" />
+            @error('bank_name')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
 
-    </x-tables.table>
+        <x-forms.group for="shaba_num" label="شماره شبا">
+            <x-forms.input type="shaba_num" wire:model="shaba_num" id="shaba_num" />
+            @error('shaba_num')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
 
-    {{-- <x-alerts.danger>کارمندی تعریف نشده است</x-alerts.danger> --}}
+        <x-forms.group for="card_num" label="شماره کارت">
+            <x-forms.input type="card_num" wire:model="card_num" id="card_num" />
+            @error('card_num')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
 
+        <div class="form-group row">
+            <div class="col-sm-4">
+                <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendSMS">ارسال کد تایید
+                </x-buttons.btn-success>
+            </div>
+            <div class="col-sm-8">
+                <x-forms.input wire:model="code" />
+                @error('code')
+                    <span class="text-danger">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+
+        <x-forms.group for="access-password" label="رمز دسترسی">
+            <x-forms.input type="password" id="access-password" wire:model="access_password" />
+            @error('access_password')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+        <x-slot name="footer">
+            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
+            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+        </x-slot>
+    </x-modals.modal>
+
+    <x-forms.search-box wire:model="search"></x-forms.search-box>
+
+    @if ($bankAccounts->count() > 0)
+        <x-tables.table>
+            <x-slot:headers>
+                <th>ردیف</th>
+                <th>نام پرسنل</th>
+                <th>نام بانک</th>
+                <th>شماره شبا</th>
+                <th>شماره کارت</th>
+            </x-slot:headers>
+            @foreach ($bankAccounts as $account)
+                <tr>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $account->bankable->name }}</td>
+                    <td>{{ $account->bank_name }}</td>
+                    <td>{{ $account->shaba_num }}</td>
+                    <td>{{ $account->card_num }}</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            @endforeach
+        </x-tables.table>
+    @else
+        <x-alerts.danger>حساب بانکی تعریف نشده است.</x-alerts.danger>
+    @endif
 </div>

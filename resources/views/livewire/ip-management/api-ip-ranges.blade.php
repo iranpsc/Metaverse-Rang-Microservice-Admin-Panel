@@ -7,7 +7,9 @@
         رنج آی پی
     </x-buttons.btn-primary>
     <x-buttons.btn-danger wire:click="flushIpRanges">Flush</x-buttons.btn-danger>
+
     <x-forms.search-box wire:model="search" />
+
     <x-modals.modal id="api-ip-range-modal" title="تعریف رنج آی پی Api">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>

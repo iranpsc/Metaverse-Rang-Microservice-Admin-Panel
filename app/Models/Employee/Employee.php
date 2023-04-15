@@ -2,8 +2,10 @@
 
 namespace App\Models\Employee;
 
+use App\Models\BankAccount;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Employee extends Model
 {
@@ -25,4 +27,9 @@ class Employee extends Model
         'entry_date',
         'email'
     ];
+
+    public function bankAccounts(): MorphMany
+    {
+        return $this->morphMany(BankAccount::class, 'bankable');
+    }
 }
