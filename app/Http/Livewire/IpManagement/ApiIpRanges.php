@@ -22,7 +22,7 @@ class ApiIpRanges extends Component
         $ip_range = [],
         $starting_ip = [],
         $ending_ip = [],
-        $title, $code, $accessPassword, $admin, $file, $ipRanges, $search;
+        $title, $code, $accessPassword, $admin, $file, $ipRanges, $searchTerm;
 
     protected $listeners = [
         'ipRangeCreated' => '$refresh',
@@ -175,11 +175,12 @@ class ApiIpRanges extends Component
         Ip::where('type', 'range')->delete();
     }
 
-    public function updatedSearch()
+    public function updatedSearchTerm()
     {
-        $ipToSearch = ip2long($this->search);
-        $this->ipRanges = Ip::whereType('range')->where('from', '>=', $ipToSearch)
-        ->where('to', '<=', $ipToSearch)->first();
+        if(!preg_match('/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/', trim($this->searchTerm)))return;
+        $ipToSearch = ip2long($this->searchTerm);
+        $this->ipRanges = Ip::whereType('range')->where('from', '<=', $ipToSearch)
+        ->where('to', '>=', $ipToSearch)->first();
     }
 
     public function render()

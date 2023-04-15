@@ -109,7 +109,7 @@
                                      <i class="fa fa-dollar"></i>
                                      <span>برداشت ها</span>
                                  </a>
-                             </li>
+                             </l•••••i>
                          @endcan
                          @can('view-profile-details')
                              <li>
