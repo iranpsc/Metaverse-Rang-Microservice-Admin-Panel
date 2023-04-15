@@ -15,7 +15,8 @@
          </div><!-- /.search-box -->
          <div class="user-box">
              <a href="#">
-                 <img src="{{Auth::user()->image === 'noimage.png' ? 'assets/images/user/128.png' : Auth::user()->image}}" alt="عکس پروفایل" class="img-circle img-responsive">
+                 <img src="{{ Auth::user()->image === 'noimage.png' ? 'assets/images/user/128.png' : Auth::user()->image }}"
+                     alt="عکس پروفایل" class="img-circle img-responsive">
              </a>
              <div class="user-details">
                  <h4>{{ Auth::user()->name }}</h4>
@@ -109,9 +110,9 @@
                                      <i class="fa fa-dollar"></i>
                                      <span>برداشت ها</span>
                                  </a>
-                             </l•••••i>
-                         @endcan
-                         @can('view-profile-details')
+                                 </l•••••i>
+                             @endcan
+                             @can('view-profile-details')
                              <li>
                                  <a href="{{ route('citizens.profile-details') }}" class="">
                                      <i class="fa fa-user-circle"></i>
@@ -466,6 +467,8 @@
                          <span>تقویم</span>
                      </a>
                  </li>
+             @endhasanyrole
+             @hasanyrole('reports-management|super-admin')
                  <li>
                      <a href="{{ route('reports') }}">
                          <span class="fa fa-eye"></span>
