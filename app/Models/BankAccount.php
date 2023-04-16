@@ -9,7 +9,11 @@ class BankAccount extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['status'];
+    protected $guarded = [];
+
+    protected $attributes = [
+        'status' => 1,
+    ];
 
     public function bankable()
     {

@@ -15,9 +15,9 @@ class Kyc extends Component
     private $kycs;
 
     public function updatedSearchTerm() {
-        $this->kycs = ModelKyc::with('errors')
+        $this->kycs = ModelKyc::with(['errors', 'user'])
         ->where('melli_code', 'like', '%' . $this->searchTerm . '%')
-        ->paginate(10);
+        ->first();
     }
 
     public function render()
@@ -25,7 +25,7 @@ class Kyc extends Component
         return view('livewire.citizens.kyc', [
             'kycs' => $this->kycs ?? ModelKyc::with(['errors', 'user'])
             ->orderByDesc('created_at')
-            ->paginate(10)
+            ->simplePaginate(10)
         ])
         ->extends('layouts.app')
         ->section('content');

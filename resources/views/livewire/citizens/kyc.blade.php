@@ -22,8 +22,7 @@
                     <td>{{ $kyc->user->phone }}</td>
                     <td>{{ $kyc->user->email }}</td>
                     <td>
-                        <button type="button" class="btn round btn-primary btn-sm" data-bs-toggle="modal"
-                            data-bs-target="#modal-kyc-{{ $kyc->id }}">مشاهده</button>
+                        <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#modal-kyc-{{ $kyc->id }}">مشاهده</x-buttons.btn-primary>
                         <livewire:citizens.kyc.details :kyc="$kyc" :wire:key="'kyc-'.$kyc->id">
                     </td>
                     <td>

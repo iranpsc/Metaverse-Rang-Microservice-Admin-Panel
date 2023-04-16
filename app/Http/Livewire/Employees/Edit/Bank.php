@@ -1,21 +1,20 @@
 <?php
 
-namespace App\Http\Livewire\Employees;
+namespace App\Http\Livewire\Employees\Edit;
 
 use Livewire\Component;
-use App\Models\BankAccount;
-use App\Models\Employee\Employee;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 use App\Helpers\SMS;
 
 class Bank extends Component
 {
-    public $employee, $admin, $bank_name, $shaba_num, $card_num, $code, $access_password;
+    public $account;
+
+    public $admin, $bank_name, $shaba_num, $card_num, $code, $access_password;
 
     protected $rules = [
-        'employee' => 'required|integer|exists:admins,id',
         'bank_name' => 'required|string|max:255',
         'shaba_num' => 'required|ir_sheba',
         'card_num' => 'required|ir_bank_card_number',
@@ -23,16 +22,12 @@ class Bank extends Component
         'access_password' => 'required'
     ];
 
-    protected $listeners = [
-        'accountCreated' => '$refresh',
-        'accountUpdated' => '$refresh',
-        'accountDeleted' => '$refresh',
-        'deleteBankAccount' => 'delete',
-    ];
-
     public function mount()
     {
         $this->admin = Auth::guard('admin')->user();
+        $this->bank_name = $this->account->bank_name;
+        $this->shaba_num = $this->account->shaba_num;
+        $this->card_num = $this->account->card_num;
     }
 
     public function sendSMS()
@@ -57,18 +52,15 @@ class Bank extends Component
         } else if (!password_verify($this->access_password, $this->admin->access_password)) {
             $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
         } else {
-            $employee = Employee::findOrFail($this->employee);
-
-            $employee->bankAccounts()->create([
+            $this->account->update([
                 'bank_name' => $this->bank_name,
                 'shaba_num' => $this->shaba_num,
                 'card_num' => $this->card_num,
             ]);
 
-            $this->resetExcept('admin');
             Cache::forget('verify-code-'.$this->admin->id);
             session()->flash('success', 'اطلاعات با موفقیت ثبت شد');
-            $this->emitSelf('accountCreated');
+            $this->emitUp('accountUpdated');
         }
     }
 
@@ -77,19 +69,8 @@ class Bank extends Component
         $this->validateOnly($propertyName);
     }
 
-    public function delete(BankAccount $account)
-    {
-        $account->delete();
-        $this->emitSelf('accountDeleted');
-    }
-
     public function render()
     {
-        return view('livewire.employees.bank', [
-            'employees' => Employee::all(),
-            'bankAccounts' => Bankaccount::paginate(10)
-        ])
-            ->extends('layouts.app')
-            ->section('content');;
+        return view('livewire.employees.edit.bank');
     }
 }

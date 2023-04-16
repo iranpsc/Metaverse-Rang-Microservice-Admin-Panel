@@ -1,5 +1,6 @@
 <div>
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#add-bank-account-modal">اضافه کردن حساب بانکی</x-buttons.btn-primary>
+    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#add-bank-account-modal">اضافه کردن حساب
+        بانکی</x-buttons.btn-primary>
     <x-modals.modal id="add-bank-account-modal" title="وارد کردن اطلاعات بانکی کارمندان">
 
         @if (session('success'))
@@ -71,22 +72,26 @@
     @if ($bankAccounts->count() > 0)
         <x-tables.table>
             <x-slot:headers>
-                <th>ردیف</th>
                 <th>نام پرسنل</th>
                 <th>نام بانک</th>
                 <th>شماره شبا</th>
                 <th>شماره کارت</th>
+                <th>مدیریت</th>
             </x-slot:headers>
             @foreach ($bankAccounts as $account)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td>{{ $account->bankable->name }}</td>
+                    <td>{{ implode(' ', [$account->bankable->fname, $account->bankable->lname]) }}</td>
                     <td>{{ $account->bank_name }}</td>
                     <td>{{ $account->shaba_num }}</td>
                     <td>{{ $account->card_num }}</td>
-                    <td></td>
-                    <td></td>
+                    <td>
+                        <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#edit-bank-account-modal-{{$account->id}}">ویرایش</x-buttons.btn-primary>
+                        <x-buttons.btn-danger class="confirm" id="{{ $account->id }}" title="deleteBankAccount">حذف
+                        </x-buttons.btn-danger>
+                    </td>
                 </tr>
+                <livewire:employees.edit.bank :account="$account" :wire:key="'bank-account-'.$account->id">
             @endforeach
         </x-tables.table>
     @else
