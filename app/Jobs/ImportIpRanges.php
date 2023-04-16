@@ -39,8 +39,8 @@ class ImportIpRanges implements ShouldQueue
             $ip = new Ip();
             $ip->title = $this->title;
             $ip->type = 'range';
-            $ip->from = ip2long(trim($ips[$i]));
-            $ip->to = ip2long(trim($ips[$i+1]));
+            $ip->from = trim($ips[$i]);
+            $ip->to = trim($ips[$i+1]);
             $ip->save();
         }
     }

@@ -177,10 +177,8 @@ class ApiIpRanges extends Component
 
     public function updatedSearchTerm()
     {
-        if(!preg_match('/^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/', trim($this->searchTerm)))return;
-        $ipToSearch = ip2long($this->searchTerm);
-        $this->ipRanges = Ip::whereType('range')->where('from', '<=', $ipToSearch)
-        ->where('to', '>=', $ipToSearch)->first();
+        $this->ipRanges = ip2long($this->searchTerm) ? Ip::whereType('range')->where('from', '<=', $this->searchTerm)
+        ->where('to', '>=', $this->searchTerm)->first() : null;
     }
 
     public function render()

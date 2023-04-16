@@ -128,8 +128,8 @@
                 <tr>
                     <td>{{ $ip_range->id }}</td>
                     <td>{{ $ip_range->title }}</td>
-                    <td>{{ long2ip($ip_range->from) }}</td>
-                    <td>{{ long2ip($ip_range->to) }}</td>
+                    <td>{{ $ip_range->from }}</td>
+                    <td>{{ $ip_range->to }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($ip_range->created_at)->format('Y/m/d') }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($ip_range->created_at)->format('H:m:s') }}</td>
                     <td>
