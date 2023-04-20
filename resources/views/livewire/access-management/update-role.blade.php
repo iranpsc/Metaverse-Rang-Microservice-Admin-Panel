@@ -48,7 +48,7 @@
             <x-alerts.danger>نقشی تعریف نشده است!</x-alerts.danger>
         @endforelse
         <x-slot name="footer">
-            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="update">ثبت</x-buttons.btn-success>
+            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot>
     </x-modals.modal>

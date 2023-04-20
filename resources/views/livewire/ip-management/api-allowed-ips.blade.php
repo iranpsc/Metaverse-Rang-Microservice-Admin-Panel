@@ -6,9 +6,6 @@
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
-        @if (session('error'))
-            <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
-        @endif
 
         <x-forms.group for="title" label="عنوان">
             <x-forms.input wire:model="title" />
@@ -28,24 +25,7 @@
                     @endfor
                 </div>
             </x-forms.group>
-            <div class="form-group row">
-                <div class="col-sm-4">
-                    <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendCode">ارسال کد تایید
-                    </x-buttons.btn-success>
-                </div>
-                <div class="col-sm-8">
-                    <x-forms.input wire:model="code" />
-                    @error('code')
-                        <span class="text-danger">{{ $message }}</span>
-                    @enderror
-                </div>
-            </div>
-            <x-forms.group for="access-password" label="رمز دسترسی">
-                <x-forms.input type="password" id="access-password" wire:model="accessPassword" />
-                @error('accessPassword')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+           <x-forms.verification/>
             <x-slot name="footer">
                 <x-buttons.btn-info wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-info>
                 <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>

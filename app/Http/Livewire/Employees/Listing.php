@@ -3,12 +3,14 @@
 namespace App\Http\Livewire\Employees;
 
 use App\Models\Employee\Employee;
+use App\Traits\SendsVerificationSms;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-
-use function App\Helpers\convertDateToCarbon;
 
 class Listing extends Component
 {
+    use SendsVerificationSms;
+
     private $employees;
     public
         $search = '',
@@ -26,6 +28,14 @@ class Listing extends Component
         $employee_code,
         $entry_date,
         $email;
+
+    protected $listeners = [
+        'employeeCreated' => '$refresh',
+        'employeeUpdated' => '$refresh',
+        'employeeDeleted' => '$refresh',
+        'deleteEmployee' => 'delete',
+    ];
+
     protected $rules = [
         'fname' => 'required|string',
         'lname' => 'required|string',
@@ -40,70 +50,33 @@ class Listing extends Component
         'address' => 'required|string',
         'entry_date' => 'required|shamsi_date',
         'email' => 'required|email|unique:employees',
-        'employee_code' => 'required|unique:employees'
+        'employee_code' => 'required|unique:employees',
+        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+        'access_password' => 'required|is_valid_access_password'
     ];
 
-    protected $messages = [
-        'lname.required' => 'نام را وارد کنید',
-        'lname.string' => 'نام صحیح نیست',
-        'fname.required' => 'نام خانوادگی را وارد کنید',
-        'fname.string' => 'نام خانوادگی صحیح نیست',
-        'melli_code.required' => 'کد ملی را وارد کنید',
-        'melli_code.ir_national_code' => 'کد ملی صحیح نیست',
-        'birthdate.required' => 'تاریخ تولد صحیح نیست',
-        'birthdate.shamsi_date' => 'تاریخ تولد صحیح نیست',
-        'hometown.required' => 'محل تولد را انتخاب کنید',
-        'father_name.required' => 'نام پدر صحیح نم باشد',
-        'father_name.string' => 'نام پدر صحیح نم باشد',
-        'gender.required' => 'جنسیت را انتخاب کنید',
-        'marriage_status.required' => 'وضیعت تاهل انتخاب کنید',
-        'home_phone.required' => 'شماره تلفن صحیح نمی باشد',
-        'home_phone.ir_phone_with_code' => 'شماره تلفن صحیح نمی باشد',
-        'phone.required' => 'شماره تلفن صحیح نمی باشد',
-        'phone.ir_mobile' => 'شماره تلفن صحیح نمی باشد',
-        'address.required' => 'آدرس صحیح نمی باشد',
-        'address.string' => 'آدرس صحیح نمی باشد',
-        'entry_date.required' => 'تاریخ ورود را ثبت کنید',
-        'entry_date.shamsi_date' => 'تاریخ ورود صحیح نمی باشد',
-        'email.required' => 'ایمیل صحیح نمی باشد',
-        'email.email' => 'ایمیل صحیح نمی باشد',
-        'email.unique' => 'آدرس ایمیل قبلا استفاده شده است'
-    ];
-
-    public function saveEmployee() {
-        $this->employee_code = random_int(100000 , 999999);
-        $this->validate();
-        Employee::create([
-            'fname' => $this->fname,
-            'lname' => $this->lname,
-            'melli_code' => $this->melli_code,
-            'birthdate' => convertDateToCarbon($this->birthdate),
-            'hometown' => $this->hometown,
-            'father_name' => $this->father_name,
-            'gender' => $this->gender,
-            'marriage_status' => $this->marriage_status,
-            'home_phone' => $this->home_phone,
-            'phone' => $this->phone,
-            'address' => $this->address,
-            'entry_date' => convertDateToCarbon($this->entry_date),
-            'email' => $this->email,
-            'employee_code' => $this->employee_code,
-        ]);
-
-        session()->flash('sucsess' , 'اطلاعات کارمند ثبت شد');
-        $this->employees = Employee::paginate(10, '*', 'listing');
+    public function mount()
+    {
+        $this->admin = Auth::guard('admin')->user();
     }
 
-    public function updated($prop) {
-        $this->validateOnly($prop);
+    public function save() {
+        $data = $this->validate();
+        unset($data['phone_verification'], $data['access_password']);
+        $data['employee_code'] = random_int(100000 , 999999);
+        Employee::create($data);
+        session()->flash('sucsess' , 'اطلاعات کارمند ثبت شد');
+        $this->emitSelf('employeeCreated');
     }
 
     public function updatedSearch() {
         $this->employees = Employee::where("melli_code", 'like', "%" . $this->search . "%")
         ->orWhere("employee_code", 'like', "%" . $this->search . "%")->get();
     }
+
     public function delete($id) {
         Employee::destroy($id);
+        $this->emitSelf('employeeDeleted');
     }
 
     public function render()

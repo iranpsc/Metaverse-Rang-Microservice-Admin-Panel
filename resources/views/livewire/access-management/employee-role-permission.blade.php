@@ -1,9 +1,6 @@
 <div>
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-admin-modal">ایجاد کاربر
     </x-buttons.btn-primary>
-    @if (session('success'))
-        <x-alerts.success>{{ session('success') }}</x-alerts.success>
-    @endif
     <x-modals.modal id="create-admin-modal" title="ایجاد کاربر">
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
@@ -45,6 +42,9 @@
         @empty
             <x-alerts.danger>مسئولیتی تعریف نشده است!</x-alerts.danger>
         @endforelse
+
+        <x-forms.verification/>
+
         <x-slot name="footer">
             <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>

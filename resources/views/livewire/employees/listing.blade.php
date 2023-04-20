@@ -144,9 +144,12 @@
                 </x-forms.group>
             </div>
         </div>
+
+        <x-forms.verification/>
+
         <x-slot:footer>
+            <x-buttons.btn-success wire:click="save">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
-            <x-buttons.btn-success wire:click="saveEmployee">ثبت</x-buttons.btn-success>
         </x-slot:footer>
     </x-modals.modal>
 
@@ -176,7 +179,7 @@
                     <td>{{ $employee->fname }}</td>
                     <td>{{ $employee->lname }}</td>
                     <td>{{ $employee->melli_code }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($employee->birthdate)->format('Y/d/m') }}</td>
+                    <td>{{ $employee->birthdate }}</td>
                     <td>{{ $employee->hometown }}</td>
                     <td>{{ $employee->father_name }}</td>
                     <td>
@@ -188,7 +191,6 @@
                         زن
                             @break
                         @default
-
                     @endswitch
                     </td>
                     <td>
@@ -208,10 +210,10 @@
                     <td>{{ $employee->email }}</td>
                     <td>{{ $employee->address }}</td>
                     <td>{{ $employee->employee_code }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($employee->entry_date)->format('Y/d/m') }}</td>
+                    <td>{{ $employee->entry_date}}</td>
                     <td>
-                        <x-buttons.btn-danger wire:click="delete({{ $employee->id }})">حذف</x-buttons.btn-danger>
                         <x-buttons.btn-success data-bs-target="#edit-employee-modal-{{$employee->id}}" data-bs-toggle="modal">ویرایش</x-buttons.btn-success>
+                        <x-buttons.btn-danger title="deleteEmloyee" class="confirm" id="{{ $employee->id }}">حذف</x-buttons.btn-danger>
 
                     </td>
                 </tr>

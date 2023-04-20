@@ -2,13 +2,15 @@
 
 namespace App\Http\Livewire\AccessManagement;
 
+use App\Traits\SendsVerificationSms;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class UpdateAdmin extends Component
 {
-    public $admin;
+    use SendsVerificationSms;
+
     public $addedRoles = [];
     public $addedDirectPermissions = [];
 
@@ -17,6 +19,11 @@ class UpdateAdmin extends Component
         'removeAdminPermission' => 'deletePermission',
         'adminRoleDeleted' => '$refresh',
         'adminPermissionDeleted' => '$refresh',
+    ];
+
+    protected $rules = [
+        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+        'access_password' => 'required|is_valid_access_password'
     ];
 
     public function update()

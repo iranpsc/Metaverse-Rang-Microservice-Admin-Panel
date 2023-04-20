@@ -2,12 +2,14 @@
 
 namespace App\Http\Livewire\Employees\Edit;
 
+use App\Traits\SendsVerificationSms;
 use Livewire\Component;
-
-use function App\Helpers\convertDateToCarbon;
+use Illuminate\Support\Facades\Auth;
 
 class EmployeeInfo extends Component
 {
+    use SendsVerificationSms;
+
     public $employee,
     $fname,
     $lname,
@@ -28,7 +30,7 @@ class EmployeeInfo extends Component
         $this->fname = $employee->fname;
         $this->lname = $employee->lname;
         $this->melli_code = $employee->melli_code;
-        $this->birthdate = \Morilog\Jalali\Jalalian::forge($employee->birthdate)->format('Y/m/d');
+        $this->birthdate = $employee->birthdate;
         $this->father_name = $employee->father_name;
         $this->gender = $employee->gender;
         $this->marriage_status = $employee->marriage_status;
@@ -36,9 +38,9 @@ class EmployeeInfo extends Component
         $this->phone = $employee->phone;
         $this->address = $employee->address;
         $this->hometown = $employee->hometown;
-        $this->employee_cade = $employee->employee_cade;
-        $this->entry_date = \Morilog\Jalali\Jalalian::forge($employee->entry_date)->format('Y/m/d');
+        $this->entry_date = $employee->entry_date;
         $this->email = $employee->email;
+        $this->admin = Auth::guard('admin')->user();
     }
 
     protected $rules = [
@@ -55,53 +57,16 @@ class EmployeeInfo extends Component
         'address' => 'required|string',
         'entry_date' => 'required|shamsi_date',
         'email' => 'required|email',
+        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+        'access_password' => 'required|is_valid_access_password'
     ];
 
-    protected $messages = [
-        'lname.required' => 'نام را وارد کنید',
-        'lname.string' => 'نام صحیح نیست',
-        'fname.required' => 'نام خانوادگی را وارد کنید',
-        'fname.string' => 'نام خانوادگی صحیح نیست',
-        'melli_code.required' => 'کد ملی را وارد کنید',
-        'melli_code.ir_national_code' => 'کد ملی صحیح نیست',
-        'birthdate.required' => 'تاریخ تولد صحیح نیست',
-        'birthdate.shamsi_date' => 'تاریخ تولد صحیح نیست',
-        'hometown.required' => 'محل تولد را انتخاب کنید',
-        'father_name.required' => 'نام پدر صحیح نم باشد',
-        'father_name.string' => 'نام پدر صحیح نم باشد',
-        'gender.required' => 'جنسیت را انتخاب کنید',
-        'marriage_status.required' => 'وضیعت تاهل انتخاب کنید',
-        'home_phone.required' => 'شماره تلفن صحیح نمی باشد',
-        'home_phone.ir_phone_with_code' => 'شماره تلفن صحیح نمی باشد',
-        'phone.required' => 'شماره تلفن صحیح نمی باشد',
-        'phone.ir_mobile' => 'شماره تلفن صحیح نمی باشد',
-        'address.required' => 'آدرس صحیح نمی باشد',
-        'address.string' => 'آدرس صحیح نمی باشد',
-        'entry_date.required' => 'تاریخ ورود را ثبت کنید',
-        'entry_date.shamsi_date' => 'تاریخ ورود صحیح نمی باشد',
-        'email.required' => 'ایمیل صحیح نمی باشد',
-        'email.email' => 'ایمیل صحیح نمی باشد',
-    ];
-
-    public function update() {
-        $this->validate();
-
-        $this->employee->update([
-            'fname' => $this->fname,
-            'lname' => $this->lname,
-            'melli_code' => $this->melli_code,
-            'birthdate' => convertDateToCarbon($this->birthdate),
-            'father_name' => $this->father_name,
-            'gender' => $this->gender,
-            'marriage_status' => $this->marriage_status,
-            'home_phone' => $this->home_phone,
-            'phone' => $this->phone,
-            'address' => $this->address,
-            'hometown' => $this->hometown,
-            'entry_date' => convertDateToCarbon($this->entry_date),
-            'email' => $this->email,
-        ]);
+    public function save() {
+        $data = $this->validate();
+        unset($data['phone_verification'], $data['access_password']);
+        $this->employee->update($data);
         session()->flash('success', 'اطلاعات کارمند بروز رسانی شد');
+        $this->emitUp('employeeUpdated');
     }
     public function render()
     {

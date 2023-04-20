@@ -15,11 +15,6 @@ class UpdatePermission extends Component
         'name' => 'required|string|min:2',
     ];
 
-    protected $messages = [
-        'title.required' => 'عنوان دسترسی را وارد کنید',
-        'name.required' => 'نام دسترسی را وارد کنید'
-    ];
-
     protected $listeners = [
         'removePermissionRole' => 'removeRole',
         'permissionRoleRemoved' => '$refresh'
@@ -31,7 +26,7 @@ class UpdatePermission extends Component
         $this->name = $permission->name;
     }
 
-    public function update()
+    public function save()
     {
         $this->validate();
         $this->permission->update([

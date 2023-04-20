@@ -13,12 +13,13 @@ class Profile extends Component
     use WithFileUploads, SendsVerificationSms;
 
     public $name, $email, $image, $new_access_password,
-        $new_access_password_confirmation;
+        $new_access_password_confirmation, $password;
 
     protected $rules = [
         'name' => 'required|string|max:255',
         'email' => 'required|email',
         'image' => 'nullable|image|max:1024',
+        'password' => 'nullable|confirmed',
         'new_access_password' => 'nullable|confirmed',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
@@ -42,7 +43,8 @@ class Profile extends Component
             'name' => $this->name,
             'email' => $this->email,
             'image' => $url,
-            'access_password' => $this->new_access_password ? Hash::make($this->new_access_password) : $this->admin->access_password
+            'access_password' => $this->new_access_password ? Hash::make($this->new_access_password) : $this->admin->access_password,
+            'password' => $this->password ? Hash::make($this->password) : $this->admin->password
         ]);
         session()->flash('success', 'اطلاعات بروزرسانی شد.');
     }

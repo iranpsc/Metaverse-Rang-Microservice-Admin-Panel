@@ -6,21 +6,21 @@ use Livewire\Component;
 use App\Models\BankAccount;
 use App\Models\Employee\Employee;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Cache;
-use App\Helpers\SMS;
+use App\Traits\SendsVerificationSms;
 
 class Bank extends Component
 {
-    public $employee, $admin, $bank_name, $shaba_num, $card_num, $code, $access_password;
+    use SendsVerificationSms;
+
+    public $employee, $bank_name, $shaba_num, $card_num;
 
     protected $rules = [
         'employee' => 'required|integer|exists:admins,id',
         'bank_name' => 'required|string|max:255',
         'shaba_num' => 'required|ir_sheba',
         'card_num' => 'required|ir_bank_card_number',
-        'code' => 'required|integer',
-        'access_password' => 'required'
+        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+        'access_password' => 'required|is_valid_access_password'
     ];
 
     protected $listeners = [
@@ -35,46 +35,21 @@ class Bank extends Component
         $this->admin = Auth::guard('admin')->user();
     }
 
-    public function sendSMS()
-    {
-        $verify_code = random_int(100000, 999999);
-        Cache::put('verify-code-'.$this->admin->id, Hash::make($verify_code), now()->addMinutes(5));
-        $result = SMS::send($this->admin->phone, $verify_code);
-        if (is_array($result)) {
-            foreach ($result as $r) {
-                session()->flash('success', $r->statustext);
-            }
-        } else {
-            session()->flash('error', explode(":", $result)[1]);
-        }
-    }
-
     public function save()
     {
         $this->validate();
-        if (!Hash::check($this->code, Cache::get('verify-code-'.$this->admin->id))) {
-            $this->addError('code', 'کد تایید وارد شده صحیح نمی باشد');
-        } else if (!password_verify($this->access_password, $this->admin->access_password)) {
-            $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
-        } else {
-            $employee = Employee::findOrFail($this->employee);
 
-            $employee->bankAccounts()->create([
-                'bank_name' => $this->bank_name,
-                'shaba_num' => $this->shaba_num,
-                'card_num' => $this->card_num,
-            ]);
+        $employee = Employee::findOrFail($this->employee);
 
-            $this->resetExcept('admin');
-            Cache::forget('verify-code-'.$this->admin->id);
-            session()->flash('success', 'اطلاعات با موفقیت ثبت شد');
-            $this->emitSelf('accountCreated');
-        }
-    }
+        $employee->bankAccounts()->create([
+            'bank_name' => $this->bank_name,
+            'shaba_num' => $this->shaba_num,
+            'card_num' => $this->card_num,
+        ]);
 
-    public function updated($propertyName)
-    {
-        $this->validateOnly($propertyName);
+        $this->resetExcept('admin');
+        session()->flash('success', 'اطلاعات با موفقیت ثبت شد');
+        $this->emitSelf('accountCreated');
     }
 
     public function delete(BankAccount $account)

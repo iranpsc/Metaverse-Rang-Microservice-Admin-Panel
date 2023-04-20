@@ -15,11 +15,6 @@ class UpdateRole extends Component
         'name' => 'required|string|min:2',
     ];
 
-    protected $messages = [
-        'title.required' => 'عنوان مسئولیت را وارد کنید',
-        'name.required' => 'نام مسئولیت را وارد کنید'
-    ];
-
     protected $listeners = [
         'removeRolePermission' => 'removePermission',
         'rolePermissionRemoved' => '$refresh'
@@ -31,7 +26,7 @@ class UpdateRole extends Component
         $this->name = $role->name;
     }
 
-    public function update()
+    public function save()
     {
         $this->validate();
         $this->role->update([

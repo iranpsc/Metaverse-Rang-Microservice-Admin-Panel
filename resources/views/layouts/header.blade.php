@@ -192,12 +192,6 @@
                                     ویرایش پروفایل
                                 </a>
                             </li>
-                            <li>
-                                <a href="{{ route('password.change') }}">
-                                    <i class="icon-key"></i>
-                                    تغییر رمز عبور
-                                </a>
-                            </li>
                             <li class="divider"></li>
                             <li>
                                 <a href="{{ route('support.technical-support') }}">

@@ -4,6 +4,7 @@ namespace App\Http\Livewire\AccessManagement;
 
 use App\Models\Admin;
 use App\Models\Employee\Employee;
+use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
@@ -12,6 +13,8 @@ use Spatie\Permission\Models\Role;
 
 class EmployeeRolePermission extends Component
 {
+    use SendsVerificationSms;
+
     public $password, $accessPassword, $employee;
     public $addedRoles = [];
     public $addedPermissions = [];
@@ -19,13 +22,9 @@ class EmployeeRolePermission extends Component
     protected $rules = [
         'employee' => 'required',
         'password' => 'required',
-        'accessPassword' => 'required'
-    ];
-
-    protected $messages = [
-        'employee.required' => 'کارمند را انتخاب کنید',
-        'password.required' => 'رمز عبور را وارد کنید',
-        'accessPassword.required' => 'رمز دسترسی را وارد کنید'
+        'accessPassword' => 'required',
+        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+        'access_password' => 'required|is_valid_access_password'
     ];
 
     protected $listeners = [

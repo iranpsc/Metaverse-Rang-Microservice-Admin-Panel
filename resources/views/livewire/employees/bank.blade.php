@@ -42,25 +42,8 @@
             @enderror
         </x-forms.group>
 
-        <div class="form-group row">
-            <div class="col-sm-4">
-                <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendSMS">ارسال کد تایید
-                </x-buttons.btn-success>
-            </div>
-            <div class="col-sm-8">
-                <x-forms.input wire:model="code" />
-                @error('code')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </div>
-        </div>
+        <x-forms.verification/>
 
-        <x-forms.group for="access-password" label="رمز دسترسی">
-            <x-forms.input type="password" id="access-password" wire:model="access_password" />
-            @error('access_password')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
         <x-slot name="footer">
             <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>

@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Auth\ChangePasswordController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Livewire\Dashboard\Dashboard;
@@ -226,9 +225,3 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
 Auth::routes([
     'register' => false,
 ]);
-
-Route::controller(ChangePasswordController::class)
-    ->prefix('password')->name('password.')->group(function () {
-        Route::get('/change', 'showChangeForm')->name('change');
-        Route::post('/change', 'change')->name('change.submit');
-    });
