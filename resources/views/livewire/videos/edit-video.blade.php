@@ -33,27 +33,7 @@
             @enderror
         </x-forms.group>
 
-        <div class="row form-group">
-            <div class="col-sm-4">
-                <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendSMS">
-                    ارسال پیامک تایید
-                </x-buttons.btn-success>
-            </div>
-            <div class="col-sm-8">
-                <x-forms.input wire:model="code" placeholder="تایید پیامکی" />
-                @error('code')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </div>
-
-        </div>
-
-        <x-forms.group label="رمز دسترسی" for="accessPassword">
-            <x-forms.input type="password" id="accessPassword" wire:model="accessPassword" placeholder="رمز دسترسی" />
-            @error('accessPassword')
-                <span class="form-text text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-forms.verification id="{{ $videoDb->id }}"/>
 
         <x-slot:footer>
             <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>

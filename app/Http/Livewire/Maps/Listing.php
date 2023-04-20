@@ -21,14 +21,6 @@ class Listing extends Component
         'file' => 'required|file'
     ];
 
-    protected $messages = [
-        'name.required' => 'نام آبادی را وارد کنید',
-        'name.string' => 'نام صحیح نیست',
-        'name.min' => 'طول نام حداقل 2 کاراکتر است',
-        'file.required' => 'فایل را انتخاب کنید',
-        'file.mimes' => 'فرمت فایل صحیح نمی باشد',
-    ];
-
     protected $listeners = [
         'deleteMap' => 'delete',
         'mapDeleted' => '$refresh',

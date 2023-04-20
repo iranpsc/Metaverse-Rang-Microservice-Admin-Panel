@@ -2,13 +2,13 @@
 
 namespace App\Http\Livewire\Level\Info;
 
-use App\Traits\VerifiesPhoneAndAccessPassword;
+use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class Prize extends Component
 {
-    use VerifiesPhoneAndAccessPassword;
+    use SendsVerificationSms;
 
     public $level, $prize, $psc, $yellow, $blue, $red, $effect, $satisfaction;
 

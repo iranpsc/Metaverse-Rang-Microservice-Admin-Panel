@@ -33,11 +33,6 @@ class Categories extends Component
         'description' => 'required|string|max:2000',
     ];
 
-    protected $messages = [
-        'name.required' => 'نام دسته بندی را وارد کنید.',
-        'slug.required' => 'اسلاگ را وارد کنید.',
-    ];
-
     public function save()
     {
         $this->validate();

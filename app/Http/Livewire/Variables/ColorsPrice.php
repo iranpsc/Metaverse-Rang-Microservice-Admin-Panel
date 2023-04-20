@@ -4,18 +4,14 @@ namespace App\Http\Livewire\Variables;
 
 use Livewire\Component;
 use App\Models\Variable;
-use Illuminate\Support\Facades\Session;
-use App\Helpers\SMS;
+use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 class ColorsPrice extends Component
 {
-    public $price;
-    public $asset;
+    use SendsVerificationSms;
 
-    public $admin, $phoneVerification;
-    public $access_password;
+    public $price, $asset;
 
     public function mount()
     {
@@ -30,67 +26,28 @@ class ColorsPrice extends Component
     ];
 
     protected $rules = [
-        'phoneVerification' => 'required|numeric',
-        'access_password' => 'required',
         'price' => 'required|numeric|min:1',
-        'asset' => 'required|in:red,blue,yellow,irr,psc,satisfaction|unique:variables'
+        'asset' => 'required|in:red,blue,yellow,irr,psc,satisfaction|unique:variables',
+        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+        'access_password' => 'required|is_valid_access_password'
     ];
-
-    protected $messages = [
-        'asset.required' => 'نام ارز را وارد کنید',
-        'asset.in' => 'نام ارز معتبر نمی باشد',
-        'asset.unique' => 'این ارز قبلا تعریف شده است',
-        'phoneVerification.required' => 'کد تایید را وارد کنید',
-        'access_password.required' => 'رمز دسترسی را وارد کنید',
-        'price.required' => 'قیمت را وارد کنید',
-        'price.numberic' => 'مقدار عددی برای قیمت وارد کنید',
-        'price.min' => 'کمترین مقدار قیمت 1 است',
-    ];
-
-    public function sendSMS()
-    {
-        $verify_code = random_int(100000, 999999);
-
-        Session::put('verify_code', Hash::make($verify_code));
-
-        $result = SMS::send($this->admin->phone, $verify_code);
-        if (is_array($result)) {
-            foreach ($result as $r) {
-                session()->flash('success', $r->statustext);
-            }
-        } else {
-            session()->flash('error', explode(":", $result)[1]);
-        }
-    }
 
     public function save()
     {
-
         $this->validate();
 
-        if (! Hash::check($this->phoneVerification, Session::get('verify_code'))) {
-            $this->addError('phoneVerification', 'کد تایید وارد شده صحیح نمی باشد');
-        } else if (!password_verify($this->access_password, $this->admin->access_password)) {
-            $this->addError('access_password', 'رمز دسترسی صحیح نمی باشد');
-        } else {
-            Variable::create([
-                'asset' => $this->asset,
-                'price' => $this->price,
-            ]);
+        Variable::create([
+            'asset' => $this->asset,
+            'price' => $this->price,
+        ]);
 
-            Session::forget('verify_code');
-            session()->flash('success', 'قیمت رنگ با موفقیت وارد شد');
-            $this->resetExcept('admin');
-            $this->emitSelf('currencyCreated');
-        }
+        session()->flash('success', 'قیمت رنگ با موفقیت وارد شد');
+        $this->resetExcept('admin');
+        $this->emitSelf('currencyCreated');
     }
 
-    public function updated($prop)
+    public function delete(Variable $variable)
     {
-        $this->validateOnly($prop);
-    }
-
-    public function delete(Variable $variable) {
         $variable->priceChangeLogs()->delete();
         $variable->delete();
         $this->emitSelf('currencyDeleted');
@@ -102,7 +59,7 @@ class ColorsPrice extends Component
         return view('livewire.variables.colors-price', [
             'variables' => Variable::with('priceChangeLogs')->get()
         ])
-        ->extends('layouts.app')
-        ->section('content');
+            ->extends('layouts.app')
+            ->section('content');
     }
 }

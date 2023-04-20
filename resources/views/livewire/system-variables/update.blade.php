@@ -4,9 +4,6 @@
         @if (session('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
-        @if (session('error'))
-            <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
-        @endif
         <x-forms.group for="name-{{ $variable->id }}" label="نام متغییر">
             <x-forms.input wire:model="name" id="name-{{ $variable->id }}" />
             @error('name')
@@ -32,24 +29,8 @@
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
-        <div class="form-group row">
-            <div class="col-sm-4">
-                <x-buttons.btn-success wire:loading.attr="disabled" wire:click="sendCode">ارسال کد تایید
-                </x-buttons.btn-success>
-            </div>
-            <div class="col-sm-8">
-                <x-forms.input wire:model="code" />
-                @error('code')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </div>
-        </div>
-        <x-forms.group for="access-password-{{ $variable->id }}" label="رمز دسترسی">
-            <x-forms.input type="password" id="access-password-{{ $variable->id }}" wire:model="accessPassword" />
-            @error('accessPassword')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+
+        <x-forms.verification id="{{ $variable->id }}"/>
         <x-slot name="footer">
             <x-buttons.btn-success wire:loading.attr="disabled" wire:click="update">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
