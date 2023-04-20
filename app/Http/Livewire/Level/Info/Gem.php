@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Level\Info;
 
+use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -9,9 +10,9 @@ use App\Traits\VerifiesPhoneAndAccessPassword;
 
 class Gem extends Component
 {
-    use WithFileUploads, VerifiesPhoneAndAccessPassword;
+    use WithFileUploads, SendsVerificationSms;
 
-    public $phone_verification, $access_password, $admin, $level, $gem,
+    public $level, $gem,
         $name, $description, $thread, $points, $has_animation, $lines,
         $volume, $color, $png_file, $fbx_file, $encryption, $designer;
 

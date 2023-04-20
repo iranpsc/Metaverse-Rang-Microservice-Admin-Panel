@@ -4,13 +4,13 @@ namespace App\Http\Livewire\Level;
 
 use Livewire\Component;
 use App\Models\Level\Level;
+use App\Traits\SendsVerificationSms;
 use Livewire\WithFileUploads;
-use App\Traits\VerifiesPhoneAndAccessPassword;
 use Illuminate\Support\Facades\Auth;
 
 class Create extends Component
 {
-    use WithFileUploads, VerifiesPhoneAndAccessPassword;
+    use WithFileUploads, SendsVerificationSms;
 
     public $name, $score, $slug, $image, $backgroundImage;
 

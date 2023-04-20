@@ -2,14 +2,14 @@
 
 namespace App\Http\Livewire\Level\Info;
 
-use App\Traits\VerifiesPhoneAndAccessPassword;
+use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 class Gift extends Component
 {
-    use VerifiesPhoneAndAccessPassword, WithFileUploads;
+    use SendsVerificationSms, WithFileUploads;
 
     public $level, $gift, $name, $description,
         $monthly_capacity_count, $store_capacity, $sell_capacity,

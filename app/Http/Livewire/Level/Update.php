@@ -2,14 +2,14 @@
 
 namespace App\Http\Livewire\Level;
 
+use App\Traits\SendsVerificationSms;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use App\Traits\VerifiesPhoneAndAccessPassword;
 use Illuminate\Support\Facades\Auth;
 
 class Update extends Component
 {
-    use WithFileUploads, VerifiesPhoneAndAccessPassword;
+    use WithFileUploads, SendsVerificationSms;
 
     public $name, $score, $level, $image, $backgroundImage;
 

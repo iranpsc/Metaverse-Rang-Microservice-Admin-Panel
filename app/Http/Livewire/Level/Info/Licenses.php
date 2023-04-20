@@ -2,13 +2,13 @@
 
 namespace App\Http\Livewire\Level\Info;
 
-use App\Traits\VerifiesPhoneAndAccessPassword;
+use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class Licenses extends Component
 {
-    use VerifiesPhoneAndAccessPassword;
+    use SendsVerificationSms;
 
     public $level, $licenses,
         $create_union,
