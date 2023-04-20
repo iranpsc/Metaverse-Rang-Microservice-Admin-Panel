@@ -402,14 +402,6 @@
                      </ul>
                  </li>
              @endhasanyrole
-             @hasanyrole('statistics-management|super-admin')
-                 <li>
-                     <a href="{{ route('statistics') }}">
-                         <span class="icon-note"></span>
-                         <span>آمار سراسری</span>
-                     </a>
-                 </li>
-             @endhasanyrole
              @hasanyrole('maps-management|super-admin')
                  <li>
                      <a href="{{ route('map-management') }}">

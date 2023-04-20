@@ -46,7 +46,6 @@ use App\Http\Livewire\IpManagement\ApiAllowedIps;
 use App\Http\Livewire\IpManagement\AdminAllowedIps;
 use App\Http\Livewire\IpManagement\ApiIpRanges;
 use App\Http\Livewire\Lands\Limits;
-use App\Http\Livewire\Statistics\Statistics;
 use App\Http\Livewire\Music\Listing as MusicListing;
 use App\Http\Livewire\Music\Categories as MusicCategories;
 use App\Http\Livewire\Panel\Profile;
@@ -206,8 +205,6 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
     Route::get('/system-variables', SystemVariablesListing::class)
         ->middleware('can:manage-system-variables')
         ->name('system-variables');
-
-    Route::get('/statistics', Statistics::class)->name('statistics');
 
     Route::prefix('music')->middleware('can:manage-musics')->group(function() {
         Route::get('/', MusicListing::class)->name('music');
