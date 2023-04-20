@@ -9,6 +9,7 @@
                 <th>امتیاز مورد نیاز</th>
                 <th>اسلاگ</th>
                 <th>تصویر</th>
+                <th>تصویر پس زمینه</th>
                 <th>اقدامات</th>
             </x-slot>
             @foreach ($levels as $level)
@@ -20,6 +21,14 @@
                     <td>
                         @if ($level->image)
                             <a target="_blank" href="{{ asset('uploads/' . $level->image->url) }}"
+                                class="btn btn-primary btn-sm round">مشاهده</a>
+                        @else
+                            -----
+                        @endif
+                    </td>
+                    <td>
+                        @if ($level->background_image)
+                            <a target="_blank" href="{{ $level->background_image }}"
                                 class="btn btn-primary btn-sm round">مشاهده</a>
                         @else
                             -----

@@ -201,5 +201,6 @@
         </div>
     </div>
     <hr>
+    <x-forms.verification id="{{$level->id}}"/>
     <x-buttons.btn-primary class="w-25" wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
 </div>

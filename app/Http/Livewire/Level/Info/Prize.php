@@ -2,10 +2,14 @@
 
 namespace App\Http\Livewire\Level\Info;
 
+use App\Traits\VerifiesPhoneAndAccessPassword;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class Prize extends Component
 {
+    use VerifiesPhoneAndAccessPassword;
+
     public $level, $prize, $psc, $yellow, $blue, $red, $effect, $satisfaction;
 
     public function mount()
@@ -17,6 +21,7 @@ class Prize extends Component
         $this->red = $this->prize ? $this->prize->red : 0;
         $this->satisfaction = $this->prize ? $this->prize->satisfaction : 0;
         $this->effect = $this->prize ? $this->prize->effect : 0;
+        $this->admin = Auth::guard('admin')->user();
     }
 
     protected $rules = [
@@ -26,11 +31,16 @@ class Prize extends Component
         'red' => 'required|integer|min:0',
         'satisfaction' => 'required|decimal:0,4|min:0',
         'effect' => 'required|integer|min:0',
+        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+        'access_password' => 'required|is_valid_access_password'
     ];
 
     public function save()
     {
         $data = $this->validate();
+
+        unset($data['phone_verification']);
+        unset($data['access_password']);
 
         if ($this->prize) {
             $this->prize->update($data);
@@ -38,11 +48,6 @@ class Prize extends Component
             $this->prize = $this->level->prize()->create($data);
         }
         session()->flash('success', 'اطلاعات با موفقیت ثبت شد.');
-    }
-
-    public function updated($prop)
-    {
-        $this->validateOnly($prop);
     }
 
     public function render()

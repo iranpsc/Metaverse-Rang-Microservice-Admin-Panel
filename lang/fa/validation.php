@@ -188,6 +188,8 @@ return [
         'new_password' => 'رمز عبور جدید',
         'score' => 'امتیاز',
         'created_at' => 'تاریخ ایجاد',
-        'subcategory' => 'زیر شاخه'
+        'subcategory' => 'زیر شاخه',
+        'access_password' => 'رمز دسترسی',
+        'phone_verification' => 'کد تایید شماره تلفن'
     ],
 ];

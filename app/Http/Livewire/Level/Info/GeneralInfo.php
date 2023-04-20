@@ -2,13 +2,38 @@
 
 namespace App\Http\Livewire\Level\Info;
 
+use App\Traits\VerifiesPhoneAndAccessPassword;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class GeneralInfo extends Component
 {
+    use VerifiesPhoneAndAccessPassword;
+
     public $level, $generalInfo, $score, $description, $rank,
         $subcategories, $creation_date, $persian_font,
-        $english_font, $file_volume, $used_colors, $points, $designer, $model_designer;
+        $english_font, $file_volume, $used_colors, $points, $designer, $model_designer,
+        $has_animation,
+        $lines;
+
+    protected $rules = [
+        'score' => 'required|integer|min:0',
+        'description' => 'required|string|max:2000',
+        'rank' => 'required|integer|min:0',
+        'subcategories' => 'required|integer|min:0',
+        'persian_font' => 'required|string|max:255',
+        'english_font' => 'required|string|max:255',
+        'file_volume' => 'required|decimal:0,3|min:0',
+        'used_colors' => 'required|string|max:500',
+        'points' => 'required|integer|min:0',
+        'designer' => 'required|string|max:255',
+        'model_designer' => 'required|string|max:255',
+        'creation_date' => 'required|shamsi_date',
+        'has_animation' => 'required|boolean',
+        'lines' => 'required|integer|min:0',
+        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+        'access_password' => 'required|is_valid_access_password'
+    ];
 
     public function mount()
     {
@@ -27,38 +52,24 @@ class GeneralInfo extends Component
         $this->points = $generalInfo ? $generalInfo->points : 0;
         $this->designer = $generalInfo ? $generalInfo->designer : '';
         $this->model_designer = $generalInfo ? $generalInfo->model_designer : '';
+        $this->lines = $generalInfo ? $generalInfo->lines : 0;
+        $this->has_animation = $generalInfo ? $generalInfo->has_animation : false;
+        $this->admin = Auth::guard('admin')->user();
     }
-
-    protected $rules = [
-        'score' => 'required|integer|min:0',
-        'description' => 'required|string|max:2000',
-        'rank' => 'required|integer|min:0',
-        'subcategories' => 'required|integer|min:0',
-        'persian_font' => 'required|string|max:255',
-        'english_font' => 'required|string|max:255',
-        'file_volume' => 'required|integer|min:0',
-        'used_colors' => 'required|string|max:500',
-        'points' => 'required|integer|min:0',
-        'designer' => 'required|string|max:255',
-        'model_designer' => 'required|string|max:255',
-        'creation_date' => 'required|shamsi_date',
-    ];
 
     public function save()
     {
         $data = $this->validate();
 
+        unset($data['phone_verification']);
+        unset($data['access_password']);
+
         if ($this->generalInfo) {
             $this->generalInfo->update($data);
         } else {
-           $this->generalInfo = $this->level->generalInfo()->create($data);
+            $this->generalInfo = $this->level->generalInfo()->create($data);
         }
         session()->flash('success', 'اطلاعات با موفقیت ثبت شد.');
-    }
-
-    public function updated($prop)
-    {
-        $this->validateOnly($prop);
     }
 
     public function render()

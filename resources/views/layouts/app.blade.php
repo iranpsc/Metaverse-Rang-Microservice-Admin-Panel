@@ -2,7 +2,7 @@
 
 <!-- BEGIN WRAPPER -->
 <div id="wrapper">
-    {{-- CHANGE PASSWORD MODAL --}}
+    {{-- Sidebar --}}
     @include('layouts.sidebar')
     <!-- BEGIN PAGE CONTENT -->
     <div id="page-content">
@@ -11,7 +11,7 @@
             <div class="col-md-12">
                 <div class="breadcrumb-box border shadow">
                     <ul class="breadcrumb">
-                        <li><a href="dashboard.html">پیشخوان</a></li>
+                        <li><a href="{{ route('dashboard') }}">پیشخوان</a></li>
                         <li><a href="#">صفحات</a></li>
                         <li class="active">صفحه خام</li>
                     </ul>
@@ -35,11 +35,14 @@
                             </h3>
                         </div><!-- /.portlet-title -->
                         <div class="buttons-box">
-                            <a class="btn btn-sm btn-default btn-round btn-fullscreen" rel="tooltip" title="تمام صفحه" href="#">
-                                <i class="icon-size-fullscreen"></i>
+                            <a class="btn btn-sm btn-default btn-round" rel="tooltip" title="آموزش" href="#video-tutorials-modal">
+                                <i class="icon-question"></i>
                             </a>
                             <a class="btn btn-sm btn-default btn-round btn-collapse" rel="tooltip" title="کوچک کردن" href="#">
                                 <i class="icon-arrow-up"></i>
+                            </a>
+                            <a class="btn btn-sm btn-default btn-round btn-fullscreen" rel="tooltip" title="تمام صفحه" href="#">
+                                <i class="icon-size-fullscreen"></i>
                             </a>
                         </div><!-- /.buttons-box -->
                     </div><!-- /.portlet-heading -->

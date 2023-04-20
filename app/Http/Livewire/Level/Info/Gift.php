@@ -2,12 +2,25 @@
 
 namespace App\Http\Livewire\Level\Info;
 
+use App\Traits\VerifiesPhoneAndAccessPassword;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class Gift extends Component
 {
-    public $level, $gift, $name, $description, $monthly_capacity_count, $store_capacity, $sell_capacity,
-        $features, $sell, $vod_document_registration, $seller_link, $designer;
+    use VerifiesPhoneAndAccessPassword, WithFileUploads;
+
+    public $level, $gift, $name, $description,
+        $monthly_capacity_count, $store_capacity, $sell_capacity,
+        $features, $sell, $vod_document_registration, $seller_link, $designer,
+        $three_d_model_volume,
+        $three_d_model_points,
+        $three_d_model_lines,
+        $has_animation,
+        $png_file,
+        $fbx_file,
+        $rent;
 
     protected $rules = [
         'name' => 'required|string|max:255',
@@ -20,6 +33,15 @@ class Gift extends Component
         'vod_document_registration' => 'required|boolean',
         'seller_link' => 'required|string|max:255',
         'designer' => 'required|string|max:255',
+        'three_d_model_volume' => 'required|decimal:0,4|min:0',
+        'three_d_model_points' => 'required|integer|min:0',
+        'three_d_model_lines' => 'required|integer|min:0',
+        'has_animation' => 'required|boolean',
+        'png_file' => 'nullable|image|max:5000',
+        'fbx_file' => 'nullable|file|max:5000',
+        'rent' => 'required|boolean',
+        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+        'access_password' => 'required|is_valid_access_password'
     ];
 
     public function mount()
@@ -35,14 +57,25 @@ class Gift extends Component
         $this->vod_document_registration = $this->gift ? $this->gift->vod_document_registration : false;
         $this->seller_link = $this->gift ? $this->gift->seller_link : '';
         $this->designer = $this->gift ? $this->gift->designer : '';
+        $this->three_d_model_volume = $this->gift ? $this->gift->three_d_model_volume : 0;
+        $this->three_d_model_points = $this->gift ? $this->gift->three_d_model_points : 0;
+        $this->three_d_model_lines = $this->gift ? $this->gift->three_d_model_lines : 0;
+        $this->has_animation = $this->gift ? $this->gift->has_animation : false;
+        $this->rent = $this->gift ? $this->gift->rent : false;
+        $this->admin = Auth::guard('admin')->user();
     }
 
     public function save()
     {
         $data = $this->validate();
 
-        if($this->gift)
-        {
+        unset($data['phone_verification']);
+        unset($data['access_password']);
+
+        $data['fbx_file'] = $this->fbx_file ? url('uploads/' . $this->fbx_file->store('levels', 'public')) : $this->gift->fbx_file;
+        $data['png_file'] = $this->png_file ? url('uploads/' . $this->png_file->store('levels', 'public')) : $this->gift->png_file;
+
+        if ($this->gift) {
             $this->gift->update($data);
         } else {
             $this->gift = $this->level->gift()->create($data);

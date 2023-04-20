@@ -2,10 +2,14 @@
 
 namespace App\Http\Livewire\Level\Info;
 
+use App\Traits\VerifiesPhoneAndAccessPassword;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class Licenses extends Component
 {
+    use VerifiesPhoneAndAccessPassword;
+
     public $level, $licenses,
         $create_union,
         $add_memeber_to_union,
@@ -47,6 +51,7 @@ class Licenses extends Component
         $this->access_to_answer_questions_unit = $licenses ? $licenses->access_to_answer_questions_unit :  false;
         $this->create_challenge_questions = $licenses ? $licenses->create_challenge_questions :  false;
         $this->upload_music = $licenses ? $licenses->upload_music :  false;
+        $this->admin = Auth::guard('admin')->user();
     }
 
     protected $rules = [
@@ -67,11 +72,16 @@ class Licenses extends Component
         'access_to_answer_questions_unit' => 'required|boolean',
         'create_challenge_questions' => 'required|boolean',
         'upload_music' => 'required|boolean',
+        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+        'access_password' => 'required|is_valid_access_password'
     ];
 
     public function save()
     {
         $data = $this->validate();
+
+        unset($data['phone_verification']);
+        unset($data['access_password']);
 
         if ($this->licenses) {
             $this->licenses->update($data);
@@ -79,11 +89,6 @@ class Licenses extends Component
            $this->licenses = $this->level->licenses()->create($data);
         }
         session()->flash('success', 'اطلاعات با موفقیت ثبت شد.');
-    }
-
-    public function updated($prop)
-    {
-        $this->validateOnly($prop);
     }
 
     public function render()

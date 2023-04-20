@@ -3,9 +3,6 @@
         @if (session()->has('success'))
             <x-alerts.success>{{ session('success') }}</x-alerts.success>
         @endif
-        @if (session()->has('error'))
-            <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
-        @endif
     </div>
 
     <div class="row">
@@ -45,6 +42,16 @@
                 @enderror
             </x-forms.group>
 
+            <x-forms.group for="level-{{ $level->id }}-gem-animation" label="انیمیشن">
+                <x-forms.select wire:model="has_animation" id="level-{{ $level->id }}-gem-animation">
+                    <option @selected($has_animation) value="0">ندارد</option>
+                    <option @selected($has_animation) value="1">دارد</option>
+                </x-forms.select>
+                @error('animation')
+                    <span class="form-text text-danger">{{ $message }}</span>
+                @enderror
+            </x-forms.group>
+
         </div>
         <div class="col-md-6">
 
@@ -58,6 +65,13 @@
             <x-forms.group for="level-{{ $level->id }}-fbx-file" label="فایل fbx نگین">
                 <x-forms.input type="file" id="level-{{ $level->id }}-fbx-file" wire:model="fbx_file" />
                 @error('fbx_file')
+                    <span class="form-text text-danger">{{ $message }}</span>
+                @enderror
+            </x-forms.group>
+
+            <x-forms.group for="level-{{ $level->id }}-gem-lines" label="تعداد خطوط مدل سه بعدی سنگ">
+                <x-forms.input id="level-{{ $level->id }}-gem-lines" wire:model="lines" />
+                @error('lines')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
             </x-forms.group>
@@ -84,12 +98,15 @@
 
     <div class="form-group my-2">
         <label for="level-{{ $level->id }}-gem-description">توضیحات نگین</label>
-        <textarea class="form-control rounded" wire:model="description" id="level-{{ $level->id }}-gem-description" cols="30" rows="10"></textarea>
+        <textarea class="form-control rounded" wire:model="description" id="level-{{ $level->id }}-gem-description"
+            cols="30" rows="10"></textarea>
         @error('description')
             <span class="form-text text-danger">{{ $message }}</span>
         @enderror
     </div>
 
+    <hr>
+    <x-forms.verification id="{{ $level->id }}"/>
     <hr>
 
     <x-buttons.btn-primary class="w-25" wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>

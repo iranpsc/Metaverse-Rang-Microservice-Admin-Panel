@@ -5,41 +5,44 @@ namespace App\Http\Livewire\Level;
 use Livewire\Component;
 use App\Models\Level\Level;
 use Livewire\WithFileUploads;
+use App\Traits\VerifiesPhoneAndAccessPassword;
+use Illuminate\Support\Facades\Auth;
 
 class Create extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, VerifiesPhoneAndAccessPassword;
 
-    public $name, $score, $slug, $image;
+    public $name, $score, $slug, $image, $backgroundImage;
 
     protected $rules = [
         'name' => 'required|string|unique:levels',
         'image' => 'nullable|image|mimes:jpg,png,bmp,jpeg',
         'slug' => 'required|string|unique:levels',
-        'score' => 'required|min:0|integer'
+        'score' => 'required|min:0|integer',
+        'backgroundImage' => 'required|image|max:5024',
+        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+        'access_password' => 'required|is_valid_access_password'
     ];
 
-    protected $messages = [
-        'name.required' => 'نام سطح را وارد کنید',
-        'name.string' => 'نام سطح صحیح نیست',
-        'name.unique' => 'این نام قبلا استفاده شده است',
-        'image.required' => 'تصویر را بارگذاری کنید',
-        'image.mimes' => 'فرمت تصویر صحیح نمی باشد',
-        'slug.required' => 'اسلاگ را وارد کنید',
-        'slug.uinque' => 'این اسلاگ قبلا استفاده شده است',
-        'score.required' => 'امتیاز سطح را وارد کنید',
-        'score.integer' => 'مقدار سطح باید عدد صحیح باشد',
-    ];
+    public function mount()
+    {
+        $this->admin = Auth::guard('admin')->user();
+    }
 
-    public function save() {
+    public function save()
+    {
         $this->validate();
+
+        $backgroundImageUrl = url('uploads/' . $this->backgroundImage->store('levels', 'public'));
+
         $level = Level::create([
             'name' => $this->name,
             'slug' => $this->slug,
-            'score' => $this->score
+            'score' => $this->score,
+            'background_image' => $backgroundImageUrl
         ]);
 
-        if($this->image) {
+        if ($this->image) {
             $url = $this->image->store('levels', 'public');
             $level->image()->create(['url' => $url]);
         }
@@ -47,10 +50,6 @@ class Create extends Component
         session()->flash('success', 'سطح ایجاد شد');
         $this->reset('name', 'slug', 'score');
         $this->emitUp('levelCreated');
-    }
-
-    public function updated($prop) {
-        $this->validateOnly($prop);
     }
 
     public function render()
