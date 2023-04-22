@@ -72,8 +72,8 @@ class Gift extends Component
         unset($data['phone_verification']);
         unset($data['access_password']);
 
-        $data['fbx_file'] = $this->fbx_file ? url('uploads/' . $this->fbx_file->store('levels', 'public')) : $this->gift->fbx_file;
-        $data['png_file'] = $this->png_file ? url('uploads/' . $this->png_file->store('levels', 'public')) : $this->gift->png_file;
+        $data['fbx_file'] = $this->fbx_file ? url('uploads/' . $this->fbx_file->store('levels', 'public')) : $this->gift?->fbx_file;
+        $data['png_file'] = $this->png_file ? url('uploads/' . $this->png_file->store('levels', 'public')) : $this->gift?->png_file;
 
         if ($this->gift) {
             $this->gift->update($data);
