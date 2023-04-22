@@ -59,9 +59,25 @@
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
             </x-forms.group>
+            <x-forms.group for="level-{{ $level->id }}-general-info-png-file" label="فایل png هدیه همراه">
+                <x-forms.input type="file" id="level-{{ $level->id }}-general-info-png-file" wire:model="png_file" />
+                <span class="text-success" wire:loading wire:target="png_file">در حال بارگذاری ...</span>
+                @error('png_file')
+                    <span class="form-text text-danger">{{ $message }}</span>
+                @enderror
+            </x-forms.group>
 
         </div>
         <div class="col-md-6">
+
+
+            <x-forms.group for="level-{{ $level->id }}-general-info-fbx-file" label="فایل fbx هدیه همراه">
+                <x-forms.input type="file" id="level-{{ $level->id }}-general-info-fbx-file" wire:model="fbx_file" />
+                <span class="text-success" wire:loading wire:target="fbx_file">در حال بارگذاری ...</span>
+                @error('fbx_file')
+                    <span class="form-text text-danger">{{ $message }}</span>
+                @enderror
+            </x-forms.group>
 
             <x-forms.group for="level-{{ $level->id }}-file-volume" label="حجم فایل">
                 <x-forms.input id="level-{{ $level->id }}-file-volume" wire:model="file_volume" />

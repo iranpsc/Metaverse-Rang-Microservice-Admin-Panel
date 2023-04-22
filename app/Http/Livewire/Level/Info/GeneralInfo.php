@@ -5,16 +5,17 @@ namespace App\Http\Livewire\Level\Info;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class GeneralInfo extends Component
 {
-    use SendsVerificationSms;
+    use SendsVerificationSms, WithFileUploads;
 
     public $level, $generalInfo, $score, $description, $rank,
         $subcategories, $creation_date, $persian_font,
         $english_font, $file_volume, $used_colors, $points, $designer, $model_designer,
         $has_animation,
-        $lines;
+        $lines, $png_file, $fbx_file;
 
     protected $rules = [
         'score' => 'required|integer|min:0',
@@ -31,6 +32,8 @@ class GeneralInfo extends Component
         'creation_date' => 'required|shamsi_date',
         'has_animation' => 'required|boolean',
         'lines' => 'required|integer|min:0',
+        'png_file' => 'nullable|image|max:5000',
+        'fbx_file' => 'nullable|file|max:5000',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
@@ -60,6 +63,13 @@ class GeneralInfo extends Component
     public function save()
     {
         $data = $this->validate();
+
+        $data['png_file'] = $this->png_file
+            ? url('uploads/' . $this->png_file->store('levels', 'public'))
+            : $this->generalInfo->png_file;
+        $data['fbx_file'] = $this->fbx_file
+            ? url('uploads/' . $this->fbx_file->store('levels', 'public'))
+            : $this->generalInfo->fbx_file;
 
         unset($data['phone_verification']);
         unset($data['access_password']);
