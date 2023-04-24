@@ -25,7 +25,7 @@ class Gift extends Component
 
     protected $rules = [
         'name' => 'required|string|max:255',
-        'description' => 'required|string|max:2000',
+        'description' => 'required|string|max:5000',
         'monthly_capacity_count' => 'required|integer|min:0',
         'store_capacity' => 'required|boolean',
         'sell_capacity' => 'required|boolean',

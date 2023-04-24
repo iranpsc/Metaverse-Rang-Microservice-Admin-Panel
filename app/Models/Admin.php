@@ -38,7 +38,8 @@ class Admin extends Authenticatable
     ];
 
     protected $attributes = [
-        'image' => 'noimage.png'
+        'image' => 'noimage.png',
+        'active' => 1
     ];
 
     public function getRoleTitles(): Collection

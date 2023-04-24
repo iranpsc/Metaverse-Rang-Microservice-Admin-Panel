@@ -4,25 +4,25 @@ namespace App\Http\Livewire\AccessManagement;
 
 use App\Models\Admin;
 use App\Models\Employee\Employee;
+use App\Notifications\AccountCreatedNotification;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class EmployeeRolePermission extends Component
 {
     use SendsVerificationSms;
 
-    public $password, $accessPassword, $employee;
-    public $addedRoles = [];
-    public $addedPermissions = [];
+    public $employee;
+    public $roles = [];
 
     protected $rules = [
-        'employee' => 'required',
-        'password' => 'required',
-        'accessPassword' => 'required',
+        'employee' => 'required|exists:employees,id',
+        'roles' => 'required|array|min:1',
+        'roles.*' => 'required|integer|exists:roles,id',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
@@ -34,36 +34,36 @@ class EmployeeRolePermission extends Component
         'deleteAdmin'  => 'delete'
     ];
 
-    public function updated($prop)
+    public function mount()
     {
-        $this->validateOnly($prop);
+        $this->admin = Auth::guard('admin')->user();
     }
 
     public function save()
     {
         $this->validate();
-        if (empty($this->addedRoles) && empty($this->addedPermissions)) {
-            $this->addError('noRolesOrPermissionsSelected', 'حداقل یک مسئولیت یا دسترسی به این کارمند اختصاص دهید!');
-        } else {
-            $employee = Employee::select(['fname', 'lname', 'email', 'phone'])->where('id', $this->employee)->first();
-            $admin = Admin::create([
-                'name' => implode(' ', [$employee->fname, $employee->lname]),
-                'email' => $employee->email,
-                'phone' => $employee->phone,
-                'password' => Hash::make($this->password),
-                'access_password' => Hash::make($this->accessPassword),
-                'active' => 1
-            ]);
-            if (count($this->addedRoles) > 0) {
-                $admin->assignRole($this->addedRoles);
-            }
-            if (count($this->addedPermissions)) {
-                $admin->givePermissionTo($this->addedPermissions);
-            }
-            session()->flash('success', 'کارمند تعریف شد!');
-            $this->reset(['password', 'employee', 'accessPassword', 'addedRoles', 'addedPermissions']);
-            $this->emitSelf('adminCreated');
-        }
+
+        $employee = Employee::select(['fname', 'lname', 'email', 'phone'])->where('id', $this->employee)->first();
+
+        $password = Str::random(8);
+
+        $access_password = random_int(100000, 999999);
+
+        $admin = Admin::create([
+            'name' => implode(' ', [$employee->fname, $employee->lname]),
+            'email' => $employee->email,
+            'phone' => $employee->phone,
+            'password' => Hash::make($password),
+            'access_password' => Hash::make($access_password),
+        ]);
+
+        $admin->assignRole($this->roles);
+
+        $admin->notify(new AccountCreatedNotification($employee->email, $password, $access_password));
+
+        session()->flash('success', 'کارمند تعریف شد!');
+        $this->reset(['employee', 'roles']);
+        $this->emitSelf('adminCreated');
     }
 
     public function delete(Admin $admin)
@@ -87,8 +87,7 @@ class EmployeeRolePermission extends Component
                 ->with(['roles', 'permissions'])
                 ->lazy(),
             'employees'   => Employee::select(['id', 'fname', 'lname'])->get(),
-            'roles'       => Role::whereNotIn('name', ['super-admin'])->get(),
-            'permissions' => Permission::lazy(),
+            'defined_roles'       => Role::whereNotIn('name', ['super-admin'])->get(),
         ])
             ->extends('layouts.app')
             ->section('content');

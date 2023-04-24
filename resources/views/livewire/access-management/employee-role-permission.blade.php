@@ -18,25 +18,15 @@
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
-        <x-forms.group for="password" label="رمز عبور">
-            <x-forms.input wire:model="password" id="password" />
-            @error('password')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-        <x-forms.group for="accessPassword" label="رمز دسترسی">
-            <x-forms.input wire:model="accessPassword" id="accessPassword" />
-            @error('accessPassword')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-        @error('noRolesOrPermissionsSelected')
+
+        @error('roles')
             <span class="text-danger">{{ $message }}</span>
         @enderror
+
         <p class="modal-text">کدام مسئولیت ها را به این کارمند می دهید؟</p>
-        @forelse ($roles as $role)
+        @forelse ($defined_roles as $role)
             <div class="input-group">
-                <input class="normal" value="{{ $role->id }}" wire:model="addedRoles" type="checkbox" id="employee-roles-{{$role->id}}">
+                <input class="normal" value="{{ $role->id }}" wire:model="roles" type="checkbox" id="employee-roles-{{$role->id}}">
                 <label for="employee-roles-{{$role->id}}">{{ $role->title }}</label>
             </div>
         @empty

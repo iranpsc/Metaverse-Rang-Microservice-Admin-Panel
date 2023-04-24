@@ -19,7 +19,7 @@ class GeneralInfo extends Component
 
     protected $rules = [
         'score' => 'required|integer|min:0',
-        'description' => 'required|string|max:2000',
+        'description' => 'required|string|max:5000',
         'rank' => 'required|integer|min:0',
         'subcategories' => 'required|integer|min:0',
         'persian_font' => 'required|string|max:255',
