@@ -12,7 +12,7 @@ class Bank extends Component
 {
     use SendsVerificationSms;
 
-    public $employee, $bank_name, $shaba_num, $card_num;
+    public $employee, $bank_name, $shaba_num, $card_num, $search;
 
     protected $rules = [
         'employee' => 'required|integer|exists:admins,id',
@@ -56,6 +56,11 @@ class Bank extends Component
     {
         $account->delete();
         $this->emitSelf('accountDeleted');
+    }
+
+    public function updatedSearch()
+    {
+        
     }
 
     public function render()
