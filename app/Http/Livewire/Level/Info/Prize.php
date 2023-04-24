@@ -47,6 +47,9 @@ class Prize extends Component
         } else {
             $this->prize = $this->level->prize()->create($data);
         }
+
+        $this->clearVerificationCode();
+
         session()->flash('success', 'اطلاعات با موفقیت ثبت شد.');
     }
 

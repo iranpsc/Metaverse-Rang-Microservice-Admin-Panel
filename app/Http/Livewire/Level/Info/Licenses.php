@@ -88,6 +88,9 @@ class Licenses extends Component
         } else {
            $this->licenses = $this->level->licenses()->create($data);
         }
+
+        $this->clearVerificationCode();
+
         session()->flash('success', 'اطلاعات با موفقیت ثبت شد.');
     }
 

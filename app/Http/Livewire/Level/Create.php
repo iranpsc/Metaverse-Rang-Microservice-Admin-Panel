@@ -49,6 +49,7 @@ class Create extends Component
 
         session()->flash('success', 'سطح ایجاد شد');
         $this->reset('name', 'slug', 'score');
+        $this->clearVerificationCode();
         $this->emitUp('levelCreated');
     }
 

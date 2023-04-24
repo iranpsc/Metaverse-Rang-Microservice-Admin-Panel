@@ -15,7 +15,7 @@ class GeneralInfo extends Component
         $subcategories, $creation_date, $persian_font,
         $english_font, $file_volume, $used_colors, $points, $designer, $model_designer,
         $has_animation,
-        $lines, $png_file, $fbx_file;
+        $lines, $png_file, $fbx_file, $gif_file;
 
     protected $rules = [
         'score' => 'required|integer|min:0',
@@ -34,6 +34,7 @@ class GeneralInfo extends Component
         'lines' => 'required|integer|min:0',
         'png_file' => 'nullable|image|max:5000',
         'fbx_file' => 'nullable|file|max:5000',
+        'gif_file' => 'nullable|file|max:5000',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
@@ -67,9 +68,14 @@ class GeneralInfo extends Component
         $data['png_file'] = $this->png_file
             ? url('uploads/' . $this->png_file->store('levels', 'public'))
             : $this->generalInfo?->png_file;
+
         $data['fbx_file'] = $this->fbx_file
             ? url('uploads/' . $this->fbx_file->store('levels', 'public'))
             : $this->generalInfo?->fbx_file;
+
+        $data['gif_file'] = $this->gif_file
+            ? url('uploads/' . $this->gif_file->store('levels', 'public'))
+            : $this->generalInfo?->gif_file;
 
         unset($data['phone_verification']);
         unset($data['access_password']);
@@ -79,6 +85,9 @@ class GeneralInfo extends Component
         } else {
             $this->generalInfo = $this->level->generalInfo()->create($data);
         }
+
+        $this->clearVerificationCode();
+
         session()->flash('success', 'اطلاعات با موفقیت ثبت شد.');
     }
 

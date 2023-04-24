@@ -44,6 +44,7 @@ class FeatureCoordinates extends Component
                 'y' => $this->coordinates[$key]['y'],
             ]);
         }
+        $this->clearVerificationCode();
         session()->flash('success', 'مختصات ملک با موفقیت بروزرسانی شد');
         $this->emitUp('featureUpdated');
     }

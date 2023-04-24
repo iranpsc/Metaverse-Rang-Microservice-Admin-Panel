@@ -51,7 +51,7 @@ class Update extends Component
                 $this->level->image()->create(['url' => $url]);
             }
         }
-
+        $this->clearVerificationCode();
         session()->flash('success', 'سطح ویرایش شد');
         $this->emitUp('levelUpdated');
     }

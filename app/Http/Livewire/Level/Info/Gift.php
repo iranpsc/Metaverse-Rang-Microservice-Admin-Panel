@@ -20,6 +20,7 @@ class Gift extends Component
         $has_animation,
         $png_file,
         $fbx_file,
+        $gif_file,
         $rent;
 
     protected $rules = [
@@ -39,6 +40,7 @@ class Gift extends Component
         'has_animation' => 'required|boolean',
         'png_file' => 'nullable|image|max:5000',
         'fbx_file' => 'nullable|file|max:5000',
+        'gif_file' => 'nullable|file|max:5000',
         'rent' => 'required|boolean',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
@@ -74,6 +76,7 @@ class Gift extends Component
 
         $data['fbx_file'] = $this->fbx_file ? url('uploads/' . $this->fbx_file->store('levels', 'public')) : $this->gift?->fbx_file;
         $data['png_file'] = $this->png_file ? url('uploads/' . $this->png_file->store('levels', 'public')) : $this->gift?->png_file;
+        $data['gif_file'] = $this->gif_file ? url('uploads/' . $this->gif_file->store('levels', 'public')) : $this->gift?->gif_file;
 
         if ($this->gift) {
             $this->gift->update($data);
@@ -81,12 +84,9 @@ class Gift extends Component
             $this->gift = $this->level->gift()->create($data);
         }
 
-        session()->flash('success', 'اطلاعات با موفقیت ثبت شد.');
-    }
+        $this->clearVerificationCode();
 
-    public function updated($prop)
-    {
-        $this->validateOnly($prop);
+        session()->flash('success', 'اطلاعات با موفقیت ثبت شد.');
     }
 
     public function render()

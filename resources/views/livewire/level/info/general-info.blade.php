@@ -59,7 +59,7 @@
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
             </x-forms.group>
-            <x-forms.group for="level-{{ $level->id }}-general-info-png-file" label="فایل png هدیه همراه">
+            <x-forms.group for="level-{{ $level->id }}-general-info-png-file" label="فایل png">
                 <x-forms.input type="file" id="level-{{ $level->id }}-general-info-png-file" wire:model="png_file" />
                 <span class="text-success" wire:loading wire:target="png_file">در حال بارگذاری ...</span>
                 @error('png_file')
@@ -70,11 +70,18 @@
         </div>
         <div class="col-md-6">
 
-
-            <x-forms.group for="level-{{ $level->id }}-general-info-fbx-file" label="فایل fbx هدیه همراه">
+            <x-forms.group for="level-{{ $level->id }}-general-info-fbx-file" label="فایل fbx">
                 <x-forms.input type="file" id="level-{{ $level->id }}-general-info-fbx-file" wire:model="fbx_file" />
                 <span class="text-success" wire:loading wire:target="fbx_file">در حال بارگذاری ...</span>
                 @error('fbx_file')
+                    <span class="form-text text-danger">{{ $message }}</span>
+                @enderror
+            </x-forms.group>
+
+            <x-forms.group for="level-{{ $level->id }}-general-info-gif-file" label="فایل gif">
+                <x-forms.input type="file" id="level-{{ $level->id }}-general-info-gif-file" wire:model="gif_file" />
+                <span class="text-success" wire:loading wire:target="gif_file">در حال بارگذاری ...</span>
+                @error('gif_file')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
             </x-forms.group>

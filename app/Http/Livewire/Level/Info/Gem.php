@@ -6,7 +6,6 @@ use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use App\Traits\VerifiesPhoneAndAccessPassword;
 
 class Gem extends Component
 {
@@ -68,6 +67,9 @@ class Gem extends Component
         } else {
             $this->gem = $this->level->gem()->create($data);
         }
+
+        $this->clearVerificationCode();
+
         session()->flash('success', 'اطلاعات با موفقیت ثبت شد.');
     }
 

@@ -3,6 +3,8 @@
 namespace App\Traits;
 
 use App\Notifications\SendVerificationCode;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 trait SendsVerificationSms
 {
@@ -17,5 +19,10 @@ trait SendsVerificationSms
     public function updated($prop)
     {
         $this->validateOnly($prop);
+    }
+
+    public function clearVerificationCode()
+    {
+        Cache::forget('verify.code.' . Auth::guard('admin')->id());
     }
 }

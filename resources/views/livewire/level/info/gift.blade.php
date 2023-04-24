@@ -109,6 +109,14 @@
                 @enderror
             </x-forms.group>
 
+            <x-forms.group for="level-{{ $level->id }}-gift-gif-file" label="فایل gif هدیه همراه">
+                <x-forms.input type="file" id="level-{{ $level->id }}-gift-gif-file" wire:model="gif_file" />
+                <span class="text-success" wire:loading wire:target="gif_file">در حال بارگذاری ...</span>
+                @error('gif_file')
+                    <span class="form-text text-danger">{{ $message }}</span>
+                @enderror
+            </x-forms.group>
+
             <x-forms.group for="level-{{ $level->id }}-sell-gift" label="قابلیت فروش هدیه همراه">
                 <x-forms.select wire:model="sell" id="level-{{ $level->id }}-sell-gift">
                     <option @selected($sell) value="0">خیر</option>
