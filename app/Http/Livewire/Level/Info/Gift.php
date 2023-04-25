@@ -29,7 +29,7 @@ class Gift extends Component
         'monthly_capacity_count' => 'required|integer|min:0',
         'store_capacity' => 'required|boolean',
         'sell_capacity' => 'required|boolean',
-        'features' => 'required|string|max:2000',
+        'features' => 'required|string|max:5000',
         'sell' => 'required|boolean',
         'vod_document_registration' => 'required|boolean',
         'seller_link' => 'required|string|max:255',
