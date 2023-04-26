@@ -1,8 +1,5 @@
 <div>
     <x-modals.modal id="edit-message-{{ $message->id }}" title="ویرایش پیام">
-        @if(session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="content" label="متن پیام">
             <textarea class="form-control form-control-sm rounded" wire:model.lazy="content" rows="10"></textarea>
             @error('content')

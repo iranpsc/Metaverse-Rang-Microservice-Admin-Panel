@@ -65,7 +65,7 @@ class EmployeeInfo extends Component
         $data = $this->validate();
         unset($data['phone_verification'], $data['access_password']);
         $this->employee->update($data);
-        session()->flash('success', 'اطلاعات کارمند بروز رسانی شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitUp('employeeUpdated');
     }
     public function render()

@@ -21,11 +21,6 @@ class Permissions extends Component
         'name' => 'required|string|min:2',
     ];
 
-    protected $messages = [
-        'title.required' => 'عنوان دسترسی را وارد کنید',
-        'name.required' => 'نام دسترسی را وارد کنید'
-    ];
-
     protected $listeners = [
         'permissionCreated' => '$refresh',
         'permissionUpdated' => '$refresh',
@@ -41,7 +36,7 @@ class Permissions extends Component
             'name' => $this->name,
         ]);
         $permission->assignRole($this->addedRoles);
-        session()->flash('success', 'دسترسی ایجاد شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitSelf('permissionCreated');
         $this->reset(['title', 'name']);
     }
@@ -53,7 +48,6 @@ class Permissions extends Component
     public function delete(Permission $permission) {
         $permission->delete();
         $this->emitSelf('permissionDeleted');
-        session()->flash('success', 'دسترسی حذف شد.');
     }
     public function render()
     {

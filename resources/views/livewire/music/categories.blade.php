@@ -1,9 +1,6 @@
 <div>
     <x-buttons.btn-primary class="mb-2" data-bs-toggle="modal" data-bs-target="#create-music-category-modal">ایجاد دسته بندی</x-buttons.btn-primary>
     <x-modals.modal title="ایجاد دسته بندی موسیقی" id="create-music-category-modal">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="name" label="نام دسته بندی">
             <x-forms.input wire:model.lazy="name"/>
             @error('name')

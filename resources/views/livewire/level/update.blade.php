@@ -1,8 +1,5 @@
 <div>
     <x-modals.modal id="edit-level-modal-{{ $level->id }}" title="بروزرسانی سطح">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="name-{{ $level->id }}" label="نام سطح">
             <x-forms.input id="name{{ $level->id }}" wire:model="name" />
             @error('name')

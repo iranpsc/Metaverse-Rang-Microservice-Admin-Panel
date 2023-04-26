@@ -21,13 +21,6 @@ class DynastyMessages extends Component
         'content' => 'required|string',
     ];
 
-    protected $messages = [
-        'type.required' => 'نوع پیام را مشخص کنید',
-        'type.in' => 'انتخاب نا معتبر',
-        'type.unique' => 'این پیام قبلا تعریف شده است',
-        'content.required' => 'متن پیام را وارد کنید'
-    ];
-
     public function save()
     {
         $this->validate();
@@ -35,7 +28,7 @@ class DynastyMessages extends Component
             'type' => $this->type,
             'message' => $this->content
         ]);
-        session()->flash('success', 'پیام ایجاد گردید');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->reset();
         $this->emitSelf('messageCreated');
     }

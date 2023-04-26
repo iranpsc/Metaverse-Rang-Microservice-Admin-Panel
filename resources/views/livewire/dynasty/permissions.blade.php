@@ -1,7 +1,4 @@
 <div>
-    @if (session()->has('success'))
-        <x-alerts.success>{{ session('success') }}</x-alerts.success>
-    @endif
     <x-tables.table>
         <x-slot name="headers"></x-slot>
             <tr>

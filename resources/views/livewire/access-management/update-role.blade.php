@@ -1,9 +1,6 @@
 <div>
     {{-- Success is as dangerous as failure. --}}
     <x-modals.modal size="modal-xl" id="update-role-modal-{{ $role->id }}" title="ویرایش مسئولیت">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="title-{{ $role->id }}" label="عنوان مسئولیت">
             <x-forms.input wire:model="title" id="title-{{ $role->id }}" />
             @error('title')

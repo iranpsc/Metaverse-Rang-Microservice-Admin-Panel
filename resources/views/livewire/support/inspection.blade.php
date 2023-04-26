@@ -54,9 +54,6 @@
                     </td>
                 </tr>
                 <x-modals.modal id="inspection-modal-{{ $ticket->id }}" title="چزئیات تیکت">
-                    @if (session('success'))
-                        <x-alerts.success>{{ session('success') }}</x-alerts.success>
-                    @endif
                     <span>شماره تیکت: {{ $ticket->code }}</span>
                     <h5 class="modal-title">عنوان: {{ $ticket->title }}</h5>
                     <p class="modal-text">متن: {{ $ticket->content }}</p>
@@ -91,10 +88,7 @@
                 </x-modals.modal>
 
                 <x-modals.modal id="inspection-modal-send-to-{{ $ticket->id }}" title="ارجا به بخش دیگر">
-                    @if (session('success'))
-                        <x-alerts.success>{{ session('success') }}</x-alerts.success>
-                    @endif
-                    <div class="alert alert-info">درصورتی که این تیکت به حوضه شما مربوط نمی باشد می توانید به بخش مربوطه
+                      <div class="alert alert-info">درصورتی که این تیکت به حوضه شما مربوط نمی باشد می توانید به بخش مربوطه
                         ارجا دهید</div>
                     <x-forms.group for="divert-to-{{ $ticket->id }}" label="ارجا به">
                         <select wire:model="department" id="divert-to-{{ $ticket->id }}"

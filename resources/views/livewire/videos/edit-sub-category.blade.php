@@ -1,8 +1,5 @@
 <div>
     <x-modals.modal title="ویرایش دسته بندی" id="edit-sub-category-modal-{{ $subCategory->id }}">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="name" label="نام دسته بندی">
             <x-forms.input wire:model.lazy="name" />
             @error('name')

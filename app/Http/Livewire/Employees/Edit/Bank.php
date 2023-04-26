@@ -4,9 +4,6 @@ namespace App\Http\Livewire\Employees\Edit;
 
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Hash;
-use App\Helpers\SMS;
 use App\Traits\SendsVerificationSms;
 
 class Bank extends Component
@@ -33,15 +30,11 @@ class Bank extends Component
 
     public function save()
     {
-        $this->validate();
+        $data = $this->validate();
+        unset($data['phone_verification'], $data['access_password']);
+        $this->account->update($data);
 
-        $this->account->update([
-            'bank_name' => $this->bank_name,
-            'shaba_num' => $this->shaba_num,
-            'card_num' => $this->card_num,
-        ]);
-
-        session()->flash('success', 'اطلاعات با موفقیت ثبت شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitUp('accountUpdated');
     }
 

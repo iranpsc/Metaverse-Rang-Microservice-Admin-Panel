@@ -51,7 +51,7 @@ class EditVideo extends Component
             'image' => $imageUrl ?? $this->videoDb->image,
         ]);
 
-        session()->flash('success', 'ویدیو بروزرسانی شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'ویدیو بروزرسانی شد']);
         $this->emitUp('videoUdated');
     }
 

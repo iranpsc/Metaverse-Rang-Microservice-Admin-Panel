@@ -1,9 +1,6 @@
 <div>
     {{-- Success is as dangerous as failure. --}}
     <x-modals.modal id="edit-system-variable-{{ $variable->id }}" title="ویرایش متغیر">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="name-{{ $variable->id }}" label="نام متغییر">
             <x-forms.input wire:model="name" id="name-{{ $variable->id }}" />
             @error('name')

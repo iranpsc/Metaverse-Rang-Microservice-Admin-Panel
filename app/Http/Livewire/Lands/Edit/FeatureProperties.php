@@ -49,7 +49,7 @@ class FeatureProperties extends Component
             'rgb' => $this->rgb,
         ]);
         $this->clearVerificationCode();
-        session()->flash('success', 'مشخصات ملک با موفقیت بروزرسانی شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitUp('featureUpdated');
     }
 

@@ -63,10 +63,9 @@ class EditOptions extends Component
                 ]);
             }
         }
-
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'بسته بروزرسانی شد']);
         $this->emitUp('packageUpdated');
         $this->emit('packageUpdated');
-        session()->flash('success', 'بسته بروزرسانی شد');
     }
 
     public function render()

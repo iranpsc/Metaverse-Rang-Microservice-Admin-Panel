@@ -2,10 +2,6 @@
     <x-buttons.btn-primary class="mb-2" data-bs-toggle="modal" data-bs-target="#create-category-modal">ایجاد دسته
         بندی</x-buttons.btn-primary>
     <x-modals.modal title="ایجاد دسته بندی" id="create-category-modal">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-
         <x-forms.group for="parentCategory" label="انتخاب دسته بندی پدر">
             <x-forms.select id="parentCategory" wire:model="parentCategory">
                 @if ($categories->count() > 0)

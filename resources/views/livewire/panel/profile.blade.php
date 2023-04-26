@@ -1,9 +1,6 @@
 <div>
     <div class="row justify-content-center">
         <div class="col-sm-4">
-            @if (session('success'))
-                <x-alerts.success>{{ session('success') }}</x-alerts.success>
-            @endif
             <x-forms.group for="name" label="نام">
                 <x-forms.input wire:model.lazy="name" />
                 @error('name')

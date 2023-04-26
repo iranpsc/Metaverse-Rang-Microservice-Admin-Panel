@@ -1,9 +1,5 @@
 <div>
     <x-modals.modal id="modal-{{ explode('-', $feature->properties->id)[1] }}" title="ویرایش اطلاعات ملک">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-
         <x-forms.group for="area-{{ $feature->id }}" label="مساحت">
             <x-forms.input id="area-{{ $feature->id }}" wire:model="area" />
             @error('area')

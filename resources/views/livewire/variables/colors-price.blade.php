@@ -3,9 +3,6 @@
     </x-buttons.btn-primary>
 
     <x-modals.modal id="create-asset-modal" title="تعریف ارز">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="variables-asset" label="ارز">
             <x-forms.input id="variables-asset" wire:model="asset" placeholder="نام ارز را به انگلیسی وارد کنید" />
             @error('asset')

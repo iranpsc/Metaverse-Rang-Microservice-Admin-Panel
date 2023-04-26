@@ -11,9 +11,6 @@
     <x-forms.search-box wire:model="searchTerm" />
 
     <x-modals.modal id="api-ip-range-modal" title="تعریف رنج آی پی Api">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="title" label="عنوان">
             <x-forms.input wire:model="title" />
             @error('title')

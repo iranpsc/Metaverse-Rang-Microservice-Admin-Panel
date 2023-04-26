@@ -43,7 +43,7 @@ class AdminAllowedIps extends Component
         $ip->type = 'admin';
         $ip->from = ip2long(implode('.', $this->allowedIp));
         $ip->save();
-        session()->flash('success', 'آی پی وارد شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->reset(['code', 'accessPassword', 'allowedIp', 'title']);
         $this->emitSelf('newIpAdded');
     }
@@ -52,7 +52,6 @@ class AdminAllowedIps extends Component
     {
         $ip->delete();
         $this->emitSelf('ipDeleted');
-        session()->flash('success', 'آی پی حذف شد');
     }
     public function render()
     {

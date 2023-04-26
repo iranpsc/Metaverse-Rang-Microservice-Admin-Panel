@@ -36,7 +36,7 @@ class UpdateRole extends Component
         if(count($this->addedPermissions) > 0) {
             $this->role->givePermissionTo($this->addedPermissions);
         }
-        session()->flash('success', 'مسئولیت بروزرسانی شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitUp('roleUpdated');
     }
 

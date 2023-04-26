@@ -68,6 +68,7 @@ class Listing extends Component
         $map->fileName = $fileName;
         $map->save();
         $this->reset(['name', 'file']);
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'فایل با موفقیت بارگذاری شد']);
     }
 
     public function updated($prop)

@@ -61,7 +61,7 @@ class EmployeeRolePermission extends Component
 
         $admin->notify(new AccountCreatedNotification($employee->email, $password, $access_password));
 
-        session()->flash('success', 'کارمند تعریف شد!');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->reset(['employee', 'roles']);
         $this->emitSelf('adminCreated');
     }
@@ -77,7 +77,6 @@ class EmployeeRolePermission extends Component
             $admin->revokePermissionTo($admin->getDirectPermissions());
         }
         $admin->delete();
-        session()->flash('success', 'کارمند حذف شد!');
         $this->emitSelf('adminDeleted');
     }
     public function render()

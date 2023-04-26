@@ -3,11 +3,6 @@
     </x-buttons.btn-primary>
 
     <x-modals.modal id="create-permission-modal" title="ایجاد دسترسی">
-
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-
         <x-forms.group for="title" label="عنوان دسترسی">
             <x-forms.input type="title" wire:model="title" id="title" />
             @error('title')

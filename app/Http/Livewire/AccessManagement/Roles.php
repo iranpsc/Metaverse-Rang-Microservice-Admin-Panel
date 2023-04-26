@@ -21,11 +21,6 @@ class Roles extends Component
         'name' => 'required|string|min:2',
     ];
 
-    protected $messages = [
-        'title.required' => 'عنوان مسئولیت را وارد کنید',
-        'name.required' => 'نام مسئولیت را وارد کنید'
-    ];
-
     protected $listeners = [
         'roleCreated' => '$refresh',
         'roleUpdated' => '$refresh',
@@ -43,7 +38,7 @@ class Roles extends Component
         if(count($this->addedPermissions) > 0) {
             $role->syncPermissions($this->addedPermissions);
         }
-        session()->flash('success', 'مسئولیت ایجاد شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitSelf('roleCreated');
         $this->reset(['title', 'name', 'addedPermissions']);
     }

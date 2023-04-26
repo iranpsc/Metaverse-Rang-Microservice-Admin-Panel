@@ -41,7 +41,7 @@ class EditColors extends Component
             'note' => $this->note
         ]);
 
-        session()->flash('success', 'ارز بروزرسانی شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'ارز با موفقیت بروزرسانی شد']);
         $this->emitUp('currencyUpdated');
         $this->emit('currencyUpdated');
     }

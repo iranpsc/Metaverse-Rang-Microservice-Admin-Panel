@@ -55,7 +55,7 @@ class TechnicalSupport extends Component
 
         $ticket->sender->notify(new TicketResponded($message));
 
-        session()->flash('success', 'پاسخ تیکت ارسال شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'پاسخ تیکت ارسال شد']);
     }
 
     public function sendTo(Ticket $ticket)
@@ -64,7 +64,7 @@ class TechnicalSupport extends Component
             'department' => $this->department,
             'importance' => $this->importance
         ]);
-        session()->flash('success', 'تیکت به واحد مورد نظر ارجا داده شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'تیکت به واحد مورد نظر ارجاع داده شد']);
     }
 
     public function render()

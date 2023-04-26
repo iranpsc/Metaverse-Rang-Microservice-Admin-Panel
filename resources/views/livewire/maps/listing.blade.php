@@ -4,9 +4,6 @@
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#upload-map-modal">بارگزاری نقشه
     </x-buttons.btn-primary>
     <x-modals.modal id="upload-map-modal" title="بارگزاری فایل نقشه">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="name" label="نام آبادی">
             <x-forms.input wire:model="name" id="name" />
             @error('name')

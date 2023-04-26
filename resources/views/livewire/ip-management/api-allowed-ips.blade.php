@@ -3,10 +3,6 @@
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#api-ip-modal">اضافه کردن IP
     </x-buttons.btn-primary>
     <x-modals.modal id="api-ip-modal" title="تعریف آی پی دسترسی Api">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-
         <x-forms.group for="title" label="عنوان">
             <x-forms.input wire:model="title" />
             @error('title')

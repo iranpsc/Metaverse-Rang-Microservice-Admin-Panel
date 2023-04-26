@@ -3,12 +3,10 @@
 namespace App\Http\Livewire\IpManagement;
 
 use Livewire\Component;
-use Illuminate\Support\Facades\Cache;
 use App\Jobs\ImportIpRanges;
 use App\Models\Ip;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
@@ -64,7 +62,7 @@ class ApiIpRanges extends Component
             $ip->from = ip2long(implode('.', $this->starting_ip));
             $ip->to = ip2long(implode('.', $this->ending_ip));
             $ip->save();
-            session()->flash('success', 'رنج آی پی تعریف شد');
+            $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
             $this->reset(['code', 'accessPassword', 'starting_ip', 'ending_ip', 'title']);
             $this->emitSelf('ipRangeCreated');
         }
@@ -106,7 +104,6 @@ class ApiIpRanges extends Component
     {
         $ip->delete();
         $this->emitSelf('ipRangeDeleted');
-        session()->flash('success', 'آی پی حذف شد');
     }
 
     public function flushIpRanges()

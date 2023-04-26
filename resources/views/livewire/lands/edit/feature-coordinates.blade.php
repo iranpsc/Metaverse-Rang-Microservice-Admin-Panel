@@ -1,8 +1,5 @@
 <div>
     <x-modals.modal id="modal-{{ $feature->id }}" title="ویرایش مختصات ملک" size="modal-lg modal-dialog-scrollable">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         @foreach ($coordinates as $key => $coordinate)
             <div class="row">
                 <div class="col-sm-6">

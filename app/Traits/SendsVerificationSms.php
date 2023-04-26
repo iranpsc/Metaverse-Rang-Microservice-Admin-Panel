@@ -13,7 +13,7 @@ trait SendsVerificationSms
     public function sendSMS()
     {
         $this->admin->notify(new SendVerificationCode);
-        session()->flash('success', 'کد تایید با موفقیت ارسال گردید.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'کد تایید با موفقیت ارسال گردید']);
     }
 
     public function updated($prop)

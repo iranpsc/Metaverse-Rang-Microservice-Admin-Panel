@@ -1,13 +1,7 @@
 <div>
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-role-modal">ایجاد مسئولیت
     </x-buttons.btn-primary>
-    @if (session('success'))
-        <x-alerts.success>{{ session('success') }}</x-alerts.success>
-    @endif
     <x-modals.modal id="create-role-modal" size="modal-xl" title="ایجاد مسئولیت">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="title" label="عنوان مسئولیت">
             <x-forms.input type="title" wire:model="title" id="title" />
             @error('title')

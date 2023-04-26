@@ -45,7 +45,7 @@ class FeatureCoordinates extends Component
             ]);
         }
         $this->clearVerificationCode();
-        session()->flash('success', 'مختصات ملک با موفقیت بروزرسانی شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitUp('featureUpdated');
     }
 

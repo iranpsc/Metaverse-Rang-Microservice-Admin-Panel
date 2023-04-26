@@ -57,7 +57,7 @@ class ColorOptions extends Component
         }
 
         $this->resetExcept('admin');
-        session()->flash('success', 'پکیج رنگ وارد شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'پکیج رنگ وارد شد']);
         $this->emitSelf('packageCreated');
     }
 

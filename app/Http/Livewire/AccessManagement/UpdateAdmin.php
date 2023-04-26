@@ -38,7 +38,7 @@ class UpdateAdmin extends Component
                 $this->admin->assignRole($adminRole);
             }
         }
-        session()->flash('success', 'دسترسی ها و مسئولیت های کارمند بروزرسانی شد!');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitUp('adminUpdated');
     }
 
@@ -46,14 +46,12 @@ class UpdateAdmin extends Component
         $this->admin->removeRole($role);
         $this->emitSelf('adminRoleDeleted');
         $this->emitUp('adminUpdated');
-        session()->flash('success', 'این مسئولیت از این کاربر گرفته شد!');
     }
 
     public function deletePermission(Permission $permission) {
         $this->admin->revokePermissionTo($permission);
         $this->emitSelf('adminPermissionDeleted');
         $this->emitUp('adminUpdated');
-        session()->flash('success', 'این دسترسی از این کاربر گرفته شد!');
     }
 
     public function render()

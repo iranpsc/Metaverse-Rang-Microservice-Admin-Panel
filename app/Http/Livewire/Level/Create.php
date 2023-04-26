@@ -47,7 +47,7 @@ class Create extends Component
             $level->image()->create(['url' => $url]);
         }
 
-        session()->flash('success', 'سطح ایجاد شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'سطح ایجاد شد']);
         $this->reset('name', 'slug', 'score');
         $this->clearVerificationCode();
         $this->emitUp('levelCreated');

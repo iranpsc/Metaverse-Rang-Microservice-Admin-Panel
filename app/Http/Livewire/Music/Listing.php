@@ -28,16 +28,6 @@ class Listing extends Component
         'category' => 'required|min:0'
     ];
 
-    protected $messages = [
-        'name.required' => 'نام موسیقی را وارد کنید.',
-        'singer.required' => 'نام خواننده را وارد کنید.',
-        'song.mimes' => 'فرمت موسیقی صحیح نیست. ',
-        'song.required' => 'فایل موسیقی را بارگذاری کنید.',
-        'cover.image' => 'فرمت تصویر صحیح نمی باشد.',
-        'category.required' => 'دسته بندی را مشخص کنید.',
-        'category.min' => 'دسته بندی را مشخص کنید.',
-    ];
-
     public function save()
     {
         $this->validate();
@@ -55,7 +45,7 @@ class Listing extends Component
             ]);
         }
         $this->reset('name', 'singer', 'song', 'cover');
-        session()->flash('success', 'موسیقی ایجاد شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'موسیقی بارگذاری شد']);
         $this->emitSelf('musicCreated');
     }
 

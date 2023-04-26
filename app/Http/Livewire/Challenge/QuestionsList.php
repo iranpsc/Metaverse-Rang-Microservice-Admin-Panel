@@ -32,7 +32,7 @@ class QuestionsList extends Component
         $data = Excel::toArray(new QuestionFileImport, $this->file)[0];
         ImportChallengeQuestions::dispatch($data);
         $this->reset('file');
-        session()->flash('success', 'سوالات با موفقیت بارگزاری شدند');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
     }
 
     public function create()
@@ -43,14 +43,13 @@ class QuestionsList extends Component
             'code' => $this->code,
         ]);
         $this->reset('title', 'code');
-        session()->flash('success', 'سوال وارد شد ');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
     }
 
     public function delete(Question $question)
     {
         $question->answers()->delete();
         $question->delete();
-        session()->flash('question-deleted', 'سوال موردنظر حذف گردید');
     }
 
     public function render()

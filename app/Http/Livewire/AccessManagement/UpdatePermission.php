@@ -40,7 +40,7 @@ class UpdatePermission extends Component
             $this->permission->assignRole($userRole);
             }
         }
-        session()->flash('success', 'دسترسی بروزرسانی شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitUp('permissionUpdated');
     }
 

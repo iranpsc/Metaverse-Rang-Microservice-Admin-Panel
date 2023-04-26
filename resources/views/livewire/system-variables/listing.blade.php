@@ -3,9 +3,6 @@
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-variable-modal">ایجاد متغیر
     </x-buttons.btn-primary>
     <x-modals.modal id="create-variable-modal" title="تعریف متغیر">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="name" label="نام متغییر">
             <x-forms.input wire:model="name" id="name" />
             @error('name')

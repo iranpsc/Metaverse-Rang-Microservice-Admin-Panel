@@ -52,7 +52,7 @@ class Update extends Component
             }
         }
         $this->clearVerificationCode();
-        session()->flash('success', 'سطح ویرایش شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'سطح ویرایش شد']);
         $this->emitUp('levelUpdated');
     }
 

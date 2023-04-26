@@ -3,9 +3,6 @@
     </x-buttons.btn-primary>
 
     <x-modals.modal size="modal-xl" id="create-prize" title="تعریف جوایز سلسله خانوادگی">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <div class="row">
             <div class="col-sm-6">
                 <x-forms.group for="member" label="نسبت خانوادگی">

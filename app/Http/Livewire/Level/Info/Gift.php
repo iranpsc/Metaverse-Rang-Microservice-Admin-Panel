@@ -86,7 +86,7 @@ class Gift extends Component
 
         $this->clearVerificationCode();
 
-        session()->flash('success', 'اطلاعات با موفقیت ثبت شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
     }
 
     public function render()

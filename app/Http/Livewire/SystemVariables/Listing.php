@@ -48,7 +48,7 @@ class Listing extends Component
             'name' => $this->name,
             'value' => $this->value,
         ]);
-        session()->flash('success', 'متغییر ایجاد شد!');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'متغیر سیستم تعریف شد']);
         $this->resetExcept('admin');
         $this->emitSelf('variableCreated');
     }

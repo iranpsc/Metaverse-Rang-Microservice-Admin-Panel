@@ -1,10 +1,5 @@
 <div>
     <x-modals.modal id="edit-bank-account-modal-{{$account->id}}" title="ویرایش کردن اطلاعات بانکی کارمندان">
-
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-
         <x-forms.group for="bank_name_{{$account->id}}" label="نام بانک">
             <x-forms.input wire:model="bank_name" id="bank_name_{{$account->id}}" />
             @error('bank_name')

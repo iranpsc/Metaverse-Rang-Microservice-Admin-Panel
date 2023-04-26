@@ -16,14 +16,16 @@ class Bankaccounts extends Component
 
     public $bankAccount_errors = [];
 
-    public function mount() {
+    public function mount()
+    {
         $this->bankAccounts = BankAccount::with('errors', 'bankable')->latest()->get();
     }
 
-    public function updated() {
+    public function updated()
+    {
         $this->bankAccounts = BankAccount::where('card_num', 'like', '%' . $this->searchTerm . '%')
-        ->orWhere('shaba_num', 'like', '%' . $this->searchTerm . '%')
-        ->get();
+            ->orWhere('shaba_num', 'like', '%' . $this->searchTerm . '%')
+            ->get();
     }
 
     public function save_errors($input, BankAccount $bankAccount)
@@ -43,7 +45,8 @@ class Bankaccounts extends Component
         }
     }
 
-    public function save(BankAccount $bankAccount) {
+    public function save(BankAccount $bankAccount)
+    {
         if (!empty($this->bankAccount_errors)) {
             for ($i = 0; $i < count($this->bankAccount_errors); $i++) {
                 $arr = $this->bankAccount_errors[$i];
@@ -61,21 +64,20 @@ class Bankaccounts extends Component
             $user = $bankAccount->bankable;
             $message = 'حساب بانکی تایید نشد.';
             $user->notify(new KycDeniedNotification($message));
-            session()->flash('error', 'حساب بانکی تایید نشد.');
-
+            $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         } else {
             $bankAccount->update([
                 'status' => 1
             ]);
 
-            session()->flash('success', 'حساب بانکی تایید شد.');
+            $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         }
     }
 
     public function render()
     {
         return view('livewire.citizens.bankaccounts')
-        ->extends('layouts.app')
-        ->section('content');
+            ->extends('layouts.app')
+            ->section('content');
     }
 }

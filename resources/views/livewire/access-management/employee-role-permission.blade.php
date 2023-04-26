@@ -2,9 +2,6 @@
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-admin-modal">ایجاد کاربر
     </x-buttons.btn-primary>
     <x-modals.modal id="create-admin-modal" title="ایجاد کاربر">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="employee" label="انتخاب کاربر">
             <select wire:model="employee" id="employee" class="form-control rounded">
                 <option selected>انتخاب کنید</option>

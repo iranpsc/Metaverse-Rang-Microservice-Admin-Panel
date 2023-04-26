@@ -88,14 +88,12 @@ class Details extends Component
             $user = $this->kyc->user;
             $message = 'احراز هویت شما تایید نشد';
             $user->notify(new KycDeniedNotification($message));
-            session()->flash('error', 'احراز هویت تایید نشد');
-
+            $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         } else {
             $this->kyc->update([
                 'status' => 1
             ]);
-
-            session()->flash('success', 'احراز هویت تایید شد');
+            $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         }
     }
 

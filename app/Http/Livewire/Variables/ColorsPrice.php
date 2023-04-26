@@ -41,7 +41,7 @@ class ColorsPrice extends Component
             'price' => $this->price,
         ]);
 
-        session()->flash('success', 'قیمت رنگ با موفقیت وارد شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'قیمت رنگ با موفقیت وارد شد']);
         $this->resetExcept('admin');
         $this->emitSelf('currencyCreated');
     }

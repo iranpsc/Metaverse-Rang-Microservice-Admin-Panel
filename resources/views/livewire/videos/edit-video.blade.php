@@ -1,9 +1,5 @@
 <div>
     <x-modals.modal size="modal-xl" id="edit-video-modal-{{$videoDb->id}}" title="بارگذاری فیلم آموزشی">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-
         <x-forms.group label="عنوان آموزش" for="title">
             <x-forms.input id="title" wire:model="title" />
             @error('title')

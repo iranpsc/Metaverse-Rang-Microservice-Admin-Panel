@@ -3,10 +3,6 @@
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#admin-ip-modal">اضافه کردن IP
     </x-buttons.btn-primary>
     <x-modals.modal id="admin-ip-modal" title="تعریف آی پی دسترسی پنل ادمین">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-
         <x-forms.group  for="title" label="عنوان">
             <x-forms.input wire:model="title"/>
             @error('title')

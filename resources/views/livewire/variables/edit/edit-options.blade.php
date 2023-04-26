@@ -1,9 +1,5 @@
 <div>
     <x-modals.modal id="edit-package-modal-{{ $option->id }}" title="بروزرسانی بسته">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-
         <x-forms.group label="تعداد" for="amount-{{ $option->id }}">
             <x-forms.input id="amount-{{ $option->id }}" wire:model="amount" placeholder="تعداد را وارد کنید" />
             @error('amount')

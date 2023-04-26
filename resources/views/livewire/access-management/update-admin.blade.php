@@ -1,9 +1,6 @@
 <div>
     {{-- Success is as dangerous as failure. --}}
     <x-modals.modal id="update-admin-modal-{{$admin->id}}" title="ویرایش دسترسی ها و مسئولیت های کارمند">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <p>مسئولیت های اختصاص داده شده به این کارمند:</p>
         @if ($admin->roles->count() > 0)
             <ul class="list-group">

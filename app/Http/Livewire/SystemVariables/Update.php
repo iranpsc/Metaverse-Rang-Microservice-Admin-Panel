@@ -3,11 +3,8 @@
 namespace App\Http\Livewire\SystemVariables;
 
 use Livewire\Component;
-use Illuminate\Support\Facades\Cache;
-use App\Helpers\SMS;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 class Update extends Component
 {
@@ -46,7 +43,7 @@ class Update extends Component
             'name' => $this->name,
             'value' => $this->value,
         ]);
-        session()->flash('success', 'متغییر ویرایش شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'متغیر سیستم ویرایش شد']);
         $this->reset(['phone_verification', 'access_password']);
         $this->emitUp('variableUpdated');
     }

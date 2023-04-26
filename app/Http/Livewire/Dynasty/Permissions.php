@@ -45,7 +45,7 @@ class Permissions extends Component
                 'COTB' => $this->COTB
             ]
         );
-        session()->flash('success', 'دسترسی ها بروزرسانی شدند');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitSelf('permissionsUpdated');
     }
 

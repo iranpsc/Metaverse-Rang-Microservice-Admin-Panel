@@ -21,15 +21,11 @@ class Categories extends Component
         'name' => 'required|string'
     ];
 
-    protected $messages = [
-        'name.required' => 'نام دسته بندی را وارد کنید.'
-    ];
-
     public function save()
     {
         $this->validate();
         MusicCategory::create(['name' => $this->name]);
-        session()->flash('success', 'دسته بندی ایجاد شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'دسته بندی ایجاد شد']);
         $this->reset('name');
         $this->emitSelf('categoryCreated');
     }
@@ -37,7 +33,6 @@ class Categories extends Component
     public function delete(MusicCategory $category)
     {
         $category->delete();
-        session()->flash('success', 'دسته بندی حذف شد.');
         $this->emitSelf('categoryDeleted');
     }
 

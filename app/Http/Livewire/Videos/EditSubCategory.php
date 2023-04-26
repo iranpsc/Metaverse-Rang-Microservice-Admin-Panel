@@ -46,7 +46,7 @@ class EditSubCategory extends Component
         array_pop($data);
 
         $this->subCategory->update($data);
-        session()->flash('success', 'دسته بندی ویرایش شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'دسته بندی ویرایش شد']);
         $this->emitUp('categoryUpdated');
     }
 

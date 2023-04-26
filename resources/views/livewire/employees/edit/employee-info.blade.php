@@ -1,9 +1,6 @@
 <div>
     {{-- Because she competes with no one, no one can compete with her. --}}
     <x-modals.modal id="edit-employee-modal-{{$employee->id}}" title="ویرایش اطلاعات کارمند">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <div class="row">
             <div class="col-sm-6">
                 <x-forms.group for="fname" label="نام">

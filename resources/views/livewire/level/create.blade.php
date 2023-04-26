@@ -1,8 +1,5 @@
 <div>
     <x-modals.modal id="create-level" title="تعریف سطح">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="name" label="نام سطح">
             <x-forms.input id="name" wire:model="name" />
             @error('name')

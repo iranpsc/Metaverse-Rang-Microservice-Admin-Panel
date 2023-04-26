@@ -1,8 +1,5 @@
 <div>
     <x-modals.modal size="modal-xl" id="edit-prize-{{ $prize->id }}" title="ویرایش پاداشهای معرفی {{ \App\Helpers\getRelationTitle($prize->member) }}">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <div class="row">
             <div class="col-sm-6">
                 <x-forms.group for="introduction-profit-increase-{{ $prize->id }}" label="افزایش سود پاداش معرفی(%)">

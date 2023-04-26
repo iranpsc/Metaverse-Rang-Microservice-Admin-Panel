@@ -17,17 +17,13 @@ class EditMessages extends Component
         'content' => 'required|string',
     ];
 
-    protected $messages = [
-        'content.required' => 'متن پیام را وارد کنید'
-    ];
-
     public function edit()
     {
         $this->validate();
         $this->message->update([
             'message' => $this->content
         ]);
-        session()->flash('success', 'بروزرسانی انجام شد');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitUp('messageUpdated');
     }
 

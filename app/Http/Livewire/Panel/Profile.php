@@ -46,7 +46,7 @@ class Profile extends Component
             'access_password' => $this->new_access_password ? Hash::make($this->new_access_password) : $this->admin->access_password,
             'password' => $this->password ? Hash::make($this->password) : $this->admin->password
         ]);
-        session()->flash('success', 'اطلاعات بروزرسانی شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات بروزرسانی شد']);
     }
 
     public function render()

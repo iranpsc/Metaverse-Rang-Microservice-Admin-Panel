@@ -1,13 +1,4 @@
 <div class="text-right">
-    <div class="container my-2">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-        @if (session()->has('error'))
-            <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
-        @endif
-    </div>
-
     <div class="row">
         <div class="col-md-6">
             <x-forms.group for="psc-{{ $level->id }}" label="دریافت PSC">

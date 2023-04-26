@@ -86,7 +86,7 @@ class Listing extends Component
         }
 
         $this->resetExcept(['success', 'videos', 'videoCategories', 'admin']);
-        session()->flash('success', 'ویدیو بارگذاری شد.');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'ویدیو بارگذاری شد']);
         $this->emitSelf('videoCreated');
     }
 
@@ -96,7 +96,6 @@ class Listing extends Component
         unlink(public_path('uploads/' . $video->image));
         $video->delete();
         $this->emitSelf('videoDeleted');
-        session()->flash('success', 'ویدیو حذف شد.');
     }
 
     public function render()

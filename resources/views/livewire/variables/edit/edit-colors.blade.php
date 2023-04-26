@@ -1,13 +1,6 @@
 <div>
     {{-- The Master doesn't talk, he acts. --}}
     <x-modals.modal id="edit-currency-modal-{{ $asset->id }}" title="ویرایش ارز">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-
-        @if (session()->has('error'))
-            <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
-        @endif
         <x-forms.group for="price-{{ $asset->id }}" label="قیمت واحد">
             <x-forms.input id="price-{{ $asset->id }}" wire:model="price" />
             @error('price')

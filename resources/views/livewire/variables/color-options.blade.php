@@ -3,10 +3,6 @@
     </x-buttons.btn-success>
 
     <x-modals.modal id="create-package-modal" title="تعریف بسته">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-
         <x-forms.group for="asset" label="رنگ">
             <x-forms.select id="asset" wire:model="asset">
                 <option selected>ارز را انتخاب کنید</option>

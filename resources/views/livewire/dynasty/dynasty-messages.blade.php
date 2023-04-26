@@ -2,9 +2,6 @@
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-message">ایجاد پیام
     </x-buttons.btn-primary>
     <x-modals.modal id="create-message" size="modal-xl" title="تعریف پیام سلسله">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <ul class="alert alert-primary fill">
             <li>لیست شورت کدهای پیامهای سلسله</li>
             <li>نسبت خانوادگی: [relationship]</li>

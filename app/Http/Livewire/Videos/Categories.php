@@ -61,8 +61,8 @@ class Categories extends Component
                 'image' => $url,
             ]);
         }
-        session()->flash('success', 'دسته بندی ایجاد شد.');
         $this->reset('name', 'slug', 'image', 'parentCategory', 'description');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'دسته بندی ایجاد شد']);
         $this->emitSelf('categoryCreated');
     }
 
@@ -73,7 +73,6 @@ class Categories extends Component
             $item->delete();
         }
         unlink(public_path('uploads/'.$category->image));
-        session()->flash('success', 'دسته بندی حذف شد.');
         $category->delete();
         $this->emitSelf('categoryDeleted');
     }
@@ -82,7 +81,6 @@ class Categories extends Component
     {
         unlink(public_path('uploads/'.$videoSubCategory->image));
         $videoSubCategory->delete();
-        session()->flash('success', 'دسته بندی حذف شد.');
         $this->emitSelf('categoryDeleted');
     }
     public function render()

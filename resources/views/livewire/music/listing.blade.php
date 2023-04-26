@@ -1,9 +1,6 @@
 <div>
     <x-buttons.btn-primary class="mb-2" data-bs-toggle="modal" data-bs-target="#create-music-modal">بارگذاری موسیقی</x-buttons.btn-primary>
     <x-modals.modal title="بارگذاری موسیقی" id="create-music-modal">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <x-forms.group for="category" label="دسته بندی">
             <select wire:model="category" class="form-control rounded">
                 <option value="0">انتخاب کنید</option>
