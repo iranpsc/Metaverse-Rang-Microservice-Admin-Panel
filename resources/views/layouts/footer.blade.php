@@ -128,32 +128,80 @@
 
 <script>
     $(document).ready(function() {
+        const headers = new Headers({
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        });
+
         $('.confirm').on('click', function() {
             Swal.fire({
-                title: 'آیا می خواهید حذف کنید؟',
-                text: "بعد از حذف قادر به بازیابی نخواهید بود!",
+                title: "کد تایید ارسال شده به تلفن همراه خود را وارد کنید",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'بله، حذف کن!',
+                confirmButtonText: 'حذف',
                 cancelButtonText: 'لغو',
+                html: `
+                    <input class="form-control form-control-sm round" type="text" id="delete-modal-phone-verification" name="phone_verification" placeholder="کد تایید را وارد کنید ..."/>
+                    <input class="form-control form-control-sm round mt-2" type="password" id="delete-modal-access-password" name="access_password" placeholder="رمز دسترسی خود را وارد کنید..."/>
+                    `,
+                showLoaderOnConfirm: true,
+                allowOutsideClick: () => !Swal.isLoading(),
+                didOpen: () => {
+                    return fetch('/code/send', {
+                            headers: headers
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(response.statusText)
+                            }
+                            return response.json();
+                        })
+                        .catch(error => {
+                            Swal.showValidationMessage(
+                                `Request failed: ${error}`
+                            )
+                        });
+                },
+                preConfirm: () => {
+                    return fetch('/code/verify', {
+                        headers: headers,
+                        method: 'POST',
+                        body: JSON.stringify({
+                            'phone_verification': $('#delete-modal-phone-verification').val(),
+                            'access_password': $('#delete-modal-access-password').val()
+                        })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(response.statusText)
+                        }
+                        return response.json();
+                    })
+                    .catch(error => {
+                        Swal.showValidationMessage('کد تایید یا رمز دسترسی اشتباه است')
+                    });
+                }
             }).then((result) => {
                 if (result.isConfirmed) {
                     Livewire.emit(this.title, this.id);
-                    Swal.fire(
-                        'حذف شد!',
-                        'اطلاعات مورد نظر حذف شد',
-                        'success',
-                    )
+                    Swal.fire({
+                        title: 'حذف شد!',
+                        text: 'اطلاعات مورد نظر حذف شد',
+                        icon: 'success',
+                        confirmButtonText: 'باشه'
+                    })
                 }
             })
         })
 
         const Toast = Swal.mixin({
             toast: true,
-            position: 'top-end',
+            position: 'top',
             showConfirmButton: false,
+            showCloseButton: true,
             timer: 3000,
             timerProgressBar: true,
             didOpen: (toast) => {

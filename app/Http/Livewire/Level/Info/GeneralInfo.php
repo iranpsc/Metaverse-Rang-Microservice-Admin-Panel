@@ -33,7 +33,7 @@ class GeneralInfo extends Component
         'has_animation' => 'required|boolean',
         'lines' => 'required|integer|min:0',
         'png_file' => 'nullable|image|max:5000',
-        'fbx_file' => 'nullable|file|max:5000',
+        'fbx_file' => 'nullable|file|max:100000',
         'gif_file' => 'nullable|file|max:5000',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'

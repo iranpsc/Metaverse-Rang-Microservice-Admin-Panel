@@ -51,6 +51,8 @@ use App\Http\Livewire\Music\Categories as MusicCategories;
 use App\Http\Livewire\Panel\Profile;
 use App\Http\Livewire\Videos\Listing as VideoListing;
 use App\Http\Livewire\Videos\Categories as VideoCategories;
+use App\Notifications\SendVerificationCode;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -206,7 +208,7 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
         ->middleware('can:manage-system-variables')
         ->name('system-variables');
 
-    Route::prefix('music')->middleware('can:manage-musics')->group(function() {
+    Route::prefix('music')->middleware('can:manage-musics')->group(function () {
         Route::get('/', MusicListing::class)->name('music');
         Route::get('/categories', MusicCategories::class)->name('music.categories');
     });
@@ -222,3 +224,18 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
 Auth::routes([
     'register' => false,
 ]);
+
+Route::middleware('auth:admin')->group(function () {
+    Route::get('/code/send', function (Request $request) {
+        $request->user()->notify(new SendVerificationCode);
+        return response()->json();
+    });
+
+    Route::post('/code/verify', function (Request $request) {
+        $request->validate([
+            'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+            'access_password' => 'required|is_valid_access_password'
+        ]);
+        return response()->json();
+    });
+});
