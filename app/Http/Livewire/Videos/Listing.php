@@ -47,7 +47,7 @@ class Listing extends Component
         'subCategory' => 'nullable|integer|exists:video_sub_categories,id',
         'image' => 'required|image|max:1024',
         'video' => 'required|file|mimes:mp4',
-        'creator_code' => 'required|string|exits:users,code',
+        'creator_code' => 'required|string|exists:users,code',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
