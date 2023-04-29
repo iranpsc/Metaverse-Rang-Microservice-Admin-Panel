@@ -167,22 +167,26 @@
                 },
                 preConfirm: () => {
                     return fetch('/code/verify', {
-                        headers: headers,
-                        method: 'POST',
-                        body: JSON.stringify({
-                            'phone_verification': $('#delete-modal-phone-verification').val(),
-                            'access_password': $('#delete-modal-access-password').val()
+                            headers: headers,
+                            method: 'POST',
+                            body: JSON.stringify({
+                                'phone_verification': $(
+                                    '#delete-modal-phone-verification')
+                                .val(),
+                                'access_password': $(
+                                    '#delete-modal-access-password').val()
+                            })
                         })
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(response.statusText)
-                        }
-                        return response.json();
-                    })
-                    .catch(error => {
-                        Swal.showValidationMessage('کد تایید یا رمز دسترسی اشتباه است')
-                    });
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(response.statusText)
+                            }
+                            return response.json();
+                        })
+                        .catch(error => {
+                            Swal.showValidationMessage(
+                                'کد تایید یا رمز دسترسی اشتباه است')
+                        });
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -217,6 +221,35 @@
             })
         }
         window.addEventListener('resourceModified', showToast);
+
+        window.addEventListener('livewire-upload-start', function(event) {
+            targetInputId = event.target
+            progressBarContainer = targetInputId.nextElementSibling
+            progressBarContainer.classList.remove('d-none')
+            progressBarContainer.classList.add('d-block')
+        })
+
+        window.addEventListener('livewire-upload-error', function(event) {
+            targetInputId = event.target
+            progressBarContainer = targetInputId.nextElementSibling
+            progressBarContainer.classList.remove('bg-success')
+            progressBarContainer.classList.add('bg-danger')
+        })
+
+        window.addEventListener('livewire-upload-progress', function(event) {
+            targetInputId = event.target
+            progressBarContainer = targetInputId.nextElementSibling
+            progressBar = progressBarContainer.firstElementChild
+            progressBar.style.width = event.detail.progress + '%'
+            progressBar.innerText = event.detail.progress + '%'
+        })
+
+        window.addEventListener('livewire-upload-finish', function(event) {
+            targetInputId = event.target
+            progressBarContainer = targetInputId.nextElementSibling
+            progressBarContainer.classList.remove('d-block')
+            progressBarContainer.classList.add('d-none')
+        })
     })
 </script>
 @stack('js')

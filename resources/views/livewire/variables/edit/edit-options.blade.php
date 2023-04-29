@@ -16,7 +16,7 @@
 
         <x-forms.group label="تصویر" for="image-{{ $option->id }}">
             <x-forms.input type="file" id="image-{{ $option->id }}" wire:model="image" placeholder="تصویر بسته" />
-            <span class="text-success" wire:loading wire:target="image-{{ $option->id }}">در حال بارگذاری ...</span>
+            <x-progress-bar/>
             @error('image')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror

@@ -89,7 +89,7 @@
 
             <x-forms.group for="level-{{ $level->id }}-gift-png-file" label="فایل png هدیه همراه">
                 <x-forms.input type="file" id="level-{{ $level->id }}-gift-png-file" wire:model="png_file" />
-                <span class="text-success" wire:loading wire:target="png_file">در حال بارگذاری ...</span>
+                <x-progress-bar/>
                 @error('png_file')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
@@ -97,7 +97,7 @@
 
             <x-forms.group for="level-{{ $level->id }}-gift-fbx-file" label="فایل fbx هدیه همراه">
                 <x-forms.input type="file" id="level-{{ $level->id }}-gift-fbx-file" wire:model="fbx_file" />
-                <span class="text-success" wire:loading wire:target="fbx_file">در حال بارگذاری ...</span>
+                <x-progress-bar/>
                 @error('fbx_file')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
@@ -105,7 +105,7 @@
 
             <x-forms.group for="level-{{ $level->id }}-gift-gif-file" label="فایل gif هدیه همراه">
                 <x-forms.input type="file" id="level-{{ $level->id }}-gift-gif-file" wire:model="gif_file" />
-                <span class="text-success" wire:loading wire:target="gif_file">در حال بارگذاری ...</span>
+                <x-progress-bar/>
                 @error('gif_file')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror

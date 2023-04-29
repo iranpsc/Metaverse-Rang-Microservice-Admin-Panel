@@ -51,6 +51,7 @@
 
             <x-forms.group for="level-{{ $level->id }}-png-file" label="فایل png نگین">
                 <x-forms.input type="file" id="level-{{ $level->id }}-png-file" wire:model="png_file" />
+                <x-progress-bar/>
                 @error('png_file')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror
@@ -58,6 +59,7 @@
 
             <x-forms.group for="level-{{ $level->id }}-fbx-file" label="فایل fbx نگین">
                 <x-forms.input type="file" id="level-{{ $level->id }}-fbx-file" wire:model="fbx_file" />
+                <x-progress-bar/>
                 @error('fbx_file')
                     <span class="form-text text-danger">{{ $message }}</span>
                 @enderror

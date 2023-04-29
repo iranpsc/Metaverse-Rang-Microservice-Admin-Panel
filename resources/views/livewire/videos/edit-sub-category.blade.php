@@ -15,7 +15,7 @@
 
         <x-forms.group for="image" label="تصویر">
             <x-forms.input type="file" wire:model.lazy="image" />
-            <span class="text-success" wire:loading wire:target="image">در حال بارگذاری ...</span>
+            <x-progress-bar/>
             @error('image')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
