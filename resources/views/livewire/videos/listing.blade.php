@@ -111,9 +111,9 @@
                     <td>{{ $video->creator_code }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($video->created_at)->format('Y/m/d') }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($video->created_at)->format('H:m:s') }}</td>
-                    <td>{{ $video->visits }}</td>
-                    <td>{{ $video->likes->count() }}</td>
-                    <td>{{ $video->dislikes->count() }}</td>
+                    <td>{{ $video->views->count() }}</td>
+                    <td>{{ $video->interactions->where('liked', 1)->count() }}</td>
+                    <td>{{ $video->interactions->where('liked', 0)->count() }}</td>
                     <td>
                         <x-buttons.btn-primary data-bs-target="#edit-video-modal-{{$video->id}}" data-bs-toggle="modal">ویرایش</x-buttons.btn-primary>
                         <x-buttons.btn-danger title="deleteTrainingVideo" class="confirm" id="{{ $video->id }}">حذف

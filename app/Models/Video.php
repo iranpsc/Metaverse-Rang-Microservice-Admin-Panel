@@ -16,13 +16,13 @@ class Video extends Model
         return $this->morphTo();
     }
 
-    public function likes()
+    public function interactions()
     {
-        return $this->morphMany(Like::class, 'likeable');
+        return $this->morphMany(Interaction::class, 'likeable');
     }
 
-    public function dislikes()
+    public function views()
     {
-        return $this->morphMany(Dislike::class, 'dislikeable');
+        return $this->morphMany(View::class, 'viewable');
     }
 }
