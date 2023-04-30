@@ -36,12 +36,12 @@ class EditVideo extends Component
 
         if ($this->image) {
             $imageName = implode('.', [Str::random(10), $this->image->getClientOriginalExtension()]);
-            $imageUrl = $this->image->storePubliclyAs('tutorials/' . $this->videoDb->categoriable->slug, $imageName, 'public');
+            $imageUrl = url($this->image->storePubliclyAs('tutorials/' . $this->videoDb->categoriable->slug, $imageName, 'public'));
         }
 
         if ($this->video) {
             $videoName = implode('.', [Str::random(10), $this->video->getClientOriginalExtension()]);
-            $videoUrl = $this->video->storePubliclyAs('tutorials/' . $this->videoDb->categoriable->slug, $videoName, 'public');
+            $videoUrl = url($this->video->storePubliclyAs('tutorials/' . $this->videoDb->categoriable->slug, $videoName, 'public'));
         }
 
         $this->videoDb->update([

@@ -63,8 +63,8 @@ class Listing extends Component
         if (!empty($this->category) && !empty($this->subCategory)) {
             $this->subCategory = VideoSubCategory::whereId($this->subCategory)->first();
 
-            $videoUrl = $this->video->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $videoName, 'public');
-            $imageUrl = $this->image->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $imageName, 'public');
+            $videoUrl = url($this->video->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $videoName, 'public'));
+            $imageUrl = url($this->image->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $imageName, 'public'));
 
             $this->subCategory->videos()->create([
                 'title' => $this->title,
@@ -74,8 +74,8 @@ class Listing extends Component
                 'image' => $imageUrl,
             ]);
         } else {
-            $videoUrl = $this->video->storePubliclyAs('tutorials/' . $this->category->slug, $videoName, 'public');
-            $imageUrl = $this->image->storePubliclyAs('tutorials/' . $this->category->slug, $imageName, 'public');
+            $videoUrl = url($this->video->storePubliclyAs('tutorials/' . $this->category->slug, $videoName, 'public'));
+            $imageUrl = url($this->image->storePubliclyAs('tutorials/' . $this->category->slug, $imageName, 'public'));
             $this->category->videos()->create([
                 'title' => $this->title,
                 'description' => $this->description,

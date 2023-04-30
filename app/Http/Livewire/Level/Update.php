@@ -22,9 +22,9 @@ class Update extends Component
 
     protected $rules = [
         'name' => 'required|string',
-        'image' => 'nullable|image|mimes:jpg,png,bmp,jpeg',
+        'image' => 'nullable|image|mimes:jpg,png,bmp,jpeg|max:1024',
         'score' => 'required|integer',
-        'backgroundImage' => 'nullable|image|max:5024',
+        'backgroundImage' => 'nullable|image|max:1024',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];

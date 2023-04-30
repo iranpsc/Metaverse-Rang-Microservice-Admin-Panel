@@ -171,8 +171,8 @@
                             method: 'POST',
                             body: JSON.stringify({
                                 'phone_verification': $(
-                                    '#delete-modal-phone-verification')
-                                .val(),
+                                        '#delete-modal-phone-verification')
+                                    .val(),
                                 'access_password': $(
                                     '#delete-modal-access-password').val()
                             })
@@ -220,6 +220,7 @@
                 title: `${event.detail.message}`
             })
         }
+
         window.addEventListener('resourceModified', showToast);
 
         window.addEventListener('livewire-upload-start', function(event) {
