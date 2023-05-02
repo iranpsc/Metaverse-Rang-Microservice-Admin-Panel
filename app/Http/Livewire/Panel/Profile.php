@@ -37,13 +37,17 @@ class Profile extends Component
     {
         $this->validate();
 
-        $url = $this->image ? url('uploads/' . $this->image->store('profile', 'public')) : $this->admin->image;
+        $url = $this->image
+            ? url('uploads/' . $this->image->store('profile', 'public'))
+            : $this->admin->image;
 
         $this->admin->update([
             'name' => $this->name,
             'email' => $this->email,
             'image' => $url,
-            'access_password' => $this->new_access_password ? Hash::make($this->new_access_password) : $this->admin->access_password,
+            'access_password' => $this->new_access_password
+                ? Hash::make($this->new_access_password)
+                : $this->admin->access_password,
             'password' => $this->password ? Hash::make($this->password) : $this->admin->password
         ]);
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات بروزرسانی شد']);

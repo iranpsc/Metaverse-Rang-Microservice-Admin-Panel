@@ -9,7 +9,7 @@
 
         <x-forms.group label="تصویر" for="image-{{ $level->id }}">
             <x-forms.input type="file" id="image-{{ $level->id }}" wire:model="image" />
-                <x-progress-bar/>
+            <x-progress-bar />
             @error('image')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
@@ -17,7 +17,7 @@
 
         <x-forms.group label="تصویر پس زمینه" for="backgroundImage-{{ $level->id }}">
             <x-forms.input type="file" id="backgroundImage-{{ $level->id }}" wire:model="backgroundImage" />
-            <x-progress-bar/>
+            <x-progress-bar />
             @error('backgroundImage')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror

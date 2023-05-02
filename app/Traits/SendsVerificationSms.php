@@ -11,13 +11,12 @@ trait SendsVerificationSms
     public $access_password, $phone_verification, $admin;
     public $countdownTime = 120; // in seconds
 
-    public function sendSMS(string $id)
+    public function sendSMS()
     {
         $this->dispatchBrowserEvent('start-countdown', [
-            'id' => $id,
             'countdownTime' => $this->countdownTime,
         ]);
-        $this->admin->notify(new SendVerificationCode);
+        // $this->admin->notify(new SendVerificationCode);
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'کد تایید با موفقیت ارسال گردید']);
     }
 

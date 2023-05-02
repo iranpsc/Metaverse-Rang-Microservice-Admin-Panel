@@ -1,6 +1,6 @@
 <div>
     <div class="row justify-content-center">
-        <div class="col-sm-4">
+        <div class="col-lg-6 col-xl-4">
             <x-forms.group for="name" label="نام">
                 <x-forms.input wire:model.lazy="name" />
                 @error('name')
@@ -53,7 +53,7 @@
 
             <x-forms.verification/>
 
-            <x-buttons.btn-success class="w-25" wire:click="save" wire:loading.attr="disabled">ثبت</x-buttons.btn-success>
+            <x-buttons.btn-success class="btn-block" wire:click="save" wire:loading.attr="disabled">ثبت</x-buttons.btn-success>
         </div>
     </div>
 </div>

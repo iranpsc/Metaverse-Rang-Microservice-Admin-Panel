@@ -214,43 +214,47 @@
             }
         })
 
-        function showToast(event) {
+        window.addEventListener('resourceModified', (event) => {
             Toast.fire({
                 icon: 'success',
                 title: `${event.detail.message}`
             })
-        }
+        });
 
-        window.addEventListener('resourceModified', showToast);
+        // Define the function to handle the Livewire upload start event
+        const startHandler = (event) => {
+            const progressBarContainer = event.target.nextElementSibling; // Get the next sibling element after the target input
+            progressBarContainer.classList.remove('d-none'); // Remove the "d-none" class to show the progress bar
+            progressBarContainer.classList.add('d-block'); // Add the "d-block" class to display the progress bar
+        };
 
-        window.addEventListener('livewire-upload-start', (event) => {
-            targetInputId = event.target
-            progressBarContainer = targetInputId.nextElementSibling
-            progressBarContainer.classList.remove('d-none')
-            progressBarContainer.classList.add('d-block')
-        })
+        // Define the function to handle the Livewire upload error event
+        const errorHandler = (event) => {
+            const progressBarContainer = event.target.nextElementSibling; // Get the next sibling element after the target input
+            progressBarContainer.classList.remove('bg-success'); // Remove the "bg-success" class to change the progress bar color
+            progressBarContainer.classList.add('bg-danger'); // Add the "bg-danger" class to display an error state for the progress bar
+        };
 
-        window.addEventListener('livewire-upload-error', (event) => {
-            targetInputId = event.target
-            progressBarContainer = targetInputId.nextElementSibling
-            progressBarContainer.classList.remove('bg-success')
-            progressBarContainer.classList.add('bg-danger')
-        })
+        // Define the function to handle the Livewire upload progress event
+        const progressHandler = (event) => {
+            const progressBarContainer = event.target.nextElementSibling; // Get the next sibling element after the target input
+            const progressBar = progressBarContainer.firstElementChild; // Get the first child element of the progress bar container, which is the progress bar itself
+            progressBar.style.width = `${event.detail.progress}%`; // Update the width of the progress bar to reflect the current progress percentage
+            progressBar.innerText = `${event.detail.progress}%`; // Update the text of the progress bar to show the current progress percentage
+        };
 
-        window.addEventListener('livewire-upload-progress', (event) => {
-            targetInputId = event.target
-            progressBarContainer = targetInputId.nextElementSibling
-            progressBar = progressBarContainer.firstElementChild
-            progressBar.style.width = event.detail.progress + '%'
-            progressBar.innerText = event.detail.progress + '%'
-        })
+        // Define the function to handle the Livewire upload finish event
+        const finishHandler = (event) => {
+            const progressBarContainer = event.target.nextElementSibling; // Get the next sibling element after the target input
+            progressBarContainer.classList.remove('d-block'); // Remove the "d-block" class to hide the progress bar
+            progressBarContainer.classList.add('d-none'); // Add the "d-none" class to remove the progress bar from the page
+        };
 
-        window.addEventListener('livewire-upload-finish', (event) => {
-            targetInputId = event.target
-            progressBarContainer = targetInputId.nextElementSibling
-            progressBarContainer.classList.remove('d-block')
-            progressBarContainer.classList.add('d-none')
-        })
+        // Attach the event listeners to the window object
+        window.addEventListener('livewire-upload-start', startHandler);
+        window.addEventListener('livewire-upload-error', errorHandler);
+        window.addEventListener('livewire-upload-progress', progressHandler);
+        window.addEventListener('livewire-upload-finish', finishHandler);
     })
 </script>
 @stack('js')
