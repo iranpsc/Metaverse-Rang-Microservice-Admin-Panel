@@ -256,6 +256,30 @@
         window.addEventListener('livewire-upload-progress', progressHandler);
         window.addEventListener('livewire-upload-finish', finishHandler);
     })
+
+    window.addEventListener('start-countdown', (event) => {
+        const sendSMSBtn = document.getElementById(event.detail.id);
+        let countdownIntervalId;
+        const countdownTime = event.detail.countdownTime;
+
+        // Disable the button and change its text to the countdown
+        sendSMSBtn.disabled = true;
+        sendSMSBtn.innerText = `ارسال مجدد بعد از ${countdownTime} ثانیه`;
+
+        // Start the countdown interval
+        let remainingTime = countdownTime;
+        countdownIntervalId = setInterval(() => {
+            remainingTime -= 1;
+            sendSMSBtn.innerText = `ارسال مجدد بعد از ${remainingTime} ثانیه`;
+
+            // When the countdown is finished, re-enable the button
+            if (remainingTime === 0) {
+                clearInterval(countdownIntervalId);
+                sendSMSBtn.disabled = false;
+                sendSMSBtn.innerText = 'ارسال کد تایید';
+            }
+        }, 1000);
+    });
 </script>
 @stack('js')
 

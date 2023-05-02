@@ -5,15 +5,17 @@ namespace App\Traits;
 use App\Notifications\SendVerificationCode;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 trait SendsVerificationSms
 {
     public $access_password, $phone_verification, $admin;
     public $countdownTime = 120; // in seconds
 
-    public function sendSMS()
+    public function sendSMS(string $id)
     {
         $this->dispatchBrowserEvent('start-countdown', [
+            'id' => $id,
             'countdownTime' => $this->countdownTime,
         ]);
         // $this->admin->notify(new SendVerificationCode);
