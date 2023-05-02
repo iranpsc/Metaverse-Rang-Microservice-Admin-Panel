@@ -12,7 +12,7 @@
                 wire:model="note"></textarea>
         </x-forms.group>
 
-        <x-forms.verification id="{{ $asset->id }}"/>
+        <x-forms.verification/>
 
         <x-slot:footer>
             <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="update">بروزرسانی</x-buttons.btn-primary>

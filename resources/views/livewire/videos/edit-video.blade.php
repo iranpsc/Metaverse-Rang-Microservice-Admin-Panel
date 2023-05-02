@@ -29,7 +29,7 @@
             @enderror
         </x-forms.group>
 
-        <x-forms.verification id="{{ $videoDb->id }}"/>
+        <x-forms.verification/>
 
         <x-slot:footer>
             <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>

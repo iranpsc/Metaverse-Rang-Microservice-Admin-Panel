@@ -68,8 +68,10 @@ use Illuminate\Http\Request;
 
 Route::redirect('/', '/dashboard');
 
-Route::middleware(['auth:admin', 'verified'])->group(function () {
+Route::middleware('auth:admin')->group(function () {
+
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
+
     Route::prefix('citizens')->as('citizens.')->group(function () {
         Route::get('/registration-info', RegistrationInfo::class)
             ->middleware('can:view-registration-info')
@@ -181,31 +183,18 @@ Route::middleware(['auth:admin', 'verified'])->group(function () {
             ->middleware('can:manage-dynasty-permissions')
             ->name('permissions');
     });
+
     Route::prefix('ip')->as('ip.')->group(function () {
-        Route::get('/ranges', ApiIpRanges::class)
-            ->middleware('can:manage-ip-ranges')
-            ->name('ranges');
-        Route::get('/api', ApiAllowedIps::class)
-            ->middleware('can:manage-api-allowed-ips')
-            ->name('api');
-        Route::get('/admin', AdminAllowedIps::class)
-            ->middleware('can:manage-admin-allowed-ips')
-            ->name('admin');
+        Route::get('/ranges', ApiIpRanges::class)->middleware('can:manage-ip-ranges')->name('ranges');
+        Route::get('/api', ApiAllowedIps::class)->middleware('can:manage-api-allowed-ips')->name('api');
+        Route::get('/admin', AdminAllowedIps::class)->middleware('can:manage-admin-allowed-ips')->name('admin');
     });
-    Route::get('/level', LevelListing::class)
-        ->middleware('can:manage-level')
-        ->name('level');
-    Route::get('/maps', MapListing::class)
-        ->middleware('can:manage-maps')
-        ->name('map-management');
-    Route::get('/calendar', CalendarListing::class)
-        ->middleware('can:manage-calendar')
-        ->name('calendar');
-    Route::get('/reports', ReportsListing::class)
-        ->middleware('can:manage-repots')
-        ->name('reports');
-    Route::get('/system-variables', SystemVariablesListing::class)
-        ->middleware('can:manage-system-variables')
+
+    Route::get('/levels', LevelListing::class)->middleware('can:manage-level')->name('level');
+    Route::get('/maps', MapListing::class)->middleware('can:manage-maps')->name('map-management');
+    Route::get('/calendar', CalendarListing::class)->middleware('can:manage-calendar')->name('calendar');
+    Route::get('/reports', ReportsListing::class)->middleware('can:manage-repots')->name('reports');
+    Route::get('/system-variables', SystemVariablesListing::class)->middleware('can:manage-system-variables')
         ->name('system-variables');
 
     Route::prefix('music')->middleware('can:manage-musics')->group(function () {

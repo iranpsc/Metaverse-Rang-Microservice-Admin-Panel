@@ -21,7 +21,7 @@
             @enderror
         </x-forms.group>
 
-        <x-forms.verification id="{{ $subCategory->id }}"/>
+        <x-forms.verification/>
 
         <x-slot name="footer">
             <x-buttons.btn-success wire:click="save" wire:loading.attr="disabled">ثبت</x-buttons.btn-success>

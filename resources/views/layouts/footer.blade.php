@@ -203,7 +203,7 @@
 
         const Toast = Swal.mixin({
             toast: true,
-            position: 'top',
+            position: 'top-right',
             showConfirmButton: false,
             showCloseButton: true,
             timer: 3000,
@@ -223,21 +223,21 @@
 
         window.addEventListener('resourceModified', showToast);
 
-        window.addEventListener('livewire-upload-start', function(event) {
+        window.addEventListener('livewire-upload-start', (event) => {
             targetInputId = event.target
             progressBarContainer = targetInputId.nextElementSibling
             progressBarContainer.classList.remove('d-none')
             progressBarContainer.classList.add('d-block')
         })
 
-        window.addEventListener('livewire-upload-error', function(event) {
+        window.addEventListener('livewire-upload-error', (event) => {
             targetInputId = event.target
             progressBarContainer = targetInputId.nextElementSibling
             progressBarContainer.classList.remove('bg-success')
             progressBarContainer.classList.add('bg-danger')
         })
 
-        window.addEventListener('livewire-upload-progress', function(event) {
+        window.addEventListener('livewire-upload-progress', (event) => {
             targetInputId = event.target
             progressBarContainer = targetInputId.nextElementSibling
             progressBar = progressBarContainer.firstElementChild
@@ -245,7 +245,7 @@
             progressBar.innerText = event.detail.progress + '%'
         })
 
-        window.addEventListener('livewire-upload-finish', function(event) {
+        window.addEventListener('livewire-upload-finish', (event) => {
             targetInputId = event.target
             progressBarContainer = targetInputId.nextElementSibling
             progressBarContainer.classList.remove('d-block')

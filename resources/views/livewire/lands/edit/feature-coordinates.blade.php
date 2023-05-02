@@ -21,7 +21,7 @@
             </div>
         @endforeach
 
-        <x-forms.verification id="{{$feature->id}}" />
+        <x-forms.verification/>
         <x-slot:footer>
             <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>

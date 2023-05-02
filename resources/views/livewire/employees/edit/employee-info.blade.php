@@ -134,7 +134,7 @@
                 </x-forms.group>
             </div>
         </div>
-        <x-forms.verification id="{{ $employee->id }}"/>
+        <x-forms.verification/>
         <x-slot:footer>
             <x-buttons.btn-success wire:click="save">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>

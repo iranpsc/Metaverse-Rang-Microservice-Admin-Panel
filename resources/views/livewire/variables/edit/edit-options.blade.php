@@ -27,7 +27,7 @@
                 wire:model="note"></textarea>
         </x-forms.group>
 
-        <x-forms.verification id="{{ $option->id }}"/>
+        <x-forms.verification/>
 
         <x-slot:footer>
             <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="update">ثبت</x-buttons.btn-primary>
