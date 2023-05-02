@@ -17,7 +17,7 @@ trait SendsVerificationSms
             'id' => $id,
             'countdownTime' => $this->countdownTime,
         ]);
-        // $this->admin->notify(new SendVerificationCode);
+        $this->admin->notify(new SendVerificationCode);
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'کد تایید با موفقیت ارسال گردید']);
     }
 
