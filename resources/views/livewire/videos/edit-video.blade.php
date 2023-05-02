@@ -1,7 +1,7 @@
 <div>
     <x-modals.modal size="modal-xl" id="edit-video-modal-{{$videoDb->id}}" title="بارگذاری فیلم آموزشی">
         <x-forms.group label="عنوان آموزش" for="title-{{ $videoDb->id }}">
-            <x-forms.input id="title" wire:model="title-{{ $videoDb->id }}" />
+            <x-forms.input id="title-{{ $videoDb->id }}" wire:model="title" />
             @error('title')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
