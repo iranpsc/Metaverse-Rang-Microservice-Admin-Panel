@@ -2,8 +2,8 @@
     $id = Str::random(10);
 @endphp
 
-<div class="row form-group" wire:ignore>
-    <div class="col-sm-4">
+<div class="row form-group">
+    <div class="col-sm-4" wire:ignore>
         <x-buttons.btn-success class="sms-btn" wire:click="sendSMS('{{ $id }}')" wire:loading.attr="disabled" wire:target="sendSMS" id="{{ $id }}">
             <span wire:loading.remove>ارسال کد تایید</span>
             <span wire:loading>
@@ -20,8 +20,8 @@
     </div>
 </div>
 
-<x-forms.group label="رمز دسترسی" for="access-password-{{ $id }}">
-    <x-forms.input type="password" id="access-password-{{ $id }}" wire:model="access_password" placeholder="رمز دسترسی" />
+<x-forms.group label="رمز دسترسی" for="access-password">
+    <x-forms.input type="password" id="access-password" wire:model="access_password" placeholder="رمز دسترسی" />
     @error('access_password')
         <span class="form-text text-danger">{{ $message }}</span>
     @enderror

@@ -118,9 +118,9 @@
                         <x-buttons.btn-primary data-bs-target="#edit-video-modal-{{$video->id}}" data-bs-toggle="modal">ویرایش</x-buttons.btn-primary>
                         <x-buttons.btn-danger title="deleteTrainingVideo" class="confirm" id="{{ $video->id }}">حذف
                         </x-buttons.btn-danger>
+                        <livewire:videos.edit-video :videoDb="$video" :wire:key="'edit-video'.$video->id">
                     </td>
                 </tr>
-                <livewire:videos.edit-video :videoDb="$video" :wire:key="'edit-video'.$video->id">
             @endforeach
         </x-tables.table>
     @else

@@ -11,7 +11,7 @@ class Listing extends Component
 {
     use SendsVerificationSms;
 
-    public $slug, $name, $value, $variables;
+    public $slug, $name, $value;
 
     protected $rules = [
         'slug' => 'required|string',
@@ -30,7 +30,6 @@ class Listing extends Component
 
     public function mount()
     {
-        $this->variables = SystemVariable::with('changeLogs')->get();
         $this->admin = Auth::guard('admin')->user();
     }
 
@@ -63,7 +62,9 @@ class Listing extends Component
 
     public function render()
     {
-        return view('livewire.system-variables.listing')
+        return view('livewire.system-variables.listing', [
+            'variables' => SystemVariable::with('changeLogs')->get()
+        ])
             ->extends('layouts.app')
             ->section('content');
     }

@@ -80,7 +80,7 @@
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $category->name }}</td>
                             <td>{{ $category->slug }}</td>
-                            <td><a href="{{ asset('uploads/' . $category->image) }}" target="_blank"
+                            <td><a href="{{ $category->image }}" target="_blank"
                                     class="btn btn-primary btn-sm round">مشاهده</a></td>
                             <td>{{ \Morilog\Jalali\Jalalian::forge($category->created_at)->format('Y/m/d') }}
                             </td>
@@ -92,9 +92,9 @@
                                     </x-button.btn-primary>
                                     <x-buttons.btn-danger class="confirm" title="deleteVideoCategory"
                                         id="{{ $category->id }}">حذف</x-buttons.btn-danger>
+                                <livewire:videos.edit-category :category="$category" :wire:key="'edit-category-'.$category->id">
                             </td>
                         </tr>
-                        <livewire:videos.edit-category :category="$category" :wire:key="'edit-category-'.$category->id">
                     </x-tables.table>
                     @if ($category->subCategories->count() > 0)
                         <p class="alert alert-info">زیر دسته ها</p>
@@ -112,7 +112,7 @@
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $item->name }}</td>
                                     <td>{{ $item->slug }}</td>
-                                    <td><a href="{{ asset('uploads/' . $item->image) }}" target="_blank"
+                                    <td><a href="{{ $item->image }}" target="_blank"
                                             class="btn btn-primary btn-sm round">مشاهده</a></td>
                                     <td>{{ \Morilog\Jalali\Jalalian::forge($item->created_at)->format('Y/m/d') }}
                                     </td>
@@ -125,10 +125,9 @@
                                             </x-button.btn-primary>
                                             <x-buttons.btn-danger class="confirm" title="deleteVideoSubCategory"
                                                 id="{{ $item->id }}">حذف</x-buttons.btn-danger>
+                                        <livewire:videos.edit-sub-category :subCategory="$item" :wire:key="'edit-sub-category-'.$item->id">
                                     </td>
                                 </tr>
-                                <livewire:videos.edit-sub-category :subCategory="$item"
-                                    :wire:key="'edit-sub-category-'.$item->id">
                             @endforeach
                         </x-tables.table>
                     @else
