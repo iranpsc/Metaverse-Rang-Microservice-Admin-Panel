@@ -5,7 +5,6 @@ namespace App\Traits;
 use App\Notifications\SendVerificationCode;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 
 trait SendsVerificationSms
 {
@@ -18,7 +17,7 @@ trait SendsVerificationSms
             'id' => $id,
             'countdownTime' => $this->countdownTime,
         ]);
-        // $this->admin->notify(new SendVerificationCode);
+        $this->admin->notify(new SendVerificationCode);
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'کد تایید با موفقیت ارسال گردید']);
     }
 
