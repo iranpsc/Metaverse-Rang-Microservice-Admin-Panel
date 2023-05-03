@@ -50,7 +50,7 @@
 
         <x-forms.group label="تصویر" for="image">
             <x-forms.input type="file" id="image" wire:model="image" />
-            <x-progress-bar/>
+            <x-progress-bar />
             @error('image')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
@@ -58,7 +58,7 @@
 
         <x-forms.group label="فایل ویدئو" for="video">
             <x-forms.input type="file" id="video" wire:model="video" />
-            <x-progress-bar/>
+            <x-progress-bar />
             @error('video')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
@@ -72,7 +72,7 @@
             @enderror
         </x-forms.group>
 
-        <x-forms.verification/>
+        <x-forms.verification />
 
         <x-slot:footer>
             <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
@@ -101,12 +101,10 @@
                     <td>{{ $video->title }}</td>
                     <td>{{ $video->categoriable->name }}</td>
                     <td>
-                        <a target="_blank" href="{{ asset('uploads/' . $video->image) }}"
-                            class="btn btn-sm btn-primary round">مشاهده</a>
+                        <a target="_blank" href="{{ $video->image }}" class="btn btn-sm btn-primary round">مشاهده</a>
                     </td>
                     <td>
-                        <a target="_blank" href="{{ asset('uploads/' . $video->fileName) }}"
-                            class="btn btn-sm btn-primary round">مشاهده</a>
+                        <a target="_blank" href="{{ $video->fileName }}" class="btn btn-sm btn-primary round">مشاهده</a>
                     </td>
                     <td>{{ $video->creator_code }}</td>
                     <td>{{ \Morilog\Jalali\Jalalian::forge($video->created_at)->format('Y/m/d') }}</td>
@@ -115,7 +113,8 @@
                     <td>{{ $video->interactions->where('liked', 1)->count() }}</td>
                     <td>{{ $video->interactions->where('liked', 0)->count() }}</td>
                     <td>
-                        <x-buttons.btn-primary data-bs-target="#edit-video-modal-{{$video->id}}" data-bs-toggle="modal">ویرایش</x-buttons.btn-primary>
+                        <x-buttons.btn-primary data-bs-target="#edit-video-modal-{{ $video->id }}"
+                            data-bs-toggle="modal">ویرایش</x-buttons.btn-primary>
                         <x-buttons.btn-danger title="deleteTrainingVideo" class="confirm" id="{{ $video->id }}">حذف
                         </x-buttons.btn-danger>
                         <livewire:videos.edit-video :videoDb="$video" :wire:key="'edit-video'.$video->id">
