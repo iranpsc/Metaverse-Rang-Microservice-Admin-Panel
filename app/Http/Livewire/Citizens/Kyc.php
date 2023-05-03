@@ -12,6 +12,8 @@ class Kyc extends Component
 
     public $searchTerm;
 
+    protected $paginationTheme = 'bootstrap';
+
     private $kycs;
 
     public function updatedSearchTerm()
