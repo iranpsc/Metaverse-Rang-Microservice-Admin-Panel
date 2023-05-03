@@ -5,8 +5,8 @@
 <div class="row form-group">
     <div class="col-sm-4" wire:ignore>
         <x-buttons.btn-success class="sms-btn" wire:click="sendSMS('{{ $id }}')" wire:loading.attr="disabled" wire:target="sendSMS" id="{{ $id }}">
-            <span wire:loading.remove>ارسال کد تایید</span>
-            <span wire:loading>
+            <span wire:loading.remove wire:target="sendSMS">ارسال کد تایید</span>
+            <span wire:loading wire:target="sendSMS">
                 <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 در حال ارسال
             </span>
