@@ -46,6 +46,6 @@ class Admin extends Authenticatable
     {
         $this->loadMissing('roles');
 
-        return $this->roles->pluck('name');
+        return $this->roles->pluck('title');
     }
 }
