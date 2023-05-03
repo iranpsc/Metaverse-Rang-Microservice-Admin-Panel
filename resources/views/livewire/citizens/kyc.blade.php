@@ -1,6 +1,6 @@
 <div>
     <x-forms.search-box wire:model="searchTerm" placeholder="کد ملی را وارد کنید" />
-    @if (count($kycs) > 0)
+    @if ($kycs->count() > 0)
         <x-tables.table>
             <x-slot:headers>
                 <th>نام</th>
