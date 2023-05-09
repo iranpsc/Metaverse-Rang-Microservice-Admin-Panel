@@ -18,6 +18,6 @@ class VideoSubCategory extends Model
 
     public function videos()
     {
-        return $this->morphMany(Video::class, 'categoriable');
+        return $this->hasMany(Video::class);
     }
 }

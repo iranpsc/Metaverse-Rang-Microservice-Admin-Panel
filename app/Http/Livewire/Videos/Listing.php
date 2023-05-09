@@ -43,8 +43,8 @@ class Listing extends Component
     protected $rules = [
         'title' => 'required',
         'description' => 'required|string|max:2000',
-        'category' => 'nullable|integer|exists:video_categories,id',
-        'subCategory' => 'nullable|integer|exists:video_sub_categories,id',
+        'category' => 'required|integer|exists:video_categories,id',
+        'subCategory' => 'required|integer|exists:video_sub_categories,id',
         'image' => 'required|image|max:1024',
         'video' => 'required|file|mimes:mp4',
         'creator_code' => 'required|string|exists:users,code',
@@ -58,32 +58,21 @@ class Listing extends Component
 
         $videoName = implode('.', [Str::random(10), $this->video->getClientOriginalExtension()]);
         $imageName = implode('.', [Str::random(10), $this->image->getClientOriginalExtension()]);
+
         $this->category = VideoCategory::whereId($this->category)->first();
 
-        if (!empty($this->category) && !empty($this->subCategory)) {
-            $this->subCategory = VideoSubCategory::whereId($this->subCategory)->first();
+        $this->subCategory = VideoSubCategory::whereId($this->subCategory)->first();
 
-            $videoUrl = url($this->video->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $videoName, 'public'));
-            $imageUrl = url($this->image->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $imageName, 'public'));
+        $videoUrl = url($this->video->storePubliclyAs('uploads/tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $videoName, 'public'));
+        $imageUrl = url($this->image->storePubliclyAs('uploads/tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $imageName, 'public'));
 
-            $this->subCategory->videos()->create([
-                'title' => $this->title,
-                'description' => $this->description,
-                'creator_code' => $this->creator_code,
-                'fileName' => $videoUrl,
-                'image' => $imageUrl,
-            ]);
-        } else {
-            $videoUrl = url($this->video->storePubliclyAs('tutorials/' . $this->category->slug, $videoName, 'public'));
-            $imageUrl = url($this->image->storePubliclyAs('tutorials/' . $this->category->slug, $imageName, 'public'));
-            $this->category->videos()->create([
-                'title' => $this->title,
-                'description' => $this->description,
-                'creator_code' => $this->creator_code,
-                'fileName' => $videoUrl,
-                'image' => $imageUrl,
-            ]);
-        }
+        $this->subCategory->videos()->create([
+            'title' => $this->title,
+            'description' => $this->description,
+            'creator_code' => $this->creator_code,
+            'fileName' => $videoUrl,
+            'image' => $imageUrl,
+        ]);
 
         $this->resetExcept(['success', 'videos', 'videoCategories', 'admin']);
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'ویدیو بارگذاری شد']);
@@ -102,7 +91,7 @@ class Listing extends Component
     {
         return view('livewire.videos.listing', [
             'videoCategories' => $this->videoCategories ?? VideoCategory::all(),
-            'videos' => $this->videos ?? Video::with(['categoriable', 'interactions', 'views'])->get()
+            'videos' => $this->videos ?? Video::with(['subCategory', 'interactions', 'views'])->get()
         ])
             ->extends('layouts.app')
             ->section('content');

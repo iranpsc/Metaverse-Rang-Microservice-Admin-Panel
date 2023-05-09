@@ -30,6 +30,9 @@ class LoginController extends Controller
      */
     protected $redirectTo = RouteServiceProvider::HOME;
 
+    protected $maxAttemps = 3;
+    protected $decayMinutes = 5;
+
         /**
      * Get the guard to be used during authentication.
      *

@@ -20,9 +20,4 @@ class VideoCategory extends Model
     {
         return $this->morphOne(Image::class, 'imageable');
     }
-
-    public function videos()
-    {
-        return $this->morphMany(Video::class, 'categoriable');
-    }
 }

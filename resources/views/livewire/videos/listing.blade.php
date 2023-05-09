@@ -99,7 +99,7 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $video->title }}</td>
-                    <td>{{ $video->categoriable->name }}</td>
+                    <td>{{ $video->subCategory->name }}</td>
                     <td>
                         <a target="_blank" href="{{ $video->image }}" class="btn btn-sm btn-primary round">مشاهده</a>
                     </td>

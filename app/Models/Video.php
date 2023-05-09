@@ -11,9 +11,9 @@ class Video extends Model
 
     protected $guarded = [];
 
-    public function categoriable()
+    public function subCategory()
     {
-        return $this->morphTo();
+        return $this->belongsTo(VideoSubCategory::class, 'video_sub_category_id', 'id');
     }
 
     public function interactions()
