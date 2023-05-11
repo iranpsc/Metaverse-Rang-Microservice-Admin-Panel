@@ -73,115 +73,58 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
 
     Route::prefix('citizens')->as('citizens.')->group(function () {
-        Route::get('/registration-info', RegistrationInfo::class)
-            ->middleware('can:view-registration-info')
-            ->name('registration-info');
-        Route::get('/kyc', Kyc::class)
-            ->middleware('can:verify-kyc')
-            ->name('kyc');
-        Route::get('/bank-accounts', Bankaccounts::class)
-            ->middleware('can:verify-bank-accounts')
-            ->name('bank-accounts');
-        Route::get('/deposits', Deposits::class)
-            ->middleware('can:view-deposits')
-            ->name('deposits');
-        Route::get('/withdraws', Withdraws::class)
-            ->middleware('can:view-withdraws')
-            ->name('withdraws');
-        Route::get('/profile-details', Profiledetails::class)
-            ->middleware('can:view-profile-details')
-            ->name('profile-details');
-        Route::get('/assets', Assets::class)
-            ->middleware('can:view-assets')
-            ->name('assets');
+        Route::get('/registration-info', RegistrationInfo::class)->middleware('can:view-registration-info')->name('registration-info');
+        Route::get('/kyc', Kyc::class)->middleware('can:verify-kyc')->name('kyc');
+        Route::get('/bank-accounts', Bankaccounts::class)->middleware('can:verify-bank-accounts')->name('bank-accounts');
+        Route::get('/deposits', Deposits::class)->middleware('can:view-deposits')->name('deposits');
+        Route::get('/withdraws', Withdraws::class)->middleware('can:view-withdraws')->name('withdraws');
+        Route::get('/profile-details', Profiledetails::class)->middleware('can:view-profile-details')->name('profile-details');
+        Route::get('/assets', Assets::class)->middleware('can:view-assets')->name('assets');
     });
+
     Route::prefix('features')->as('features.')->group(function () {
-        Route::get('/', AllFeatures::class)
-            ->middleware('can:edit-features-info')
-            ->name('all');
-        Route::get('/prices', FeaturesPrices::class)
-            ->middleware('can:view-features-prices')
-            ->name('prices');
-        Route::get('/sold', SoldFeatures::class)
-            ->middleware('can:view-sold-features')
-            ->name('sold');
-        Route::get('/trades', TradedFeatures::class)
-            ->middleware('can:view-features-trades')
-            ->name('trades');
-        Route::get('/priced', PricedFeatures::class)
-            ->middleware('can:view-priced-features')
-            ->name('priced');
-        Route::get('/pricing-limits', FeaturePricingLimits::class)
-            ->middleware('can:edit-pricing-limits')
-            ->name('pricing-limits');
-        Route::get('/limits', Limits::class)
-            ->middleware('can:manage-feature-limits')
-            ->name('limits');
+        Route::get('/', AllFeatures::class)->middleware('can:edit-features-info')->name('all');
+        Route::get('/prices', FeaturesPrices::class)->middleware('can:view-features-prices')->name('prices');
+        Route::get('/sold', SoldFeatures::class)->middleware('can:view-sold-features')->name('sold');
+        Route::get('/trades', TradedFeatures::class)->middleware('can:view-features-trades')->name('trades');
+        Route::get('/priced', PricedFeatures::class)->middleware('can:view-priced-features')->name('priced');
+        Route::get('/pricing-limits', FeaturePricingLimits::class)->middleware('can:edit-pricing-limits')->name('pricing-limits');
+        Route::get('/limits', Limits::class)->middleware('can:manage-feature-limits')->name('limits');
     });
-    Route::prefix('access-management')->middleware('can:manage-access')
-        ->as('access-management.')->group(function () {
-            Route::get('/', EmployeesAccessManagement::class)->name('employees');
-            Route::get('/roles', EmployeesRoles::class)->name('roles');
-            Route::get('/permissions', EmployeesPermissions::class)->name('permissions');
-        });
+
+    Route::prefix('access-management')->middleware('can:manage-access')->as('access-management.')->group(function () {
+        Route::get('/', EmployeesAccessManagement::class)->name('employees');
+        Route::get('/roles', EmployeesRoles::class)->name('roles');
+        Route::get('/permissions', EmployeesPermissions::class)->name('permissions');
+    });
+
     Route::prefix('employees')->as('employees.')->group(function () {
-        Route::get('/info', EmployeesInfo::class)
-            ->middleware('can:manage-employee-info')
-            ->name('info');
-        Route::get('/bank-info', EmployeesBankInfo::class)
-            ->middleware('can:manage-employee-bank-accounts')
-            ->name('bank-info');
-        Route::get('/documents', EmployeesDocuments::class)
-            ->middleware('can:manage-employee-documents')
-            ->name('documents');
-        Route::get('/salary', EmployeesSalary::class)
-            ->middleware('can:manage-employee-salary')
-            ->name('salary');
-        Route::get('/time-card', EmployeesTimeCard::class)
-            ->middleware('can:manage-employee-time-card')
-            ->name('time-card');
-        Route::get('/tasks', EmployeesTasks::class)
-            ->middleware('can:manage-employee-tasks')
-            ->name('tasks');
+        Route::get('/info', EmployeesInfo::class)->middleware('can:manage-employee-info')->name('info');
+        Route::get('/bank-info', EmployeesBankInfo::class)->middleware('can:manage-employee-bank-accounts')->name('bank-info');
+        Route::get('/documents', EmployeesDocuments::class)->middleware('can:manage-employee-documents')->name('documents');
+        Route::get('/salary', EmployeesSalary::class)->middleware('can:manage-employee-salary')->name('salary');
+        Route::get('/time-card', EmployeesTimeCard::class)->middleware('can:manage-employee-time-card')->name('time-card');
+        Route::get('/tasks', EmployeesTasks::class)->middleware('can:manage-employee-tasks')->name('tasks');
     });
+
     Route::prefix('support')->as('support.')->group(function () {
-        Route::get('/citizens-safety', SupportCitizensSafety::class)
-            ->middleware('can:respond-to-citziens-safety-tickets')
-            ->name('citizens-safety');
-        Route::get('/technical-support', SupportTechnicalSupport::class)
-            ->middleware('can:respond-to-technical-support-tickets')
-            ->name('technical-support');
-        Route::get('/investment', SupportInvestment::class)
-            ->middleware('can:respond-to-investment-tickets')
-            ->name('investment');
-        Route::get('/inspection', SupportInspection::class)
-            ->middleware('can:respond-to-inspection-tickets')
-            ->name('inspection');
-        Route::get('/protection', SupportProtection::class)
-            ->middleware('can:respond-to-protection-tickets')
-            ->name('protection');
-        Route::get('/ztb-management', SupportZTBManagement::class)
-            ->middleware('can:respond-to-ztb-management-tickets')
-            ->name('ztb-management');
+        Route::get('/citizens-safety', SupportCitizensSafety::class)->middleware('can:respond-to-citziens-safety-tickets')->name('citizens-safety');
+        Route::get('/technical-support', SupportTechnicalSupport::class)->middleware('can:respond-to-technical-support-tickets')->name('technical-support');
+        Route::get('/investment', SupportInvestment::class)->middleware('can:respond-to-investment-tickets')->name('investment');
+        Route::get('/inspection', SupportInspection::class)->middleware('can:respond-to-inspection-tickets')->name('inspection');
+        Route::get('/protection', SupportProtection::class)->middleware('can:respond-to-protection-tickets')->name('protection');
+        Route::get('/ztb-management', SupportZTBManagement::class)->middleware('can:respond-to-ztb-management-tickets')->name('ztb-management');
     });
+
     Route::prefix('store')->as('store.')->group(function () {
-        Route::get('/packages', StorePackages::class)
-            ->middleware('can:manage-packages')
-            ->name('packages');
-        Route::get('/currencies', StoreCurrencies::class)
-            ->middleware('can:manage-currencies')
-            ->name('currencies');
+        Route::get('/packages', StorePackages::class)->middleware('can:manage-packages')->name('packages');
+        Route::get('/currencies', StoreCurrencies::class)->middleware('can:manage-currencies')->name('currencies');
     });
+
     Route::prefix('dynasty')->as('dynasty.')->group(function () {
-        Route::get('/prizes', DynastyPrizes::class)
-            ->middleware('can:manage-dynasty-prizes')
-            ->name('prizes');
-        Route::get('/messages', DynastyMessages::class)
-            ->middleware('can:manage-dynasty-messages')
-            ->name('messages');
-        Route::get('/permissions', DynastyPermissions::class)
-            ->middleware('can:manage-dynasty-permissions')
-            ->name('permissions');
+        Route::get('/prizes', DynastyPrizes::class)->middleware('can:manage-dynasty-prizes')->name('prizes');
+        Route::get('/messages', DynastyMessages::class)->middleware('can:manage-dynasty-messages')->name('messages');
+        Route::get('/permissions', DynastyPermissions::class)->middleware('can:manage-dynasty-permissions')->name('permissions');
     });
 
     Route::prefix('ip')->as('ip.')->group(function () {
@@ -193,17 +136,16 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/levels', LevelListing::class)->middleware('can:manage-level')->name('level');
     Route::get('/maps', MapListing::class)->middleware('can:manage-maps')->name('map-management');
     Route::get('/calendar', CalendarListing::class)->middleware('can:manage-calendar')->name('calendar');
-    Route::get('/reports', ReportsListing::class)->middleware('can:manage-repots')->name('reports');
-    Route::get('/system-variables', SystemVariablesListing::class)->middleware('can:manage-system-variables')
-        ->name('system-variables');
+    Route::get('/reports', ReportsListing::class)->middleware('can:manage-reports')->name('reports');
+    Route::get('/system-variables', SystemVariablesListing::class)->middleware('can:manage-system-variables')->name('system-variables');
 
     Route::prefix('music')->middleware('can:manage-musics')->group(function () {
         Route::get('/', MusicListing::class)->name('music');
         Route::get('/categories', MusicCategories::class)->name('music.categories');
     });
 
-    Route::get('/videos', VideoListing::class)->middleware('can:manage-tutorials')->name('videos');
-    Route::get('/video-categories', VideoCategories::class)->middleware('can:manage-tutorials')->name('video.categories');
+    Route::get('videos', VideoListing::class)->middleware('can:manage-tutorials')->name('videos');
+    Route::get('video-categories', VideoCategories::class)->middleware('can:manage-tutorials')->name('video.categories');
 
     Route::get('challenge', QuestionsList::class)->middleware('can:manage-challenge')->name('challenge');
 
@@ -214,13 +156,13 @@ Auth::routes([
     'register' => false,
 ]);
 
-Route::middleware('auth:admin')->group(function () {
-    Route::get('/code/send', function (Request $request) {
+Route::middleware('auth:admin')->prefix('code')->group(function () {
+    Route::get('send', function (Request $request) {
         $request->user()->notify(new SendVerificationCode);
         return response()->json();
     });
 
-    Route::post('/code/verify', function (Request $request) {
+    Route::post('verify', function (Request $request) {
         $request->validate([
             'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
             'access_password' => 'required|is_valid_access_password'
