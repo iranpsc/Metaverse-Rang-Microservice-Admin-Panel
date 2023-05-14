@@ -34,7 +34,7 @@ class GeneralInfo extends Component
         'lines' => 'required|integer|min:0',
         'png_file' => 'required|image|mimes:png|max:5000',
         'fbx_file' => 'required|file|max:102400',
-        'gif_file' => 'required|file|mimes:gif|max:5000',
+        'gif_file' => 'required|file|mimes:png|max:5000',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
@@ -70,7 +70,7 @@ class GeneralInfo extends Component
             : $this->generalInfo?->png_file;
 
         $data['fbx_file'] = $this->fbx_file
-            ? url('uploads/' . $this->fbx_file->store('levels', 'public'))
+            ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public'))
             : $this->generalInfo?->fbx_file;
 
         $data['gif_file'] = $this->gif_file

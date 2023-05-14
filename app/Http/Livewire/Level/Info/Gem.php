@@ -56,7 +56,7 @@ class Gem extends Component
             ? url('uploads/' . $this->png_file->store('levels', 'public'))
             : $this->gem?->png_file;
         $data['fbx_file'] = $this->fbx_file
-            ? url('uploads/' . $this->fbx_file->store('levels', 'public'))
+            ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public'))
             : $this->gem?->fbx_file;
 
         unset($data['phone_verification']);

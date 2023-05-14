@@ -1,6 +1,5 @@
 <div>
-    <x-buttons.btn-success class="mb-2" data-bs-toggle="modal" data-bs-target="#create-level">تعریف سطح
-    </x-buttons.btn-success>
+    <x-buttons.btn-success class="mb-2" data-bs-toggle="modal" data-bs-target="#create-level">تعریف سطح</x-buttons.btn-success>
     @livewire('level.create', key('create-level'))
     @if ($levels->count() > 0)
         <x-tables.table>
@@ -27,12 +26,7 @@
                         @endif
                     </td>
                     <td>
-                        @if ($level->background_image)
-                            <a target="_blank" href="{{ $level->background_image }}"
-                                class="btn btn-primary btn-sm round">مشاهده</a>
-                        @else
-                            -----
-                        @endif
+                        <x-buttons.btn-link target="_blank" link="{{ $level->background_image }}">مشاهده</x-buttons.btn-link>
                     </td>
                     <td>
                         <x-buttons.btn-primary data-bs-target="#level-info-modal-{{ $level->id }}"
