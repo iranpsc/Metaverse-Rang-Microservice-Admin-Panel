@@ -3,30 +3,21 @@
 namespace App\Http\Livewire\Calendar;
 
 use Livewire\Component;
-use App\Models\Calendar;
+use Livewire\WithFileUploads;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
-use Livewire\WithFileUploads;
-use Livewire\WithPagination;
 
-class Listing extends Component
+class Update extends Component
 {
-    use WithFileUploads, WithPagination, SendsVerificationSms;
+    use WithFileUploads, SendsVerificationSms;
 
-    public $title, $content, $image, $start_date, $end_date, $is_version = false, $color;
+    public $event, $title, $content, $image, $start_date, $end_date, $is_version = false, $color;
     public $btn_name, $btn_link, $version_title, $start_time, $end_time;
-
-    protected $listeners = [
-        'eventCreated' => '$refresh',
-        'eventUpdated' => '$refresh',
-        'eventDeleted' => '$refresh',
-        'deleteEvent'  => 'delete',
-    ];
 
     protected $rules = [
         'title' => 'required|string|min:2|max:255',
         'content' => 'required|string|min:2|max:5000',
-        'image' => 'required|image|mimes:jpg,jpeg,png|max:2024',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2024',
         'start_date' => 'required|date',
         'end_date' => 'nullable|date',
         'start_time' => 'nullable|string|min:2|max:255',
@@ -40,44 +31,44 @@ class Listing extends Component
         'access_password' => 'required|is_valid_access_password'
     ];
 
-    public function mount()
-    {
+    public function mount($event) {
+
+        $this->title = $event->title;
+        $this->content = $event->content;
+        $this->color = $event->color;
+        $this->btn_name = $event->btn_name;
+        $this->btn_link = $event->btn_link;
+        $this->version_title = $event->version_title;
+        $this->is_version = $event->is_version;
+        $this->start_date = $event->starts_at->format('Y-m-d');
+        $this->end_date = $event->ends_at->format('Y-m-d');
+        $this->start_time = $event->starts_at->format('H:i');
+        $this->end_time = $event->ends_at->format('H:i');
+        $this->event = $event;
+
         $this->admin = Auth::guard('admin')->user();
     }
 
-    public function save()
-    {
+    public function save() {
         $this->validate();
 
-        Calendar::create([
+        $this->event->update([
             'title' => $this->title,
             'content' => $this->content,
             'starts_at' => $this->start_date . ' ' . $this->start_time,
             'ends_at' => $this->end_date . ' ' . $this->end_time,
             'color' => $this->color,
-            'writer' => Auth::guard('admin')->user()->name,
             'btn_name' => $this->btn_name,
             'btn_link' => $this->btn_link,
             'version_title' => $this->version_title,
             'is_version' => $this->is_version,
-            'image' => url('uploads/' . $this->image->store('calendars', 'public')),
+            'image' => $this->image ? $this->image->store('events', 'public') : $this->event->image,
         ]);
-
-        $this->resetExcept('admin');
-        $this->dispatchBrowserEvent('resourceModified', ['message' => 'وقعه ثبت شد.']);
-        $this->emitSelf('eventCreated');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'وقعه ویرایش شد']);
+        $this->emitUp('eventUpdated');
     }
-
-    public function delete(Calendar $calendar)
-    {
-        $calendar->delete();
-        $this->emitSelf('eventDeleted');
-    }
-
     public function render()
     {
-        return view('livewire.calendar.listing', [
-            'events' => Calendar::with('interactions')->latest('starts_at')->simplePaginate(10)
-        ])->extends('layouts.app')->section('content');
+        return view('livewire.calendar.update');
     }
 }

@@ -18,31 +18,31 @@ class OrderRepository
     public function pscOrderAmount(): float|int
     {
         return $this->variables ? $this->orders->where('asset', 'psc')->sum('amount') *
-            $this->variables->where('asset', 'psc')->first()->price : 0;
+            optional($this->variables->where('asset', 'psc')->first())->price : 0;
     }
 
     public function yellowOrderAmount(): float|int
     {
         return $this->variables ? $this->orders->where('asset', 'yellow')->sum('amount') *
-            $this->variables->where('asset', 'yellow')->first()->price : 0;
+            optional($this->variables->where('asset', 'yellow')->first())->price : 0;
     }
 
     public function blueOrderAmount(): float|int
     {
         return $this->variables ? $this->orders->where('asset', 'blue')->sum('amount') *
-            $this->variables->where('asset', 'blue')->first()->price : 0;
+            optional($this->variables->where('asset', 'blue')->first())->price : 0;
     }
 
     public function redOrderAmount(): float|int
     {
         return $this->variables ? $this->orders->where('asset', 'red')->sum('amount') *
-            $this->variables->where('asset', 'red')->first()->price : 0;
+            optional($this->variables->where('asset', 'red')->first())->price : 0;
     }
 
     public function irrOrderAmount(): float|int
     {
         return $this->variables ? $this->orders->where('asset', 'irr')->sum('amount') *
-            $this->variables->where('asset', 'irr')->first()->price : 0;
+            optional($this->variables->where('asset', 'irr')->first())->price : 0;
     }
 
     public function totalOrderAmount(): float|int

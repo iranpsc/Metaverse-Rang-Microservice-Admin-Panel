@@ -57,8 +57,8 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $permission->title }}</td>
                     <td>{{ $permission->name }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($permission->created_at)->format('Y/m/d') }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($permission->created_at)->format('H:m:s') }}</td>
+                    <td>{{ jdate($permission->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($permission->created_at)->format('H:m:s') }}</td>
                     <td>
                         <x-buttons.btn-primary data-bs-target="#update-permission-modal-{{ $permission->id }}"
                             data-bs-toggle="modal">بروزرسانی

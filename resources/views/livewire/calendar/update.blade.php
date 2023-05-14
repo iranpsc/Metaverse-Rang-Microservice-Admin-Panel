@@ -1,6 +1,5 @@
 <div>
-    {{-- Close your eyes. Count to one. That is how long forever feels. --}}
-    <x-modals.modal id="edit-event-modal-{{$event->id}}" title="ویرایش وقعه">
+    <x-modals.modal id="edit-event-modal-{{$event->id}}" title="ویرایش وقعه" size="modal-xl">
         <x-forms.group for="title-{{$event->id}}" label="عنوان">
             <x-forms.input id="title-{{$event->id}}" wire:model="title" />
             @error('title')
@@ -16,14 +15,14 @@
         </x-forms.group>
 
         <x-forms.group for="color-{{$event->id}}" label="رنگ">
-            <x-forms.input id="color-{{$event->id}}" wire:model="color" />
+            <x-forms.input type="color" id="color-{{$event->id}}" wire:model="color" />
             @error('color')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
 
 
-        <x-forms.group for="image-{{$event->id}}" label="عکس">
+        <x-forms.group for="image-{{$event->id}}" label="تصویر">
             <x-forms.input type="file" id="image-{{$event->id}}" wire:model="image" />
             <span class="text-success" wire:loading wire:target="image">در حال بارگذاری
                 ...</span>
@@ -62,9 +61,36 @@
             @enderror
         </x-forms.group>
 
+        <x-forms.group for="btn_name" label="نام دکمه ورود به واقعه">
+            <x-forms.input id="btn_name" wire:model="btn_name" />
+            @error('btn_name')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <x-forms.group for="btn_link" label="لینک دکمه ورود به واقعه">
+            <x-forms.input id="btn_link" wire:model="btn_link" />
+            @error('btn_link')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <div class="input-group my-2">
+            <input class="normal" wire:model="is_version" type="checkbox" id="is_version">
+            <label for="is_version">این واقعه ورژن است.</label>
+        </div>
+
+        <x-forms.group for="version_title" label="شناسه نسخه">
+            <x-forms.input id="version_title" wire:model="version_title" />
+            @error('version_title')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <x-forms.verification/>
 
         <x-slot name="footer">
-            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="update">ثبت
+            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت
             </x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بازگشت</x-buttons.btn-danger>
         </x-slot>

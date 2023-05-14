@@ -1,8 +1,5 @@
 <div>
-    {{-- Success is as dangerous as failure. --}}
-
-    <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#create-event-modal">ایجاد وقعه
-    </x-buttons.btn-primary>
+    <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#create-event-modal">ایجاد وقعه</x-buttons.btn-primary>
 
     <x-modals.modal size="modal-xl" id="create-event-modal" title="ایجاد وقعه">
 
@@ -13,32 +10,22 @@
             @enderror
         </x-forms.group>
 
-        {{-- <x-forms.group for="content" label="متن" wire:ignore>
-            <textarea id="editor" wire:model="content" rows="25" cols="35">
-            </textarea>
-            @error('content')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group> --}}
-
         <x-forms.group for="content" label="متن">
-            <textarea id="editor" wire:model="content" rows="10" cols="20" class="form-control">
+            <textarea id="content" wire:model="content" rows="10" cols="20" class="form-control rounded">
             </textarea>
             @error('content')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
 
-
         <x-forms.group for="color" label="رنگ">
-            <x-forms.input id="color" wire:model="color" />
+            <x-forms.input type="color" id="color" wire:model="color" />
             @error('color')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
 
-
-        <x-forms.group for="image" label="عکس">
+        <x-forms.group for="image" label="تصویر">
             <x-forms.input type="file" id="image" wire:model="image" />
             <span class="text-success" wire:loading wire:target="image">در حال بارگذاری ...</span>
             @error('image')
@@ -74,6 +61,33 @@
             @enderror
         </x-forms.group>
 
+        <x-forms.group for="btn_name" label="نام دکمه ورود به واقعه">
+            <x-forms.input id="btn_name" wire:model="btn_name" />
+            @error('btn_name')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <x-forms.group for="btn_link" label="لینک دکمه ورود به واقعه">
+            <x-forms.input id="btn_link" wire:model="btn_link" />
+            @error('btn_link')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <div class="input-group my-2">
+            <input class="normal" wire:model="is_version" type="checkbox" id="is_version">
+            <label for="is_version">این واقعه ورژن است.</label>
+        </div>
+
+        <x-forms.group for="version_title" label="شناسه نسخه">
+            <x-forms.input id="version_title" wire:model="version_title" />
+            @error('version_title')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <x-forms.verification/>
 
         <x-slot name="footer">
             <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
@@ -81,26 +95,44 @@
         </x-slot>
     </x-modals.modal>
 
-    <ul class="nav nav-tabs border">
-        <li class="nav-item">
-            <a class="nav-link active" data-bs-toggle="tab" href="#tab1">وقایع شروع نشده</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#tab2">در حال اجرا</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#tab3">وقایع تمام شده</a>
-        </li>
-    </ul>
+    @if ($events->count() > 0)
+        <x-tables.table>
+            <x-slot name="headers">
+                <th>عنوان</th>
+                <th>متن</th>
+                <th>رنگ</th>
+                <th>زمان شروع</th>
+                <th>زمان پایان</th>
+                <th>تصویر</th>
+                <th>تعداد بازدید</th>
+                <th>لایک</th>
+                <th>دیسلایک</th>
+                <th>وضعیت</th>
+                <th>اقدامات</th>
 
-    <div class="tab-content">
-        <div id="tab1" class="tab-pane fade active show">
-            <livewire:calendar.comming-events :events="$events">
-        </div>
-        <div id="tab2" class="tab-pane fade">
-            <livewire:calendar.now :events="$events">
-        </div>
-        <div id="tab3" class="tab-pane fade">
-            <livewire:calendar.ago-events :events="$events">
-        </div>
-    </div>
+                @foreach ($events as $event)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $event->title }}</td>
+                        <td>{{ Str::limit($event->content, 20) }}</td>
+                        <td>{{ $event->color }}</td>
+                        <td>{{ jdate($event->starts_at)->format('Y/m/d H:i:s') }}</td>
+                        <td>{{ jdate($event->ends_at)->format('Y/m/d H:i:s') }}</td>
+                        <td><x-buttons.btn-link target="_blank" link="{{ $event->image }}">مشاهده</x-buttons.btn-link></td>
+                        <td>{{ $event->views->count() }}</td>
+                        <td>{{ $event->interactions->where('liked', 1)->count() }}</td>
+                        <td>{{ $event->interactions->where('liked', 0)->count() }}</td>
+                        <td>{{ $event->getStatus() }}</td>
+                        <td>
+                            <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#edit-event-modal-{{$event->id}}">ویرایش</x-buttons.btn-primary>
+                            <x-buttons.btn-danger class="confirm" id="{{ $event->id }}" title="deleteEvent">حذف</x-buttons.btn-danger>
+                            <livewire:calendar.update :event="$event" :key="'event-'.$event->id" />
+                        </td>
+                    </tr>
+                @endforeach
+            </x-slot>
+        </x-tables.table>
+    @else
+        <x-alerts.danger>وقعه ای ثبت نشده است.</x-alerts.danger>
+    @endif
+</div>

@@ -49,8 +49,8 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $role->title }}</td>
                     <td>{{ $role->name }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($role->created_at)->format('Y/m/d') }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($role->created_at)->format('H:m:s') }}</td>
+                    <td>{{ jdate($role->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($role->created_at)->format('H:m:s') }}</td>
                     <td>
                         <x-buttons.btn-danger class="confirm" id="{{ $role->id }}" title="deleteRole">حذف
                         </x-buttons.btn-danger>

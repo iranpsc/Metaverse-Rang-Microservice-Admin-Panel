@@ -17,8 +17,8 @@ class Roles extends Component
     protected $paginationTheme = 'bootstrap';
 
     protected $rules = [
-        'title' => 'required|string',
-        'name' => 'required|string|min:2',
+        'title' => 'required|string|min:2|unique:roles|max:255',
+        'name' => 'required|string|min:2|unique:roles|max:255',
     ];
 
     protected $listeners = [
@@ -35,9 +35,11 @@ class Roles extends Component
             'title' => $this->title,
             'name' => $this->name,
         ]);
+
         if(count($this->addedPermissions) > 0) {
             $role->syncPermissions($this->addedPermissions);
         }
+
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         $this->emitSelf('roleCreated');
         $this->reset(['title', 'name', 'addedPermissions']);
@@ -57,8 +59,8 @@ class Roles extends Component
     public function render()
     {
         return view('livewire.access-management.roles', [
-            'roles' => Role::whereNotIn('name', ['super-admin'])
-            ->with('permissions')->paginate(10, '*', 'roles-listing'),
+            'roles' => Role::whereNot('name', 'super-admin')
+            ->with('permissions')->simplePaginate(10),
             'permissions' => Permission::lazy(),
         ])
         ->extends('layouts.app')

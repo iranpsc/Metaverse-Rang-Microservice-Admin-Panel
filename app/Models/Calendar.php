@@ -9,29 +9,26 @@ class Calendar extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'title',
-        'content',
-        'start_date',
-        'end_date',
-        'start_time',
-        'end_time',
-        'views',
-        'color',
-        'writer'
+    protected $guarded = [];
+
+    public $timestamps = false;
+
+    protected $casts = [
+        'starts_at' => 'datetime',
+        'ends_at' => 'datetime',
     ];
 
-    public function image()
+    public function interactions() {
+        return $this->morphMany(Interaction::class, 'likeable');
+    }
+
+    public function views() {
+        return $this->morphMany(View::class, 'viewable');
+    }
+
+    public function getStatus()
     {
-        return $this->morphOne(Image::class, 'imageable');
-    }
-
-    public function likes() {
-        return $this->morphMany(Like::class, 'likeable');
-    }
-
-    public function dislikes() {
-        return $this->morphMany(Dislike::class, 'dislikeable');
+        return $this->ends_at < now() ? 'سپری شده' : 'در حال برگزاری';
     }
 }
 
