@@ -38,8 +38,8 @@ class Gem extends Component
         'points' => 'required|integer|min:0',
         'volume' => 'required|decimal:0,3|min:0',
         'color' => 'required|string|max:255',
-        'png_file' => 'nullable|image|max:5024',
-        'fbx_file' => 'nullable|file|max:100000',
+        'png_file' => 'required|image|max:5024',
+        'fbx_file' => 'required|file|max:100000',
         'encryption' => 'required|boolean',
         'designer' => 'required|string|max:255',
         'has_animation' => 'required|boolean',
@@ -52,33 +52,26 @@ class Gem extends Component
     {
         $data = $this->validate();
 
-        if (is_null($this->gem)) {
-            $this->validate([
-                'png_file' => 'required|image|max:5024',
-                'fbx_file' => 'required|file|max:100000',
-            ]);
+        $data['png_file'] = $this->png_file
+            ? url('uploads/' . $this->png_file->store('levels', 'public'))
+            : $this->gem->png_file;
+
+        $data['fbx_file'] = $this->fbx_file
+            ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public'))
+            : $this->gem->fbx_file;
+
+        unset($data['phone_verification']);
+        unset($data['access_password']);
+
+        if ($this->gem) {
+            $this->gem->update($data);
         } else {
-            $data['png_file'] = $this->png_file
-                ? url('uploads/' . $this->png_file->store('levels', 'public'))
-                : $this->gem->png_file;
-
-            $data['fbx_file'] = $this->fbx_file
-                ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public'))
-                : $this->gem->fbx_file;
-
-            unset($data['phone_verification']);
-            unset($data['access_password']);
-
-            if ($this->gem) {
-                $this->gem->update($data);
-            } else {
-                $this->gem = $this->level->gem()->create($data);
-            }
-
-            $this->clearVerificationCode();
-
-            $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
+            $this->gem = $this->level->gem()->create($data);
         }
+
+        $this->clearVerificationCode();
+
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
     }
 
     public function render()

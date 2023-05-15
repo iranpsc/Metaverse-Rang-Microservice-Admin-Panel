@@ -18,12 +18,7 @@
                     <td>{{ $level->score }}</td>
                     <td>{{ $level->slug }}</td>
                     <td>
-                        @if ($level->image)
-                            <a target="_blank" href="{{ asset('uploads/' . $level->image->url) }}"
-                                class="btn btn-primary btn-sm round">مشاهده</a>
-                        @else
-                            -----
-                        @endif
+                        <x-buttons.btn-link target="_blank" link="{{ 'uploads/'.optional($level->image)->url }}">مشاهده</x-buttons.btn-link>
                     </td>
                     <td>
                         <x-buttons.btn-link target="_blank" link="{{ $level->background_image }}">مشاهده</x-buttons.btn-link>

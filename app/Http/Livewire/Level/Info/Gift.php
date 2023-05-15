@@ -71,31 +71,28 @@ class Gift extends Component
     {
         $data = $this->validate();
 
-        if(is_null($this->gift)) {
-            $this->validate([
-                'fbx_file' => 'required|file|max:100000',
-                'png_file' => 'required|image|max:5000',
-                'gif_file' => 'required|file|mimes:png|max:5000',
-            ]);
+        unset($data['phone_verification']);
+        unset($data['access_password']);
+
+        $data['fbx_file'] = $this->fbx_file
+            ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public'))
+            : $this->gift->fbx_file;
+        $data['png_file'] = $this->png_file
+            ? url('uploads/' . $this->png_file->store('levels', 'public'))
+            : $this->gift->png_file;
+        $data['gif_file'] = $this->gif_file
+            ? url('uploads/' . $this->gif_file->store('levels', 'public'))
+            : $this->gift->gif_file;
+
+        if ($this->gift) {
+            $this->gift->update($data);
         } else {
-            unset($data['phone_verification']);
-            unset($data['access_password']);
-
-            $data['fbx_file'] = $this->fbx_file ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public')) : $this->gift->fbx_file;
-            $data['png_file'] = $this->png_file ? url('uploads/' . $this->png_file->store('levels', 'public')) : $this->gift->png_file;
-            $data['gif_file'] = $this->gif_file ? url('uploads/' . $this->gif_file->store('levels', 'public')) : $this->gift->gif_file;
-
-            if ($this->gift) {
-                $this->gift->update($data);
-            } else {
-                $this->gift = $this->level->gift()->create($data);
-            }
-
-            $this->clearVerificationCode();
-
-            $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
+            $this->gift = $this->level->gift()->create($data);
         }
 
+        $this->clearVerificationCode();
+
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
     }
 
     public function render()

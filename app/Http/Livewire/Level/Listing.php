@@ -37,7 +37,7 @@ class Listing extends Component
     public function render()
     {
         return view('livewire.level.listing', [
-            'levels' => Level::with(['prize', 'image', 'generalInfo'])->paginate(10)
+            'levels' => Level::with(['prize', 'image', 'generalInfo'])->simplePaginate(10)
         ])
             ->extends('layouts.app')
             ->section('content');

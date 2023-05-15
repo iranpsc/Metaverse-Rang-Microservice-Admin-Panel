@@ -65,13 +65,6 @@ class GeneralInfo extends Component
     {
         $data = $this->validate();
 
-        if (is_null($this->generalInfo)) {
-            $this->validate([
-                'png_file' => 'required|image|mimes:png|max:5000',
-                'fbx_file' => 'required|file|max:102400',
-                'gif_file' => 'required|file|mimes:png|max:5000',
-            ]);
-        } else {
             $data['png_file'] = $this->png_file
                 ? url('uploads/' . $this->png_file->store('levels', 'public'))
                 : $this->generalInfo->png_file;
@@ -96,7 +89,6 @@ class GeneralInfo extends Component
             $this->clearVerificationCode();
 
             $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
-        }
     }
 
     public function render()
