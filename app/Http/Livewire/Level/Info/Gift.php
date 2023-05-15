@@ -38,9 +38,9 @@ class Gift extends Component
         'three_d_model_points' => 'required|integer|min:0',
         'three_d_model_lines' => 'required|integer|min:0',
         'has_animation' => 'required|boolean',
-        'png_file' => 'required|image|max:5000',
-        'fbx_file' => 'required|file|max:100000',
-        'gif_file' => 'required|file|max:5000',
+        'png_file' => 'nullable|image|max:5000',
+        'fbx_file' => 'nullable|file|max:100000',
+        'gif_file' => 'nullable|file|max:5000',
         'rent' => 'required|boolean',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
@@ -71,22 +71,31 @@ class Gift extends Component
     {
         $data = $this->validate();
 
-        unset($data['phone_verification']);
-        unset($data['access_password']);
-
-        $data['fbx_file'] = $this->fbx_file ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public')) : $this->gift?->fbx_file;
-        $data['png_file'] = $this->png_file ? url('uploads/' . $this->png_file->store('levels', 'public')) : $this->gift?->png_file;
-        $data['gif_file'] = $this->gif_file ? url('uploads/' . $this->gif_file->store('levels', 'public')) : $this->gift?->gif_file;
-
-        if ($this->gift) {
-            $this->gift->update($data);
+        if(is_null($this->gift)) {
+            $this->validate([
+                'fbx_file' => 'required|file|max:100000',
+                'png_file' => 'required|image|max:5000',
+                'gif_file' => 'required|file|mimes:png|max:5000',
+            ]);
         } else {
-            $this->gift = $this->level->gift()->create($data);
+            unset($data['phone_verification']);
+            unset($data['access_password']);
+
+            $data['fbx_file'] = $this->fbx_file ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public')) : $this->gift->fbx_file;
+            $data['png_file'] = $this->png_file ? url('uploads/' . $this->png_file->store('levels', 'public')) : $this->gift->png_file;
+            $data['gif_file'] = $this->gif_file ? url('uploads/' . $this->gif_file->store('levels', 'public')) : $this->gift->gif_file;
+
+            if ($this->gift) {
+                $this->gift->update($data);
+            } else {
+                $this->gift = $this->level->gift()->create($data);
+            }
+
+            $this->clearVerificationCode();
+
+            $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         }
 
-        $this->clearVerificationCode();
-
-        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
     }
 
     public function render()

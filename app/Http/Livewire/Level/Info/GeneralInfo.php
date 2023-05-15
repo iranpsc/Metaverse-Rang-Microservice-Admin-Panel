@@ -32,9 +32,9 @@ class GeneralInfo extends Component
         'creation_date' => 'required|shamsi_date',
         'has_animation' => 'required|boolean',
         'lines' => 'required|integer|min:0',
-        'png_file' => 'required|image|mimes:png|max:5000',
-        'fbx_file' => 'required|file|max:102400',
-        'gif_file' => 'required|file|mimes:png|max:5000',
+        'png_file' => 'nullable|image|mimes:png|max:5000',
+        'fbx_file' => 'nullable|file|max:102400',
+        'gif_file' => 'nullable|file|mimes:png|max:5000',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
@@ -65,30 +65,38 @@ class GeneralInfo extends Component
     {
         $data = $this->validate();
 
-        $data['png_file'] = $this->png_file
-            ? url('uploads/' . $this->png_file->store('levels', 'public'))
-            : $this->generalInfo?->png_file;
-
-        $data['fbx_file'] = $this->fbx_file
-            ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public'))
-            : $this->generalInfo?->fbx_file;
-
-        $data['gif_file'] = $this->gif_file
-            ? url('uploads/' . $this->gif_file->store('levels', 'public'))
-            : $this->generalInfo?->gif_file;
-
-        unset($data['phone_verification']);
-        unset($data['access_password']);
-
-        if ($this->generalInfo) {
-            $this->generalInfo->update($data);
+        if (is_null($this->generalInfo)) {
+            $this->validate([
+                'png_file' => 'required|image|mimes:png|max:5000',
+                'fbx_file' => 'required|file|max:102400',
+                'gif_file' => 'required|file|mimes:png|max:5000',
+            ]);
         } else {
-            $this->generalInfo = $this->level->generalInfo()->create($data);
+            $data['png_file'] = $this->png_file
+                ? url('uploads/' . $this->png_file->store('levels', 'public'))
+                : $this->generalInfo->png_file;
+
+            $data['fbx_file'] = $this->fbx_file
+                ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public'))
+                : $this->generalInfo->fbx_file;
+
+            $data['gif_file'] = $this->gif_file
+                ? url('uploads/' . $this->gif_file->store('levels', 'public'))
+                : $this->generalInfo->gif_file;
+
+            unset($data['phone_verification']);
+            unset($data['access_password']);
+
+            if ($this->generalInfo) {
+                $this->generalInfo->update($data);
+            } else {
+                $this->generalInfo = $this->level->generalInfo()->create($data);
+            }
+
+            $this->clearVerificationCode();
+
+            $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
         }
-
-        $this->clearVerificationCode();
-
-        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
     }
 
     public function render()
