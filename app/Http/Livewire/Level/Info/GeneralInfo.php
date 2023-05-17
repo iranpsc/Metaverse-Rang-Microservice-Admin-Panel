@@ -65,30 +65,30 @@ class GeneralInfo extends Component
     {
         $data = $this->validate();
 
-            $data['png_file'] = $this->png_file
-                ? url('uploads/' . $this->png_file->store('levels', 'public'))
-                : $this->generalInfo->png_file;
+        $data['png_file'] = $this->png_file
+            ? url('uploads/' . $this->png_file->store('levels', 'public'))
+            : $this->generalInfo->png_file;
 
-            $data['fbx_file'] = $this->fbx_file
-                ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public'))
-                : $this->generalInfo->fbx_file;
+        $data['fbx_file'] = $this->fbx_file
+            ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public'))
+            : $this->generalInfo->fbx_file;
 
-            $data['gif_file'] = $this->gif_file
-                ? url('uploads/' . $this->gif_file->store('levels', 'public'))
-                : $this->generalInfo->gif_file;
+        $data['gif_file'] = $this->gif_file
+            ? url('uploads/' . $this->gif_file->store('levels', 'public'))
+            : $this->generalInfo->gif_file;
 
-            unset($data['phone_verification']);
-            unset($data['access_password']);
+        unset($data['phone_verification']);
+        unset($data['access_password']);
 
-            if ($this->generalInfo) {
-                $this->generalInfo->update($data);
-            } else {
-                $this->generalInfo = $this->level->generalInfo()->create($data);
-            }
+        if ($this->generalInfo) {
+            $this->generalInfo->update($data);
+        } else {
+            $this->generalInfo = $this->level->generalInfo()->create($data);
+        }
 
-            $this->clearVerificationCode();
+        $this->clearVerificationCode();
 
-            $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
     }
 
     public function render()

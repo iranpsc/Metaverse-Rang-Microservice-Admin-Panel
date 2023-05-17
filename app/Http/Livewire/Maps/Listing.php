@@ -2,23 +2,22 @@
 
 namespace App\Http\Livewire\Maps;
 
-use App\Helpers\Feature;
 use App\Models\Map;
+use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
-use Morilog\Jalali\Jalalian;
 
 class Listing extends Component
 {
-    use WithFileUploads, WithPagination;
+    use WithFileUploads, WithPagination, SendsVerificationSms;
 
     public $name, $file;
 
     protected $rules = [
         'name' => 'required|string|min:2',
-        'file' => 'required|file'
+        'file' => 'required|file|mimes:json|max:10240'
     ];
 
     protected $listeners = [
@@ -26,6 +25,11 @@ class Listing extends Component
         'mapDeleted' => '$refresh',
         'mapsInsertedToDatabase' => '$refresh'
     ];
+
+    public function mount()
+    {
+        $this->admin = Auth::guard('admin')->user();
+    }
 
     protected $paginationTheme = 'bootstrap';
 
@@ -53,11 +57,11 @@ class Listing extends Component
 
         $first_id = $fileContents['features'][0]['properties']['id'];
         $last_id = $fileContents['features'][count($fileContents['features']) - 1]['properties']['id'] ?? "";
-        $karbari = Feature::getKarbari($fileContents['features'][0]['properties']['karbari']);
+        $karbari = $this->getFeatureTitle($fileContents['features'][0]['properties']['karbari']);
 
         $map = new Map();
         $map->name = $this->name;
-        $map->publish_date = Jalalian::forge(now())->format('Y/m/d');
+        $map->publish_date = jdate(now())->format('Y/m/d');
         $map->publisher_name = Auth::guard('admin')->user()->name;
         $map->polygon_count = $polygon_count;
         $map->total_area = $polygons_total_area;
@@ -71,10 +75,6 @@ class Listing extends Component
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'فایل با موفقیت بارگذاری شد']);
     }
 
-    public function updated($prop)
-    {
-        $this->validateOnly($prop);
-    }
 
     public function delete(Map $map)
     {
@@ -83,12 +83,26 @@ class Listing extends Component
         $this->emitSelf('mapDeleted');
     }
 
+    protected function getFeatureTitle(string $type)
+    {
+        return match ($type) {
+            'm' => 'مسکونی',
+            't' => 'تجاری',
+            'e' => 'اداری',
+            'a' => 'آموزشی',
+            'b' => 'بهداشتی',
+            's' => 'فضای سبز',
+            'f' => 'فرهنگی',
+            'g' => 'گردشگری',
+            'z' => 'مذهبی',
+            'n' => 'نمایشگاه',
+        };
+    }
+
     public function render()
     {
         return view('livewire.maps.listing', [
             'maps' => Map::simplePaginate(10)
-        ])
-            ->extends('layouts.app')
-            ->section('content');
+        ])->extends('layouts.app')->section('content');
     }
 }

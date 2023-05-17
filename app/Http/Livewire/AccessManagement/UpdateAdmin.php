@@ -26,6 +26,11 @@ class UpdateAdmin extends Component
         'access_password' => 'required|is_valid_access_password'
     ];
 
+    public function mount()
+    {
+        $this->admin = auth()->guard('admin')->user();
+    }
+
     public function update()
     {
         if(count($this->addedDirectPermissions) > 0) {

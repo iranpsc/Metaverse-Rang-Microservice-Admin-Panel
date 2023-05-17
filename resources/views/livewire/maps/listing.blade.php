@@ -1,28 +1,28 @@
 <div>
-    {{-- Care about people's approval and you will be their prisoner. --}}
-    @can('Upload-Maps')
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#upload-map-modal">بارگزاری نقشه
-    </x-buttons.btn-primary>
-    <x-modals.modal id="upload-map-modal" title="بارگزاری فایل نقشه">
+    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#upload-map-modal">بارگذاری نقشه</x-buttons.btn-primary>
+    <x-modals.modal id="upload-map-modal" title="بارگذاری فایل نقشه">
         <x-forms.group for="name" label="نام آبادی">
             <x-forms.input wire:model="name" id="name" />
             @error('name')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
-        <x-forms.group for="file" label="بارگزاری نقشه">
+
+        <x-forms.group for="file" label="بارگذاری نقشه">
             <x-forms.input type="file" wire:model="file" id="file" />
-            <span class="text-success" wire:loading wire:target="file">در حال بارگذاری ...</span>
+            <x-progress-bar wire:loading wire:target="file" />
             @error('file')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
+
+        <x-forms.verification/>
+
         <x-slot name="footer">
-            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">آپلود</x-buttons.btn-success>
+            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">بارگذاری</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot>
     </x-modals.modal>
-    @endcan
     @if ($maps->count() > 0)
         <x-tables.table>
             <x-slot name="headers">
@@ -48,29 +48,13 @@
                     <td>{{ $map->total_area }}</td>
                     <td>{{ $map->first_id }}</td>
                     <td>{{ $map->last_id }}</td>
-                    <td>
-                        @switch($map->status)
-                            @case(0)
-                                <span class="badge badge-warning">منتشر نشده</span>
-                            @break
-
-                            @case(1)
-                                <span class="badge badge-success">منتشر شده</span>
-                            @break
-
-                            @default
-                        @endswitch
-                    </td>
+                    <td>{{ $map->status }}</td>
                     <td>
                         @unless($map->status == 1)
-                            <x-buttons.btn-primary data-bs-toggle="modal"
-                                data-bs-target="#map-modal-{{ $map->id }}">
-                                اعمال</x-buttons.btn-primary>
-                            <x-buttons.btn-danger class="confirm" id="{{ $map->id }}" title="deleteMap">حذف
-                            </x-buttons.btn-danger>
+                            <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#map-modal-{{ $map->id }}">اعمال</x-buttons.btn-primary>
+                            <x-buttons.btn-danger class="confirm" id="{{ $map->id }}" title="deleteMap">حذف</x-buttons.btn-danger>
                         @endunless
-                        @livewire('maps.insert-into-database', ['map' => $map], key('map-' . $map->id))
-                    </td>
+                        <livewire:maps.insert-into-database' :map="$map" wire:key="'map-' . $map->id"/>                    </td>
                 </tr>
             @endforeach
         </x-tables.table>
