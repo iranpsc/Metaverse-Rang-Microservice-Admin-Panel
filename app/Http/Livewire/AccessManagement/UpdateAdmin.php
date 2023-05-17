@@ -23,7 +23,7 @@ class UpdateAdmin extends Component
         'access_password' => 'required|is_valid_access_password'
     ];
 
-    public function update()
+    public function save()
     {
         if(count($this->addedDirectPermissions) > 0) {
             $this->admin->givePermissionTo($this->addedDirectPermissions);
