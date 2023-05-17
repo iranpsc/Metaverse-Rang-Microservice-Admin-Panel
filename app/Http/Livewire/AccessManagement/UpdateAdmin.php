@@ -2,14 +2,13 @@
 
 namespace App\Http\Livewire\AccessManagement;
 
-use App\Traits\SendsVerificationSms;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class UpdateAdmin extends Component
 {
-    public $addedRoles = [];
+    public $addedRoles = [], $admin;
     public $addedDirectPermissions = [];
 
     protected $listeners = [
