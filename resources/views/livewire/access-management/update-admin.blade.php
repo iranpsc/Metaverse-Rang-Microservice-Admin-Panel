@@ -26,7 +26,6 @@
         @empty
             <x-alerts.danger>مسئولیتی تعریف نشده است!</x-alerts.danger>
         @endforelse
-        <x-forms.verification id="{{ $admin->id }}"/>
 
         <x-slot name="footer">
             <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>

@@ -9,8 +9,6 @@ use Spatie\Permission\Models\Role;
 
 class UpdateAdmin extends Component
 {
-    use SendsVerificationSms;
-
     public $addedRoles = [];
     public $addedDirectPermissions = [];
 
@@ -25,11 +23,6 @@ class UpdateAdmin extends Component
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
-
-    public function mount()
-    {
-        $this->admin = auth()->guard('admin')->user();
-    }
 
     public function update()
     {

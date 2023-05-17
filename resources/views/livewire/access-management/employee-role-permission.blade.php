@@ -56,8 +56,8 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $admin->name }}</td>
                     <td>{{ implode('، ', json_decode($admin->getRoleTitles())) }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($admin->created_at)->format('Y/m/d') }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($admin->created_at)->format('H:m:s') }}</td>
+                    <td>{{ jdate($admin->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($admin->created_at)->format('H:m:s') }}</td>
                     <td>
                         @unless ($admin->id == Auth::user()->id)
                             <x-buttons.btn-danger class="confirm" id="{{ $admin->id }}" title="deleteAdmin">حذف
