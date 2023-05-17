@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Map extends Model
 {
-	protected $table = 'maps';
-
 	protected $guarded = [];
+
+    public $timestamps = false;
 
 	public function crs()
 	{

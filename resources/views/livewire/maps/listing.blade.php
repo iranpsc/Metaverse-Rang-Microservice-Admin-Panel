@@ -8,10 +8,33 @@
             @enderror
         </x-forms.group>
 
-        <x-forms.group for="file" label="بارگذاری نقشه">
-            <x-forms.input type="file" wire:model="file" id="file" />
-            <x-progress-bar wire:loading wire:target="file" />
-            @error('file')
+        <x-forms.group for="mapFile" label="بارگذاری نقشه">
+            <x-forms.input type="file" wire:model="mapFile" id="mapFile" />
+            <x-progress-bar wire:loading wire:target="mapFile" />
+            @error('mapFile')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <x-forms.group for="pointFile" label="بارگذاری فایل نقطه مرکزی">
+            <x-forms.input type="file" wire:model="pointFile" id="pointFile" />
+            <x-progress-bar wire:loading wire:target="pointFile" />
+            @error('pointFile')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <x-forms.group for="borderFile" label="بارگذاری فایل مرز">
+            <x-forms.input type="file" wire:model="borderFile" id="borderFile" />
+            <x-progress-bar wire:loading wire:target="borderFile" />
+            @error('borderFile')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
+        <x-forms.group for="color" label="رنگ محدوده">
+            <x-forms.input type="color" wire:model="color" id="color" />
+            @error('color')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
@@ -50,11 +73,14 @@
                     <td>{{ $map->last_id }}</td>
                     <td>{{ $map->status }}</td>
                     <td>
+                        <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#update-map-modal-{{ $map->id }}">بروزرسانی</x-buttons.btn-primary>
                         @unless($map->status == 1)
                             <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#map-modal-{{ $map->id }}">اعمال</x-buttons.btn-primary>
                             <x-buttons.btn-danger class="confirm" id="{{ $map->id }}" title="deleteMap">حذف</x-buttons.btn-danger>
                         @endunless
-                        <livewire:maps.insert-into-database' :map="$map" wire:key="'map-' . $map->id"/>                    </td>
+                        <livewire:maps.insert-into-database' :map="$map" wire:key="'map-' . $map->id"/>
+                        <livewire:maps.update :map="$map" wire:key="'update-map-' . $map->id"/>
+                    </td>
                 </tr>
             @endforeach
         </x-tables.table>
