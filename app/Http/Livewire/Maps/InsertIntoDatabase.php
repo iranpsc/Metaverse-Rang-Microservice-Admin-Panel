@@ -28,14 +28,13 @@ class InsertIntoDatabase extends Component
     {
         $this->validate();
 
-        if ($map->status) {
+        if ($map->isPublished()) {
             return;
         }
 
         ImportMaps::dispatch($map);
         $map->update(['status' => 1]);
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت وارد دیتابیس شد']);
-        $this->reset('code', 'accessPassword');
         $this->emitUp('mapsInsertedToDatabase');
     }
 

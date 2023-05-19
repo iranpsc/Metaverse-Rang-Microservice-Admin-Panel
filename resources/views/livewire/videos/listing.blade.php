@@ -107,8 +107,8 @@
                         <a target="_blank" href="{{ $video->fileName }}" class="btn btn-sm btn-primary round">مشاهده</a>
                     </td>
                     <td>{{ $video->creator_code }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($video->created_at)->format('Y/m/d') }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($video->created_at)->format('H:m:s') }}</td>
+                    <td>{{ jdate($video->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($video->created_at)->format('H:m:s') }}</td>
                     <td>{{ $video->views->count() }}</td>
                     <td>{{ $video->interactions->where('liked', 1)->count() }}</td>
                     <td>{{ $video->interactions->where('liked', 0)->count() }}</td>

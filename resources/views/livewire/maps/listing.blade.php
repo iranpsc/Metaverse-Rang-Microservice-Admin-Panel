@@ -65,21 +65,25 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $map->name }}</td>
                     <td>{{ $map->karbari }}</td>
-                    <td>{{ $map->publish_date }}</td>
+                    <td>{{ jdate($map->publish_date)->format('Y/m/d') }}</td>
                     <td>{{ $map->publisher_name }}</td>
                     <td>{{ $map->polygon_count }}</td>
                     <td>{{ $map->total_area }}</td>
                     <td>{{ $map->first_id }}</td>
                     <td>{{ $map->last_id }}</td>
-                    <td>{{ $map->status }}</td>
                     <td>
-                        <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#update-map-modal-{{ $map->id }}">بروزرسانی</x-buttons.btn-primary>
-                        @unless($map->status == 1)
-                            <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#map-modal-{{ $map->id }}">اعمال</x-buttons.btn-primary>
-                            <x-buttons.btn-danger class="confirm" id="{{ $map->id }}" title="deleteMap">حذف</x-buttons.btn-danger>
+                        @if ($map->status)
+                            <span class="badge bg-success">منتشر شده</span>
+                        @else
+                            <span class="badge bg-danger">منتشر نشده</span>
+                        @endif
+                    </td>
+                    <td>
+                        @unless ($map->isPublished())
+                            <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#map-modal-{{ $map->id }}">انتشار</x-buttons.btn-primary>
                         @endunless
-                        <livewire:maps.insert-into-database' :map="$map" wire:key="'map-' . $map->id"/>
-                        <livewire:maps.update :map="$map" wire:key="'update-map-' . $map->id"/>
+                        <x-buttons.btn-danger class="confirm" id="{{ $map->id }}" title="deleteMap">حذف</x-buttons.btn-danger>
+                        <livewire:maps.insert-into-database :map="$map" :wire:key="'insert-into-database-' . $map->id" />
                     </td>
                 </tr>
             @endforeach

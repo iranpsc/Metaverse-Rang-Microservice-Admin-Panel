@@ -34,7 +34,7 @@ class Listing extends Component
 
     public function mount()
     {
-        $this->admin = Auth::guard('admin')->user();
+        $this->admin = auth()->guard('admin')->user();
     }
 
     protected $paginationTheme = 'bootstrap';
@@ -77,8 +77,8 @@ class Listing extends Component
 
         $map = new Map();
         $map->name = $this->name;
-        $map->publish_date = jdate(now())->format('Y/m/d');
-        $map->publisher_name = Auth::guard('admin')->user()->name;
+        $map->publish_date = now()->format('Y/m/d');
+        $map->publisher_name = auth()->guard('admin')->user()->name;
         $map->polygon_count = $polygon_count;
         $map->total_area = $polygons_total_area;
         $map->first_id = $first_id;
@@ -86,7 +86,7 @@ class Listing extends Component
         $map->status = 0;
         $map->karbari = $karbari;
         $map->fileName = $mapFileName;
-        $map->border_coordinates = json_encode($borderFileContents['features'][0]['geometry']['coordinates']);
+        $map->border_coordinates = json_encode($borderFileContents['features'][0]['geometry']['coordinates'][0][0]);
         $map->central_point_coordinates = json_encode($pointFileContents['features'][0]['geometry']['coordinates']);
         $map->polygon_area = intval($borderFileContents['features'][0]['properties']['area']);
         $map->polygon_address = json_encode($borderFileContents['features'][0]['properties']['address']);
