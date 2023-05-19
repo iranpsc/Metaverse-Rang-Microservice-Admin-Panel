@@ -65,7 +65,7 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $map->name }}</td>
                     <td>{{ $map->karbari }}</td>
-                    <td>{{ jdate($map->publish_date)->format('Y/m/d') }}</td>
+                    <td>{{ $map->publish_date }}</td>
                     <td>{{ $map->publisher_name }}</td>
                     <td>{{ $map->polygon_count }}</td>
                     <td>{{ $map->total_area }}</td>
