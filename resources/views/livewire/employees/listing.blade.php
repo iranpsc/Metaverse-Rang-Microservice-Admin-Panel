@@ -1,18 +1,21 @@
 <div>
-    {{-- The Master doesn't talk, he acts. --}}
     <x-forms.search-box wire:model="search"></x-forms.search-box>
 
     <x-buttons.btn-success class="my-2" data-bs-toggle="modal" data-bs-target="#create-employee-modal">تعریف کارمند</x-buttons.btn-success>
 
     <x-modals.modal id="create-employee-modal" title="تعریف کارمند">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
         <div class="row">
             <div class="col-sm-6">
                 <x-forms.group for="fname" label="نام">
                     <x-forms.input id="fname" wire:model="fname" />
                     @error('fname')
+                        <span class="text-danger">{{ $message }}</span>
+                    @enderror
+                </x-forms.group>
+
+                <x-forms.group for="lname" label="نام خانوادگی">
+                    <x-forms.input id="lname" wire:model="lname" />
+                    @error('lname')
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
                 </x-forms.group>
@@ -26,7 +29,7 @@
 
                 <x-forms.group for="hometown" label="محل تولد">
                     <x-forms.select id="hometown" wire:model="hometown">
-                        <option selected>انتخاب کنید</option>
+                        <option selected value="">انتخاب کنید</option>
                         <option value="قزوین">قزوین</option>
                         <option value="البرز">البرز</option>
                         <option value="تهران">تهران</option>
@@ -88,18 +91,13 @@
                     @enderror
                 </x-forms.group>
 
-                <x-forms.group for="entry_date" label="تاریخ ورود">
-                    <x-forms.input id="entry_date" wire:model="entry_date" />
-                    @error('entry_date')
-                        <span class="text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
             </div>
 
             <div class="col-sm-6">
-                <x-forms.group for="lname" label="نام خانوادگی">
-                    <x-forms.input id="lname" wire:model="lname" />
-                    @error('lname')
+
+                <x-forms.group for="entry_date" label="تاریخ ورود">
+                    <x-forms.input id="entry_date" wire:model="entry_date" />
+                    @error('entry_date')
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
                 </x-forms.group>
@@ -148,7 +146,7 @@
         <x-forms.verification/>
 
         <x-slot:footer>
-            <x-buttons.btn-success wire:click="save">ثبت</x-buttons.btn-success>
+            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot:footer>
     </x-modals.modal>
