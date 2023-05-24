@@ -34,7 +34,7 @@ class GeneralInfo extends Component
         'lines' => 'required|integer|min:0',
         'png_file' => 'nullable|image|mimes:png|max:5000',
         'fbx_file' => 'nullable|file|max:102400',
-        'gif_file' => 'nullable|file|mimes:png|max:5000',
+        'gif_file' => 'nullable|file|mimes:gif|max:5000',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
