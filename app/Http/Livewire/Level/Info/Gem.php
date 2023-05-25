@@ -38,7 +38,7 @@ class Gem extends Component
         'points' => 'required|integer|min:0',
         'volume' => 'required|decimal:0,3|min:0',
         'color' => 'required|string|max:255',
-        'png_file' => 'required|image|max:5024',
+        'png_file' => 'required|image|mimes:png|max:5024',
         'fbx_file' => 'required|file|max:100000',
         'encryption' => 'required|boolean',
         'designer' => 'required|string|max:255',
