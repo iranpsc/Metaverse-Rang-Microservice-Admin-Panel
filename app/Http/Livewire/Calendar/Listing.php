@@ -26,12 +26,12 @@ class Listing extends Component
     protected $rules = [
         'title' => 'required|string|min:2|max:255',
         'content' => 'required|string|min:2|max:5000',
-        'image' => 'required|image|mimes:jpg,jpeg,png|max:2024',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2024',
         'start_date' => 'required|date',
         'end_date' => 'nullable|date',
         'start_time' => 'nullable|string|min:2|max:255',
         'end_time' => 'nullable|string|min:2|max:255',
-        'color' => 'required|string',
+        'color' => 'nullable|string',
         'btn_name' => 'nullable|string|min:2|max:255',
         'btn_link' => 'nullable|string|min:2|max:255',
         'version_title' => 'nullable|string|min:2|max:255',
@@ -52,15 +52,15 @@ class Listing extends Component
         Calendar::create([
             'title' => $this->title,
             'content' => $this->content,
-            'starts_at' => $this->start_date . ' ' . $this->start_time,
-            'ends_at' => $this->end_date . ' ' . $this->end_time,
-            'color' => $this->color,
+            'starts_at' => $this->is_version ? $this->start_date : $this->start_date . ' ' . $this->start_time,
+            'ends_at' => $this->is_version ? null : $this->end_date . ' ' . $this->end_time,
+            'color' => $this->color ?? ' ',
             'writer' => Auth::guard('admin')->user()->name,
             'btn_name' => $this->btn_name,
             'btn_link' => $this->btn_link,
             'version_title' => $this->version_title,
             'is_version' => $this->is_version,
-            'image' => url('uploads/' . $this->image->store('calendars', 'public')),
+            'image' => $this->image ? url('uploads/' . $this->image->store('calendars', 'public')) : '',
         ]);
 
         $this->resetExcept('admin');

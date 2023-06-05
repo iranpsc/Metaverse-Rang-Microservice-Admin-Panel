@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Variable;
 
 class OrderRepository
@@ -47,6 +48,6 @@ class OrderRepository
 
     public function totalOrderAmount(): float|int
     {
-        return $this->orders->sum('amount');
+        return Payment::sum('amount');
     }
 }

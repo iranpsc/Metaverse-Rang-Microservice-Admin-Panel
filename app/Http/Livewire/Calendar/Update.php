@@ -22,7 +22,7 @@ class Update extends Component
         'end_date' => 'nullable|date',
         'start_time' => 'nullable|string|min:2|max:255',
         'end_time' => 'nullable|string|min:2|max:255',
-        'color' => 'required|string',
+        'color' => 'nullable|string',
         'btn_name' => 'nullable|string|min:2|max:255',
         'btn_link' => 'nullable|string|min:2|max:255',
         'version_title' => 'nullable|string|min:2|max:255',
@@ -41,9 +41,9 @@ class Update extends Component
         $this->version_title = $event->version_title;
         $this->is_version = $event->is_version;
         $this->start_date = $event->starts_at->format('Y-m-d');
-        $this->end_date = $event->ends_at->format('Y-m-d');
-        $this->start_time = $event->starts_at->format('H:i');
-        $this->end_time = $event->ends_at->format('H:i');
+        $this->end_date = $event->is_version ? null : $event->ends_at->format('Y-m-d');
+        $this->start_time = $event->is_version ? null : $event->starts_at->format('H:i');
+        $this->end_time = $event->is_version ? null : $event->ends_at->format('H:i');
         $this->event = $event;
 
         $this->admin = Auth::guard('admin')->user();
@@ -55,9 +55,9 @@ class Update extends Component
         $this->event->update([
             'title' => $this->title,
             'content' => $this->content,
-            'starts_at' => $this->start_date . ' ' . $this->start_time,
-            'ends_at' => $this->end_date . ' ' . $this->end_time,
-            'color' => $this->color,
+            'starts_at' => $this->event->is_version ? $this->start_date : $this->start_date . ' ' . $this->start_time,
+            'ends_at' => $this->event->is_version ? null : $this->end_date . ' ' . $this->end_time,
+            'color' => $this->color ?? ' ',
             'btn_name' => $this->btn_name,
             'btn_link' => $this->btn_link,
             'version_title' => $this->version_title,

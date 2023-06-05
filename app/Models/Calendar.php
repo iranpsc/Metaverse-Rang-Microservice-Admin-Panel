@@ -28,6 +28,7 @@ class Calendar extends Model
 
     public function getStatus()
     {
+        if($this->is_version) return '---';
         return $this->ends_at < now() ? 'سپری شده' : 'در حال برگزاری';
     }
 }

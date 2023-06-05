@@ -7,7 +7,7 @@
                 <button type="button" class="close" data-bs-dismiss="modal">&times;</button>
                 <h4 class="modal-title">{{ $title }}</h4>
             </div>
-            <div class="modal-body">
+            <div class="modal-body text-right">
                 {{ $slot }}
             </div>
             <div class="modal-footer">{{ $footer }}</div>
