@@ -27,7 +27,9 @@ class MergeMapsSeeder extends Seeder
             'last_id' => $qa31Maps->max('last_id'),
         ]);
 
-        $qa31Maps->where('id', '!=', $firstQA31Map->id)->delete();
+        $qa31Maps->where('id', '!=', $firstQA31Map->id)->each(function ($map) {
+            $map->delete();
+        });
 
         $to11Maps = \App\Models\Map::whereName('TO11')->get();
 
@@ -39,7 +41,9 @@ class MergeMapsSeeder extends Seeder
             'last_id' => $to11Maps->max('last_id'),
         ]);
 
-        $to11Maps->where('id', '!=', $firstTO11Map->id)->delete();
+        $to11Maps->where('id', '!=', $firstTO11Map->id)->each(function ($map) {
+            $map->delete();
+        });
 
         $properties = FeatureProperties::with(['feature', 'feature.map'])->get();
 
