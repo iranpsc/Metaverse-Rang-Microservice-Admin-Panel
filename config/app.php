@@ -210,9 +210,9 @@ return [
     */
 
     'aliases' => Facade::defaultAliases()->merge([
-        // 'ExampleClass' => App\Example\ExampleClass::class,
         'Kavenegar' => Kavenegar\Laravel\Facade::class,
         'sms' => App\Channels\SmsChannel::class,
+        'Redis' => Illuminate\Support\Facades\Redis::class,
     ])->toArray(),
 
 ];

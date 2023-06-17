@@ -50,7 +50,6 @@
         <x-tables.table>
             <x-slot name="headers">
                 <th>نام آبادی</th>
-                <th>کاربری</th>
                 <th>تاریخ انتشار</th>
                 <th>نام منتشر کننده</th>
                 <th>تعداد پالیگان</th>
@@ -64,7 +63,6 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $map->name }}</td>
-                    <td>{{ $map->karbari }}</td>
                     <td>{{ $map->publish_date }}</td>
                     <td>{{ $map->publisher_name }}</td>
                     <td>{{ $map->polygon_count }}</td>
@@ -82,7 +80,11 @@
                         @unless ($map->isPublished())
                             <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#map-modal-{{ $map->id }}">انتشار</x-buttons.btn-primary>
                         @endunless
+
+                        <x-buttons.btn-info data-bs-toggle="modal" data-bs-target="#update-map-modal-{{ $map->id }}">ویرایش</x-buttons.btn-info>
                         <x-buttons.btn-danger class="confirm" id="{{ $map->id }}" title="deleteMap">حذف</x-buttons.btn-danger>
+
+                        <livewire:maps.update :map="$map" :wire:key="'map-update-' . $map->id" />
                         <livewire:maps.insert-into-database :map="$map" :wire:key="'insert-into-database-' . $map->id" />
                     </td>
                 </tr>

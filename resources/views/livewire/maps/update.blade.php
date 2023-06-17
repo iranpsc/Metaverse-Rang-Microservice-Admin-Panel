@@ -1,6 +1,13 @@
 <div>
     <x-modals.modal id="update-map-modal-{{ $map->id }}" title="بروزرسانی نقشه">
 
+        <x-forms.group for="name-{{$map->id}}" label="نام آبادی">
+            <x-forms.input wire:model="name" id="name-{{$map->id}}" />
+            @error('name')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
         <x-forms.group for="pointFile-{{ $map->id }}" label="بارگذاری فایل نقطه مرکزی">
             <x-forms.input type="file" wire:model="pointFile" id="pointFile-{{ $map->id }}" />
             <x-progress-bar wire:loading wire:target="pointFile" />

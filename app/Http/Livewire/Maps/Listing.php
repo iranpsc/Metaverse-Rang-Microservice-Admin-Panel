@@ -4,7 +4,6 @@ namespace App\Http\Livewire\Maps;
 
 use App\Models\Map;
 use App\Traits\SendsVerificationSms;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -32,12 +31,13 @@ class Listing extends Component
         'mapsInsertedToDatabase' => '$refresh'
     ];
 
+    protected $paginationTheme = 'bootstrap';
+
     public function mount()
     {
         $this->admin = auth()->guard('admin')->user();
     }
 
-    protected $paginationTheme = 'bootstrap';
 
     public function save()
     {
