@@ -42,7 +42,7 @@ class Categories extends Component
         $this->slug = trim($this->slug);
 
         if(empty($this->parentCategory)) {
-            $url = url($this->image->storePubliclyAs('tutorials/'.$this->slug, $imageName, 'public'));
+            $url = url($this->image->storePubliclyAs('uploads/tutorials/'.$this->slug, $imageName, 'public'));
             VideoCategory::create([
                 'name' => $this->name,
                 'slug' => $this->slug,
@@ -53,7 +53,7 @@ class Categories extends Component
         } else {
 
             $parentCategory = VideoCategory::findOrFail($this->parentCategory);
-            $url = url($this->image->storePubliclyAs('tutorials/'.$parentCategory->slug.'/'.$this->slug, $imageName, 'public'));
+            $url = url($this->image->storePubliclyAs('uploads/tutorials/'.$parentCategory->slug.'/'.$this->slug, $imageName, 'public'));
             $parentCategory->subCategories()->create([
                 'name' => $this->name,
                 'slug' => $this->slug,

@@ -35,7 +35,7 @@ class EditCategory extends Component
 
         if ($this->image) {
             $imageName = implode('.', [Str::random(10), $this->image->getClientOriginalExtension()]);
-            $url = url($this->image->storePubliclyAs('tutorials/' . $this->category->slug, $imageName, 'public'));
+            $url = url($this->image->storePubliclyAs('uploads/tutorials/' . $this->category->slug, $imageName, 'public'));
             $data['image'] = $url;
         } else {
             $data['image'] = $this->category->image;
