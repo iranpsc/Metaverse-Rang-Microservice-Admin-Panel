@@ -63,8 +63,8 @@ class Listing extends Component
 
         $this->subCategory = VideoSubCategory::whereId($this->subCategory)->first();
 
-        $videoUrl = url($this->video->storePubliclyAs('uploads/tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $videoName, 'public'));
-        $imageUrl = url($this->image->storePubliclyAs('uploads/tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $imageName, 'public'));
+        $videoUrl = url('uploads/'.$this->video->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $videoName, 'public'));
+        $imageUrl = url('uploads/'.$this->image->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $imageName, 'public'));
 
         $this->subCategory->videos()->create([
             'title' => $this->title,
