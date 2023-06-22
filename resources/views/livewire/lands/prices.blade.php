@@ -13,10 +13,10 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $feature->properties->id }}</td>
-                    <td>{{ \App\Helpers\Feature::getKarbari($feature->properties->karbari) }}</td>
+                    <td>{{ $property->getApplicationTitle() }}</td>
                     <td>{{ $feature->properties->stability }}</td>
                     <td>{{ $feature->properties->minimum_price_percentage }}</td>
-                    <td>{{\Morilog\Jalali\Jalalian::forge($feature->properties->updated_at)->format('Y/m/d')}}</td>
+                    <td>{{ jdate($feature->properties->updated_at)->format('Y/m/d')}}</td>
                 </tr>
             @endforeach
         </x-tables.table>

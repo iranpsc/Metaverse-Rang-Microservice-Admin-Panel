@@ -16,8 +16,8 @@
                     <td>{{ $pricing->feature->properties->id }}</td>
                     <td>{{ $pricing->price_psc }}</td>
                     <td>{{ $pricing->price_irr }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($pricing->created_at)->format('Y/m/d') }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($pricing->created_at)->format('H:m:s') }}</td>
+                    <td>{{ jdate($pricing->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($pricing->created_at)->format('H:m:s') }}</td>
                 </tr>
             @endforeach
         </x-tables.table>
@@ -25,5 +25,3 @@
         <x-alerts.danger>ملکی قیمت گذاری نشده است</x-alerts.danger>
     @endif
 </div>
-
-

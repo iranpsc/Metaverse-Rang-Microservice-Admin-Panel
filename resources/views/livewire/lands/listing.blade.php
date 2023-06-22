@@ -20,9 +20,9 @@
                         <td>{{ $property->id }}</td>
                         <td>{{ $property->area }}</td>
                         <td>{{ $property->density }}</td>
-                        <td>{{ \App\Helpers\Feature::getKarbari($property->karbari) }}</td>
-                        <td>{{ \Illuminate\Support\Str::limit($property->address, 15) }}</td>
-                        <td>{{ \Morilog\Jalali\Jalalian::forge($property->date)->format('Y/m/d') }}</td>
+                        <td>{{ $property->getApplicationTitle() }}</td>
+                        <td>{{ Str::limit($property->address, 15) }}</td>
+                        <td>{{ jdate($property->date)->format('Y/m/d') }}</td>
                         <td>{{ $property->feature->map->publisher_name }}</td>
                         <td>
                             <x-buttons.btn-primary data-bs-toggle="modal"

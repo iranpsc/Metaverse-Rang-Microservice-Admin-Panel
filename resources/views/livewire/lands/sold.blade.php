@@ -17,8 +17,8 @@
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $trade->feature->properties->id }}</td>
                         <td>{{ $trade->buyer->name }}</td>
-                        <td>{{ \Morilog\Jalali\Jalalian::forge($trade->created_at)->format('Y/m/d') }}</td>
-                        <td>{{ \Morilog\Jalali\Jalalian::forge($trade->created_at)->format('H:m:s') }}</td>
+                        <td>{{ jdate($trade->created_at)->format('Y/m/d') }}</td>
+                        <td>{{ jdate($trade->created_at)->format('H:m:s') }}</td>
                     </tr>
                 @endforeach
             </tbody>

@@ -44,11 +44,16 @@ class Update extends Component
         $borderFileContents = explode('=', $borderFileContents)[1];
         $pointFileContents = explode('=', $pointFileContents)[1];
 
+        $borderFileContents = json_decode($borderFileContents, true);
+        $pointFileContents = json_decode($pointFileContents, true);
+
         $this->map->update([
             'name' => $this->name,
             'polygon_color' => $this->color,
-            'border_coordinates' => $borderFileContents,
-            'central_point_coordinates' => $pointFileContents
+            'border_coordinates' => json_encode($borderFileContents['features'][0]['geometry']['coordinates'][0][0]),
+            'central_point_coordinates' => json_encode($pointFileContents['features'][0]['geometry']['coordinates']),
+            'polygon_area' => intval($borderFileContents['features'][0]['properties']['area']),
+            'polygon_address' => json_encode($borderFileContents['features'][0]['properties']['address'])
         ]);
 
         $this->emitUp('mapUpdated');
@@ -60,5 +65,4 @@ class Update extends Component
     {
         return view('livewire.maps.update');
     }
-
 }

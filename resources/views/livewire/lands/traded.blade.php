@@ -19,8 +19,8 @@
                     <td>{{ $trade->feature->properties->id }}</td>
                     <td>{{ $trade->buyer->name }}</td>
                     <td>{{ $trade->seller->name }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($trade->created_at)->format('Y/m/d') }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($trade->created_at)->format('H:m:s') }}</td>
+                    <td>{{ jdate($trade->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($trade->created_at)->format('H:m:s') }}</td>
                     <td>{{ $trade->psc_amount }}</td>
                     <td>{{ $trade->irr_amount }}</td>
                     <td>{{ $trade->commision->psc ?? 0 }}</td>
