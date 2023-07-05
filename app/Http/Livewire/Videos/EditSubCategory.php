@@ -2,10 +2,8 @@
 
 namespace App\Http\Livewire\Videos;
 
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Str;
 use App\Traits\SendsVerificationSms;
 
 class EditSubCategory extends Component
@@ -18,7 +16,7 @@ class EditSubCategory extends Component
     {
         $this->name = $this->subCategory->name;
         $this->description = $this->subCategory->description;
-        $this->admin = Auth::guard('admin')->user();
+        $this->admin = auth()->guard('admin')->user();
     }
 
     protected $rules = [
@@ -34,8 +32,7 @@ class EditSubCategory extends Component
         $data = $this->validate();
 
         if ($this->image) {
-            $imageName = implode('.', [Str::random(10), $this->image->getClientOriginalExtension()]);
-            $url = url('uploads/'.$this->image->storePubliclyAs('tutorials/' . $this->subCategory->slug, $imageName, 'public'));
+            $url = $this->image->store('tutorials/' . $this->subCategory->slug, 'public');
             $data['image'] = $url;
         } else {
             $data['image'] = $this->subCategory->image;

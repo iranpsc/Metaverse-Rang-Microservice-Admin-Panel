@@ -97,14 +97,14 @@
             </x-slot:headers>
             @foreach ($videos as $video)
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $video->id }}</td>
                     <td>{{ $video->title }}</td>
                     <td>{{ $video->subCategory->name }}</td>
                     <td>
-                        <a target="_blank" href="{{ $video->image }}" class="btn btn-sm btn-primary round">مشاهده</a>
+                        <a target="_blank" href="{{ asset('uploads/'.$video->image) }}" class="btn btn-sm btn-primary round">مشاهده</a>
                     </td>
                     <td>
-                        <a target="_blank" href="{{ $video->fileName }}" class="btn btn-sm btn-primary round">مشاهده</a>
+                        <a target="_blank" href="{{ asset('uploads/'.$video->fileName) }}" class="btn btn-sm btn-primary round">مشاهده</a>
                     </td>
                     <td>{{ $video->creator_code }}</td>
                     <td>{{ jdate($video->created_at)->format('Y/m/d') }}</td>

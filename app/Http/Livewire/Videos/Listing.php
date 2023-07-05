@@ -10,8 +10,6 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use App\Models\VideoSubCategory;
 use App\Traits\SendsVerificationSms;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class Listing extends Component
 {
@@ -32,7 +30,7 @@ class Listing extends Component
 
     public function mount()
     {
-        $this->admin = Auth::user();
+        $this->admin = auth()->guard('admin')->user();
     }
 
     public function updatedCategory()
@@ -56,15 +54,12 @@ class Listing extends Component
     {
         $this->validate();
 
-        $videoName = implode('.', [Str::random(10), $this->video->getClientOriginalExtension()]);
-        $imageName = implode('.', [Str::random(10), $this->image->getClientOriginalExtension()]);
-
         $this->category = VideoCategory::whereId($this->category)->first();
 
         $this->subCategory = VideoSubCategory::whereId($this->subCategory)->first();
 
-        $videoUrl = url('uploads/'.$this->video->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $videoName, 'public'));
-        $imageUrl = url('uploads/'.$this->image->storePubliclyAs('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, $imageName, 'public'));
+        $videoUrl = $this->video->store('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, 'public');
+        $imageUrl = $this->image->store('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, 'public');
 
         $this->subCategory->videos()->create([
             'title' => $this->title,
@@ -91,7 +86,7 @@ class Listing extends Component
     {
         return view('livewire.videos.listing', [
             'videoCategories' => VideoCategory::all(),
-            'videos' => Video::with(['subCategory', 'interactions', 'views'])->simplePaginate(10)
+            'videos' => Video::with(['subCategory', 'interactions', 'views'])->paginate(10)
         ])->extends('layouts.app')->section('content');
     }
 }

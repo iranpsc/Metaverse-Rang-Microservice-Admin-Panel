@@ -3,9 +3,7 @@
 namespace App\Http\Livewire\Videos;
 
 use Livewire\Component;
-use Illuminate\Support\Facades\Auth;
 use App\Traits\SendsVerificationSms;
-use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
 
 class EditVideo extends Component
@@ -25,7 +23,7 @@ class EditVideo extends Component
 
     public function mount()
     {
-        $this->admin = Auth::guard('admin')->user();
+        $this->admin = auth()->guard('admin')->user();
         $this->title = $this->videoDb->title;
         $this->description = $this->videoDb->description;
     }
@@ -35,13 +33,11 @@ class EditVideo extends Component
         $this->validate();
 
         if ($this->image) {
-            $imageName = implode('.', [Str::random(10), $this->image->getClientOriginalExtension()]);
-            $imageUrl = url('uploads/'.$this->image->storePubliclyAs('tutorials/' . $this->videoDb->categoriable->slug, $imageName, 'public'));
+            $imageUrl = $this->image->store('tutorials/' . $this->videoDb->categoriable->slug, 'public');
         }
 
         if ($this->video) {
-            $videoName = implode('.', [Str::random(10), $this->video->getClientOriginalExtension()]);
-            $videoUrl = url('uploads/'.$this->video->storePubliclyAs('tutorials/' . $this->videoDb->categoriable->slug, $videoName, 'public'));
+            $videoUrl = $this->video->store('tutorials/' . $this->videoDb->categoriable->slug, 'public');
         }
 
         $this->videoDb->update([

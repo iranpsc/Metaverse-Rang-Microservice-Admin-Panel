@@ -3,10 +3,8 @@
 namespace App\Http\Livewire\Videos;
 
 use Livewire\Component;
-use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
 use App\Traits\SendsVerificationSms;
-use Illuminate\Support\Facades\Auth;
 
 class EditCategory extends Component
 {
@@ -18,7 +16,7 @@ class EditCategory extends Component
     {
         $this->name = $this->category->name;
         $this->description = $this->category->description;
-        $this->admin = Auth::guard('admin')->user();
+        $this->admin = auth()->guard('admin')->user();
     }
 
     protected $rules = [
@@ -34,8 +32,7 @@ class EditCategory extends Component
         $data = $this->validate();
 
         if ($this->image) {
-            $imageName = implode('.', [Str::random(10), $this->image->getClientOriginalExtension()]);
-            $url = url('uploads/'.$this->image->storePubliclyAs('tutorials/' . $this->category->slug, $imageName, 'public'));
+            $url = $this->image->store('tutorials/' . $this->category->slug, 'public');
             $data['image'] = $url;
         } else {
             $data['image'] = $this->category->image;

@@ -7,7 +7,6 @@ use Livewire\WithPagination;
 use App\Models\VideoCategory;
 use App\Models\VideoSubCategory;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Str;
 
 class Categories extends Component
 {
@@ -37,23 +36,19 @@ class Categories extends Component
     {
         $this->validate();
 
-        $imageName = implode('.', [Str::random(10), $this->image->getClientOriginalExtension()]);
-
         $this->slug = trim($this->slug);
 
-        if(empty($this->parentCategory)) {
-            $url = url('uploads/'.$this->image->storePubliclyAs('tutorials/'.$this->slug, $imageName, 'public'));
+        if (empty($this->parentCategory)) {
+            $url = $this->image->store('tutorials/' . $this->slug, 'public');
             VideoCategory::create([
                 'name' => $this->name,
                 'slug' => $this->slug,
                 'description' => $this->description,
                 'image' => $url,
             ]);
-
         } else {
-
             $parentCategory = VideoCategory::findOrFail($this->parentCategory);
-            $url = url('uploads/'.$this->image->storePubliclyAs('tutorials/'.$parentCategory->slug.'/'.$this->slug, $imageName, 'public'));
+            $url = $this->image->store('tutorials/' . $parentCategory->slug . '/' . $this->slug, 'public');
             $parentCategory->subCategories()->create([
                 'name' => $this->name,
                 'slug' => $this->slug,
@@ -68,18 +63,18 @@ class Categories extends Component
 
     public function deleteCategory(VideoCategory $category)
     {
-        foreach($category->subCategories as $item) {
-            unlink(public_path('uploads/'.$item->image));
+        foreach ($category->subCategories as $item) {
+            unlink(public_path('uploads/' . $item->image));
             $item->delete();
         }
-        unlink(public_path('uploads/'.$category->image));
+        unlink(public_path('uploads/' . $category->image));
         $category->delete();
         $this->emitSelf('categoryDeleted');
     }
 
     public function deleteSubCategory(VideoSubCategory $videoSubCategory)
     {
-        unlink(public_path('uploads/'.$videoSubCategory->image));
+        unlink(public_path('uploads/' . $videoSubCategory->image));
         $videoSubCategory->delete();
         $this->emitSelf('categoryDeleted');
     }
@@ -88,7 +83,7 @@ class Categories extends Component
         return view('livewire.videos.categories', [
             'categories' => VideoCategory::with('subCategories')->paginate(10),
         ])
-        ->extends('layouts.app')
-        ->section('content');
+            ->extends('layouts.app')
+            ->section('content');
     }
 }
