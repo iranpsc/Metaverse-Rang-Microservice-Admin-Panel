@@ -121,6 +121,7 @@
                     </td>
                 </tr>
             @endforeach
+            {{ $videos->links() }}
         </x-tables.table>
     @else
         <x-alerts.danger>ویدئویی بارگذاری نشده است.</x-alerts.danger>

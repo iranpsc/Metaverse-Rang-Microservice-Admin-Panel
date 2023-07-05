@@ -82,9 +82,9 @@
                             <td>{{ $category->slug }}</td>
                             <td><a href="{{ $category->image }}" target="_blank"
                                     class="btn btn-primary btn-sm round">مشاهده</a></td>
-                            <td>{{ \Morilog\Jalali\Jalalian::forge($category->created_at)->format('Y/m/d') }}
+                            <td>{{ jdate($category->created_at)->format('Y/m/d') }}
                             </td>
-                            <td>{{ \Morilog\Jalali\Jalalian::forge($category->created_at)->format('H:m:s') }}
+                            <td>{{ jdate($category->created_at)->format('H:m:s') }}
                             </td>
                             <td>
                                 <x-buttons.btn-primary data-bs-toggle="modal"

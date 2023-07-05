@@ -19,8 +19,6 @@ class Listing extends Component
 
     public $title, $description, $category, $subCategory, $image, $video, $creator_code;
 
-    private $videos, $videoCategories;
-
     public $videoSubCategories;
 
     protected $listeners = [
@@ -90,10 +88,8 @@ class Listing extends Component
     public function render()
     {
         return view('livewire.videos.listing', [
-            'videoCategories' => $this->videoCategories ?? VideoCategory::all(),
-            'videos' => $this->videos ?? Video::with(['subCategory', 'interactions', 'views'])->get()
-        ])
-            ->extends('layouts.app')
-            ->section('content');
+            'videoCategories' => VideoCategory::all(),
+            'videos' => Video::with(['subCategory', 'interactions', 'views'])->simplePaginate(10)
+        ])->extends('layouts.app')->section('content');
     }
 }
