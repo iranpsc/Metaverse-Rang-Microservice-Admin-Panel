@@ -28,6 +28,8 @@ class Listing extends Component
         'deleteTrainingVideo' => 'deleteVideo',
     ];
 
+    protected $paginationTheme = 'bootstrap';
+
     public function mount()
     {
         $this->admin = Auth::user();
