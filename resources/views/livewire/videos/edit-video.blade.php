@@ -23,9 +23,9 @@
         </x-forms.group>
 
         <x-forms.group label="فایل ویدئو" for="videoFile-{{ $videoDb->id }}">
-            <span id="videoFile-{{ $videoDb->id }}" style="cursor: pointer" wire:ignore
-                class="form-control rounded">Choose File</span>
+            <span id="videoFile-{{ $videoDb->id }}" style="cursor: pointer" wire:ignore class="form-control rounded">Choose File</span>
             <x-progress-bar />
+            <span class="form-text text-danger d-none" id="internet-disconnected-alert">اینترنت متصل نیست. به محض اتصال مجدد بارگذاری ادامه خواهد یافت.</span>
             @error('video')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
@@ -44,6 +44,7 @@
             let browseFile = document.getElementById('videoFile-{{ $videoDb->id }}');
             let progress = browseFile.nextElementSibling;
             let progressBar = progress.querySelector('.progress-bar');
+            let internetDisconnectedAlert = document.getElementById('internet-disconnected-alert');
 
             let resumable = new Resumable({
                 target: '{{ route('videos.edit.upload') }}',
@@ -100,10 +101,12 @@
             }
 
             window.addEventListener('offline', function() {
+                internetDisconnectedAlert.classList.remove('d-none');
                 resumable.pause();
             });
 
             window.addEventListener('online', function() {
+                internetDisconnectedAlert.classList.add('d-none');
                 resumable.upload();
             });
         });
