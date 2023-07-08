@@ -5,12 +5,11 @@
     <title>پنل مدیریت سامانه متارنگ</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="assets/images/logo-rgb.png">
+    <link rel="shortcut icon" href="{{ asset('assets/images/logo-rgb.png') }}">
 
     <!-- BEGIN CSS -->
     <link href="{{ asset('assets/plugins/bootstrap/bootstrap5/css/bootstrap.rtl.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/plugins/simple-line-icons/css/simple-line-icons.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/plugins/sweetalert2/dist/sweetalert2.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/plugins/paper-ripple/dist/paper-ripple.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/plugins/iCheck/skins/square/_all.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/style.css') }}" rel="stylesheet">
@@ -106,8 +105,6 @@
     <script src="{{ asset('assets/plugins/jquery-migrate/jquery-migrate-1.2.1.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/bootstrap/bootstrap5/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/paper-ripple/dist/PaperRipple.min.js') }}"></script>
-    <script src="{{ asset('assets/plugins/sweetalert2//dist/sweetalert2.min.js') }}"></script>
-    <script src="{{ asset('assets/plugins/iCheck/icheck.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/iCheck/icheck.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/jquery-validation/dist/jquery.validate.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/jquery-validation/src/localization/messages_fa.js') }}"></script>
