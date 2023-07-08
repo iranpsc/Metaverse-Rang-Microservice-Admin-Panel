@@ -17,12 +17,12 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $ticket->code }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($ticket->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($ticket->created_at)->format('Y/m/d') }}</td>
                     <td>{{ $ticket->sender->name }}</td>
                     <td>{{ $ticket->sender->email }}</td>
                     <td>{{ $ticket->sender->phone }}</td>
                     <td>{{ $ticket->title }}</td>
-                    <td>{{ \App\Helpers\getTicketPriorityTitle($ticket->importance) }}</td>
+                    <td>{{ $ticket->getPriorityTitle() }}</td>
                     <td>
                         @switch($ticket->status)
                             @case(0)

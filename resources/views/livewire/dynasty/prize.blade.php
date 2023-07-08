@@ -70,7 +70,7 @@
             @foreach ($prizes as $prize)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td>{{ \App\Helpers\getRelationTitle($prize->member) }}</td>
+                    <td>{{ $prize->getRelationTitle() }}</td>
                     <td>
                         <x-buttons.btn-info data-bs-toggle="modal" data-bs-target="#view-prize-{{ $prize->id }}">
                             مشاهده</x-buttons.btn-info>
@@ -80,7 +80,7 @@
                                 <div class="col-sm-6">
                                     <x-forms.group for="member-{{ $prize->id }}" label="نسبت خانوادگی">
                                         <x-forms.input id="member-{{ $prize->id }}" disabled
-                                            value="{{ \App\Helpers\getRelationTitle($prize->member) }}" />
+                                            value="{{ $prize->getRelationTitle() }}" />
                                     </x-forms.group>
                                     <x-forms.group for="introduction_profit_increase-{{ $prize->id }}"
                                         label="افزایش سود پاداش معرفی(%)">

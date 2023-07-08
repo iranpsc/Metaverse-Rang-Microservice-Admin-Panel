@@ -16,20 +16,33 @@ class Variable extends Model
         'note'
     ];
 
-    protected $casts =[
+    protected $casts = [
         'price' => 'int'
     ];
 
-    public static function getRate($asset) {
+    public static function getRate($asset)
+    {
         return self::firstWhere('asset', $asset)->price ?? 0;
     }
 
-    public function option() {
+    public function option()
+    {
         return $this->belongsTo(Option::class);
     }
 
     public function priceChangeLogs()
     {
         return $this->morphMany(VariableChangeLog::class, 'changeable');
+    }
+
+    public function getAssetTitle()
+    {
+        return match ($this->asset) {
+            'red' => 'قرمز',
+            'blue' => 'آبی',
+            'yellow' => 'زرد',
+            'psc' => 'psc',
+            'irr' => 'ریال',
+        };
     }
 }

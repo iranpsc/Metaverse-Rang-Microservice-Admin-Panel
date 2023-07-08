@@ -50,7 +50,7 @@ class ColorOptions extends Component
         ]);
 
         if ($this->image) {
-            $url = url('uploads/'.$this->image->store('packages'));
+            $url = url('uploads/'.$this->image->store('packages', 'public'));
             $option->image()->create([
                 'url' => $url,
             ]);

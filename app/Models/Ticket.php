@@ -35,4 +35,13 @@ class Ticket extends Model
     public function responses() {
         return $this->hasMany(TicketResponse::class);
     }
+
+    public function getPriorityTitle()
+    {
+        return match($this->importance) {
+            0 => 'متوسط',
+            1 => 'زیاد',
+            -1 => 'کم'
+        };
+    }
 }

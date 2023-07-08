@@ -7,7 +7,7 @@
             <x-forms.select id="asset" wire:model="asset">
                 <option selected>ارز را انتخاب کنید</option>
                 @forelse ($variables as $variable)
-                    <option value="{{ $variable->asset }}">{{ \App\Helpers\getAssetColor($variable->asset) }}</option>
+                    <option value="{{ $variable->asset }}">{{ $variable->getAssetTitle() }}</option>
                 @empty
                     <option disabled>ارزی تعریف نشده است</option>
                 @endforelse
@@ -63,10 +63,10 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $option->code }}</td>
-                    <td>{{ \App\Helpers\getAssetColor($option->asset) }}</td>
+                    <td>{{ $option->getAssetTitle() }}</td>
                     <td>{{ \App\Models\Variable::getRate($option->asset) * $option->amount }}</td>
                     <td>{{ $option->amount }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($option->update_at) }}</td>
+                    <td>{{ jdate($option->update_at)->format('Y-m-d') }}</td>
                     <th>
                         @if ($option->image)
                             <a href="{{ $option->image->url }}" target="_blank" class="btn btn-primary btn-sm round">مشاهده</a>
@@ -99,9 +99,9 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $option->code }}</td>
-                                                <td>{{ \Morilog\Jalali\Jalalian::forge($changeLog->created_at)->format('Y/m/d') }}
+                                                <td>{{ jdate($changeLog->created_at)->format('Y/m/d') }}
                                                 </td>
-                                                <td>{{ \Morilog\Jalali\Jalalian::forge($changeLog->created_at)->format('H:m:s') }}
+                                                <td>{{ jdate($changeLog->created_at)->format('H:m:s') }}
                                                 </td>
                                                 <td>{{ $changeLog->changer_name }}</td>
                                                 <td>{{ $changeLog->previous_value }}</td>

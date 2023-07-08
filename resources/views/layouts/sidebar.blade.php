@@ -135,22 +135,6 @@
                                  </a>
                              </li>
                          @endcan
-                         @can('manage-pricing-limits')
-                             <li>
-                                 <a href="{{ route('features.pricing-limits') }}" class="">
-                                     <i class="fa fa-bar-chart"></i>
-                                     <span>محدودیت قیمت گذاری</span>
-                                 </a>
-                             </li>
-                         @endcan
-                         @can('manage-feature-limits')
-                             <li>
-                                 <a href="{{ route('features.limits') }}" class="">
-                                     <i class="fa fa-bar-chart"></i>
-                                     <span>محدودیت املاک</span>
-                                 </a>
-                             </li>
-                         @endcan
                      </ul>
                  </li>
              @endhasanyrole

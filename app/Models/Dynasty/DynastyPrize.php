@@ -17,4 +17,18 @@ class DynastyPrize extends Model
         'data_storage',
         'psc',
     ];
+
+    public function getRelationTitle()
+    {
+        return match ($this->member) {
+            'father' => 'پدر',
+            'mother' => 'مادر',
+            'life_partner' => 'همسر',
+            'brother' => 'برادر',
+            'sister' => 'خواهر',
+            'offspring' => 'فرزند',
+            'wife' => 'زن',
+            'husband' => 'شوهر',
+        };
+    }
 }

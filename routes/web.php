@@ -41,11 +41,9 @@ use App\Http\Livewire\Citizens\Kyc;
 use App\Http\Livewire\Citizens\Profiledetails;
 use App\Http\Livewire\Citizens\RegistrationInfo;
 use App\Http\Livewire\Citizens\Withdraws;
-use App\Http\Livewire\Lands\FeaturePricingLimits;
 use App\Http\Livewire\IpManagement\ApiAllowedIps;
 use App\Http\Livewire\IpManagement\AdminAllowedIps;
 use App\Http\Livewire\IpManagement\ApiIpRanges;
-use App\Http\Livewire\Lands\Limits;
 use App\Http\Livewire\Panel\Profile;
 use App\Http\Livewire\Videos\Listing as VideoListing;
 use App\Http\Livewire\Videos\Categories as VideoCategories;
@@ -87,8 +85,6 @@ Route::middleware('auth:admin')->group(function () {
         Route::get('/sold', SoldFeatures::class)->middleware('can:view-sold-features')->name('sold');
         Route::get('/trades', TradedFeatures::class)->middleware('can:view-features-trades')->name('trades');
         Route::get('/priced', PricedFeatures::class)->middleware('can:view-priced-features')->name('priced');
-        Route::get('/pricing-limits', FeaturePricingLimits::class)->middleware('can:edit-pricing-limits')->name('pricing-limits');
-        Route::get('/limits', Limits::class)->middleware('can:manage-feature-limits')->name('limits');
     });
 
     Route::prefix('access-management')->middleware('can:manage-access')->as('access-management.')->group(function () {

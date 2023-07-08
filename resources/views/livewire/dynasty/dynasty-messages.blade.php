@@ -53,7 +53,7 @@
             @foreach ($dynastyMessages as $message)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td>{{ \App\Helpers\getDynastyMessageTitle($message->type) }}</td>
+                    <td>{{ $message->getMessageTitle() }}</td>
                     <td>
                         <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#view-{{ $message->id }}">مشاهده
                         </x-buttons.btn-primary>

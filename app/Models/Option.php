@@ -34,4 +34,15 @@ class Option extends Model
         return $this->morphOne(Image::class, 'imageable');
     }
 
+    public function getAssetTitle()
+    {
+        return match ($this->asset) {
+            'red' => 'قرمز',
+            'blue' => 'آبی',
+            'yellow' => 'زرد',
+            'psc' => 'psc',
+            'irr' => 'ریال',
+        };
+    }
+
 }
