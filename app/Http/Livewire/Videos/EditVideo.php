@@ -5,6 +5,9 @@ namespace App\Http\Livewire\Videos;
 use Livewire\Component;
 use App\Traits\SendsVerificationSms;
 use Livewire\WithFileUploads;
+use Illuminate\Http\Request;
+use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
+use Pion\Laravel\ChunkUpload\Handler\HandlerFactory;
 
 class EditVideo extends Component
 {
@@ -16,7 +19,7 @@ class EditVideo extends Component
         'title' => 'required',
         'description' => 'required|string|max:2000',
         'image' => 'nullable|image|max:1024',
-        'video' => 'nullable|file|mimes:mp4',
+        'video' => 'nullable|string',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
@@ -33,11 +36,18 @@ class EditVideo extends Component
         $this->validate();
 
         if ($this->image) {
-            $imageUrl = $this->image->store('tutorials/' . $this->videoDb->categoriable->slug, 'public');
+            $imageUrl = $this->image->store('tutorials/' . $this->videoDb->category->slug, 'public');
         }
 
         if ($this->video) {
-            $videoUrl = $this->video->store('tutorials/' . $this->videoDb->categoriable->slug, 'public');
+            $videoUrl = 'tutorials/' . $this->videoDb->category->category->slug . '/' . $this->videoDb->category->slug . '/' . $this->video;
+
+            if (!file_exists(storage_path('app/public/resumable-tmp/' . $this->video))) {
+                $this->addError('video', 'فایل ویدیو را بارگذاری کنید.');
+                return;
+            } else {
+                rename(storage_path('app/public/resumable-tmp/' . $this->video), storage_path('app/public/' . $videoUrl));
+            }
         }
 
         $this->videoDb->update([
@@ -49,6 +59,35 @@ class EditVideo extends Component
 
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'ویدیو بروزرسانی شد']);
         $this->emitUp('videoUdated');
+    }
+
+    public function upload(Request $request)
+    {
+        $request->validate(['file' => 'required|file|max:2024']);
+
+        $receiver = new FileReceiver('file', $request, HandlerFactory::classFromRequest($request));
+
+        $fileReceived = $receiver->receive(); // receive file
+
+        if ($fileReceived->isFinished()) { // file uploading is complete / all chunks are uploaded
+            $file = $fileReceived->getFile(); // get file
+            $extension = $file->getClientOriginalExtension();
+            $fileName = md5(time()) . '.' . $extension; // a unique file name
+
+            $file->storeAs('resumable-tmp', $fileName, 'public');
+
+            unlink($file->getPathname());
+
+            return response()->json(['fileName' => $fileName]);
+        }
+
+        // otherwise return percentage information
+        $handler = $fileReceived->handler();
+
+        return response()->json([
+            'done' => $handler->getPercentageDone(),
+            'status' => true
+        ]);
     }
 
     public function render()

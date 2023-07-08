@@ -11,7 +11,7 @@ class Video extends Model
 
     protected $guarded = [];
 
-    public function subCategory()
+    public function category()
     {
         return $this->belongsTo(VideoSubCategory::class, 'video_sub_category_id', 'id');
     }

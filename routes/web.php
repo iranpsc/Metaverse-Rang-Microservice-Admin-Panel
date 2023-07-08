@@ -51,6 +51,7 @@ use App\Http\Livewire\Music\Categories as MusicCategories;
 use App\Http\Livewire\Panel\Profile;
 use App\Http\Livewire\Videos\Listing as VideoListing;
 use App\Http\Livewire\Videos\Categories as VideoCategories;
+use App\Http\Livewire\Videos\EditVideo;
 use App\Notifications\SendVerificationCode;
 use Illuminate\Http\Request;
 
@@ -145,6 +146,9 @@ Route::middleware('auth:admin')->group(function () {
     });
 
     Route::get('videos', VideoListing::class)->middleware('can:manage-tutorials')->name('videos');
+    Route::post('videos', [VideoListing::class, 'upload'])->middleware('can:manage-tutorials')->name('videos.upload');
+    Route::post('videos/edit', [EditVideo::class, 'upload'])->middleware('can:manage-tutorials')->name('videos.edit.upload');
+
     Route::get('video-categories', VideoCategories::class)->middleware('can:manage-tutorials')->name('video.categories');
 
     Route::get('challenge', QuestionsList::class)->middleware('can:manage-challenge')->name('challenge');

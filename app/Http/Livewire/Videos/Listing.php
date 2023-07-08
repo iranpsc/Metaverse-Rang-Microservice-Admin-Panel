@@ -10,6 +10,9 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use App\Models\VideoSubCategory;
 use App\Traits\SendsVerificationSms;
+use Illuminate\Http\Request;
+use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
+use Pion\Laravel\ChunkUpload\Handler\HandlerFactory;
 
 class Listing extends Component
 {
@@ -44,7 +47,7 @@ class Listing extends Component
         'category' => 'required|integer|exists:video_categories,id',
         'subCategory' => 'required|integer|exists:video_sub_categories,id',
         'image' => 'required|image|max:1024',
-        'video' => 'required|file|mimes:mp4',
+        'video' => 'required|string',
         'creator_code' => 'required|string|exists:users,code',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
@@ -58,7 +61,15 @@ class Listing extends Component
 
         $this->subCategory = VideoSubCategory::whereId($this->subCategory)->first();
 
-        $videoUrl = $this->video->store('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, 'public');
+        $videoUrl = 'tutorials/' . $this->category->slug . '/' . $this->subCategory->slug . '/' . $this->video;
+
+        if (!file_exists(storage_path('app/public/resumable-tmp/' . $this->video))) {
+            $this->addError('video', 'فایل ویدیو را بارگذاری کنید.');
+            return;
+        } else {
+            rename(storage_path('app/public/resumable-tmp/' . $this->video), storage_path('app/public/'.$videoUrl));
+        }
+
         $imageUrl = $this->image->store('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, 'public');
 
         $this->subCategory->videos()->create([
@@ -74,6 +85,35 @@ class Listing extends Component
         $this->emitSelf('videoCreated');
     }
 
+    public function upload(Request $request)
+    {
+        $request->validate(['file' => 'required|file|max:2024']);
+
+        $receiver = new FileReceiver('file', $request, HandlerFactory::classFromRequest($request));
+
+        $fileReceived = $receiver->receive(); // receive file
+
+        if ($fileReceived->isFinished()) { // file uploading is complete / all chunks are uploaded
+            $file = $fileReceived->getFile(); // get file
+            $extension = $file->getClientOriginalExtension();
+            $fileName = md5(time()) . '.' . $extension; // a unique file name
+
+            $file->storeAs('resumable-tmp', $fileName, 'public');
+
+            unlink($file->getPathname());
+
+            return response()->json(['fileName' => $fileName]);
+        }
+
+        // otherwise return percentage information
+        $handler = $fileReceived->handler();
+
+        return response()->json([
+            'done' => $handler->getPercentageDone(),
+            'status' => true
+        ]);
+    }
+
     public function deleteVideo(Video $video)
     {
         unlink(public_path('uploads/' . $video->fileName));
@@ -86,7 +126,7 @@ class Listing extends Component
     {
         return view('livewire.videos.listing', [
             'videoCategories' => VideoCategory::all(),
-            'videos' => Video::with(['subCategory', 'interactions', 'views'])->paginate(10)
+            'videos' => Video::with(['category', 'interactions', 'views'])->paginate(10)
         ])->extends('layouts.app')->section('content');
     }
 }

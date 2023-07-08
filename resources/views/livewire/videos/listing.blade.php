@@ -56,14 +56,13 @@
             @enderror
         </x-forms.group>
 
-        <x-forms.group label="فایل ویدئو" for="video">
-            <x-forms.input type="file" id="video" wire:model="video" />
+        <x-forms.group label="فایل ویدئو" for="videoFile">
+            <span id="videoFile" style="cursor: pointer" wire:ignore class="form-control rounded">Choose File</span>
             <x-progress-bar />
             @error('video')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
-
 
         <x-forms.group label="کد شهروندی بارگذار" for="creator_code">
             <x-forms.input id="creator_code" wire:model="creator_code" placeholder="hm-" />
@@ -99,12 +98,14 @@
                 <tr>
                     <td>{{ $video->id }}</td>
                     <td>{{ $video->title }}</td>
-                    <td>{{ $video->subCategory->name }}</td>
+                    <td>{{ $video->category->name }}</td>
                     <td>
-                        <a target="_blank" href="{{ asset('uploads/'.$video->image) }}" class="btn btn-sm btn-primary round">مشاهده</a>
+                        <a target="_blank" href="{{ asset('uploads/' . $video->image) }}"
+                            class="btn btn-sm btn-primary round">مشاهده</a>
                     </td>
                     <td>
-                        <a target="_blank" href="{{ asset('uploads/'.$video->fileName) }}" class="btn btn-sm btn-primary round">مشاهده</a>
+                        <a target="_blank" href="{{ asset('uploads/' . $video->fileName) }}"
+                            class="btn btn-sm btn-primary round">مشاهده</a>
                     </td>
                     <td>{{ $video->creator_code }}</td>
                     <td>{{ jdate($video->created_at)->format('Y/m/d') }}</td>
@@ -126,4 +127,74 @@
     @else
         <x-alerts.danger>ویدئویی بارگذاری نشده است.</x-alerts.danger>
     @endif
+
+    <script>
+        window.addEventListener('livewire:load', function() {
+            let browseFile = document.getElementById('videoFile');
+            let progress = browseFile.nextElementSibling;
+            let progressBar = progress.querySelector('.progress-bar');
+
+            let resumable = new Resumable({
+                target: '{{ route('videos.upload') }}',
+                fileType: ['mp4'],
+                chunkSize: 1 * 1024 * 1024, // 1MB
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                testChunks: false,
+                throttleProgressCallbacks: 1,
+                maxFiles: 1,
+            });
+
+            resumable.assignBrowse(browseFile);
+
+            resumable.on('fileAdded', function(file) {
+                resumable.upload();
+                showProgress();
+            });
+
+            resumable.on('fileProgress', function(file) {
+                updateProgress(Math.floor(file.progress() * 100));
+            });
+
+            resumable.on('fileSuccess', function(file, response) {
+                response = JSON.parse(response)
+                @this.set('video', response.fileName);
+                browseFile.innerText = response.fileName;
+                hideProgress();
+            });
+
+            resumable.on('fileError', function(file, response) {
+                progressBar.classList.remove('bg-success');
+                progressBar.classList.add('bg-danger');
+            });
+
+
+            function showProgress() {
+                progress.classList.remove('d-none');
+                progress.classList.add('d-block');
+                progressBar.style.width = '0%';
+                progressBar.innerText = '0%';
+            }
+
+            function updateProgress(value) {
+                progressBar.style.width = `${value}%`;
+                progressBar.innerText = `${value}%`;
+            }
+
+            function hideProgress() {
+                progress.classList.remove('d-block');
+                progress.classList.add('d-none');
+            }
+
+            window.addEventListener('offline', function() {
+                resumable.pause();
+            });
+
+            window.addEventListener('online', function() {
+                resumable.upload();
+            });
+        });
+    </script>
 </div>
