@@ -191,13 +191,17 @@
             }
 
             window.addEventListener('offline', function() {
-                videoDisconnectedAlert.classList.remove('d-none');
                 resumable.pause();
+                videoDisconnectedAlert.classList.remove('d-none');
+                progressBar.classList.remove('bg-success');
+                progressBar.classList.add('bg-danger');
             });
 
             window.addEventListener('online', function() {
-                videoDisconnectedAlert.classList.add('d-none');
                 resumable.upload();
+                videoDisconnectedAlert.classList.add('d-none');
+                progressBar.classList.remove('bg-danger');
+                progressBar.classList.add('bg-success');
             });
         });
     </script>
