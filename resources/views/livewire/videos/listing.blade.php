@@ -59,6 +59,7 @@
         <x-forms.group label="فایل ویدئو" for="videoFile">
             <span id="videoFile" style="cursor: pointer" wire:ignore class="form-control rounded">Choose File</span>
             <x-progress-bar />
+            <span class="form-text text-danger d-none" id="internet-disconnected-alert">اینترنت متصل نیست. به محض اتصال مجدد بارگذاری ادامه خواهد یافت.</span>
             @error('video')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
@@ -133,6 +134,7 @@
             let browseFile = document.getElementById('videoFile');
             let progress = browseFile.nextElementSibling;
             let progressBar = progress.querySelector('.progress-bar');
+            let videoDisconnectedAlert = document.getElementById('internet-disconnected-alert');
 
             let resumable = new Resumable({
                 target: '{{ route('videos.upload') }}',
@@ -189,10 +191,12 @@
             }
 
             window.addEventListener('offline', function() {
+                videoDisconnectedAlert.classList.remove('d-none');
                 resumable.pause();
             });
 
             window.addEventListener('online', function() {
+                videoDisconnectedAlert.classList.add('d-none');
                 resumable.upload();
             });
         });
