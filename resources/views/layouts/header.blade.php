@@ -6,11 +6,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="fontiran.com:license" content="NE29X">
-    <link rel="shortcut icon" href="assets/images/logo-rgb.png">
+    <link rel="shortcut icon" href="{{ asset('assets/images/logo-rgb.png') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-
-    <script src="https://cdn.ckeditor.com/ckeditor5/34.0.0/classic/ckeditor.js"></script>
     <!-- BEGIN CSS -->
     <link href="{{ asset('assets/plugins/bootstrap/bootstrap5/css/bootstrap.rtl.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/plugins/metisMenu/dist/metisMenu.min.css') }}" rel="stylesheet">
@@ -25,14 +23,7 @@
     <link href="{{ asset('assets/css/colors.css') }}" rel="stylesheet">
     <link rel="stylesheet"
         href="{{ asset('assets/plugins/data-table/DataTables-1.10.16/css/jquery.dataTables.css') }}">
-    <link href="{{ asset('assets/plugins/datepicker/jquery.ui.datepicker1.8-all.css') }}" rel="stylesheet">
     <!-- END CSS -->
-
-    <!-- BEGIN PAGE CSS -->
-    <link href="{{ asset('assets/plugins/clockpicker/dist/bootstrap-clockpicker.min.css') }}" rel="stylesheet">
-    <!-- END PAGE CSS -->
-
-    <link rel="stylesheet" href="{{ asset('assets/plugins/persian-datepicker/css/persian-datepicker.min.css') }}">
 
     @livewireStyles
 
@@ -50,49 +41,17 @@
     <!-- BEGIN HEADER -->
     <div class="navbar navbar-fixed-top" id="main-navbar">
         <div class="header-right">
-            <a href="dashboard.html" class="logo-con">
-                <img src="assets/images/logo.png" class="img-responsive center-block" alt="لوگو قالب مدیران">
+            <a href="{{ route('dashboard') }}" class="logo-con">
+                <img src="{{ asset('assets/images/logo.png') }}" class="img-responsive center-block" alt="لوگو قالب مدیران">
             </a>
         </div><!-- /.header-right -->
         <div class="header-left">
             <div class="top-bar">
-                <ul class="nav navbar-nav navbar-right">
-                    <li>
-                        <a href="#" class="btn" id="toggle-sidebar">
-                            <span class="menu"></span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="btn open" id="toggle-sidebar-top">
-                            <i class="icon-user-following"></i>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#" class="btn" id="toggle-dark-mode">
-                            <i class="icon-bulb"></i>
-                        </a>
-                    </li>
-                </ul>
                 <ul class="nav navbar-nav navbar-left">
-                    <li class="dropdown">
-                        <a href="#" class="btn" id="toggle-fullscreen">
-                            <i class="icon-size-fullscreen"></i>
-                        </a>
-                    </li>
-                    <li class="dropdown dropdown-messages">
-                        <a href="#messages" class="btn">
-                            <i class="icon-envelope"></i>
-                            <span class="badge badge-primary">
-                                {{ count(Auth::user()->unreadNotifications) }}
-                            </span>
-                        </a>
-                    </li>
                     <li class="dropdown dropdown-announces">
                         <a href="#" class="dropdown-toggle btn" data-bs-toggle="dropdown">
                             <i class="icon-bell"></i>
-                            <span class="badge badge-warning">
-                                5
-                            </span>
+                            <span class="badge badge-warning">{{ Auth::user()->unreadNotifications->count() }}</span>
                         </a>
                         <ul class="dropdown-menu has-scrollbar">
                             <li class="dropdown-header clearfix">
@@ -101,10 +60,9 @@
                                         <i class="icon-eye"></i>
                                     </a>
                                     <span>
-                                        شما 8 اعلان تازه دارید.
+                                        شما 1 اعلان تازه دارید.
                                     </span>
                                 </span>
-
                             </li>
                             <li class="dropdown-body">
                                 <ul class="dropdown-menu-list">
@@ -117,55 +75,7 @@
                                                     21:30
                                                 </small>
                                             </p>
-                                            <p>بسته ارسالی شما به دستم رسید.</p>
-                                        </a>
-                                    </li>
-                                    <li class="clearfix">
-                                        <a href="#">
-                                            <p class="clearfix">
-                                                <strong class="float-start">حسن باقری</strong>
-                                                <small class="float-end text-muted">
-                                                    <i class="icon-clock"></i>
-                                                    20:20
-                                                </small>
-                                            </p>
-                                            <p>از محبت شما ممنونم.</p>
-                                        </a>
-                                    </li>
-                                    <li class="clearfix">
-                                        <a href="#">
-                                            <p class="clearfix">
-                                                <strong class="float-start">مدیر کل</strong>
-                                                <small class="float-end text-muted">
-                                                    <i class="icon-clock"></i>
-                                                    19:20
-                                                </small>
-                                            </p>
-                                            <p>سفارش شما ارسال گردید..</p>
-                                        </a>
-                                    </li>
-                                    <li class="clearfix">
-                                        <a href="#">
-                                            <p class="clearfix">
-                                                <strong class="float-start">مدیر مالی</strong>
-                                                <small class="float-end text-muted">
-                                                    <i class="icon-clock"></i>
-                                                    17:40
-                                                </small>
-                                            </p>
-                                            <p>درخواست فیش حقوقی</p>
-                                        </a>
-                                    </li>
-                                    <li class="clearfix">
-                                        <a href="#">
-                                            <p class="clearfix">
-                                                <strong class="float-start">ابراهیم همت</strong>
-                                                <small class="float-end text-muted">
-                                                    <i class="icon-clock"></i>
-                                                    15:45
-                                                </small>
-                                            </p>
-                                            <p>پیام های مرا دنبال کنید.</p>
+                                            <p>اعلان نمونه</p>
                                         </a>
                                     </li>
                                 </ul>
@@ -194,14 +104,6 @@
                                 </a>
                             </li>
                             <li class="divider"></li>
-                            <li>
-                                <a href="{{ route('support.technical-support') }}">
-                                    <span class="badge badge-primary float-end">
-                                        {{ count(Auth::user()->unreadNotifications) }} </span>
-                                    <i class="icon-envelope"></i>
-                                    تیکت های جدید
-                                </a>
-                            </li>
                             <li class="divider"></li>
                             <li>
                                 <a href="{{ route('logout') }}"

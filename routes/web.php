@@ -46,8 +46,6 @@ use App\Http\Livewire\IpManagement\ApiAllowedIps;
 use App\Http\Livewire\IpManagement\AdminAllowedIps;
 use App\Http\Livewire\IpManagement\ApiIpRanges;
 use App\Http\Livewire\Lands\Limits;
-use App\Http\Livewire\Music\Listing as MusicListing;
-use App\Http\Livewire\Music\Categories as MusicCategories;
 use App\Http\Livewire\Panel\Profile;
 use App\Http\Livewire\Videos\Listing as VideoListing;
 use App\Http\Livewire\Videos\Categories as VideoCategories;
@@ -139,11 +137,6 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/calendar', CalendarListing::class)->middleware('can:manage-calendar')->name('calendar');
     Route::get('/reports', ReportsListing::class)->middleware('can:manage-reports')->name('reports');
     Route::get('/system-variables', SystemVariablesListing::class)->middleware('can:manage-system-variables')->name('system-variables');
-
-    Route::prefix('music')->middleware('can:manage-musics')->group(function () {
-        Route::get('/', MusicListing::class)->name('music');
-        Route::get('/categories', MusicCategories::class)->name('music.categories');
-    });
 
     Route::get('videos', VideoListing::class)->middleware('can:manage-tutorials')->name('videos');
     Route::post('videos', [VideoListing::class, 'upload'])->middleware('can:manage-tutorials')->name('videos.upload');

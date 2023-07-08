@@ -13,49 +13,6 @@
                  </div>
              </form>
          </div><!-- /.search-box -->
-         <div class="user-box">
-             <a href="#">
-                 <img src="{{ Auth::user()->image === 'noimage.png' ? 'assets/images/user/128.png' : Auth::user()->image }}"
-                     alt="عکس پروفایل" class="img-circle img-responsive">
-             </a>
-             <div class="user-details">
-                 <h4>{{ Auth::user()->name }}</h4>
-                 <p class="role">مدیر سایت</p>
-                 <div class="dropdown user-login">
-                     <button class="btn btn-xs btn-status dropdown-toggle btn-round" type="button"
-                         data-bs-toggle="dropdown" data-hover="dropdown">
-                         <i class="fa fa-circle text-success"></i>
-                         <span>دردسترس</span>
-                     </button>
-                     <ul class="dropdown-menu dropdown-status">
-                         <li>
-                             <a href="#" class="busy">
-                                 <i class="fa fa-circle text-success"></i>
-                                 <span>دردسترس</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="#" class="busy">
-                                 <i class="fa fa-circle text-danger"></i>
-                                 <span>مشغول</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="#">
-                                 <i class="fa fa-circle text-gray"></i>
-                                 <span>مخفی</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="#">
-                                 <i class="fa fa-circle text-warning"></i>
-                                 <span>سایر</span>
-                             </a>
-                         </li>
-                     </ul>
-                 </div><!-- /dropdown -->
-             </div><!-- /.user-details -->
-         </div><!-- /.user-box -->
      </div><!-- /.sidebar-top -->
      <div class="side-menu-container">
          <ul class="metismenu" id="side-menu">
@@ -110,7 +67,7 @@
                                      <i class="fa fa-dollar"></i>
                                      <span>برداشت ها</span>
                                  </a>
-                                 </l•••••i>
+                                 </li>
                              @endcan
                              @can('view-profile-details')
                              <li>
@@ -487,28 +444,6 @@
                              <a href="{{ route('challenge') }}" class="">
                                  <i class="fa fa-list"></i>
                                  <span>لیست سوالات</span>
-                             </a>
-                         </li>
-                     </ul>
-                 </li>
-             @endhasanyrole
-             @hasanyrole('music-management|super-admin')
-                 <li>
-                     <a href="#" class="dropdown-toggle">
-                         <i class="fa fa-music"></i>
-                         <span>مدیریت موسیقی سراسری</span>
-                     </a>
-                     <ul>
-                         <li>
-                             <a href="{{ route('music') }}" class="">
-                                 <i class="fa fa-list"></i>
-                                 <span>لیست آهنگ ها</span>
-                             </a>
-                         </li>
-                         <li>
-                             <a href="{{ route('music.categories') }}" class="">
-                                 <i class="fa fa-category"></i>
-                                 <span>دسته بندی ها</span>
                              </a>
                          </li>
                      </ul>
