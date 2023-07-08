@@ -35,17 +35,6 @@ class QuestionsList extends Component
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
     }
 
-    public function create()
-    {
-        $this->validate();
-        Question::create([
-            'title' => $this->title,
-            'code' => $this->code,
-        ]);
-        $this->reset('title', 'code');
-        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
-    }
-
     public function delete(Question $question)
     {
         $question->answers()->delete();
@@ -56,10 +45,6 @@ class QuestionsList extends Component
     {
         return view('livewire.challenge.questions-list', [
             'questions' => Question::simplePaginate(10),
-        ])
-            ->extends('layouts.app')
-            ->section('content');
+        ])->extends('layouts.app')->section('content');
     }
-
-
 }

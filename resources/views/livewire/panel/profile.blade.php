@@ -1,6 +1,6 @@
 <div>
     <div class="row justify-content-center">
-        <div class="col-lg-6 col-xl-4">
+        <div class="col-xl-8">
             <x-forms.group for="name" label="نام">
                 <x-forms.input wire:model.lazy="name" />
                 @error('name')
