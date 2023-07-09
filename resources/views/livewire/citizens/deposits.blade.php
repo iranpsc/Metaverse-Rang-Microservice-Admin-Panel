@@ -1,8 +1,9 @@
 <div>
-    <x-forms.search-box wire:model="searchTerm"></x-forms.search-box>
+    <x-forms.search-box wire:model.debounce.1500="searchTerm"></x-forms.search-box>
     @if (count($payments) > 0)
         <x-tables.table>
             <x-slot:headers>
+                <th>نام کاربر</th>
                 <th>مبلغ تراکنش</th>
                 <th>شماره مرجع بانک</th>
                 <td>شماره کارت یا حساب مبدا</td>
@@ -14,13 +15,14 @@
             @foreach ($payments as $payment)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
+                    <td>{{ $payment->user->name }}</td>
                     <td>{{ $payment->amount }}</td>
                     <td>{{ $payment->ref_id }}</td>
                     <td>{{ $payment->card_pan }}</td>
                     <td>{{ $payment->gateway }}</td>
-                    <td>{{ \App\Helpers\getAssetColor($payment->product) }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($payment->created_at)->format('Y/m/d') }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($payment->created_at)->format('h:m:s') }}</td>
+                    <td>{{ $payment->getTitle() }}</td>
+                    <td>{{ jdate($payment->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($payment->created_at)->format('h:m:s') }}</td>
                 </tr>
             @endforeach
         </x-tables.table>

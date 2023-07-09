@@ -18,4 +18,25 @@ class Payment extends Model
         'amount',
         'status',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function scopeSearch($query, $searchTerm)
+    {
+        return $query->where('ref_id', 'like', '%' . $searchTerm . '%');
+    }
+
+    public function getTitle()
+    {
+        return match($this->product) {
+            'irr' => 'ریال',
+            'psc' => 'PSC',
+            'red' => 'رنگ قرمز',
+            'blue' => 'رنگ آبی',
+            'yellow' => 'رنگ زرد',
+        };
+    }
 }

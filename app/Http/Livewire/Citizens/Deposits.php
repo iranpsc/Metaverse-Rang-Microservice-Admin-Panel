@@ -16,17 +16,14 @@ class Deposits extends Component
     protected $paginationTheme = 'bootstrap';
 
     public function updatedSearchTerm() {
-        $this->payments = Payment::where('ref_id', 'like', '%' . $this->searchTerm . '%')
-        ->paginate(10);
+        $this->payments = Payment::search($this->searchTerm)->with('user')->paginate(10);
         $this->resetPage();
     }
 
     public function render()
     {
         return view('livewire.citizens.deposits', [
-            'payments' => $this->payments ?? Payment::latest()->paginate(10)
-        ])
-        ->extends('layouts.app')
-        ->section('content');
+            'payments' => $this->payments ?? Payment::latest()->with('user')->paginate(10)
+        ])->extends('layouts.app')->section('content');
     }
 }
