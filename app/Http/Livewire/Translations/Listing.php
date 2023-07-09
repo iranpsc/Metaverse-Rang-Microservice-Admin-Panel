@@ -1,0 +1,80 @@
+<?php
+
+namespace App\Http\Livewire\Translations;
+
+use App\Models\Translation;
+use Livewire\Component;
+
+class Listing extends Component
+{
+    public $languages = [], $selectedLanguage;
+
+    protected $paginationTheme = 'bootstrap';
+
+    protected $listeners = [
+        'translationAdded' => '$refresh',
+        'translationDeleted' => '$refresh',
+    ];
+
+    public function mount()
+    {
+        $langFile = file_get_contents(public_path('lang/lang.json'));
+        $this->languages = json_decode($langFile, true);
+    }
+
+
+    public function saveTranslation()
+    {
+        $this->validate([
+            'selectedLanguage' => [
+                'required',
+                'unique:translations,code'
+            ]
+        ]);
+
+
+        Translation::create([
+            'code' => $this->selectedLanguage['code'],
+            'name' => $this->selectedLanguage['name'],
+            'native_name' => $this->selectedLanguage['nativeName'],
+            'path' => 'lang/' . $this->selectedLanguage['code']
+        ]);
+
+        $this->emitSelf('translationAdded');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'ترجمه اضافه شد']);
+        $this->reset('selectedLanguage');
+    }
+
+    public function deleteTranslation(Translation $translation)
+    {
+        $translation->delete();
+
+        $this->emitSelf('translationDeleted');
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'ترجمه حذف شد']);
+    }
+
+    public function updatedSelectedLanguage()
+    {
+        $this->validateOnly('selectedLanguage', [
+            'selectedLanguage' => 'required'
+        ]);
+
+        $this->selectedLanguage = $this->languages[$this->selectedLanguage];
+    }
+
+    public function toggleTranslationStatus(Translation $translation)
+    {
+        $translation->update([
+            'status' => !$translation->status
+        ]);
+
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'وضعیت ترجمه تغییر کرد']);
+    }
+
+    public function render()
+    {
+        return view('livewire.translations.listing', [
+            'translations' => Translation::paginate(10)
+        ])->extends('layouts.app')->section('content');
+    }
+}

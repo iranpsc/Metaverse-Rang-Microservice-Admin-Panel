@@ -455,6 +455,15 @@
                      </ul>
                  </li>
              @endhasanyrole
+
+             @hasanyrole('translations-management|super-admin')
+                <li>
+                    <a href="{{ route('translations.index') }}">
+                        <span class="fa fa-list"></span>
+                        <span>ترجمه</span>
+                    </a>
+                </li>
+             @endhasanyrole
          </ul><!-- /#side-menu -->
      </div><!-- /.side-menu-container -->
  </div><!-- /#sidebar -->

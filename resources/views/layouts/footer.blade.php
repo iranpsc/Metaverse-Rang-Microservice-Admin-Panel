@@ -20,6 +20,8 @@
 <script src="{{ asset('assets/js/pages/dashboard1.js') }}"></script>
 <script src="{{ asset('assets/js/sweetalert2@11.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/resumable.js/1.1.0/resumable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 @livewireScripts
 
 <script>

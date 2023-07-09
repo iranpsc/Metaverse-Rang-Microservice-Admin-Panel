@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SendVerificationCodeController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Livewire\Dashboard\Dashboard;
@@ -48,8 +49,7 @@ use App\Http\Livewire\Panel\Profile;
 use App\Http\Livewire\Videos\Listing as VideoListing;
 use App\Http\Livewire\Videos\Categories as VideoCategories;
 use App\Http\Livewire\Videos\EditVideo;
-use App\Notifications\SendVerificationCode;
-use Illuminate\Http\Request;
+use App\Http\Livewire\Translations\Listing as TranslationsListing;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +64,8 @@ use Illuminate\Http\Request;
 
 
 Route::redirect('/', '/dashboard');
+
+Auth::routes(['register' => false]);
 
 Route::middleware('auth:admin')->group(function () {
 
@@ -143,23 +145,11 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('challenge', QuestionsList::class)->middleware('can:manage-challenge')->name('challenge');
 
     Route::get('profile', Profile::class)->name('profile');
-});
 
-Auth::routes([
-    'register' => false,
-]);
-
-Route::middleware('auth:admin')->prefix('code')->group(function () {
-    Route::get('send', function (Request $request) {
-        $request->user()->notify(new SendVerificationCode);
-        return response()->json();
+    Route::controller(SendVerificationCodeController::class)->prefix('code')->group(function () {
+        Route::get('/', [SendVerificationCodeController::class, 'send']);
+        Route::post('/verify', [SendVerificationCodeController::class, 'verify']);
     });
 
-    Route::post('verify', function (Request $request) {
-        $request->validate([
-            'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-            'access_password' => 'required|is_valid_access_password'
-        ]);
-        return response()->json();
-    });
+    Route::get('translations', TranslationsListing::class)->middleware('can:manage-translations')->name('translations.index');
 });
