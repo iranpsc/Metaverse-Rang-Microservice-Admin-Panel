@@ -15,12 +15,11 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('translations', function (Blueprint $table) {
+        Schema::create('fields', function (Blueprint $table) {
             $table->id();
-            $table->string('code');
-            $table->string('name');
-            $table->string('native_name');
-            $table->boolean('status')->default(0);
+            $table->foreignId('tab_id')->constrained()->onDelete('cascade');
+            $table->text('name');
+            $table->text('translation')->nullable();
         });
     }
 
@@ -31,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('translations');
+        Schema::dropIfExists('fields');
     }
 };

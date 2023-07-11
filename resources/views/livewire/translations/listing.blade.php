@@ -4,7 +4,7 @@
         <div class="col-sm-6">
             <div class="input-group mb-3" wire:ignore>
                 <select class="form-control round" id="languages" wire:model="selectedLanguage">
-                    <option value="0">انتخاب زبان</option>
+                    <option value="">انتخاب زبان</option>
                     @foreach ($languages as $key => $language)
                         <option value="{{ $key }}">{{ $language['name'] }}({{ $language['nativeName'] }})</option>
                     @endforeach
@@ -39,7 +39,9 @@
                     <td></td>
                     <td>
                         <input type="checkbox" @checked($translation->status) id="languageStatus-{{ $translation->id }}">
-                        <a href="" class="btn btn-primary rounded"><span class="fa fa-list"></span></a>
+                        <a href="{{ route('modals', $translation->id) }}" class="btn btn-primary rounded">
+                            <span class="fa fa-edit"></span>
+                        </a>
                         <x-buttons.btn-danger id="deleteTranslation-{{ $translation->id }}">
                             <span class="close">&times;</span>
                         </x-buttons.btn-danger>
@@ -88,7 +90,7 @@
                 let languageStatus = document.querySelectorAll("[id^='languageStatus-']");
 
                 languageStatus.forEach(function(element) {
-                    element.addEventListener('click', function() {
+                    element.addEventListener('change', function() {
                         let translationId = element.id.split('-')[1];
                         @this.call('toggleTranslationStatus', translationId);
                     });

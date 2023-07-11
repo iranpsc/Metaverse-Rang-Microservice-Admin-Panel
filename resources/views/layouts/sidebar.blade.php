@@ -458,7 +458,7 @@
 
              @hasanyrole('translations-management|super-admin')
                 <li>
-                    <a href="{{ route('translations.index') }}">
+                    <a href="{{ route('translations') }}">
                         <span class="fa fa-list"></span>
                         <span>ترجمه</span>
                     </a>

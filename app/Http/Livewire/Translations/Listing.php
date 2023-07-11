@@ -2,11 +2,14 @@
 
 namespace App\Http\Livewire\Translations;
 
-use App\Models\Translation;
+use App\Models\Translations\Translation;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Listing extends Component
 {
+    use WithPagination;
+
     public $languages = [], $selectedLanguage;
 
     protected $paginationTheme = 'bootstrap';
@@ -28,7 +31,7 @@ class Listing extends Component
         $this->validate([
             'selectedLanguage' => [
                 'required',
-                'unique:translations,code'
+                'unique:sqlite.translations,code'
             ]
         ]);
 
@@ -37,7 +40,6 @@ class Listing extends Component
             'code' => $this->selectedLanguage['code'],
             'name' => $this->selectedLanguage['name'],
             'native_name' => $this->selectedLanguage['nativeName'],
-            'path' => 'lang/' . $this->selectedLanguage['code']
         ]);
 
         $this->emitSelf('translationAdded');

@@ -15,12 +15,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('translations', function (Blueprint $table) {
+        Schema::create('tabs', function (Blueprint $table) {
             $table->id();
-            $table->string('code');
+            $table->foreignId('modal_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->string('native_name');
-            $table->boolean('status')->default(0);
         });
     }
 
@@ -31,6 +29,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('translations');
+        Schema::dropIfExists('tabs');
     }
 };

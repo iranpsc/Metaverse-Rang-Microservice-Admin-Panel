@@ -46,10 +46,13 @@ use App\Http\Livewire\IpManagement\ApiAllowedIps;
 use App\Http\Livewire\IpManagement\AdminAllowedIps;
 use App\Http\Livewire\IpManagement\ApiIpRanges;
 use App\Http\Livewire\Panel\Profile;
+use App\Http\Livewire\Translations\Field;
 use App\Http\Livewire\Videos\Listing as VideoListing;
 use App\Http\Livewire\Videos\Categories as VideoCategories;
 use App\Http\Livewire\Videos\EditVideo;
 use App\Http\Livewire\Translations\Listing as TranslationsListing;
+use App\Http\Livewire\Translations\Modal;
+use App\Http\Livewire\Translations\Tab;
 
 /*
 |--------------------------------------------------------------------------
@@ -151,5 +154,8 @@ Route::middleware('auth:admin')->group(function () {
         Route::post('/verify', [SendVerificationCodeController::class, 'verify']);
     });
 
-    Route::get('translations', TranslationsListing::class)->middleware('can:manage-translations')->name('translations.index');
+    Route::get('translations', TranslationsListing::class)->middleware('can:manage-translations')->name('translations');
+    Route::get('translations/{translation}', Modal::class)->middleware('can:manage-translations')->name('modals');
+    Route::get('modals/{modal}', Tab::class)->middleware('can:manage-translations')->name('tabs');
+    Route::get('tabs/{tab}', Field::class)->middleware('can:manage-translations')->name('fields');
 });
