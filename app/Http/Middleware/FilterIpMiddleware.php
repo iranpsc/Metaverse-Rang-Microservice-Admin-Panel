@@ -16,6 +16,10 @@ class FilterIpMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
+        if($request->routeIs('api.translations')) {
+            return $next($request);
+        }
+
         $ipWhiteList = [
             '2.187.99.104',
             '2.187.98.75',

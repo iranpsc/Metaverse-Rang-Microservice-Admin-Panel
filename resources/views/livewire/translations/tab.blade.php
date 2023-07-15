@@ -27,9 +27,18 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $tab->name }}</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                    <td>
+                        <div class="progress">
+                            @php
+                                $tab->progress = $tab->fields_count > 0 ? round(($tab->translated_fields_count / $tab->fields_count) * 100) : 0;
+                            @endphp
+                            <div class="progress-bar" role="progressbar" style="width: {{ $tab->progress }}%" aria-valuenow="{{ $tab->progress }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ $tab->progress }}%
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ $tab->fields_count }}</td>
+                    <td>{{ $tab->translated_fields_count }}</td>
                     <td>
                         <a href="{{ route('fields', $tab->id) }}" class="btn btn-primary rounded"><span class="fa fa-edit"></span></a>
                         <x-buttons.btn-danger id="deleteTab-{{ $tab->id }}">
@@ -39,6 +48,7 @@
                 </tr>
             @endforeach
         </x-tables.table>
+        {{ $tabs->links() }}
     @else
         <x-alerts.danger>هیچ اطلاعاتی موجود نیست.</x-alerts.danger>
     @endif

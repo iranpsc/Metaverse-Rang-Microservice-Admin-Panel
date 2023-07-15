@@ -39,6 +39,7 @@
                 </tr>
             @endforeach
         </x-tables.table>
+        {{ $modals->links() }}
     @else
         <x-alerts.danger>هیچ اطلاعاتی موجود نیست.</x-alerts.danger>
     @endif

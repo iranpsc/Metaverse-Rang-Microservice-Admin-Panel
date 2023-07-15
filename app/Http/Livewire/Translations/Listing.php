@@ -36,7 +36,7 @@ class Listing extends Component
         ]);
 
 
-        Translation::create([
+        $translation = Translation::create([
             'code' => $this->selectedLanguage['code'],
             'name' => $this->selectedLanguage['name'],
             'native_name' => $this->selectedLanguage['nativeName'],
