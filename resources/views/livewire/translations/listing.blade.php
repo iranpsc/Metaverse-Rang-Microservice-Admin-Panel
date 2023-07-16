@@ -32,7 +32,7 @@
             @forelse ($translations as $translation)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td></td>
+                    <td><img src="https://www.countryflagicons.com/FLAT/64/{{ Str::upper($translation->code) }}.png"></td>
                     <td>{{ $translation->name }}</td>
                     <td></td>
                     <td></td>

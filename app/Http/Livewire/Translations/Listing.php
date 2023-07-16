@@ -76,7 +76,7 @@ class Listing extends Component
     public function render()
     {
         return view('livewire.translations.listing', [
-            'translations' => Translation::paginate(10)
+            'translations' => Translation::simplePaginate(10)
         ])->extends('layouts.app')->section('content');
     }
 }
