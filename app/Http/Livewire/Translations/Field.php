@@ -35,7 +35,7 @@ class Field extends Component
             'translation' => $this->translation,
         ]);
 
-        $tabs = Tab::whereNot('id', $this->tab->id)->get();
+        $tabs = Tab::whereNot('id', $this->tab->id)->where('name', $this->tab->name)->get();
 
         foreach ($tabs as $tab) {
             $tab->fields()->create([

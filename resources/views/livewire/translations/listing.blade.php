@@ -1,7 +1,7 @@
 <div>
     <div class="row">
-        <div class="col-sm-6"></div>
-        <div class="col-sm-6">
+        <div class="col-sm-8"></div>
+        <div class="col-sm-4">
             <div class="input-group mb-3" wire:ignore>
                 <select class="form-control round" id="languages" wire:model="selectedLanguage">
                     <option value="">انتخاب زبان</option>
