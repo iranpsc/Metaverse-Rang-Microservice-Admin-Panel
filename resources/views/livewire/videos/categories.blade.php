@@ -1,7 +1,7 @@
 <div>
     <x-buttons.btn-primary class="mb-2" data-bs-toggle="modal" data-bs-target="#create-category-modal">ایجاد دسته
         بندی</x-buttons.btn-primary>
-    <x-modals.modal title="ایجاد دسته بندی" id="create-category-modal">
+    <x-modals.modal size="modal-xl" title="ایجاد دسته بندی" id="create-category-modal">
         <x-forms.group for="parentCategory" label="انتخاب دسته بندی پدر">
             <x-forms.select id="parentCategory" wire:model="parentCategory">
                 @if ($categories->count() > 0)
@@ -31,7 +31,9 @@
             @enderror
         </x-forms.group>
         <x-forms.group for="description" label="توضیحات">
-            <textarea wire:model.lazy="description" class="form-control rounded" id="description" cols="30" rows="10"></textarea>
+            <div wire:ignore>
+                <textarea id="description"></textarea>
+            </div>
             @error('description')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
@@ -45,7 +47,7 @@
             @enderror
         </x-forms.group>
         <x-slot name="footer">
-            <x-buttons.btn-success wire:click="save" wire:loading.attr="disabled">ثبت</x-buttons.btn-success>
+            <x-buttons.btn-success id="save-btn">ثبت</x-buttons.btn-success>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot>
     </x-modals.modal>
@@ -141,4 +143,23 @@
     @else
         <x-alerts.danger>دسته بندی تعریف نشده است.</x-alerts.danger>
     @endif
+
+    <script>
+        window.addEventListener('livewire:load', function() {
+            var description = CKEDITOR.replace('description');
+            var saveBtn = document.getElementById('save-btn');
+
+            CKEDITOR.editorConfig = function( config ) {
+                config.language = 'fa';
+                config.uiColor = '#F7B42C';
+                config.height = 300;
+                config.toolbarCanCollapse = true;
+            };
+
+            saveBtn.addEventListener('click', function() {
+                @this.set('description', description.getData());
+                @this.call('save');
+            });
+        })
+    </script>
 </div>

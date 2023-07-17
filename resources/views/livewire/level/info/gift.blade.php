@@ -143,7 +143,9 @@
 
     <div class="form-group my-2">
         <label for="level-{{ $level->id }}-gift-description">توضیحات هدیه همراه</label>
-        <textarea class="form-control rounded" wire:model="description" id="level-{{ $level->id }}-gift-description" cols="30" rows="5"></textarea>
+        <div wire:ignore>
+            <textarea id="level-{{ $level->id }}-gift-description">{{ $description }}</textarea>
+        </div>
         @error('description')
             <span class="form-text text-danger">{{ $message }}</span>
         @enderror
@@ -151,7 +153,9 @@
 
     <div class="form-group my-2">
         <label for="level-{{ $level->id }}-gift-features">قابلیت های هدیه همراه</label>
-        <textarea class="form-control rounded" wire:model="features" id="level-{{ $level->id }}-gift-features" cols="30" rows="5"></textarea>
+        <div wire:ignore>
+            <textarea id="level-{{ $level->id }}-gift-features">{{ $features }}</textarea>
+        </div>
         @error('features')
             <span class="form-text text-danger">{{ $message }}</span>
         @enderror
@@ -161,6 +165,26 @@
     <x-forms.verification/>
     <hr>
 
-    <x-buttons.btn-primary class="w-25" wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
+    <x-buttons.btn-primary class="w-25" id="save-btn-{{$level->id}}-gifts">ثبت</x-buttons.btn-primary>
 
+    <script>
+        window.addEventListener('livewire:load', function() {
+            var level_{{ $level->id }}_gift_description = CKEDITOR.replace('level-{{ $level->id }}-gift-description');
+            var level_{{ $level->id }}_gift_features = CKEDITOR.replace('level-{{ $level->id }}-gift-features');
+            var saveBtn{{$level->id}} = document.getElementById('save-btn-{{$level->id}}-gifts');
+
+            CKEDITOR.editorConfig = function( config ) {
+                config.language = 'fa';
+                config.uiColor = '#F7B42C';
+                config.height = 300;
+                config.toolbarCanCollapse = true;
+            };
+
+            saveBtn{{$level->id}}.addEventListener('click', function() {
+                @this.set('description', level_{{ $level->id }}_gift_description.getData());
+                @this.set('features', level_{{ $level->id }}_gift_features.getData());
+                @this.call('save');
+            });
+        })
+    </script>
 </div>

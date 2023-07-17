@@ -17,7 +17,7 @@ class EditMessages extends Component
         'content' => 'required|string',
     ];
 
-    public function edit()
+    public function save()
     {
         $this->validate();
         $this->message->update([

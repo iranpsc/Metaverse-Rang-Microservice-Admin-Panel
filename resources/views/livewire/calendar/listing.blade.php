@@ -25,8 +25,9 @@
         </x-forms.group>
 
         <x-forms.group for="content" label="متن">
-            <textarea id="content" wire:model.defer="content" rows="10" cols="20" class="form-control rounded">
-            </textarea>
+            <div wire:ignore>
+                <textarea id="content"></textarea>
+            </div>
             @error('content')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
@@ -102,7 +103,7 @@
         <x-forms.verification />
 
         <x-slot name="footer">
-            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
+            <x-buttons.btn-primary id="save-btn">ثبت</x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بازگشت</x-buttons.btn-danger>
         </x-slot>
     </x-modals.modal>
@@ -154,8 +155,23 @@
         <x-alerts.danger>وقعه ای ثبت نشده است.</x-alerts.danger>
     @endif
 
-    @push('js')
-        <script>
+    <script>
+        window.addEventListener('livewire:load', function() {
+            var content = CKEDITOR.replace('content');
+            var saveBtn = document.getElementById('save-btn');
+
+            CKEDITOR.editorConfig = function( config ) {
+                config.language = 'fa';
+                config.uiColor = '#F7B42C';
+                config.height = 300;
+                config.toolbarCanCollapse = true;
+            };
+
+            saveBtn.addEventListener('click', function() {
+                @this.set('content', content.getData());
+                @this.call('save');
+            });
+
             var checkbox = document.getElementById('is_version')
             var versionTitleGroup = document.getElementById('version-title-group')
             var calendarInputs = document.getElementsByClassName('calendar-inputs')
@@ -185,6 +201,6 @@
                     }
                 }
             })
-        </script>
-    @endpush
+        })
+    </script>
 </div>

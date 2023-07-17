@@ -25,20 +25,22 @@
             @enderror
         </x-forms.group>
 
-        <x-forms.group for="content" label="متن پیام">
-            <label class="form-col-label">متن پیام</label>
-            <textarea class="form-control form-control-sm rounded summernote" wire:model="content" rows="10"></textarea>
+        <div class="form-group">
+            <label>متن پیام</label>
+            <div wire:ignore>
+                <textarea id="content"></textarea>
+            </div>
             @error('content')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
-        </x-forms.group>
+        </div>
         <x-slot name="footer">
             <div class="row">
                 <div class="col-sm-6">
-                    <x-buttons.btn-primary class="btn-block" wire:click="save">ذخیره</x-buttons.btn-primary>
+                    <x-buttons.btn-primary id="save-btn">ذخیره</x-buttons.btn-primary>
                 </div>
                 <div class="col-sm-6">
-                    <x-buttons.btn-danger class="btn-block" data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+                    <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
                 </div>
             </div>
         </x-slot>
@@ -76,4 +78,23 @@
     @else
         <x-alerts.danger>پیامی تعریف نشده است</x-alerts.danger>
     @endif
+
+    <script>
+        window.addEventListener('livewire:load', function() {
+            var description = CKEDITOR.replace('content');
+            var saveBtn = document.getElementById('save-btn');
+
+            CKEDITOR.editorConfig = function( config ) {
+                config.language = 'fa';
+                config.uiColor = '#F7B42C';
+                config.height = 300;
+                config.toolbarCanCollapse = true;
+            };
+
+            saveBtn.addEventListener('click', function() {
+                @this.set('content', description.getData());
+                @this.call('save');
+            });
+        })
+    </script>
 </div>

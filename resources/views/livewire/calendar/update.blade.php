@@ -28,9 +28,7 @@
         </x-forms.group>
 
         <x-forms.group for="content-{{ $event->id }}" label="متن">
-            <textarea id="content-{{ $event->id }}" wire:model="content" rows="10" cols="20"
-                class="form-control rounded">
-            </textarea>
+            <textarea id="content-{{ $event->id }}">{{ $event->content }}</textarea>
             @error('content')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
@@ -116,9 +114,28 @@
         <x-forms.verification />
 
         <x-slot name="footer">
-            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت
+            <x-buttons.btn-primary id="save-btn-{{ $event->id }}">ثبت
             </x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بازگشت</x-buttons.btn-danger>
         </x-slot>
     </x-modals.modal>
+
+    <script>
+        window.addEventListener('livewire:load', function() {
+        var content{{ $event->id }} = CKEDITOR.replace('content-{{ $event->id }}');
+        var saveBtn = document.getElementById('save-btn');
+
+        CKEDITOR.editorConfig = function( config ) {
+            config.language = 'fa';
+            config.uiColor = '#F7B42C';
+            config.height = 300;
+            config.toolbarCanCollapse = true;
+        };
+
+        saveBtn.addEventListener('click', function() {
+            @this.set('content', content{{ $event->id }}.getData());
+            @this.call('save');
+        });
+        })
+    </script>
 </div>
