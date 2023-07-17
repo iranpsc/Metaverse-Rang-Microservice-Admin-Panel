@@ -10,7 +10,9 @@
             @enderror
         </x-forms.group>
         <x-forms.group for="description" label="توضیحات متنی">
-            <textarea id="description" cols="30" rows="10" class="form-control rounded" wire:model="description"></textarea>
+            <div wire:ignore>
+                <textarea name="description" id="description"></textarea>
+            </div>
             @error('description')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
@@ -59,7 +61,8 @@
         <x-forms.group label="فایل ویدئو" for="videoFile">
             <span id="videoFile" style="cursor: pointer" wire:ignore class="form-control rounded">Choose File</span>
             <x-progress-bar />
-            <span class="form-text text-danger d-none" id="internet-disconnected-alert">اینترنت متصل نیست. به محض اتصال مجدد بارگذاری ادامه خواهد یافت.</span>
+            <span class="form-text text-danger d-none" id="internet-disconnected-alert">اینترنت متصل نیست. به محض اتصال
+                مجدد بارگذاری ادامه خواهد یافت.</span>
             @error('video')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
@@ -75,7 +78,7 @@
         <x-forms.verification />
 
         <x-slot:footer>
-            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
+            <x-buttons.btn-primary wire:loading.attr="disabled" id="save-btn">ثبت</x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot:footer>
     </x-modals.modal>
@@ -202,6 +205,23 @@
                 videoDisconnectedAlert.classList.add('d-none');
                 progressBar.classList.remove('bg-danger');
                 progressBar.classList.add('bg-success');
+            });
+
+
+
+            var description = CKEDITOR.replace('description');
+            var saveBtn = document.getElementById('save-btn');
+
+            CKEDITOR.editorConfig = function( config ) {
+                config.language = 'fa';
+                config.uiColor = '#F7B42C';
+                config.height = 300;
+                config.toolbarCanCollapse = true;
+            };
+
+            saveBtn.addEventListener('click', function() {
+                @this.set('description', description.getData());
+                @this.call('save');
             });
         });
     </script>

@@ -6,9 +6,11 @@
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
+
         <x-forms.group for="description-{{ $videoDb->id }}" label="توضیحات متنی">
-            <textarea id="description-{{ $videoDb->id }}" cols="30" rows="10" class="form-control rounded"
-                wire:model="description"></textarea>
+            <div wire:ignore>
+                <textarea id="description-{{ $videoDb->id }}">{{ $videoDb->description }}</textarea>
+            </div>
             @error('description')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
@@ -34,7 +36,7 @@
         <x-forms.verification />
 
         <x-slot:footer>
-            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
+            <x-buttons.btn-primary id="save-{{ $videoDb->id }}">ثبت</x-buttons.btn-primary>
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot:footer>
     </x-modals.modal>
@@ -108,6 +110,21 @@
             window.addEventListener('online', function() {
                 internetDisconnectedAlert.classList.add('d-none');
                 resumable.upload();
+            });
+
+            var description = CKEDITOR.replace(document.getElementById('description-{{ $videoDb->id }}'));
+            var saveBtn = document.getElementById('save-{{ $videoDb->id }}');
+
+            CKEDITOR.editorConfig = function( config ) {
+                config.language = 'fa';
+                config.uiColor = '#F7B42C';
+                config.height = 300;
+                config.toolbarCanCollapse = true;
+            };
+
+            saveBtn.addEventListener('click', function() {
+                @this.set('description', description.getData());
+                @this.call('save');
             });
         });
     </script>

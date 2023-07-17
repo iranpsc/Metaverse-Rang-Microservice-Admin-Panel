@@ -150,7 +150,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('profile', Profile::class)->name('profile');
 
     Route::controller(SendVerificationCodeController::class)->prefix('code')->group(function () {
-        Route::get('/', [SendVerificationCodeController::class, 'send']);
+        Route::get('/send', [SendVerificationCodeController::class, 'send']);
         Route::post('/verify', [SendVerificationCodeController::class, 'verify']);
     });
 
