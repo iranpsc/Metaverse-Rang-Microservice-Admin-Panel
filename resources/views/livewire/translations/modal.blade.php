@@ -1,4 +1,11 @@
 <div>
+
+    <x-breadcrumb>
+        <x-breadcrumb.item title="ترجمه ها" href="{{ route('translations') }}"/>
+        <x-breadcrumb.item title="بخش ها" active="true" />
+    </x-breadcrumb>
+    <br>
+
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-modal">ایجاد بخش جدید</x-buttons.btn-primary>
 
     <x-modals.modal id="create-modal" title="ایجاد بخش جدید">
@@ -31,7 +38,11 @@
                     <td></td>
                     <td></td>
                     <td>
-                        <a href="{{ route('tabs', $modal->id) }}" class="btn btn-primary rounded"><span class="fa fa-edit"></span></a>
+                        <a href="{{ route('tabs', [
+                            'translation' => $translation->id,
+                            'modal' => $modal->id
+                            ]) }}"
+                        class="btn btn-primary rounded"><span class="fa fa-edit"></span></a>
                         <x-buttons.btn-danger id="deleteModal-{{ $modal->id }}">
                             <span class="close">&times;</span>
                         </x-buttons.btn-danger>

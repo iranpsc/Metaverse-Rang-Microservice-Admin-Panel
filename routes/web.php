@@ -154,8 +154,10 @@ Route::middleware('auth:admin')->group(function () {
         Route::post('/verify', [SendVerificationCodeController::class, 'verify']);
     });
 
-    Route::get('translations', TranslationsListing::class)->middleware('can:manage-translations')->name('translations');
-    Route::get('translations/{translation}', Modal::class)->middleware('can:manage-translations')->name('modals');
-    Route::get('modals/{modal}', Tab::class)->middleware('can:manage-translations')->name('tabs');
-    Route::get('tabs/{tab}', Field::class)->middleware('can:manage-translations')->name('fields');
+    Route::prefix('translations')->group(function() {
+        Route::get('/', TranslationsListing::class)->middleware('can:manage-translations')->name('translations');
+        Route::get('/{translation}/modals', Modal::class)->middleware('can:manage-translations')->name('modals');
+        Route::get('/{translation}/modals/{modal}/tabs', Tab::class)->middleware('can:manage-translations')->name('tabs');
+        Route::get('/{translation}/modals/{modal}/tabs/{tab}/fields', Field::class)->middleware('can:manage-translations')->name('fields');
+    });
 });

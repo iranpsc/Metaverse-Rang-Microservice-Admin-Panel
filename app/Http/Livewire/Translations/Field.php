@@ -23,7 +23,7 @@ class Field extends Component
 
     public function mount(Tab $tab)
     {
-        $this->tab = $tab;
+        $this->tab = $tab->load(['modal', 'modal.translation']);
     }
 
     public function save()

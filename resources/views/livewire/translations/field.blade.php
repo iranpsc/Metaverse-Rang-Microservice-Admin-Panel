@@ -1,4 +1,16 @@
 <div>
+    <x-breadcrumb>
+        <x-breadcrumb.item title="ترجمه ها" href="{{ route('translations') }}"/>
+        <x-breadcrumb.item title="بخش ها" href="{{ route('modals', $tab->modal->translation->id) }}"/>
+        <x-breadcrumb.item title="تب ها" href="{{ route('tabs', [
+            'translation' => $tab->modal->translation->id,
+            'modal' => $tab->modal->id,
+            'tab' => $tab->id
+        ]) }}" />
+        <x-breadcrumb.item title="عبارات" active="true"/>
+    </x-breadcrumb>
+    <br>
+
     <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-field">ایجاد عبارت جدید</x-buttons.btn-primary>
 
     <x-modals.modal id="create-field" title="ایجاد عبارت جدید">

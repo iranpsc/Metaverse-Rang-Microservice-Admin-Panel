@@ -2,6 +2,9 @@
 
 namespace App\Http\Livewire\Translations;
 
+use App\Models\Translations\Field;
+use App\Models\Translations\Modal;
+use App\Models\Translations\Tab;
 use App\Models\Translations\Translation;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -25,22 +28,41 @@ class Listing extends Component
         $this->languages = json_decode($langFile, true);
     }
 
-
     public function saveTranslation()
     {
         $this->validate([
-            'selectedLanguage' => [
-                'required',
-                'unique:sqlite.translations,code'
-            ]
+            'selectedLanguage' => 'required|unique:sqlite.translations,code'
         ]);
-
 
         $translation = Translation::create([
             'code' => $this->selectedLanguage['code'],
             'name' => $this->selectedLanguage['name'],
             'native_name' => $this->selectedLanguage['nativeName'],
         ]);
+
+        $modals = Modal::all()->unique('name');
+
+        foreach ($modals as $modal) {
+            $newModal = $translation->modals()->create([
+                'name' => $modal->name,
+            ]);
+
+            $relatedTabs = Tab::where('modal_id', $modal->id)->get();
+
+            foreach ($relatedTabs as $tab) {
+                $newTab = $newModal->tabs()->create([
+                    'name' => $tab->name,
+                ]);
+
+                $relatedFields = Field::where('tab_id', $tab->id)->get();
+
+                foreach ($relatedFields as $field) {
+                    $newTab->fields()->create([
+                        'name' => $field->name,
+                    ]);
+                }
+            }
+        }
 
         $this->emitSelf('translationAdded');
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'ترجمه اضافه شد']);
