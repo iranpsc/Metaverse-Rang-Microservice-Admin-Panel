@@ -21,12 +21,12 @@ class TranslationController extends Controller
         return response()->json(['data' => $modals]);
     }
 
-    public function getTabs(Modal $modal)
+    public function getTabs(Translation $translation, Modal $modal)
     {
         return response()->json(['data' => $modal->tabs]);
     }
 
-    public function getFields(Tab $tab)
+    public function getFields(Translation $translation, Modal $modal, Tab $tab)
     {
         return response()->json(['data' => $tab->fields]);
     }

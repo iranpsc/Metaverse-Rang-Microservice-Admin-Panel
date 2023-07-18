@@ -14,9 +14,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::controller(TranslationController::class)->group(function() {
-    Route::get('/translations', 'index');
-    Route::get('/translations/{translation}/modals', 'getModals');
-    Route::get('/modals/{modal}/tabs', 'getTabs');
-    Route::get('/tabs/{tab}/fields', 'getFields');
+Route::controller(TranslationController::class)->prefix('translations')->group(function() {
+    Route::get('/', 'index');
+    Route::get('/{translation}/modals', 'getModals');
+    Route::get('/{translation}/modals/{modal}/tabs', 'getTabs');
+    Route::get('/{translation}/modals/{modal}/tabs/{tab}/fields', 'getFields');
 })->name('api.translations');
