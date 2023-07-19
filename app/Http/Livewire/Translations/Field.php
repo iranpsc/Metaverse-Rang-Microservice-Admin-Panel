@@ -8,7 +8,7 @@ use Livewire\Component;
 
 class Field extends Component
 {
-    public $tab, $name, $translation;
+    public $tab, $name, $value;
 
     protected $listeners = [
         'fieldAdded' => '$refresh',
@@ -18,7 +18,7 @@ class Field extends Component
 
     protected $rules = [
         'name' => 'required|string|max:500|unique:sqlite.fields,name',
-        'translation' => 'required|string|max:500',
+        'value' => 'required|string|max:500',
     ];
 
     public function mount(Tab $tab)
@@ -32,7 +32,7 @@ class Field extends Component
 
         $this->tab->fields()->create([
             'name' => $this->name,
-            'translation' => $this->translation,
+            'translation' => $this->value,
         ]);
 
         $tabs = Tab::whereNot('id', $this->tab->id)->where('name', $this->tab->name)->get();
@@ -43,7 +43,7 @@ class Field extends Component
             ]);
         }
 
-        $this->reset('name', 'translation');
+        $this->reset('name', 'value');
 
         $this->emitSelf('fieldAdded');
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'فیلد اضافه شد']);

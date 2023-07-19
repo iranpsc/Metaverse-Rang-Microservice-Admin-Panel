@@ -20,9 +20,9 @@
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
-        <x-forms.group for="translation" label="ترجمه">
-            <x-forms.input wire:model.defer="translation" id="translation" />
-            @error('translation')
+        <x-forms.group for="value" label="ترجمه">
+            <x-forms.input wire:model.defer="value" id="value" />
+            @error('value')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
