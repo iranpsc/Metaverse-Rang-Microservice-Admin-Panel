@@ -17,7 +17,7 @@ class Field extends Component
     ];
 
     protected $rules = [
-        'name' => 'required|string|max:500|unique:sqlite.fields,name',
+        'name' => 'required|string|max:500',
         'value' => 'required|string|max:500',
     ];
 
