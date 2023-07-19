@@ -15,6 +15,7 @@ class Listing extends Component
 
     public $title, $content, $image, $start_date, $end_date, $is_version = false, $color;
     public $btn_name, $btn_link, $version_title, $start_time, $end_time;
+    public $pageTitle = 'لیست وقایع';
 
     protected $listeners = [
         'eventCreated' => '$refresh',
@@ -78,6 +79,6 @@ class Listing extends Component
     {
         return view('livewire.calendar.listing', [
             'events' => Calendar::with('interactions')->latest('starts_at')->simplePaginate(10)
-        ])->extends('layouts.app')->section('content');
+        ])->extends('layouts.app', ['pageTitle' => $this->pageTitle])->section('content');
     }
 }

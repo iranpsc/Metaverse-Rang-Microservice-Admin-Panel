@@ -11,6 +11,7 @@ class Kyc extends Component
     use WithPagination;
 
     public $searchTerm;
+    public $pageTitle = 'احراز هویت';
 
     protected $paginationTheme = 'bootstrap';
 
@@ -30,7 +31,7 @@ class Kyc extends Component
                 ->orderByDesc('created_at')
                 ->paginate(10)
         ])
-            ->extends('layouts.app')
+            ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
             ->section('content');
     }
 }

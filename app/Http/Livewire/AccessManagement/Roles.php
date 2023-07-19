@@ -13,6 +13,7 @@ class Roles extends Component
 
     public $title, $name;
     public $addedPermissions = [];
+    public $pageTitle = 'مدیریت مسئولیت ها';
 
     protected $paginationTheme = 'bootstrap';
 
@@ -63,7 +64,7 @@ class Roles extends Component
             ->with('permissions')->simplePaginate(10),
             'permissions' => Permission::lazy(),
         ])
-        ->extends('layouts.app')
+        ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
         ->section('content');
     }
 }

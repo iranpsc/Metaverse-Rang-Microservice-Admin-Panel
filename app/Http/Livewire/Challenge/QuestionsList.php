@@ -15,6 +15,7 @@ class QuestionsList extends Component
     use WithFileUploads, WithPagination;
 
     public $title, $code, $image, $prize, $creator_code, $file;
+    public $pageTitle = 'لیست سوالات';
 
     protected $paginationTheme = 'bootstrap';
 
@@ -45,6 +46,6 @@ class QuestionsList extends Component
     {
         return view('livewire.challenge.questions-list', [
             'questions' => Question::simplePaginate(10),
-        ])->extends('layouts.app')->section('content');
+        ])->extends('layouts.app', ['pageTitle' => $this->pageTitle])->section('content');
     }
 }

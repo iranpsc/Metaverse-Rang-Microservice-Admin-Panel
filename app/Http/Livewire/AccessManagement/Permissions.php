@@ -13,6 +13,7 @@ class Permissions extends Component
 
     public $title, $name;
     public $addedRoles = [];
+    public $pageTitle = 'مدیریت دسترسی ها';
 
     protected $paginationTheme = 'bootstrap';
 
@@ -55,7 +56,7 @@ class Permissions extends Component
             'roles' => Role::whereNotIn('name', ['super-admin'])->lazy(),
             'permissions' => Permission::with('roles')->paginate(10, '*', 'permissions-listing')
         ])
-        ->extends('layouts.app')
+        ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
         ->section('content');
     }
 }

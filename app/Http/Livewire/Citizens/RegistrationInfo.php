@@ -12,6 +12,7 @@ class RegistrationInfo extends Component
 
     private $users;
     public $searchTerm;
+    public $pageTitle = 'اطلاعات ثبت نام';
 
     protected $paginationTheme = 'bootstrap';
 
@@ -27,7 +28,7 @@ class RegistrationInfo extends Component
         return view('livewire.citizens.registration-info', [
             'users' => $this->users ?? User::simplePaginate(10)
         ])
-        ->extends('layouts.app')
+        ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
         ->section('content');
     }
 }

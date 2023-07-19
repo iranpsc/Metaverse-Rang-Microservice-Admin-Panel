@@ -18,6 +18,7 @@ class EmployeeRolePermission extends Component
 
     public $employee;
     public $roles = [];
+    public $pageTitle = 'مدیریت دسترسی کارمندان';
 
     protected $rules = [
         'employee' => 'required|exists:employees,id',
@@ -88,7 +89,7 @@ class EmployeeRolePermission extends Component
             'employees'   => Employee::select(['id', 'fname', 'lname'])->get(),
             'defined_roles'       => Role::whereNotIn('name', ['super-admin'])->get(),
         ])
-            ->extends('layouts.app')
+            ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
             ->section('content');
     }
 }

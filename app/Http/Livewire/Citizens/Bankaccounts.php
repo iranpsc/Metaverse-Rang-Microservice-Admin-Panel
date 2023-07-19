@@ -8,6 +8,8 @@ use App\Notifications\KycDeniedNotification;
 
 class Bankaccounts extends Component
 {
+    public $pageTitle = 'اطلاعات حساب های بانکی';
+
     public $bankAccounts, $searchTerm;
 
     public $bank_name_err;
@@ -77,7 +79,7 @@ class Bankaccounts extends Component
     public function render()
     {
         return view('livewire.citizens.bankaccounts')
-            ->extends('layouts.app')
+            ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
             ->section('content');
     }
 }

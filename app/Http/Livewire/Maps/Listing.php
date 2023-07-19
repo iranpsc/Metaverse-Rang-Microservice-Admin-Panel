@@ -13,6 +13,7 @@ class Listing extends Component
     use WithFileUploads, WithPagination, SendsVerificationSms;
 
     public $name, $mapFile, $color, $pointFile, $borderFile;
+    public $pageTitle = 'لیست نقشه ها';
 
     protected $rules = [
         'name' => 'required|string|min:2',
@@ -124,6 +125,6 @@ class Listing extends Component
     {
         return view('livewire.maps.listing', [
             'maps' => Map::simplePaginate(10)
-        ])->extends('layouts.app')->section('content');
+        ])->extends('layouts.app', ['pageTitle' => $this->pageTitle])->section('content');
     }
 }

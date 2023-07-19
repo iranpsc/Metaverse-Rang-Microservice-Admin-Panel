@@ -1,5 +1,5 @@
 <div>
-    <x-modals.modal size="modal-xl" id="edit-prize-{{ $prize->id }}" title="ویرایش پاداشهای معرفی {{ \App\Helpers\getRelationTitle($prize->member) }}">
+    <x-modals.modal size="modal-xl" id="edit-prize-{{ $prize->id }}" title="ویرایش پاداشهای معرفی {{ $prize->getRelationTitle() }}">
         <div class="row">
             <div class="col-sm-6">
                 <x-forms.group for="introduction-profit-increase-{{ $prize->id }}" label="افزایش سود پاداش معرفی(%)">
