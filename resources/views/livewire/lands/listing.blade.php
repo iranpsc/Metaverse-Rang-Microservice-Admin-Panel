@@ -1,6 +1,5 @@
     <div>
-        <x-forms.search-box wire:model.debounce.1000ms="search" placeholder="شناسه ملک را وارد کنید">
-        </x-forms.search-box>
+        <x-forms.search-box wire:model.debounce.1000ms="search" placeholder="شناسه ملک را وارد کنید" />
 
         @if ($properties->count() > 0)
             <x-tables.table>

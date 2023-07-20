@@ -13,7 +13,7 @@
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $feature->properties->id }}</td>
-                    <td>{{ $property->getApplicationTitle() }}</td>
+                    <td>{{ $feature->properties->getApplicationTitle() }}</td>
                     <td>{{ $feature->properties->stability }}</td>
                     <td>{{ $feature->properties->minimum_price_percentage }}</td>
                     <td>{{ jdate($feature->properties->updated_at)->format('Y/m/d')}}</td>
