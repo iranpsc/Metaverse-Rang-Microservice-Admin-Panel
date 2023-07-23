@@ -21,7 +21,7 @@ class EditCategory extends Component
 
     protected $rules = [
         'name' => 'required|string|max:255',
-        'description' => 'required|string|max:2000',
+        'description' => 'required|string|max:5000',
         'image' => 'nullable|image|max:5024',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'

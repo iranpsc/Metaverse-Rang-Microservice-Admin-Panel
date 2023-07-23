@@ -33,11 +33,9 @@
                                 ویرایش
                                 مختصات</x-buttons.btn-success>
 
-                            <livewire:lands.edit.feature-properties :feature="$property->feature"
-                                :wire:key="'edit-properties-'.$property->feature->id">
+                            <livewire:lands.edit.feature-properties :feature="$property->feature" :wire:key="'edit-properties-'.$property->feature->id">
 
-                                <livewire:lands.edit.feature-coordinates :feature="$property->feature"
-                                    :wire:key="'edit-coordinates-'.$property->feature->id">
+                            <livewire:lands.edit.feature-coordinates :feature="$property->feature" :wire:key="'edit-coordinates-'.$property->feature->id">
                         </td>
                     </tr>
                 @endforeach

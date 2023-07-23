@@ -17,7 +17,7 @@ class EditVideo extends Component
 
     protected $rules = [
         'title' => 'required',
-        'description' => 'required|string|max:2000',
+        'description' => 'required|string|max:5000',
         'image' => 'nullable|image|max:1024',
         'video' => 'nullable|string',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
