@@ -59,11 +59,11 @@ class ApiIpRanges extends Component
             $ip = new Ip();
             $ip->title = $this->title;
             $ip->type = 'range';
-            $ip->from = ip2long(implode('.', $this->starting_ip));
-            $ip->to = ip2long(implode('.', $this->ending_ip));
+            $ip->from = implode('.', $this->starting_ip);
+            $ip->to = implode('.', $this->ending_ip);
             $ip->save();
+            $this->resetExcept('admin');
             $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
-            $this->reset(['code', 'accessPassword', 'starting_ip', 'ending_ip', 'title']);
             $this->emitSelf('ipRangeCreated');
         }
     }
@@ -71,33 +71,18 @@ class ApiIpRanges extends Component
 
     public function import()
     {
-        $this->validate(
-            [
-                'file' => 'required|file|mimes:txt',
-                'code' => 'required|integer',
-                'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-                'access_password' => 'required|is_valid_access_password'
-            ],
-            [
-                'accessPassword.required' => 'رمز دسترسی را وارد کنید',
-                'file.required' => 'فایل را بارگذاری کنید',
-                'file.mimes' => 'فرمت فایل باید .txt باشد.',
-                'file.file' => 'فرمت فایل صحیح نیست.',
-                'title.required' => 'عنوان را وارد کنید',
-                'code.required' => 'کد تایید را وارد کنید',
-                'code.integer' => 'کد تایید صحیح نمی باشد',
-                'code.min' => 'کد تایید صحیح نمی باشد',
-                'accessPassword.required' => 'رمز دسترسی را وارد کنید',
-                'title.required' => 'عنوان را وارد کنید',
-            ],
-            ['file', 'code', 'accessPassword', 'title']
-        );
+        $this->validate([
+            'file' => 'required|file|mimes:txt',
+            'code' => 'required|integer',
+            'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
+            'access_password' => 'required|is_valid_access_password'
+        ]);
 
         $fileName =  $this->file->getClientOriginalName();
         $this->file->storePubliclyAs('ip', $fileName, 'public');
         ImportIpRanges::dispatch($fileName, $this->title);
-        session()->flash('success', 'درون ریزی با موفقیت انجام شد.');
-        $this->reset(['code', 'accessPassword', 'file', 'title']);
+        $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
+        $this->resetExcept('admin');
     }
 
     public function deleteIp(Ip $ip)

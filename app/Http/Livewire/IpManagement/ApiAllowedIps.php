@@ -41,10 +41,10 @@ class ApiAllowedIps extends Component
         $ip = new Ip();
         $ip->title = $this->title;
         $ip->type = 'api';
-        $ip->from = ip2long(implode('.', $this->allowedIp));
+        $ip->from = implode('.', $this->allowedIp);
         $ip->save();
+        $this->resetExcept('admin');
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'اطلاعات با موفقیت ثبت شد']);
-        $this->reset(['code', 'accessPassword', 'allowedIp', 'title']);
         $this->emitSelf('newIpAdded');
     }
 
