@@ -75,7 +75,7 @@ class Listing extends Component
         $this->subCategory->videos()->create([
             'title' => $this->title,
             'description' => $this->description,
-            'creator_code' => $this->creator_code,
+            'creator_code' => strtolower($this->creator_code),
             'fileName' => $videoUrl,
             'image' => $imageUrl,
         ]);
