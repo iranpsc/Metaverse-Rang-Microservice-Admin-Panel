@@ -45,6 +45,7 @@ use App\Http\Livewire\Citizens\Withdraws;
 use App\Http\Livewire\IpManagement\ApiAllowedIps;
 use App\Http\Livewire\IpManagement\AdminAllowedIps;
 use App\Http\Livewire\IpManagement\ApiIpRanges;
+use App\Http\Livewire\IpManagement\WhiteListRequests;
 use App\Http\Livewire\Panel\Profile;
 use App\Http\Livewire\Translations\Field;
 use App\Http\Livewire\Videos\Listing as VideoListing;
@@ -128,9 +129,10 @@ Route::middleware('auth:admin')->group(function () {
     });
 
     Route::prefix('ip')->as('ip.')->group(function () {
-        Route::get('/ranges', ApiIpRanges::class)->middleware('can:manage-ip-ranges')->name('ranges');
-        Route::get('/api', ApiAllowedIps::class)->middleware('can:manage-api-allowed-ips')->name('api');
-        Route::get('/admin', AdminAllowedIps::class)->middleware('can:manage-admin-allowed-ips')->name('admin');
+        Route::get('ranges', ApiIpRanges::class)->middleware('can:manage-ip-ranges')->name('ranges');
+        Route::get('api', ApiAllowedIps::class)->middleware('can:manage-api-allowed-ips')->name('api');
+        Route::get('admin', AdminAllowedIps::class)->middleware('can:manage-admin-allowed-ips')->name('admin');
+        Route::get('white-listing', WhiteListRequests::class)->middleware('can:manage-white-list-requests')->name('white-listing');
     });
 
     Route::get('/levels', LevelListing::class)->middleware('can:manage-level')->name('level');

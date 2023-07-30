@@ -390,6 +390,14 @@
                                  </a>
                              </li>
                          @endcan
+                         @can('manage-ip-whitelisting')
+                            <li>
+                                <a href="{{ route('ip.white-listing') }}" class="">
+                                    <i class="fa fa-sign-in"></i>
+                                    <span>درخواستهای رفع محدودیت</span>
+                                </a>
+                            </li>
+                         @endcan
                      </ul>
                  </li>
              @endhasanyrole
