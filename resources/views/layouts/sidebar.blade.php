@@ -409,6 +409,14 @@
                      </a>
                  </li>
              @endhasanyrole
+             @hasanyrole('versions-management|super-admin')
+                 <li>
+                     <a href="{{ route('versions') }}">
+                         <span class="fa fa-list"></span>
+                         <span>ورژن ها</span>
+                     </a>
+                 </li>
+             @endhasanyrole
              @hasanyrole('reports-management|super-admin')
                  <li>
                      <a href="{{ route('reports') }}">

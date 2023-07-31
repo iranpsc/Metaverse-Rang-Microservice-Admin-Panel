@@ -54,6 +54,7 @@ use App\Http\Livewire\Videos\EditVideo;
 use App\Http\Livewire\Translations\Listing as TranslationsListing;
 use App\Http\Livewire\Translations\Modal;
 use App\Http\Livewire\Translations\Tab;
+use App\Http\Livewire\Versions\Listing as VersionsListing;
 
 /*
 |--------------------------------------------------------------------------
@@ -76,21 +77,21 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
 
     Route::prefix('citizens')->as('citizens.')->group(function () {
-        Route::get('/registration-info', RegistrationInfo::class)->middleware('can:view-registration-info')->name('registration-info');
-        Route::get('/kyc', Kyc::class)->middleware('can:verify-kyc')->name('kyc');
-        Route::get('/bank-accounts', Bankaccounts::class)->middleware('can:verify-bank-accounts')->name('bank-accounts');
-        Route::get('/deposits', Deposits::class)->middleware('can:view-deposits')->name('deposits');
-        Route::get('/withdraws', Withdraws::class)->middleware('can:view-withdraws')->name('withdraws');
-        Route::get('/profile-details', Profiledetails::class)->middleware('can:view-profile-details')->name('profile-details');
-        Route::get('/assets', Assets::class)->middleware('can:view-assets')->name('assets');
+        Route::get('registration-info', RegistrationInfo::class)->can('view-registration-info')->name('registration-info');
+        Route::get('kyc', Kyc::class)->can('verify-kyc')->name('kyc');
+        Route::get('bank-accounts', Bankaccounts::class)->can('verify-bank-accounts')->name('bank-accounts');
+        Route::get('deposits', Deposits::class)->can('view-deposits')->name('deposits');
+        Route::get('withdraws', Withdraws::class)->can('view-withdraws')->name('withdraws');
+        Route::get('profile-details', Profiledetails::class)->can('view-profile-details')->name('profile-details');
+        Route::get('assets', Assets::class)->can('view-assets')->name('assets');
     });
 
     Route::prefix('features')->as('features.')->group(function () {
-        Route::get('/', AllFeatures::class)->middleware('can:edit-features-info')->name('all');
-        Route::get('/prices', FeaturesPrices::class)->middleware('can:view-features-prices')->name('prices');
-        Route::get('/sold', SoldFeatures::class)->middleware('can:view-sold-features')->name('sold');
-        Route::get('/trades', TradedFeatures::class)->middleware('can:view-features-trades')->name('trades');
-        Route::get('/priced', PricedFeatures::class)->middleware('can:view-priced-features')->name('priced');
+        Route::get('/', AllFeatures::class)->can('edit-features-info')->name('all');
+        Route::get('/prices', FeaturesPrices::class)->can('view-features-prices')->name('prices');
+        Route::get('/sold', SoldFeatures::class)->can('view-sold-features')->name('sold');
+        Route::get('/trades', TradedFeatures::class)->can('view-features-trades')->name('trades');
+        Route::get('/priced', PricedFeatures::class)->can('view-priced-features')->name('priced');
     });
 
     Route::prefix('access-management')->middleware('can:manage-access')->as('access-management.')->group(function () {
@@ -100,54 +101,55 @@ Route::middleware('auth:admin')->group(function () {
     });
 
     Route::prefix('employees')->as('employees.')->group(function () {
-        Route::get('/info', EmployeesInfo::class)->middleware('can:manage-employee-info')->name('info');
-        Route::get('/bank-info', EmployeesBankInfo::class)->middleware('can:manage-employee-bank-accounts')->name('bank-info');
-        Route::get('/documents', EmployeesDocuments::class)->middleware('can:manage-employee-documents')->name('documents');
-        Route::get('/salary', EmployeesSalary::class)->middleware('can:manage-employee-salary')->name('salary');
-        Route::get('/time-card', EmployeesTimeCard::class)->middleware('can:manage-employee-time-card')->name('time-card');
-        Route::get('/tasks', EmployeesTasks::class)->middleware('can:manage-employee-tasks')->name('tasks');
+        Route::get('/info', EmployeesInfo::class)->can('manage-employee-info')->name('info');
+        Route::get('/bank-info', EmployeesBankInfo::class)->can('manage-employee-bank-accounts')->name('bank-info');
+        Route::get('/documents', EmployeesDocuments::class)->can('manage-employee-documents')->name('documents');
+        Route::get('/salary', EmployeesSalary::class)->can('manage-employee-salary')->name('salary');
+        Route::get('/time-card', EmployeesTimeCard::class)->can('manage-employee-time-card')->name('time-card');
+        Route::get('/tasks', EmployeesTasks::class)->can('manage-employee-tasks')->name('tasks');
     });
 
     Route::prefix('support')->as('support.')->group(function () {
-        Route::get('/citizens-safety', SupportCitizensSafety::class)->middleware('can:respond-to-citziens-safety-tickets')->name('citizens-safety');
-        Route::get('/technical-support', SupportTechnicalSupport::class)->middleware('can:respond-to-technical-support-tickets')->name('technical-support');
-        Route::get('/investment', SupportInvestment::class)->middleware('can:respond-to-investment-tickets')->name('investment');
-        Route::get('/inspection', SupportInspection::class)->middleware('can:respond-to-inspection-tickets')->name('inspection');
-        Route::get('/protection', SupportProtection::class)->middleware('can:respond-to-protection-tickets')->name('protection');
-        Route::get('/ztb-management', SupportZTBManagement::class)->middleware('can:respond-to-ztb-management-tickets')->name('ztb-management');
+        Route::get('/citizens-safety', SupportCitizensSafety::class)->can('respond-to-citziens-safety-tickets')->name('citizens-safety');
+        Route::get('/technical-support', SupportTechnicalSupport::class)->can('respond-to-technical-support-tickets')->name('technical-support');
+        Route::get('/investment', SupportInvestment::class)->can('respond-to-investment-tickets')->name('investment');
+        Route::get('/inspection', SupportInspection::class)->can('respond-to-inspection-tickets')->name('inspection');
+        Route::get('/protection', SupportProtection::class)->can('respond-to-protection-tickets')->name('protection');
+        Route::get('/ztb-management', SupportZTBManagement::class)->can('respond-to-ztb-management-tickets')->name('ztb-management');
     });
 
     Route::prefix('store')->as('store.')->group(function () {
-        Route::get('/packages', StorePackages::class)->middleware('can:manage-packages')->name('packages');
-        Route::get('/currencies', StoreCurrencies::class)->middleware('can:manage-currencies')->name('currencies');
+        Route::get('/packages', StorePackages::class)->can('manage-packages')->name('packages');
+        Route::get('/currencies', StoreCurrencies::class)->can('manage-currencies')->name('currencies');
     });
 
     Route::prefix('dynasty')->as('dynasty.')->group(function () {
-        Route::get('/prizes', DynastyPrizes::class)->middleware('can:manage-dynasty-prizes')->name('prizes');
-        Route::get('/messages', DynastyMessages::class)->middleware('can:manage-dynasty-messages')->name('messages');
-        Route::get('/permissions', DynastyPermissions::class)->middleware('can:manage-dynasty-permissions')->name('permissions');
+        Route::get('/prizes', DynastyPrizes::class)->can('manage-dynasty-prizes')->name('prizes');
+        Route::get('/messages', DynastyMessages::class)->can('manage-dynasty-messages')->name('messages');
+        Route::get('/permissions', DynastyPermissions::class)->can('manage-dynasty-permissions')->name('permissions');
     });
 
     Route::prefix('ip')->as('ip.')->group(function () {
-        Route::get('ranges', ApiIpRanges::class)->middleware('can:manage-ip-ranges')->name('ranges');
-        Route::get('api', ApiAllowedIps::class)->middleware('can:manage-api-allowed-ips')->name('api');
-        Route::get('admin', AdminAllowedIps::class)->middleware('can:manage-admin-allowed-ips')->name('admin');
-        Route::get('white-listing', WhiteListRequests::class)->middleware('can:manage-white-list-requests')->name('white-listing');
+        Route::get('ranges', ApiIpRanges::class)->can('manage-ip-ranges')->name('ranges');
+        Route::get('api', ApiAllowedIps::class)->can('manage-api-allowed-ips')->name('api');
+        Route::get('admin', AdminAllowedIps::class)->can('manage-admin-allowed-ips')->name('admin');
+        Route::get('white-listing', WhiteListRequests::class)->can('manage-white-list-requests')->name('white-listing');
     });
 
-    Route::get('/levels', LevelListing::class)->middleware('can:manage-level')->name('level');
-    Route::get('/maps', MapListing::class)->middleware('can:manage-maps')->name('map-management');
-    Route::get('/calendar', CalendarListing::class)->middleware('can:manage-calendar')->name('calendar');
-    Route::get('/reports', ReportsListing::class)->middleware('can:manage-reports')->name('reports');
-    Route::get('/system-variables', SystemVariablesListing::class)->middleware('can:manage-system-variables')->name('system-variables');
+    Route::get('levels', LevelListing::class)->can('manage-level')->name('level');
+    Route::get('maps', MapListing::class)->can('manage-maps')->name('map-management');
+    Route::get('calendar', CalendarListing::class)->can('manage-calendar')->name('calendar');
+    Route::get('versions', VersionsListing::class)->can('manage-versions')->name('versions');
+    Route::get('reports', ReportsListing::class)->can('manage-reports')->name('reports');
+    Route::get('system-variables', SystemVariablesListing::class)->can('manage-system-variables')->name('system-variables');
 
-    Route::get('videos', VideoListing::class)->middleware('can:manage-tutorials')->name('videos');
-    Route::post('videos', [VideoListing::class, 'upload'])->middleware('can:manage-tutorials')->name('videos.upload');
-    Route::post('videos/edit', [EditVideo::class, 'upload'])->middleware('can:manage-tutorials')->name('videos.edit.upload');
+    Route::get('videos', VideoListing::class)->can('manage-tutorials')->name('videos');
+    Route::post('videos', [VideoListing::class, 'upload'])->can('manage-tutorials')->name('videos.upload');
+    Route::post('videos/edit', [EditVideo::class, 'upload'])->can('manage-tutorials')->name('videos.edit.upload');
 
-    Route::get('video-categories', VideoCategories::class)->middleware('can:manage-tutorials')->name('video.categories');
+    Route::get('video-categories', VideoCategories::class)->can('manage-tutorials')->name('video.categories');
 
-    Route::get('challenge', QuestionsList::class)->middleware('can:manage-challenge')->name('challenge');
+    Route::get('challenge', QuestionsList::class)->can('manage-challenge')->name('challenge');
 
     Route::get('profile', Profile::class)->name('profile');
 
@@ -156,10 +158,10 @@ Route::middleware('auth:admin')->group(function () {
         Route::post('/verify', [SendVerificationCodeController::class, 'verify']);
     });
 
-    Route::prefix('translations')->group(function() {
-        Route::get('/', TranslationsListing::class)->middleware('can:manage-translations')->name('translations');
-        Route::get('/{translation}/modals', Modal::class)->middleware('can:manage-translations')->name('modals');
-        Route::get('/{translation}/modals/{modal}/tabs', Tab::class)->middleware('can:manage-translations')->name('tabs');
-        Route::get('/{translation}/modals/{modal}/tabs/{tab}/fields', Field::class)->middleware('can:manage-translations')->name('fields');
+    Route::prefix('translations')->group(function () {
+        Route::get('/', TranslationsListing::class)->can('manage-translations')->name('translations');
+        Route::get('/{translation}/modals', Modal::class)->can('manage-translations')->name('modals');
+        Route::get('/{translation}/modals/{modal}/tabs', Tab::class)->can('manage-translations')->name('tabs');
+        Route::get('/{translation}/modals/{modal}/tabs/{tab}/fields', Field::class)->can('manage-translations')->name('fields');
     });
 });

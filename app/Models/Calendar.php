@@ -18,6 +18,16 @@ class Calendar extends Model
         'ends_at' => 'datetime',
     ];
 
+    protected $attributes = [
+        'color' => '#000000',
+        'is_version' => false,
+    ];
+
+    public function scopeVersion($query)
+    {
+        return $query->where('is_version', true);
+    }
+
     public function interactions() {
         return $this->morphMany(Interaction::class, 'likeable');
     }

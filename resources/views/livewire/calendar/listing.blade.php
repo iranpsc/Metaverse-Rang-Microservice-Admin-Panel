@@ -1,22 +1,8 @@
 <div>
-    <x-buttons.btn-primary class="mb-2" data-bs-toggle="modal" data-bs-target="#create-event-modal">ایجاد وقعه</x-buttons.btn-primary>
+    <x-buttons.btn-primary class="mb-2" data-bs-toggle="modal" data-bs-target="#create-event-modal">ایجاد
+        وقعه</x-buttons.btn-primary>
 
     <x-modals.modal size="modal-xl" id="create-event-modal" title="ایجاد وقعه">
-
-        <div class="input-group my-2">
-            <input class="normal" wire:model.defer="is_version" type="checkbox" id="is_version">
-            <label for="is_version">این وقعه ورژن است</label>
-        </div>
-
-        <div id="version-title-group" class="d-none" wire:ignore.self>
-            <x-forms.group for="version_title" label="شناسه نسخه">
-                <x-forms.input id="version_title" wire:model.defer="version_title" placeholder="V1.0.1.1"/>
-                @error('version_title')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
-        </div>
-
         <x-forms.group for="title" label="عنوان">
             <x-forms.input id="title" wire:model.defer="title" />
             @error('title')
@@ -33,24 +19,19 @@
             @enderror
         </x-forms.group>
 
-        <div class="calendar-inputs" wire:ignore.self>
-            <x-forms.group for="color" label="رنگ">
-                <x-forms.input type="color" id="color" wire:model="color" />
-                @error('color')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
-        </div>
-
-        <div class="calendar-inputs" wire:ignore.self>
-            <x-forms.group for="image" label="تصویر">
-                <x-forms.input type="file" id="image" wire:model="image" />
-                <x-progress-bar/>
-                @error('image')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
-        </div>
+        <x-forms.group for="color" label="رنگ">
+            <x-forms.input type="color" id="color" wire:model="color" />
+            @error('color')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+        <x-forms.group for="image" label="تصویر">
+            <x-forms.input type="file" id="image" wire:model="image" />
+            <x-progress-bar />
+            @error('image')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
 
         <x-forms.group for="start_date" label="تاریخ شروع">
             <x-forms.input type="date" id="start_date" wire:model.defer="start_date" />
@@ -59,32 +40,26 @@
             @enderror
         </x-forms.group>
 
-        <div class="calendar-inputs" wire:ignore.self>
-            <x-forms.group for="end_date" label="تاریخ پایان">
-                <x-forms.input type="date" id="end_date" wire:model="end_date" />
-                @error('end_date')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
-        </div>
+        <x-forms.group for="end_date" label="تاریخ پایان">
+            <x-forms.input type="date" id="end_date" wire:model="end_date" />
+            @error('end_date')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
 
-        <div class="calendar-inputs" wire:ignore.self>
-            <x-forms.group for="start_time" label="ساعت شروع">
-                <x-forms.input type="time" id="start_time" wire:model="start_time" />
-                @error('start_time')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
-        </div>
+        <x-forms.group for="start_time" label="ساعت شروع">
+            <x-forms.input type="time" id="start_time" wire:model="start_time" />
+            @error('start_time')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
 
-        <div class="calendar-inputs" wire:ignore.self>
-            <x-forms.group for="end_time" label="ساعت پایان">
-                <x-forms.input type="time" id="end_time" wire:model="end_time" />
-                @error('end_time')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
-        </div>
+        <x-forms.group for="end_time" label="ساعت پایان">
+            <x-forms.input type="time" id="end_time" wire:model="end_time" />
+            @error('end_time')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
 
         <x-forms.group for="btn_name" label="نام دکمه ورود به واقعه">
             <x-forms.input id="btn_name" wire:model.defer="btn_name" />
@@ -144,8 +119,10 @@
                     <td>{{ $event->interactions->where('liked', 0)->count() }}</td>
                     <td>{{ $event->getStatus() }}</td>
                     <td>
-                        <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#edit-event-modal-{{ $event->id }}">ویرایش</x-buttons.btn-primary>
-                        <x-buttons.btn-danger class="confirm" id="{{ $event->id }}" title="deleteEvent">حذف</x-buttons.btn-danger>
+                        <x-buttons.btn-primary data-bs-toggle="modal"
+                            data-bs-target="#edit-event-modal-{{ $event->id }}">ویرایش</x-buttons.btn-primary>
+                        <x-buttons.btn-danger class="confirm" id="{{ $event->id }}"
+                            title="deleteEvent">حذف</x-buttons.btn-danger>
                         <livewire:calendar.update :event="$event" :key="'event-' . $event->id" />
                     </td>
                 </tr>
@@ -160,7 +137,7 @@
             var content = CKEDITOR.replace('content');
             var saveBtn = document.getElementById('save-btn');
 
-            CKEDITOR.editorConfig = function( config ) {
+            CKEDITOR.editorConfig = function(config) {
                 config.language = 'fa';
                 config.uiColor = '#F7B42C';
                 config.height = 300;
@@ -171,36 +148,6 @@
                 @this.set('content', content.getData());
                 @this.call('save');
             });
-
-            var checkbox = document.getElementById('is_version')
-            var versionTitleGroup = document.getElementById('version-title-group')
-            var calendarInputs = document.getElementsByClassName('calendar-inputs')
-
-            checkbox.addEventListener('click', function(event) {
-                var el = event.target
-
-                if(el.checked)
-                {
-                    versionTitleGroup.classList.remove('d-none')
-                    versionTitleGroup.classList.add('d-block')
-
-                    for(input of calendarInputs)
-                    {
-                        input.classList.remove('d-block')
-                        input.classList.add('d-none')
-                    }
-
-                } else {
-                    versionTitleGroup.classList.remove('d-block')
-                    versionTitleGroup.classList.add('d-none')
-
-                    for(input of calendarInputs)
-                    {
-                        input.classList.remove('d-none')
-                        input.classList.add('d-block')
-                    }
-                }
-            })
         })
     </script>
 </div>
