@@ -22,7 +22,7 @@ class Tab extends Component
     ];
 
     protected $rules = [
-        'name' => 'required|max:255|alpha_dash:ascii|unique:sqlite.tabs,name',
+        'name' => 'required|max:255|alpha_dash:ascii',
     ];
 
     public function mount(Modal $modal)
