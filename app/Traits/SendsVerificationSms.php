@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Cache;
 trait SendsVerificationSms
 {
     public $access_password, $phone_verification, $admin;
-    public $countdownTime = 120; // in seconds
+    public $countdownTime = 60; // in seconds
 
     public function sendSMS(string $id)
     {
