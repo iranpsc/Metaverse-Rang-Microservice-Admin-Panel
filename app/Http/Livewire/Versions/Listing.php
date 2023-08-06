@@ -26,8 +26,6 @@ class Listing extends Component
         'description' => 'required|string|max:20000',
         'versionTitle' => 'required|string|max:255',
         'startsAt' => 'required|date',
-        'btnLink' => 'required|string|max:255',
-        'btnName' => 'required|string|max:255',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
@@ -47,8 +45,6 @@ class Listing extends Component
             'is_version' => true,
             'version_title' => $this->versionTitle,
             'starts_at' => $this->startsAt,
-            'btn_link' => $this->btnLink,
-            'btn_name' => $this->btnName,
             'writer' => $this->admin->name,
         ]);
 
@@ -63,8 +59,7 @@ class Listing extends Component
         $this->description = $version->content;
         $this->versionTitle = $version->version_title;
         $this->startsAt = $version->starts_at->format('Y-m-d');
-        $this->btnLink = $version->btn_link;
-        $this->btnName = $version->btn_name;
+
         $this->dispatchBrowserEvent('openEditModal', [
             'id' => $version->id,
             'description' => $this->description,
@@ -80,8 +75,6 @@ class Listing extends Component
             'content' => $this->description,
             'version_title' => $this->versionTitle,
             'starts_at' => $this->startsAt,
-            'btn_link' => $this->btnLink,
-            'btn_name' => $this->btnName,
             'writer' => $this->admin->name,
         ]);
 

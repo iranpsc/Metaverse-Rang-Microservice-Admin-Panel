@@ -73,20 +73,6 @@
             @enderror
         </x-forms.group>
 
-        <x-forms.group for="btnName" label="نام دکمه ورود به واقعه">
-            <x-forms.input id="btnName" wire:model="btnName" />
-            @error('btnName')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-
-        <x-forms.group for="btnLink" label="لینک دکمه ورود به واقعه">
-            <x-forms.input id="btnLink" wire:model="btnLink" />
-            @error('btnLink')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-
         <x-forms.verification />
 
         <x-slot name="footer">
