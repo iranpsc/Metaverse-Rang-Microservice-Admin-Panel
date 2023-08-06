@@ -2,10 +2,11 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Ip;
 use Closure;
 use Illuminate\Http\Request;
 
-class FilterIpMiddleware
+class FilterIp
 {
     /**
      * Handle an incoming request.
@@ -16,19 +17,12 @@ class FilterIpMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if($request->routeIs('api.translations')) {
+        if ($request->routeIs('api.translations') || app()->environment('local')) {
             return $next($request);
         }
 
-        $ipWhiteList = [
-            '2.187.99.104',
-            '2.187.98.75',
-            '2.187.99.118',
-            '2.187.99.119',
-            '89.199.177.2'
-        ];
-        return !in_array($request->ip(), $ipWhiteList) && app()->environment('production')
-            ? redirect()->back()
+        return Ip::admin()->where('from', ip2long($request->ip()))->doesntExist()
+            ? abort(403, 'Unauthorized IP address.')
             : $next($request);
     }
 }
