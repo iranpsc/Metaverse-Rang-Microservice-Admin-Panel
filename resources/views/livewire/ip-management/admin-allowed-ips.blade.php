@@ -29,7 +29,7 @@
             <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
         </x-slot>
     </x-modals.modal>
-    @if (count($allowedIps) > 0)
+    @if (count($ips) > 0)
         <x-tables.table>
             <x-slot name="headers">
                 <th>عنوان</th>
@@ -38,21 +38,45 @@
                 <th>ساعت ایجاد</th>
                 <th>ملاحضات</th>
             </x-slot>
-            @foreach ($allowedIps as $allowedIp)
+            @foreach ($ips as $ip)
                 <tr>
-                    <td>{{ $allowedIp->id }}</td>
-                    <td>{{ $allowedIp->title }}</td>
-                    <td>{{ $allowedIp->from }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($allowedIp->created_at)->format('Y/m/d') }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($allowedIp->created_at)->format('H:m:s') }}</td>
+                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $ip->title }}</td>
+                    <td>{{ $ip->from }}</td>
+                    <td>{{ jdate($ip->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($ip->created_at)->format('H:m:s') }}</td>
                     <td>
-                        <x-buttons.btn-danger class="confirm" id="{{ $allowedIp->id }}" title="deleteAdminIp">حذف
+                        <x-buttons.btn-danger id="delete-btn-{{ $ip->id }}">
+                            <span class="fa fa-trash"></span>
                         </x-buttons.btn-danger>
                     </td>
                 </tr>
             @endforeach
         </x-tables.table>
+        {{ $ips->links() }}
     @else
         <x-alerts.danger>آی پی تعریف نشده است</x-alerts.danger>
     @endif
+
+        <script>
+            window.addEventListener('livewire:load', function() {
+                @foreach ($ips as $ip)
+                    $("#delete-btn-{{ $ip->id }}").click(function() {
+                        Swal.fire({
+                            title: 'آیا از حذف این آی پی مطمئن هستید؟',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText:'بله حذف کن',
+                            cancelButtonText:'خیر'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                @this.call('delete', {{ $ip->id }})
+                            }
+                        })
+                    })
+                @endforeach
+            })
+        </script>
 </div>

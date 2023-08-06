@@ -18,7 +18,6 @@ class AdminAllowedIps extends Component
 
     protected $listeners = [
         'newIpAdded' => '$refresh',
-        'deleteAdminIp' => 'deleteIp',
         'ipDeleted' => '$refresh',
     ];
 
@@ -48,7 +47,7 @@ class AdminAllowedIps extends Component
         $this->emitSelf('newIpAdded');
     }
 
-    public function deleteIp(Ip $ip)
+    public function delete(Ip $ip)
     {
         $ip->delete();
         $this->emitSelf('ipDeleted');
@@ -56,7 +55,7 @@ class AdminAllowedIps extends Component
     public function render()
     {
         return view('livewire.ip-management.admin-allowed-ips', [
-            'allowedIps' => Ip::whereType('admin')->simplePaginate(10)
+            'ips' => Ip::whereType('admin')->simplePaginate(10)
         ])
             ->extends('layouts.app')
             ->section('content');
