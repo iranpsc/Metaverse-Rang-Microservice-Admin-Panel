@@ -17,6 +17,8 @@ class Listing extends Component
     public $btn_name, $btn_link, $start_time, $end_time;
     public $pageTitle = 'لیست وقایع';
 
+    protected $paginationTheme = 'bootstrap';
+
     protected $listeners = [
         'eventCreated' => '$refresh',
         'eventUpdated' => '$refresh',
