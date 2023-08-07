@@ -15,7 +15,6 @@ class Listing extends Component
 
     public $title, $content, $image, $start_date, $end_date, $color;
     public $btn_name, $btn_link, $start_time, $end_time;
-    public $pageTitle = 'لیست وقایع';
 
     protected $paginationTheme = 'bootstrap';
 
@@ -79,6 +78,6 @@ class Listing extends Component
             'events' => Calendar::with('interactions')
                 ->where('is_version', false)->latest('starts_at')
                 ->simplePaginate(10)
-        ])->extends('layouts.app', ['pageTitle' => $this->pageTitle])->section('content');
+        ]);
     }
 }

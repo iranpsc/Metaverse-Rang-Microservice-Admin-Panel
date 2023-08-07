@@ -55,8 +55,6 @@ class Profile extends Component
 
     public function render()
     {
-        return view('livewire.panel.profile')
-            ->extends('layouts.app')
-            ->section('content');
+        return view('livewire.panel.profile');
     }
 }

@@ -63,8 +63,6 @@ class Roles extends Component
             'roles' => Role::whereNot('name', 'super-admin')
             ->with('permissions')->simplePaginate(10),
             'permissions' => Permission::lazy(),
-        ])
-        ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
-        ->section('content');
+        ]);
     }
 }

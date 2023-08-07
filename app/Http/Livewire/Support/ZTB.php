@@ -73,9 +73,7 @@ class ZTB extends Component
             'tickets' => Ticket::with('responses')
                 ->whereIn('department', ['ztb'])
                 ->orderBy('status')
-                ->orderBy('importance', 'desc')->paginate(10)
-        ])
-        ->extends('layouts.app')
-        ->section('content');
+                ->orderBy('importance', 'desc')->simplePaginate(10)
+        ]);
     }
 }

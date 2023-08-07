@@ -16,8 +16,6 @@ class Listing extends Component
 
     public function render()
     {
-        return view('livewire.reports.listing')
-        ->extends('layouts.app')
-        ->section('content');
+        return view('livewire.reports.listing');
     }
 }

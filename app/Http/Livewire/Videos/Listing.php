@@ -126,7 +126,7 @@ class Listing extends Component
     {
         return view('livewire.videos.listing', [
             'videoCategories' => VideoCategory::all(),
-            'videos' => Video::with(['category', 'interactions', 'views'])->paginate(10)
-        ])->extends('layouts.app')->section('content');
+            'videos' => Video::with(['category', 'interactions', 'views'])->simplePaginate(10)
+        ]);
     }
 }

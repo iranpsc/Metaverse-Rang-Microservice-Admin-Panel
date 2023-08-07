@@ -69,7 +69,7 @@ class Tab extends Component
                 'fields as translated_fields_count' => function ($query) {
                     $query->whereNotNull('translation');
                 },
-            ])->paginate(10)
-        ])->extends('layouts.app')->section('content');
+            ])->simplePaginate(10)
+        ]);
     }
 }

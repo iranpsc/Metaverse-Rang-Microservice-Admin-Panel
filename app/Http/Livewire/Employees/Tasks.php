@@ -8,8 +8,6 @@ class Tasks extends Component
 {
     public function render()
     {
-        return view('livewire.employees.tasks')
-        ->extends('layouts.app')
-        ->section('content');
+        return view('livewire.employees.tasks');
     }
 }

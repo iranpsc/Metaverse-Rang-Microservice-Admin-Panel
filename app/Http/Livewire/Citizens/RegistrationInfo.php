@@ -27,8 +27,6 @@ class RegistrationInfo extends Component
     {
         return view('livewire.citizens.registration-info', [
             'users' => $this->users ?? User::simplePaginate(10)
-        ])
-        ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
-        ->section('content');
+        ]);
     }
 }

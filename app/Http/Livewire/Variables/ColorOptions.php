@@ -74,9 +74,7 @@ class ColorOptions extends Component
     {
         return view('livewire.variables.color-options', [
             'variables' => Variable::all('asset'),
-            'options'   => Option::with('priceChangeLogs')->paginate(10)
-        ])
-            ->extends('layouts.app')
-            ->section('content');
+            'options'   => Option::with('priceChangeLogs')->simplePaginate(10)
+        ]);
     }
 }

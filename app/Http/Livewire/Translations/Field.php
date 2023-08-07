@@ -60,6 +60,6 @@ class Field extends Component
     {
         return view('livewire.translations.field', [
             'fields' => $this->tab->fields
-        ])->extends('layouts.app')->section('content');
+        ]);
     }
 }

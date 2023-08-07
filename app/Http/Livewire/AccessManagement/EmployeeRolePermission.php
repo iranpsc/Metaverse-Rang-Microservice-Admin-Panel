@@ -88,8 +88,6 @@ class EmployeeRolePermission extends Component
                 ->lazy(),
             'employees'   => Employee::select(['id', 'fname', 'lname'])->get(),
             'defined_roles'       => Role::whereNotIn('name', ['super-admin'])->get(),
-        ])
-            ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
-            ->section('content');
+        ]);
     }
 }

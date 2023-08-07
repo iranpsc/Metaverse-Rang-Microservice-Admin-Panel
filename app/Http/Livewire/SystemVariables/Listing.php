@@ -6,10 +6,13 @@ use App\Models\SystemVariable;
 use Livewire\Component;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
+use Livewire\WithPagination;
 
 class Listing extends Component
 {
-    use SendsVerificationSms;
+    use SendsVerificationSms, WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
 
     public $slug, $name, $value;
 
@@ -63,9 +66,7 @@ class Listing extends Component
     public function render()
     {
         return view('livewire.system-variables.listing', [
-            'variables' => SystemVariable::with('changeLogs')->get()
-        ])
-            ->extends('layouts.app')
-            ->section('content');
+            'variables' => SystemVariable::with('changeLogs')->simplePaginate(10)
+        ]);
     }
 }

@@ -125,6 +125,6 @@ class Listing extends Component
     {
         return view('livewire.maps.listing', [
             'maps' => Map::simplePaginate(10)
-        ])->extends('layouts.app', ['pageTitle' => $this->pageTitle])->section('content');
+        ]);
     }
 }

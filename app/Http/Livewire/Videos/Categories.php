@@ -82,8 +82,6 @@ class Categories extends Component
     {
         return view('livewire.videos.categories', [
             'categories' => VideoCategory::with('subCategories')->paginate(10),
-        ])
-            ->extends('layouts.app')
-            ->section('content');
+        ]);
     }
 }

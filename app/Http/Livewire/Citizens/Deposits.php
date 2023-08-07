@@ -26,6 +26,6 @@ class Deposits extends Component
     {
         return view('livewire.citizens.deposits', [
             'payments' => $this->payments ?? Payment::latest()->with('user')->paginate(10)
-        ])->extends('layouts.app', ['pageTitle' => $this->pageTitle])->section('content');
+        ]);
     }
 }

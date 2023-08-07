@@ -98,7 +98,9 @@ class Versions extends Component
     public function render()
     {
         return view('livewire.versions', [
-            'versions' => Calendar::version()->orderByDesc('version_title')->simplePaginate('10')
-        ])->extends('layouts.app')->section('content');
+            'versions' => Calendar::version()
+                ->orderByDesc('version_title')
+                ->simplePaginate('10')
+        ]);
     }
 }

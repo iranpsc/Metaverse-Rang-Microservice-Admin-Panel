@@ -99,6 +99,6 @@ class Listing extends Component
     {
         return view('livewire.translations.listing', [
             'translations' => Translation::simplePaginate(10)
-        ])->extends('layouts.app')->section('content');
+        ]);
     }
 }

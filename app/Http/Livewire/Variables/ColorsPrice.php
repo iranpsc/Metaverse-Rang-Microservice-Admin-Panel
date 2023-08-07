@@ -58,8 +58,6 @@ class ColorsPrice extends Component
     {
         return view('livewire.variables.colors-price', [
             'variables' => Variable::with('priceChangeLogs')->get()
-        ])
-            ->extends('layouts.app')
-            ->section('content');
+        ]);
     }
 }

@@ -1,3 +1,7 @@
+@props([
+    'pageTitle' => 'عنوان صفحه'
+])
+
 @include('layouts.header')
 
 <!-- BEGIN WRAPPER -->
@@ -13,7 +17,7 @@
                         <div class="portlet-title">
                             <h3 class="title">
                                 <i class="icon-note"></i>
-                                {{ $pageTitle ?? 'عنوان صفحه'}}
+                                {{ $pageTitle }}
                             </h3>
                         </div><!-- /.portlet-title -->
                         <div class="buttons-box">

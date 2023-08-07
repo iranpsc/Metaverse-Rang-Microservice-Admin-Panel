@@ -64,7 +64,7 @@ class Modal extends Component
     public function render()
     {
         return view('livewire.translations.modal', [
-            'modals' => $this->translation->modals()->paginate(10)
-        ])->extends('layouts.app')->section('content');
+            'modals' => $this->translation->modals()->simplePaginate(10)
+        ]);
     }
 }

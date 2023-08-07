@@ -45,8 +45,6 @@ class FeaturePricingLimits extends Component
 
     public function render()
     {
-        return view('livewire.lands.feature-pricing-limits')
-        ->extends('layouts.app')
-        ->section('content');
+        return view('livewire.lands.feature-pricing-limits');
     }
 }

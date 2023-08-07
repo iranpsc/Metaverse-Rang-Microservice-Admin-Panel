@@ -38,8 +38,6 @@ class Listing extends Component
     {
         return view('livewire.level.listing', [
             'levels' => Level::with(['prize', 'image', 'generalInfo'])->simplePaginate(10)
-        ])
-            ->extends('layouts.app')
-            ->section('content');
+        ]);
     }
 }

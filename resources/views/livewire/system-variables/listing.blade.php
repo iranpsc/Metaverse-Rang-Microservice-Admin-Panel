@@ -94,6 +94,7 @@
         </tr>
         @endforeach
         </x-tables.table>
+        {{ $variables->links() }}
     @else
         <x-alerts.danger>متغیری تعریف نشده است!</x-alerts.danger>
         @endif

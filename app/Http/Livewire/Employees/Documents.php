@@ -8,8 +8,6 @@ class Documents extends Component
 {
     public function render()
     {
-        return view('livewire.employees.documents')
-        ->extends('layouts.app')
-        ->section('content');
+        return view('livewire.employees.documents');
     }
 }

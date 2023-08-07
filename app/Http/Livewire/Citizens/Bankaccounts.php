@@ -78,8 +78,6 @@ class Bankaccounts extends Component
 
     public function render()
     {
-        return view('livewire.citizens.bankaccounts')
-            ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
-            ->section('content');
+        return view('livewire.citizens.bankaccounts');
     }
 }

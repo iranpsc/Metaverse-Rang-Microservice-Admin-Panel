@@ -34,6 +34,6 @@ class Listing extends Component
                 ->orderBy('id', 'asc')
                 ->simplePaginate(10)
                 : $this->properties
-        ])->extends('layouts.app')->section('content');
+        ]);
     }
 }

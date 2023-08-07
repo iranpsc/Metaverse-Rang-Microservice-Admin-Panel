@@ -30,8 +30,6 @@ class Kyc extends Component
             'kycs' => $this->kycs ?? ModelKyc::with(['errors', 'user'])
                 ->orderByDesc('created_at')
                 ->paginate(10)
-        ])
-            ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
-            ->section('content');
+        ]);
     }
 }

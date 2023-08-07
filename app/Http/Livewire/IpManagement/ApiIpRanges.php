@@ -106,8 +106,6 @@ class ApiIpRanges extends Component
     {
         return view('livewire.ip-management.api-ip-ranges', [
             'ip_ranges' => $ipRanges ?? Ip::simplePaginate(10)
-        ])
-            ->extends('layouts.app')
-            ->section('content');
+        ]);
     }
 }

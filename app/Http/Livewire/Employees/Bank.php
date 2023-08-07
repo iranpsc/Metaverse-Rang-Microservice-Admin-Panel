@@ -68,8 +68,6 @@ class Bank extends Component
         return view('livewire.employees.bank', [
             'employees' => Employee::all(),
             'bankAccounts' => Bankaccount::paginate(10)
-        ])
-            ->extends('layouts.app')
-            ->section('content');;
+        ]);
     }
 }

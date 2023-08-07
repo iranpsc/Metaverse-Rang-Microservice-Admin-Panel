@@ -56,8 +56,6 @@ class AdminAllowedIps extends Component
     {
         return view('livewire.ip-management.admin-allowed-ips', [
             'ips' => Ip::whereType('admin')->simplePaginate(10)
-        ])
-            ->extends('layouts.app')
-            ->section('content');
+        ]);
     }
 }

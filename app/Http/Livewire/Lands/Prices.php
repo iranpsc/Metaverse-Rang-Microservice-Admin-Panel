@@ -23,6 +23,6 @@ class Prices extends Component
     {
         return view('livewire.lands.prices', [
             'features' => $this->features ?? Feature::with('properties')->simplePaginate(10)
-        ])->extends('layouts.app')->section('content');
+        ]);
     }
 }

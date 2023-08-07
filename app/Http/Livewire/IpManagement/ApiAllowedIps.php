@@ -58,8 +58,6 @@ class ApiAllowedIps extends Component
     {
         return view('livewire.ip-management.api-allowed-ips', [
             'allowedIps' => Ip::whereType('api')->simplePaginate(10),
-        ])
-            ->extends('layouts.app')
-            ->section('content');
+        ]);
     }
 }

@@ -55,8 +55,6 @@ class Permissions extends Component
         return view('livewire.access-management.permissions', [
             'roles' => Role::whereNotIn('name', ['super-admin'])->lazy(),
             'permissions' => Permission::with('roles')->paginate(10, '*', 'permissions-listing')
-        ])
-        ->extends('layouts.app', ['pageTitle' => $this->pageTitle])
-        ->section('content');
+        ]);
     }
 }

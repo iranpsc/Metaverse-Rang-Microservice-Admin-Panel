@@ -76,9 +76,7 @@ class CitizensSafety extends Component
             'tickets' => Ticket::with('responses')
                 ->whereIn('department', ['citizens_safety'])
                 ->orderBy('status')
-                ->orderBy('importance', 'desc')->paginate(10)
-        ])
-        ->extends('layouts.app')
-        ->section('content');
+                ->orderBy('importance', 'desc')->simplePaginate(10)
+        ]);
     }
 }

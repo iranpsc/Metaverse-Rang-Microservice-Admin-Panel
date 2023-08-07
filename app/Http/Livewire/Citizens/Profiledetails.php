@@ -15,8 +15,6 @@ class Profiledetails extends Component
 
     public function render()
     {
-        return view('livewire.citizens.profiledetails', ['users' => $this->users])
-        ->extends('layouts.app')
-        ->section('content');
+        return view('livewire.citizens.profiledetails', ['users' => $this->users]);
     }
 }

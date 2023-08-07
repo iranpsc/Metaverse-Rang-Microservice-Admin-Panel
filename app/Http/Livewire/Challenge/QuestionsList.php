@@ -46,6 +46,6 @@ class QuestionsList extends Component
     {
         return view('livewire.challenge.questions-list', [
             'questions' => Question::simplePaginate(10),
-        ])->extends('layouts.app', ['pageTitle' => $this->pageTitle])->section('content');
+        ]);
     }
 }

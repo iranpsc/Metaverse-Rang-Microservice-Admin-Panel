@@ -32,8 +32,7 @@ class WhiteListRequests extends Component
     public function render()
     {
         return view('livewire.ip-management.white-list-requests', [
-            'pageTitle' => 'درخواست های رفع مسدودیت',
             'ips' => Ip::where('type', 'api')->where('blocked', 1)->simplePaginate(10)
-        ])->extends('layouts.app')->section('content');
+        ]);
     }
 }
