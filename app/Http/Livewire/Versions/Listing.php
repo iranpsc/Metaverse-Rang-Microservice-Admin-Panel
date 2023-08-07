@@ -11,7 +11,7 @@ class Listing extends Component
 {
     use WithPagination, SendsVerificationSms;
 
-    public $title, $description, $versionTitle, $startsAt, $btnLink, $btnName;
+    public $title, $description, $versionTitle, $startsAt;
 
     protected $paginationTheme = 'bootstrap';
 

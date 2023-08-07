@@ -108,11 +108,7 @@
                     <td>{{ jdate($event->starts_at)->format('Y/m/d H:i:s') }}</td>
                     <td>{{ $event->ends_at ? jdate($event->ends_at)->format('Y/m/d H:i:s') : '' }}</td>
                     <td>
-                        @if ($event->is_version)
-                            ---
-                        @else
-                            <x-buttons.btn-link target="_blank" link="{{ $event->image }}">مشاهده</x-buttons.btn-link>
-                        @endif
+                        <x-buttons.btn-link target="_blank" link="{{ $event->image }}">مشاهده</x-buttons.btn-link>
                     </td>
                     <td>{{ $event->views->count() }}</td>
                     <td>{{ $event->interactions->where('liked', 1)->count() }}</td>
@@ -128,6 +124,8 @@
                 </tr>
             @endforeach
         </x-tables.table>
+
+        {{ $events->links() }}
     @else
         <x-alerts.danger>وقعه ای ثبت نشده است.</x-alerts.danger>
     @endif

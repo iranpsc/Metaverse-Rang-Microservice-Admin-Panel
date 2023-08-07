@@ -11,8 +11,8 @@ class Update extends Component
 {
     use WithFileUploads, SendsVerificationSms;
 
-    public $event, $title, $content, $image, $start_date, $end_date, $is_version = false, $color;
-    public $btn_name, $btn_link, $version_title, $start_time, $end_time;
+    public $event, $title, $content, $image, $start_date, $end_date, $color;
+    public $btn_name, $btn_link, $start_time, $end_time;
 
     protected $rules = [
         'title' => 'required|string|min:2|max:255',
@@ -25,8 +25,6 @@ class Update extends Component
         'color' => 'nullable|string',
         'btn_name' => 'nullable|string|min:2|max:255',
         'btn_link' => 'nullable|string|min:2|max:255',
-        'version_title' => 'nullable|string|min:2|max:255',
-        'is_version' => 'nullable|boolean',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
@@ -38,8 +36,6 @@ class Update extends Component
         $this->color = $event->color;
         $this->btn_name = $event->btn_name;
         $this->btn_link = $event->btn_link;
-        $this->version_title = $event->version_title;
-        $this->is_version = $event->is_version;
         $this->start_date = $event->starts_at->format('Y-m-d');
         $this->end_date = $event->is_version ? null : $event->ends_at->format('Y-m-d');
         $this->start_time = $event->is_version ? null : $event->starts_at->format('H:i');
@@ -60,8 +56,6 @@ class Update extends Component
             'color' => $this->color ?? ' ',
             'btn_name' => $this->btn_name,
             'btn_link' => $this->btn_link,
-            'version_title' => $this->version_title,
-            'is_version' => $this->is_version,
             'image' => $this->image ? $this->image->store('events', 'public') : $this->event->image,
         ]);
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'وقعه ویرایش شد']);
