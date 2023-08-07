@@ -35,6 +35,7 @@
                 </tr>
             @endforeach
         </x-tables.table>
+        {{ $versions->links() }}
     @else
         <x-alerts.danger>ورژنی ثبت نشده است.</x-alerts.danger>
     @endif
