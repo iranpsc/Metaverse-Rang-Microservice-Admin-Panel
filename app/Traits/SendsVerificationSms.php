@@ -21,11 +21,6 @@ trait SendsVerificationSms
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'کد تایید با موفقیت ارسال گردید']);
     }
 
-    public function updated($prop)
-    {
-        $this->validateOnly($prop);
-    }
-
     public function clearVerificationCode()
     {
         Cache::forget('verify.code.' . Auth::guard('admin')->id());

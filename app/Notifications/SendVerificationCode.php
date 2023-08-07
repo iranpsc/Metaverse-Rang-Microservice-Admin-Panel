@@ -27,7 +27,7 @@ class SendVerificationCode extends Notification implements ShouldQueue
         Cache::put(
             'verify.code.' . Auth::guard('admin')->id(),
             Hash::make($this->code),
-            now()->addMinutes(2)
+            now()->addMinutes(1)
         );
     }
 

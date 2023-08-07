@@ -1,8 +1,8 @@
 <div>
-    <x-buttons.btn-primary wire:click="resetModal" class="mb-2" data-bs-toggle="modal" data-bs-target="#version-modal">تعریف ورژن</x-buttons.btn-primary>
+    <x-button wire:click="resetModal" class="mb-2" data-bs-toggle="modal" data-bs-target="#version-modal">تعریف ورژن</x-button>
 
     @if ($versions->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot name="headers">
                 <th>عنوان</th>
                 <th>متن</th>
@@ -25,26 +25,26 @@
                     <td>{{ $version->interactions->where('liked', 1)->count() }}</td>
                     <td>{{ $version->interactions->where('liked', 0)->count() }}</td>
                     <td>
-                        <x-buttons.btn-primary id="edit-btn-{{ $version->id }}">
+                        <x-button id="edit-btn-{{ $version->id }}">
                             <span class="fa fa-edit"></span>
-                        </x-buttons.btn-primary>
-                        <x-buttons.btn-danger id="delete-btn-{{ $version->id }}">
+                        </x-button>
+                        <x-button color="danger" id="delete-btn-{{ $version->id }}">
                             <span class="fa fa-trash"></span>
-                        </x-buttons.btn-danger>
+                        </x-button>
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $versions->links() }}
     @else
-        <x-alerts.danger>ورژنی ثبت نشده است.</x-alerts.danger>
+        <x-alert type="warning" message="ورژنی یافت نشد!" />
     @endif
 
-    <x-modals.modal size="modal-xl" id="version-modal" title="تعریف ورژن">
+    <x-modal size="modal-xl" id="version-modal" title="تعریف ورژن">
 
         <div id="version-title-group">
             <x-forms.group for="versionTitle" label="شناسه نسخه">
-                <x-forms.input id="versionTitle" wire:model="versionTitle" placeholder="V1.0.1.1"/>
+                <x-forms.input id="versionTitle" wire:model.defer="versionTitle" placeholder="V1.0.1.1"/>
                 @error('versionTitle')
                     <span class="text-danger">{{ $message }}</span>
                 @enderror
@@ -52,7 +52,7 @@
         </div>
 
         <x-forms.group for="title" label="عنوان">
-            <x-forms.input id="title" wire:model="title" />
+            <x-forms.input id="title" wire:model.defer="title" />
             @error('title')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
@@ -68,19 +68,14 @@
         </x-forms.group>
 
         <x-forms.group for="startsAt" label="تاریخ شروع">
-            <x-forms.input type="date" id="startsAt" wire:model="startsAt" />
+            <x-forms.input type="date" id="startsAt" wire:model.defer="startsAt" />
             @error('startsAt')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
 
         <x-forms.verification />
-
-        <x-slot name="footer">
-            <x-buttons.btn-primary id="store-btn">ثبت</x-buttons.btn-primary>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بازگشت</x-buttons.btn-danger>
-        </x-slot>
-    </x-modals.modal>
+    </x-modal>
 
     <script>
         window.addEventListener('livewire:load', function() {

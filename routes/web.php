@@ -54,7 +54,7 @@ use App\Http\Livewire\Videos\EditVideo;
 use App\Http\Livewire\Translations\Listing as TranslationsListing;
 use App\Http\Livewire\Translations\Modal;
 use App\Http\Livewire\Translations\Tab;
-use App\Http\Livewire\Versions\Listing as VersionsListing;
+use App\Http\Livewire\Versions;
 
 /*
 |--------------------------------------------------------------------------
@@ -139,7 +139,7 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('levels', LevelListing::class)->can('manage-level')->name('level');
     Route::get('maps', MapListing::class)->can('manage-maps')->name('map-management');
     Route::get('calendar', CalendarListing::class)->can('manage-calendar')->name('calendar');
-    Route::get('versions', VersionsListing::class)->can('manage-versions')->name('versions');
+    Route::get('versions', Versions::class)->can('manage-versions')->name('versions');
     Route::get('reports', ReportsListing::class)->can('manage-reports')->name('reports');
     Route::get('system-variables', SystemVariablesListing::class)->can('manage-system-variables')->name('system-variables');
 

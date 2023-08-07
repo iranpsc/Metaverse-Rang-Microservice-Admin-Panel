@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Livewire\Versions;
+namespace App\Http\Livewire;
 
 use App\Models\Calendar;
 use App\Traits\SendsVerificationSms;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-class Listing extends Component
+class Versions extends Component
 {
     use WithPagination, SendsVerificationSms;
 
@@ -97,7 +97,7 @@ class Listing extends Component
 
     public function render()
     {
-        return view('livewire.versions.listing', [
+        return view('livewire.versions', [
             'versions' => Calendar::version()->orderByDesc('version_title')->simplePaginate('10')
         ])->extends('layouts.app')->section('content');
     }

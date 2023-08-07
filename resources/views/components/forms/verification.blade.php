@@ -13,7 +13,7 @@
         </x-buttons.btn-success>
     </div>
     <div class="col-sm-8">
-        <x-forms.input wire:model="phone_verification" placeholder="تایید پیامکی" />
+        <x-forms.input wire:model.defer="phone_verification" placeholder="تایید پیامکی" />
         @error('phone_verification')
             <span class="form-text text-danger">{{ $message }}</span>
         @enderror
@@ -21,7 +21,7 @@
 </div>
 
 <x-forms.group label="رمز دسترسی" for="access-password">
-    <x-forms.input type="password" id="access-password" wire:model="access_password" placeholder="رمز دسترسی" />
+    <x-forms.input type="password" id="access-password" wire:model.defer="access_password" placeholder="رمز دسترسی" />
     @error('access_password')
         <span class="form-text text-danger">{{ $message }}</span>
     @enderror
