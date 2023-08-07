@@ -34,10 +34,6 @@
                         --
                     </td>
                 </tr>
-                <x-slot:footer>
-                    <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
-                </x-slot:footer>
-                </x-modals.modal>
             @endforeach
         </x-tables.table>
         {{ $questions->links() }}
