@@ -20,7 +20,7 @@
     </div>
 
     @if ($translations->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>آیکون</th>
                 <th>زبان</th>
@@ -42,16 +42,16 @@
                         <a href="{{ route('modals', $translation->id) }}" class="btn btn-primary rounded">
                             <span class="fa fa-edit"></span>
                         </a>
-                        <x-buttons.btn-danger id="deleteTranslation-{{ $translation->id }}">
-                            <span class="close">&times;</span>
-                        </x-buttons.btn-danger>
+                        <x-button color="danger" id="deleteTranslation-{{ $translation->id }}">
+                            <span class="fa fa-trash"></span>
+                        </x-button>
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $translations->links() }}
     @else
-        <x-alerts.danger>ترجمه ای تعریف نشده است</x-alerts.danger>
+        <x-alert type="warning" message="هیچ ترجمه ای یافت نشد!"/>
     @endif
 
 

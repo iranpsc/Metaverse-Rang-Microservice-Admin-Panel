@@ -12,7 +12,17 @@ class TranslationController extends Controller
     public function index()
     {
         $translations = Translation::active()->get();
-        return response()->json(['data' => $translations]);
+        return response()->json([
+            'data' => $translations->map(function($translation) {
+                return [
+                    'id' => $translation->id,
+                    'code' => $translation->code,
+                    'name' => $translation->name,
+                    'native_name' => $translation->native_name,
+                    'icon' => asset('assets/images/flags/' . $translation->code . '.png')
+                ];
+            })
+        ]);
     }
 
     public function getModals(Translation $translation)

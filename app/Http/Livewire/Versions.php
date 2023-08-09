@@ -3,17 +3,13 @@
 namespace App\Http\Livewire;
 
 use App\Models\Calendar;
-use App\Traits\SendsVerificationSms;
-use Livewire\Component;
 use Livewire\WithPagination;
 
-class Versions extends Component
+class Versions extends LivewireComponent
 {
-    use WithPagination, SendsVerificationSms;
+    use WithPagination;
 
     public $title, $description, $versionTitle, $startsAt;
-
-    protected $paginationTheme = 'bootstrap';
 
     protected $listeners = [
         'versionAdded' => '$refresh',
@@ -26,18 +22,11 @@ class Versions extends Component
         'description' => 'required|string|max:20000',
         'versionTitle' => 'required|string|max:255',
         'startsAt' => 'required|date',
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
     ];
-
-    public function mount()
-    {
-        $this->admin = auth()->guard('admin')->user();
-    }
 
     public function store()
     {
-        $this->validate();
+        $this->validate(array_merge($this->rules, $this->getVerficationRules()));
 
         Calendar::create([
             'title' => $this->title,
@@ -53,8 +42,9 @@ class Versions extends Component
         $this->resetExcept('admin');
     }
 
-    public function edit(Calendar $version)
+    public function edit($id)
     {
+        $version = Calendar::findOrFail($id);
         $this->title = $version->title;
         $this->description = $version->content;
         $this->versionTitle = $version->version_title;
@@ -66,9 +56,11 @@ class Versions extends Component
         ]);
     }
 
-    public function update(Calendar $version)
+    public function update($id)
     {
-        $this->validate();
+        $this->validate(array_merge($this->rules, $this->getVerficationRules()));
+
+        $version = Calendar::findOrFail($id);
 
         $version->update([
             'title' => $this->title,
@@ -83,16 +75,12 @@ class Versions extends Component
         $this->reset(['phone_verification', 'access_password']);
     }
 
-    public function delete(Calendar $version)
+    public function delete($id)
     {
+        $version = Calendar::findOrFail($id);
         $version->delete();
         $this->emitSelf('versionDeleted');
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'نسخه با موفقیت حذف شد.']);
-    }
-
-    public function resetModal()
-    {
-        $this->resetExcept('admin');
     }
 
     public function render()

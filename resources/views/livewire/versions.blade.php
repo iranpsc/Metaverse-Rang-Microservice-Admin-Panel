@@ -1,5 +1,5 @@
 <div>
-    <x-button wire:click="resetModal" class="mb-2" data-bs-toggle="modal" data-bs-target="#version-modal">تعریف ورژن</x-button>
+    <x-button wire:click="resetForm" class="mb-2" data-bs-toggle="modal" data-bs-target="#version-modal">تعریف ورژن</x-button>
 
     @if ($versions->count() > 0)
         <x-table>
@@ -42,14 +42,12 @@
 
     <x-modal size="modal-xl" id="version-modal" title="تعریف ورژن">
 
-        <div id="version-title-group">
-            <x-forms.group for="versionTitle" label="شناسه نسخه">
-                <x-forms.input id="versionTitle" wire:model.defer="versionTitle" placeholder="V1.0.1.1"/>
-                @error('versionTitle')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
-        </div>
+        <x-forms.group for="versionTitle" label="شناسه نسخه">
+            <x-forms.input id="versionTitle" wire:model.defer="versionTitle" placeholder="V1.0.1.1"/>
+            @error('versionTitle')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
 
         <x-forms.group for="title" label="عنوان">
             <x-forms.input id="title" wire:model.defer="title" />
@@ -74,7 +72,10 @@
             @enderror
         </x-forms.group>
 
-        <x-forms.verification />
+        @production
+            <x-forms.verification />
+        @endproduction
+
     </x-modal>
 
     <script>
@@ -97,12 +98,15 @@
             storeBtn.addEventListener('click', function() {
                 @this.set('description', description.getData());
 
+                console.log(action, versionId)
+
                 if(action == 'store') {
                     @this.call('store');
                 } else if(action == 'update') {
                     @this.call('update', versionId);
                 }
                 action = 'store';
+                versionId = null;
             });
 
             @foreach ($versions as $version)
