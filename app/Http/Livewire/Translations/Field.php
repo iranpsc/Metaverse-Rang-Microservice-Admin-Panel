@@ -17,8 +17,8 @@ class Field extends Component
     ];
 
     protected $rules = [
-        'name' => 'required|string|max:500',
-        'value' => 'required|string|max:500',
+        'name' => 'required|string|max:2000',
+        'value' => 'required|string|max:2000',
     ];
 
     public function mount(Tab $tab)
