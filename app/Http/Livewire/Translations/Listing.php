@@ -38,6 +38,7 @@ class Listing extends Component
             'code' => $this->selectedLanguage['code'],
             'name' => $this->selectedLanguage['name'],
             'native_name' => $this->selectedLanguage['nativeName'],
+            'direction' => $this->selectedLanguage['dir'] ?? null,
         ]);
 
         $modals = Modal::all()->unique('name');

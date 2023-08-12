@@ -19,6 +19,7 @@ class TranslationController extends Controller
                     'code' => $translation->code,
                     'name' => $translation->name,
                     'native_name' => $translation->native_name,
+                    'direction' => $translation->direction,
                     'icon' => asset('assets/images/flags/' . $translation->code . '.svg')
                 ];
             })

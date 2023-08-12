@@ -33,7 +33,7 @@
     </x-modals.modal>
 
     @if ($fields->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>عبارت</th>
                 <th>ترجمه</th>
@@ -45,19 +45,19 @@
                     <td>{{ $field->name }}</td>
                     <td>{{ $field->translation }}</td>
                     <td>
-                        <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#edit-field-{{ $field->id }}">
+                        <x-button data-bs-toggle="modal" data-bs-target="#edit-field-{{ $field->id }}">
                             <span class="fa fa-edit"></span>
-                        </x-buttons.btn-primary>
-                        <x-buttons.btn-danger id="deleteField-{{ $field->id }}">
-                            <span class="close">&times;</span>
-                        </x-buttons.btn-danger>
+                        </x-button>
+                        <x-button color="danger" id="deleteField-{{ $field->id }}">
+                            <span class="fa fa-trash"></span>
+                        </x-button>
                         <livewire:translations.edit-field :field="$field" :key="'fields-'.$field->id" />
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
     @else
-        <x-alerts.danger>هیچ اطلاعاتی موجود نیست.</x-alerts.danger>
+        <x-alert type="danger" message="هیچ اطلاعاتی موجود نیست"/>
     @endif
 
     <script>
