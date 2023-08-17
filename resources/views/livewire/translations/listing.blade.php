@@ -34,7 +34,10 @@
             @forelse ($translations as $translation)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td><img src="{{ asset('assets/images/flags/' . Str::upper($translation->code)) }}.svg"></td>
+                    <td>
+                        <img src="{{ asset('assets/images/flags/' . Str::upper($translation->code)) }}.svg"
+                        style="width: 30px; height: 30px">
+                    </td>
                     <td>{{ $translation->name }}</td>
                     <td></td>
                     <td></td>
