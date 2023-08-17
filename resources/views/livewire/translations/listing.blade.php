@@ -6,11 +6,13 @@
                 <select class="form-control round" id="languages" wire:model="selectedLanguage">
                     <option value="">انتخاب زبان</option>
                     @foreach ($languages as $key => $language)
-                        <option value="{{ $key }}">{{ $language['name'] }}({{ $language['nativeName'] }})</option>
+                        <option value="{{ $key }}">{{ $language['name'] }}({{ $language['nativeName'] }})
+                        </option>
                     @endforeach
                 </select>
                 <div class="input-group-append">
-                    <button class="btn btn-primary" type="button" wire:click="saveTranslation" style="border-radius: 5px 0 0 5px">اضافه کردن ترجمه</button>
+                    <button class="btn btn-primary" type="button" wire:click="saveTranslation"
+                        style="border-radius: 5px 0 0 5px">اضافه کردن ترجمه</button>
                 </div>
             </div>
             @error('selectedLanguage')
@@ -32,7 +34,7 @@
             @forelse ($translations as $translation)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
-                    <td><img src="https://www.countryflagicons.com/FLAT/64/{{ Str::upper($translation->code) }}.png"></td>
+                    <td><img src="{{ asset('assets/images/flags/' . Str::upper($translation->code)) }}.svg"></td>
                     <td>{{ $translation->name }}</td>
                     <td></td>
                     <td></td>
@@ -51,7 +53,7 @@
         </x-table>
         {{ $translations->links() }}
     @else
-        <x-alert type="warning" message="هیچ ترجمه ای یافت نشد!"/>
+        <x-alert type="warning" message="هیچ ترجمه ای یافت نشد!" />
     @endif
 
 
@@ -60,7 +62,7 @@
             $(document).ready(function() {
                 $('#languages').select2();
 
-                $('#languages').on('select2:select', function (e) {
+                $('#languages').on('select2:select', function(e) {
                     var data = e.params.data;
                     @this.set('selectedLanguage', data.id);
                 });
