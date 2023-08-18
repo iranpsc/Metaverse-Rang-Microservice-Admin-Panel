@@ -87,7 +87,7 @@ class Versions extends LivewireComponent
     {
         return view('livewire.versions', [
             'versions' => Calendar::version()
-                ->orderByDesc('version_title')
+                ->orderByDesc('id')
                 ->simplePaginate('10')
         ]);
     }
