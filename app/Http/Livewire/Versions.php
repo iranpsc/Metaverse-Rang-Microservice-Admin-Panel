@@ -9,7 +9,7 @@ class Versions extends LivewireComponent
 {
     use WithPagination;
 
-    public $title, $description, $versionTitle, $startsAt;
+    public $title, $content, $versionTitle, $startsAt;
 
     protected $listeners = [
         'versionAdded' => '$refresh',
@@ -19,7 +19,7 @@ class Versions extends LivewireComponent
 
     protected $rules = [
         'title' => 'required|string|max:255',
-        'description' => 'required|string|max:20000',
+        'content' => 'required|string|max:20000',
         'versionTitle' => 'required|string|max:255',
         'startsAt' => 'required|date',
     ];
@@ -30,7 +30,7 @@ class Versions extends LivewireComponent
 
         Calendar::create([
             'title' => $this->title,
-            'content' => $this->description,
+            'content' => $this->content,
             'is_version' => true,
             'version_title' => $this->versionTitle,
             'starts_at' => $this->startsAt,
@@ -38,7 +38,7 @@ class Versions extends LivewireComponent
         ]);
 
         $this->emitSelf('versionAdded');
-        $this->dispatchBrowserEvent('resourceModified', ['message' => 'نسخه جدید با موفقیت افزوده شد.']);
+        $this->dispatchBrowserEvent('closeCreateModal');
         $this->resetExcept('admin');
     }
 
@@ -46,13 +46,13 @@ class Versions extends LivewireComponent
     {
         $version = Calendar::findOrFail($id);
         $this->title = $version->title;
-        $this->description = $version->content;
+        $this->content = $version->content;
         $this->versionTitle = $version->version_title;
         $this->startsAt = $version->starts_at->format('Y-m-d');
 
         $this->dispatchBrowserEvent('openEditModal', [
             'id' => $version->id,
-            'description' => $this->description,
+            'content' => $this->content,
         ]);
     }
 
@@ -64,15 +64,14 @@ class Versions extends LivewireComponent
 
         $version->update([
             'title' => $this->title,
-            'content' => $this->description,
+            'content' => $this->content,
             'version_title' => $this->versionTitle,
             'starts_at' => $this->startsAt,
-            'writer' => $this->admin->name,
         ]);
 
         $this->emitSelf('versionUpdated');
-        $this->dispatchBrowserEvent('resourceModified', ['message' => 'نسخه با موفقیت ویرایش شد.']);
-        $this->reset(['phone_verification', 'access_password']);
+        $this->dispatchBrowserEvent('closeEditModal');
+        $this->resetExcept('admin');
     }
 
     public function delete($id)
@@ -80,7 +79,6 @@ class Versions extends LivewireComponent
         $version = Calendar::findOrFail($id);
         $version->delete();
         $this->emitSelf('versionDeleted');
-        $this->dispatchBrowserEvent('resourceModified', ['message' => 'نسخه با موفقیت حذف شد.']);
     }
 
     public function render()

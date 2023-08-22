@@ -28,6 +28,11 @@ class Calendar extends Model
         return $query->where('is_version', true);
     }
 
+    public function scopeEvent($query)
+    {
+        return $query->where('is_version', false);
+    }
+
     public function interactions() {
         return $this->morphMany(Interaction::class, 'likeable');
     }

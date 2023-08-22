@@ -28,7 +28,6 @@ use App\Http\Livewire\Dynasty\Prize as DynastyPrizes;
 use App\Http\Livewire\Dynasty\DynastyMessages;
 use App\Http\Livewire\Dynasty\Permissions as DynastyPermissions;
 use App\Http\Livewire\Maps\Listing as MapListing;
-use App\Http\Livewire\Calendar\Listing as CalendarListing;
 use App\Http\Livewire\Reports\Listing as ReportsListing;
 use App\Http\Livewire\SystemVariables\Listing as SystemVariablesListing;
 use App\Http\Livewire\AccessManagement\EmployeeRolePermission as EmployeesAccessManagement;
@@ -55,6 +54,7 @@ use App\Http\Livewire\Translations\Listing as TranslationsListing;
 use App\Http\Livewire\Translations\Modal;
 use App\Http\Livewire\Translations\Tab;
 use App\Http\Livewire\Versions;
+use App\Http\Livewire\Calendar;
 
 /*
 |--------------------------------------------------------------------------
@@ -138,7 +138,7 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::get('levels', LevelListing::class)->can('manage-level')->name('level');
     Route::get('maps', MapListing::class)->can('manage-maps')->name('map-management');
-    Route::get('calendar', CalendarListing::class)->can('manage-calendar')->name('calendar');
+    Route::get('calendar', Calendar::class)->can('manage-calendar')->name('calendar');
     Route::get('versions', Versions::class)->can('manage-versions')->name('versions');
     Route::get('reports', ReportsListing::class)->can('manage-reports')->name('reports');
     Route::get('system-variables', SystemVariablesListing::class)->can('manage-system-variables')->name('system-variables');

@@ -58,8 +58,9 @@ abstract class LivewireComponent extends Component
     public abstract function delete($id);
     public abstract function render();
 
-    public function resetForm()
+    public function openCreateModal()
     {
         $this->resetExcept('admin');
+        $this->dispatchBrowserEvent('openCreateModal');
     }
 }
