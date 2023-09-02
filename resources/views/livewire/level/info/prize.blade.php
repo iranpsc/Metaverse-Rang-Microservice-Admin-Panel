@@ -45,5 +45,5 @@
     <hr>
     <x-forms.verification/>
     <hr>
-    <x-buttons.btn-primary class="w-25" wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
+    <x-button color="primay" class="w-25" wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
 </div>
