@@ -164,5 +164,9 @@ class User extends Authenticatable
         return $this->morphMany(Bankaccount::class, 'bankable');
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
 
 }

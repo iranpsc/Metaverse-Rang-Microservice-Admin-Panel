@@ -1,27 +1,28 @@
 <div>
     @if ($users->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>شناسه شهروند</th>
+                <th>تاریخ و ساعت ثبت نام</th>
                 <th>کل زمان حضور</th>
                 <th>تعداد مشترکین</th>
-                <th>تعداد مشارکت</th>
+                <th>تعداد پرداخت های بالای ۱ میلیون تومان</th>
                 <th>کل امتیاز دریافتی</th>
             </x-slot:headers>
             @foreach ($users as $user)
                 <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $user->code }}</td>
-                    <td>{{ $user->activities->sum('total') }}</td>
-                    <td>{{ $user->followers->count() }}</td>
-                    <td>--</td>
-                    <td>{{ $user->log->score ?? 0 }}</td>
+                    <td>{{ jdate($user->created_at)->format('Y/m/d H:i:s') }}</td>
+                    <td>{{ $user->activities }}</td>
+                    <td>{{ $user->followers_count }}</td>
+                    <td>{{ $user->payments_count }}</td>
+                    <td>{{ $user->score }}</td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
+        {{ $users->links() }}
     @else
-        <x-alerts.danger>کاربری یافت نشد</x-alerts.danger>
+        <x-alert type="warning" message="کاربری یافت نشد." />
     @endif
-
 </div>
-

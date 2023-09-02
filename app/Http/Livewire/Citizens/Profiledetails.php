@@ -4,17 +4,25 @@ namespace App\Http\Livewire\Citizens;
 
 use App\Models\User;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Profiledetails extends Component
 {
-    private $users;
+    use WithPagination;
 
-    public function mount() {
-        $this->users = User::lazy();
-    }
+    protected $paginationTheme = 'bootstrap';
 
     public function render()
     {
-        return view('livewire.citizens.profiledetails', ['users' => $this->users]);
+        return view('livewire.citizens.profiledetails', [
+            'users' => User::withSum('activities', 'total')
+                ->withCount([
+                    'followers',
+                    'payments' => function ($query) {
+                        $query->where('amount', '>', 10000000);
+                    }
+                ])
+                ->paginate(10)
+        ]);
     }
 }
