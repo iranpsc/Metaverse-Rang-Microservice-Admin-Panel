@@ -14,7 +14,7 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $user->code }}</td>
                     <td>{{ jdate($user->created_at)->format('Y/m/d H:i:s') }}</td>
-                    <td>{{ $user->activities }}</td>
+                    <td>{{ $user->activities_sum_total }}</td>
                     <td>{{ $user->followers_count }}</td>
                     <td>{{ $user->payments_count }}</td>
                     <td>{{ $user->score }}</td>
