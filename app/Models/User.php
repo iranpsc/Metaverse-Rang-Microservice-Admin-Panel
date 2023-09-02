@@ -71,13 +71,10 @@ class User extends Authenticatable
         return $this->hasMany(BuyFeatureRequest::class, 'seller_id');
     }
 
-
-
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
     }
-
 
     public function referralOrders()
     {
