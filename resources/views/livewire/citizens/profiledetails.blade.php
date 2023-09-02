@@ -6,6 +6,7 @@
                 <th>تاریخ و ساعت ثبت نام</th>
                 <th>کل زمان حضور</th>
                 <th>تعداد مشترکین</th>
+                <th>خرید ابزار و PSC</th>
                 <th>تعداد پرداخت های بالای ۱ میلیون تومان</th>
                 <th>کل امتیاز دریافتی</th>
             </x-slot:headers>
@@ -17,6 +18,7 @@
                     <td>{{ $user->activities_sum_total ?? 0 }}</td>
                     <td>{{ $user->followers_count }}</td>
                     <td>{{ $user->payments_count }}</td>
+                    <td>{{ $user->more_than_a_million_payment }}</td>
                     <td>{{ $user->score }}</td>
                 </tr>
             @endforeach

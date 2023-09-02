@@ -18,7 +18,8 @@ class Profiledetails extends Component
             'users' => User::withSum('activities', 'total')
                 ->withCount([
                     'followers',
-                    'payments' => function ($query) {
+                    'payments',
+                    'payments as more_than_a_million_payment' => function ($query) {
                         $query->where('amount', '>', 10000000);
                     }
                 ])
