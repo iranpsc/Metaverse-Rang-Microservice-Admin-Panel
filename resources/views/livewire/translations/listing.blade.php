@@ -47,6 +47,11 @@
                         <a href="{{ route('modals', $translation->id) }}" class="btn btn-primary rounded">
                             <span class="fa fa-edit"></span>
                         </a>
+
+                        <x-button color="success" id="export-{{ $translation->id }}">
+                            <span class="fa fa-download"></span>
+                        </x-button>
+
                         <x-button color="danger" id="deleteTranslation-{{ $translation->id }}">
                             <span class="fa fa-trash"></span>
                         </x-button>
@@ -71,6 +76,7 @@
                 });
 
                 let deleteTranslation = document.querySelectorAll("[id^='deleteTranslation-']");
+                let exportBtns = document.querySelectorAll("[id^='export-']");
 
                 deleteTranslation.forEach(function(element) {
                     element.addEventListener('click', function() {
@@ -98,6 +104,13 @@
                     element.addEventListener('change', function() {
                         let translationId = element.id.split('-')[1];
                         @this.call('toggleTranslationStatus', translationId);
+                    });
+                });
+
+                exportBtns.forEach(function(element) {
+                    element.addEventListener('click', function() {
+                        let translationId = element.id.split('-')[1];
+                        @this.call('export', translationId);
                     });
                 });
             });

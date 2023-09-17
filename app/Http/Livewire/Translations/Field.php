@@ -5,9 +5,14 @@ namespace App\Http\Livewire\Translations;
 use App\Models\Translations\Field as TranslationsField;
 use App\Models\Translations\Tab;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class Field extends Component
 {
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+    
     public $tab, $name, $value;
 
     protected $listeners = [
@@ -59,7 +64,7 @@ class Field extends Component
     public function render()
     {
         return view('livewire.translations.field', [
-            'fields' => $this->tab->fields
+            'fields' => TranslationsField::where('tab_id', $this->tab->id)->paginate(10)
         ]);
     }
 }

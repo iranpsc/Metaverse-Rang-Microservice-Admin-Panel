@@ -11,7 +11,7 @@
     </x-breadcrumb>
     <br>
 
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-field">ایجاد عبارت جدید</x-buttons.btn-primary>
+    <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#create-field">ایجاد عبارت جدید</x-button>
 
     <x-modals.modal id="create-field" title="ایجاد عبارت جدید">
         <x-forms.group for="name" label="نام عبارت">
@@ -56,6 +56,7 @@
                 </tr>
             @endforeach
         </x-table>
+        {{ $fields->links() }}
     @else
         <x-alert type="danger" message="هیچ اطلاعاتی موجود نیست"/>
     @endif
