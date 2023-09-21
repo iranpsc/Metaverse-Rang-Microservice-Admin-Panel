@@ -13,7 +13,7 @@ class Profile extends Component
     use WithFileUploads, SendsVerificationSms;
 
     public $name, $email, $image, $new_access_password,
-        $new_access_password_confirmation, $password;
+        $new_access_password_confirmation, $password, $password_confirmation;
 
     protected $rules = [
         'name' => 'required|string|max:255',
