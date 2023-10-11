@@ -115,7 +115,7 @@
 
         window.addEventListener('resourceModified', (event) => {
             Toast.fire({
-                icon: 'success',
+                icon: `${event.detail.type} ? ${event.detail.type} : 'success'`,
                 title: `${event.detail.message}`
             })
         });

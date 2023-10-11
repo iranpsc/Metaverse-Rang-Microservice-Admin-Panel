@@ -114,7 +114,24 @@ class Listing extends Component
         fwrite($file, json_encode($translation->toArray(), JSON_PRETTY_PRINT));
         fclose($file);
 
-        return response()->download(public_path('lang/' . $fileName));
+        $content = file_get_contents(public_path('lang/' . $fileName));
+
+        $translation->increment('version');
+
+        $fileName = strtolower($translation->code) . '-' . $translation->version . '.json';
+
+        $translation->update(['file_url' => 'https://play.irpsc.com/metaverse/lang/' . $fileName]);
+
+        if (!Storage::disk('ftp')->put('lang/' . $fileName, $content)) {
+            $this->dispatchBrowserEvent('resourceModified', [
+                'type' => 'error',
+                'message' => 'خطا در ذخیره فایل'
+            ]);
+        } else {
+            $this->dispatchBrowserEvent('resourceModified', [
+                'message' => 'فایل ذخیره شد'
+            ]);
+        }
     }
 
     public function render()

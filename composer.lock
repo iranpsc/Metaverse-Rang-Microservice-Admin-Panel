@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8bea996911556032ad6dd549f55807c6",
+    "content-hash": "fa1912572c3cffec2d60aecd6b3cb2a7",
     "packages": [
         {
             "name": "beberlei/assert",
@@ -2364,21 +2364,21 @@
         },
         {
             "name": "league/flysystem-ftp",
-            "version": "3.10.3",
+            "version": "3.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/flysystem-ftp.git",
-                "reference": "475d526de342b4a166e64c11ccabbda027c9e716"
+                "reference": "2a3833d05e3abcaab926751311431065f50a493b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/flysystem-ftp/zipball/475d526de342b4a166e64c11ccabbda027c9e716",
-                "reference": "475d526de342b4a166e64c11ccabbda027c9e716",
+                "url": "https://api.github.com/repos/thephpleague/flysystem-ftp/zipball/2a3833d05e3abcaab926751311431065f50a493b",
+                "reference": "2a3833d05e3abcaab926751311431065f50a493b",
                 "shasum": ""
             },
             "require": {
                 "ext-ftp": "*",
-                "league/flysystem": "^3.0.0",
+                "league/flysystem": "^2.0.0 || ^3.0.0",
                 "league/mime-type-detection": "^1.0.0",
                 "php": "^8.0.2"
             },
@@ -2408,11 +2408,11 @@
                 "ftpd"
             ],
             "support": {
-                "source": "https://github.com/thephpleague/flysystem-ftp/tree/3.10.3"
+                "source": "https://github.com/thephpleague/flysystem-ftp/tree/3.0.0"
             },
             "funding": [
                 {
-                    "url": "https://ecologi.com/frankdejonge",
+                    "url": "https://offset.earth/frankdejonge",
                     "type": "custom"
                 },
                 {
@@ -2424,7 +2424,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-10-26T18:15:09+00:00"
+            "time": "2022-01-12T20:39:47+00:00"
         },
         {
             "name": "league/mime-type-detection",
@@ -9794,5 +9794,5 @@
         "php": "^8.0.2"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.6.0"
 }

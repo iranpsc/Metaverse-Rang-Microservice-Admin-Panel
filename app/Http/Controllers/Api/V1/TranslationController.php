@@ -21,7 +21,7 @@ class TranslationController extends Controller
                     'native_name' => $translation->native_name,
                     'direction' => $translation->direction,
                     'icon' => asset('assets/images/flags/' . $translation->code . '.svg'),
-                    'file_url' => 'https://rgb.irpsc.com/metaverse/lang/' . strtolower($translation->code) . '.json',
+                    'file_url' => $translation->file_url,
                 ];
             })
         ]);
