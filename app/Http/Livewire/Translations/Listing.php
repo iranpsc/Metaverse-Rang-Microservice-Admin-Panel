@@ -118,7 +118,7 @@ class Listing extends Component
 
         $translation->increment('version');
 
-        $fileName = strtolower($translation->code) . '-' . $translation->version . '.json';
+        $fileName = strtolower($translation->code) . '.json';
 
         $translation->update(['file_url' => 'https://play.irpsc.com/metaverse/lang/' . $fileName]);
 
