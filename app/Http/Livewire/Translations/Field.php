@@ -2,7 +2,7 @@
 
 namespace App\Http\Livewire\Translations;
 
-use App\Models\Translations\Field as TranslationsField;
+use App\Models\Translations\Field as TranslationField;
 use App\Models\Translations\Tab;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -54,9 +54,9 @@ class Field extends Component
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'فیلد اضافه شد']);
     }
 
-    public function deleteField(TranslationsField $field)
+    public function deleteField(TranslationField $field)
     {
-        TranslationsField::where('name', $field->name)->delete();
+        TranslationField::where('name', $field->name)->delete();
         $this->emitSelf('fieldDeleted');
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'فیلد حذف شد']);
     }
@@ -64,7 +64,7 @@ class Field extends Component
     public function render()
     {
         return view('livewire.translations.field', [
-            'fields' => TranslationsField::where('tab_id', $this->tab->id)->paginate(10)
+            'fields' => TranslationField::where('tab_id', $this->tab->id)->paginate(10)
         ]);
     }
 }

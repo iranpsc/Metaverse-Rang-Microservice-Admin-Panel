@@ -9,7 +9,6 @@ use App\Models\Translations\Translation;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Support\Str;
 
 class Listing extends Component
 {

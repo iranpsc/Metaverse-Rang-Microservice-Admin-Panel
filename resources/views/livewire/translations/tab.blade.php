@@ -55,7 +55,7 @@
                             ]) }}"
                         class="btn btn-primary rounded"><span class="fa fa-edit"></span></a>
                         <x-buttons.btn-danger id="deleteTab-{{ $tab->id }}">
-                            <span class="close">&times;</span>
+                            <span class="fa fa-trash"></span>
                         </x-buttons.btn-danger>
                     </td>
                 </tr>

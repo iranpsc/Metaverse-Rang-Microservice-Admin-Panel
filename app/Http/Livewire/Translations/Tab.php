@@ -3,7 +3,7 @@
 namespace App\Http\Livewire\Translations;
 
 use App\Models\Translations\Modal;
-use App\Models\Translations\Tab as TranslationsTab;
+use App\Models\Translations\Tab as TranslationTab;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -48,9 +48,13 @@ class Tab extends Component
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'تب اضافه شد']);
     }
 
-    public function deleteTab(TranslationsTab $tab)
+    public function deleteTab(TranslationTab $tab)
     {
-        TranslationsTab::where('name', $tab->name)->delete();
+        TranslationTab::where('name', $tab->name)
+            ->whereHas('modal', function ($query) {
+                $query->where('name', $this->modal->name);
+            })
+            ->delete();
 
         $this->emitSelf('tabDeleted');
         $this->dispatchBrowserEvent('resourceModified', ['message' => 'تب حذف شد']);
