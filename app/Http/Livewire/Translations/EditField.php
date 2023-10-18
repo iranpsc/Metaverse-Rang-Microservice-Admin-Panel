@@ -22,10 +22,10 @@ class EditField extends Component
             'name' => [
                 'required',
                 'string',
-                'max:255',
+                'max:2000',
                 Rule::unique('sqlite.fields')->ignore($this->field, 'name'),
             ],
-            'translation' => 'required|string|max:255',
+            'translation' => 'required|string|max:2000',
         ]);
 
 
