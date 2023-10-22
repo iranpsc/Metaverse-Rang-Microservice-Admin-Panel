@@ -21,7 +21,7 @@ class Versions extends LivewireComponent
         'title' => 'required|string|max:255',
         'content' => 'required|string|max:20000',
         'versionTitle' => 'required|string|max:255',
-        'startsAt' => 'required|shamsi_date',
+        'startsAt' => 'required|date',
     ];
 
     public function store()
