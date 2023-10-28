@@ -11,6 +11,7 @@ class Listing extends Component
     use WithPagination;
 
     private $properties;
+    
     public $search = '';
 
     protected $paginationTheme = 'bootstrap';
@@ -32,7 +33,7 @@ class Listing extends Component
             'properties' => is_null($this->properties) ?
                 FeatureProperties::with('feature', 'feature.geometry.coordinates')
                 ->orderBy('id', 'asc')
-                ->simplePaginate(10)
+                ->paginate(10)
                 : $this->properties
         ]);
     }

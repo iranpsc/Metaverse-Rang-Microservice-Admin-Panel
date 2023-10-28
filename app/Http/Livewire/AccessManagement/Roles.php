@@ -11,7 +11,7 @@ class Roles extends Component
 {
     use WithPagination;
 
-    public $title, $name;
+    public $title, $name, $search;
     public $addedPermissions = [];
     public $pageTitle = 'مدیریت مسئولیت ها';
 
@@ -60,9 +60,8 @@ class Roles extends Component
     public function render()
     {
         return view('livewire.access-management.roles', [
-            'roles' => Role::whereNot('name', 'super-admin')
-            ->with('permissions')->simplePaginate(10),
-            'permissions' => Permission::lazy(),
+            'roles' => Role::whereNot('name', 'super-admin')->with('permissions')->paginate(10),
+            'permissions' => Permission::all(),
         ]);
     }
 }

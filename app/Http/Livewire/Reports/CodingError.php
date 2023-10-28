@@ -6,7 +6,7 @@ use Livewire\Component;
 
 class CodingError extends Component
 {
-    public $reports;
+    public $reports, $search;
 
     public function mount($reports) {
         $this->reports = $reports->reject(function($report) {

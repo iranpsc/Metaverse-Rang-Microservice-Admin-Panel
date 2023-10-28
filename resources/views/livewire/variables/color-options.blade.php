@@ -1,6 +1,11 @@
 <div>
-    <x-buttons.btn-success class="my-2" data-bs-toggle="modal" data-bs-target="#create-package-modal">ایجاد پکیج رنگ
-    </x-buttons.btn-success>
+    <x-slot name="pageTitle">
+        مدیریت پکیج ها
+    </x-slot>
+
+    <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#create-package-modal">ایجاد پکیج رنگ</x-button>
+
+    <x-forms.search-box wire:model="search" />
 
     <x-modals.modal id="create-package-modal" title="تعریف بسته">
         <x-forms.group for="asset" label="رنگ">
@@ -42,13 +47,13 @@
         <x-forms.verification/>
 
         <x-slot:footer>
-            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot:footer>
     </x-modals.modal>
 
     @if ($options->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>کد بسته</th>
                 <th>ارز</th>
@@ -61,7 +66,7 @@
             </x-slot:headers>
             @forelse ($options as $option)
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $option->id }}</td>
                     <td>{{ $option->code }}</td>
                     <td>{{ $option->getAssetTitle() }}</td>
                     <td>{{ \App\Models\Variable::getRate($option->asset) * $option->amount }}</td>
@@ -74,17 +79,17 @@
                     </th>
                     <td>{{ $option->note }}</td>
                     <td>
-                        <x-buttons.btn-primary data-bs-toggle="modal"
-                            data-bs-target="#edit-package-modal-{{ $option->id }}">بروز رسانی</x-buttons.btn-primary>
-                        <x-buttons.btn-danger title="deletePackage" class="confirm" id="{{ $option->id }}">حذف
-                        </x-buttons.btn-danger>
+                        <x-button data-bs-toggle="modal"
+                            data-bs-target="#edit-package-modal-{{ $option->id }}">بروز رسانی</x-button>
+                        <x-button color="danger" title="deletePackage" class="confirm" id="{{ $option->id }}">حذف
+                        </x-button>
                         @if ($option->priceChangeLogs->count() > 0)
-                        <x-buttons.btn-info data-bs-toggle="modal"
+                        <x-button color="info" data-bs-toggle="modal"
                             data-bs-target="#option-history-{{ $option->id }}">تاریخچه تغییرات
-                        </x-buttons.btn-info>
+                        </x-button>
                         <x-modals.modal size="modal-xl" id="option-history-{{ $option->id }}"
                             title="تاریخچه تغییرات">
-                            <x-tables.table>
+                            <x-table>
                                 <x-slot name="headers">
                                     <th>کد بسته</th>
                                     <th>تاریخ تغییر</th>
@@ -112,7 +117,7 @@
                                     </tbody>
                             </x-tables.table>
                             <x-slot:footer>
-                                <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+                                <x-button color="danger"  data-bs-dismiss="modal">بستن</x-button>
                             </x-slot:footer>
                         </x-modals.modal>
                     @endif
@@ -123,6 +128,6 @@
         </x-tables.table>
         {{ $options->links() }}
     @else
-        <x-alerts.danger>پکیجی تعریف نشده است</x-alerts.danger>
+        <x-alert type="warning" :message="'هیچ بسته ای تعریف نشده است'" />
     @endif
 </div>

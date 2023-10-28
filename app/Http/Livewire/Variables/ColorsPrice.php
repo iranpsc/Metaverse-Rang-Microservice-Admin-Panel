@@ -11,7 +11,7 @@ class ColorsPrice extends Component
 {
     use SendsVerificationSms;
 
-    public $price, $asset;
+    public $price, $asset, $search;
 
     public function mount()
     {

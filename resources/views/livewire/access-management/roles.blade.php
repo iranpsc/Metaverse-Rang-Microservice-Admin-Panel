@@ -1,6 +1,14 @@
 <div>
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-role-modal">ایجاد مسئولیت
-    </x-buttons.btn-primary>
+    <x-slot name="pageTitle">
+        مدیریت مسئولیت ها
+    </x-slot>
+
+    <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#create-role-modal">
+        ایجاد مسئولیت
+    </x-button>
+
+    <x-forms.search-box wire:model="search"/>
+
     <x-modals.modal id="create-role-modal" size="modal-xl" title="ایجاد مسئولیت">
         <x-forms.group for="title" label="عنوان مسئولیت">
             <x-forms.input type="title" wire:model="title" id="title" />
@@ -28,15 +36,16 @@
                 @endforeach
             </div>
         @empty
-            <x-alerts.danger>نقشی تعریف نشده است!</x-alerts.danger>
+            <x-alert type="danger" :message="'مسئولیتی تعریف نشده است'"/>
         @endforelse
         <x-slot name="footer">
-            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button color="success" wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
     </x-modals.modal>
+
     @if ($roles->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot name="headers">
                 <th>عنوان مسئولیت</th>
                 <th>نام مسئولیت</th>
@@ -52,18 +61,19 @@
                     <td>{{ jdate($role->created_at)->format('Y/m/d') }}</td>
                     <td>{{ jdate($role->created_at)->format('H:m:s') }}</td>
                     <td>
-                        <x-buttons.btn-danger class="confirm" id="{{ $role->id }}" title="deleteRole">حذف
-                        </x-buttons.btn-danger>
-                        <x-buttons.btn-primary data-bs-target="#update-role-modal-{{ $role->id }}"
-                            data-bs-toggle="modal">بروزرسانی
-                        </x-buttons.btn-primary>
+                        <x-button color="danger" class="confirm" id="{{ $role->id }}" title="deleteRole">
+                            حذف
+                        </x-button>
+                        <x-button color="info" data-bs-target="#update-role-modal-{{ $role->id }}" data-bs-toggle="modal">
+                            بروزرسانی
+                        </x-button>
                         <livewire:access-management.update-role :role="$role" :wire:key="'update-role-'.$role->id">
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $roles->links() }}
     @else
-        <x-alerts.danger>مسئولیتی تعریف نشده است!</x-alerts.danger>
+        <x-alert type="warning" :message="'مسئولیتی تعریف نشده است'"/>
     @endif
 </div>

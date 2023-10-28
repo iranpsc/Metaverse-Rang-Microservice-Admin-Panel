@@ -16,13 +16,13 @@ class Prices extends Component
     protected $paginationTheme = 'bootstrap';
 
     public function updatingSearch() {
-        $this->resetPage('lands-price');
+        // 
     }
 
     public function render()
     {
         return view('livewire.lands.prices', [
-            'features' => $this->features ?? Feature::with('properties')->simplePaginate(10)
+            'features' => $this->features ?? Feature::with('properties')->paginate(10)
         ]);
     }
 }

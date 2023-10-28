@@ -12,21 +12,19 @@ class RegistrationInfo extends Component
 
     private $users;
     public $searchTerm;
-    public $pageTitle = 'اطلاعات ثبت نام';
 
     protected $paginationTheme = 'bootstrap';
 
-    public function updated() {
-        $this->resetPage();
+    public function updatedSearchTerm() {
         $this->users = User::where('email', 'like', '%' . $this->searchTerm . '%')
         ->orWhere('name', 'like', '%' . $this->searchTerm . '%')
-        ->simplePaginate(10);
+        ->paginate(10);
     }
 
     public function render()
     {
         return view('livewire.citizens.registration-info', [
-            'users' => $this->users ?? User::simplePaginate(10)
+            'users' => $this->users ?? User::paginate(10)
         ]);
     }
 }

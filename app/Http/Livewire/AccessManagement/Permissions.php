@@ -11,7 +11,7 @@ class Permissions extends Component
 {
     use WithPagination;
 
-    public $title, $name;
+    public $title, $name, $search;
     public $addedRoles = [];
     public $pageTitle = 'مدیریت دسترسی ها';
 
@@ -50,11 +50,12 @@ class Permissions extends Component
         $permission->delete();
         $this->emitSelf('permissionDeleted');
     }
+
     public function render()
     {
         return view('livewire.access-management.permissions', [
-            'roles' => Role::whereNotIn('name', ['super-admin'])->lazy(),
-            'permissions' => Permission::with('roles')->paginate(10, '*', 'permissions-listing')
+            'roles' => Role::whereNotIn('name', ['super-admin'])->get(),
+            'permissions' => Permission::with('roles')->paginate(10)
         ]);
     }
 }

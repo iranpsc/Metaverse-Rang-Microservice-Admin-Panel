@@ -1,8 +1,12 @@
     <div>
+        <x-slot name="pageTitle">
+            لیست ملک ها
+        </x-slot>
+
         <x-forms.search-box wire:model.debounce.1000ms="search" placeholder="شناسه ملک را وارد کنید" />
 
         @if ($properties->count() > 0)
-            <x-tables.table>
+            <x-table>
                 <x-slot:headers>
                     <th>کد زمین</th>
                     <th>مساحت</th>
@@ -24,14 +28,13 @@
                         <td>{{ jdate($property->date)->format('Y/m/d') }}</td>
                         <td>{{ $property->feature->map->publisher_name }}</td>
                         <td>
-                            <x-buttons.btn-primary data-bs-toggle="modal"
-                                data-bs-target="#modal-{{ explode('-', $property->id)[1] }}">ویرایش
-                            </x-buttons.btn-primary>
-
-                            <x-buttons.btn-success data-bs-toggle="modal"
-                                data-bs-target="#modal-{{ $property->feature->id }}">
+                            <x-button color="primary" data-bs-toggle="modal" data-bs-target="#modal-{{ explode('-', $property->id)[1] }}">
                                 ویرایش
-                                مختصات</x-buttons.btn-success>
+                            </x-button>
+
+                            <x-button color="success" data-bs-toggle="modal" data-bs-target="#modal-{{ $property->feature->id }}">
+                                ویرایش مختصات
+                            </x-button>
 
                             <livewire:lands.edit.feature-properties :feature="$property->feature" :wire:key="'edit-properties-'.$property->feature->id">
 
@@ -39,9 +42,9 @@
                         </td>
                     </tr>
                 @endforeach
-            </x-tables.table>
+            </x-table>
             {{ $properties->links() }}
         @else
-            <x-alerts.danger>ملکی یافت نشد</x-alerts.danger>
+            <x-alert type="danger" :message="'ملکی یافت نشد'"/>
         @endif
     </div>

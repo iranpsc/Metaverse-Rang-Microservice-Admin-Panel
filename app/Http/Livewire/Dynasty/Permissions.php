@@ -14,16 +14,16 @@ class Permissions extends Component
     public function mount()
     {
         $this->permissions = DynastyPermission::first();
-        $this->BFR  = $this->permissions->BFR  ? $this->permissions->BFR  : 0;
-        $this->SF   = $this->permissions->SF   ? $this->permissions->SF   : 0;
-        $this->W    = $this->permissions->W    ? $this->permissions->W    : 0;
-        $this->JU   = $this->permissions->JU   ? $this->permissions->JU   : 0;
-        $this->DM   = $this->permissions->DM   ? $this->permissions->DM   : 0;
-        $this->PIUP = $this->permissions->PIUP ? $this->permissions->PIUP : 0;
-        $this->PITC = $this->permissions->PITC ? $this->permissions->PITC : 0;
-        $this->PIC  = $this->permissions->PIC  ? $this->permissions->PIC  : 0;
-        $this->ESOO = $this->permissions->ESOO ? $this->permissions->ESOO : 0;
-        $this->COTB = $this->permissions->COTB ? $this->permissions->COTB : 0;
+        $this->BFR  = $this->permissions ? $this->permissions->BFR  : 0;
+        $this->SF   = $this->permissions ? $this->permissions->SF   : 0;
+        $this->W    = $this->permissions ? $this->permissions->W    : 0;
+        $this->JU   = $this->permissions ? $this->permissions->JU   : 0;
+        $this->DM   = $this->permissions ? $this->permissions->DM   : 0;
+        $this->PIUP = $this->permissions ? $this->permissions->PIUP : 0;
+        $this->PITC = $this->permissions ? $this->permissions->PITC : 0;
+        $this->PIC  = $this->permissions ? $this->permissions->PIC  : 0;
+        $this->ESOO = $this->permissions ? $this->permissions->ESOO : 0;
+        $this->COTB = $this->permissions ? $this->permissions->COTB : 0;
     }
 
     public function update()

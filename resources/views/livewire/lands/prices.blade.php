@@ -1,7 +1,12 @@
 <div>
+    <x-slot name="pageTitle">
+        لیست پیشنهادات قیمت
+    </x-slot>
+    
     <x-forms.search-box wire:model="search"></x-forms.search-box>
+
     @if (count($features) > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>کد زمین</th>
                 <th>کاربری</th>
@@ -19,9 +24,9 @@
                     <td>{{ jdate($feature->properties->updated_at)->format('Y/m/d')}}</td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $features->links() }}
     @else
-        <x-alerts.danger>ملکی یافت نشد</x-alerts.danger>
+        <x-alert type="danger" :message="'ملکی یافت نشد'"/>
     @endif
 </div>

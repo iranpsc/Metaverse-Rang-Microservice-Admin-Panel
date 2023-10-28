@@ -1,6 +1,11 @@
 <div>
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-prize">تعریف جوایز
-    </x-buttons.btn-primary>
+    <x-slot name="pageTitle">
+        مدیریت پاداش ها
+    </x-slot>
+    
+    <x-button color="primary" class="my-2" data-bs-toggle="modal" data-bs-target="#create-prize">
+        تعریف جوایز
+    </x-button>
 
     <x-modals.modal size="modal-xl" id="create-prize" title="تعریف جوایز سلسله خانوادگی">
         <div class="row">
@@ -61,7 +66,7 @@
     </x-modals.modal>
 
     @if ($prizes->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot name="headers">
                 <th>نسبت خانوادگی</th>
                 <th>جزپیات</th>
@@ -72,8 +77,9 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $prize->getRelationTitle() }}</td>
                     <td>
-                        <x-buttons.btn-info data-bs-toggle="modal" data-bs-target="#view-prize-{{ $prize->id }}">
-                            مشاهده</x-buttons.btn-info>
+                        <x-button color="info" data-bs-toggle="modal" data-bs-target="#view-prize-{{ $prize->id }}">
+                            مشاهده
+                        </x-button>
 
                         <x-modals.modal size="modal-xl" id="view-prize-{{ $prize->id }}" title="جزئیات پاداش">
                             <div class="row">
@@ -109,21 +115,53 @@
                                 </div>
                             </div>
                             <x-slot name="footer">
-                                <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+                                <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
                             </x-slot>
                         </x-modals.modal>
                     </td>
                     <td>
-                        <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#edit-prize-{{ $prize->id }}">
-                            ویرایش</x-buttons.btn-primary>
-                        <x-buttons.btn-danger class="confirm" title="deleteDynastyPrize" id="{{ $prize->id }}">حذف</x-buttons.btn-danger>
+                        <x-button color="info" data-bs-toggle="modal" data-bs-target="#edit-prize-{{ $prize->id }}">
+                            ویرایش
+                        </x-button>
+                        <x-button color="danger" id="delete-btn-{{ $prize->id }}">حذف</x-button>
                         <livewire:dynasty.edit-prize :prize="$prize" :wire:key="'edit-prize-'.$prize->id">
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $prizes->links() }}
     @else
-        <x-alerts.danger>پاداشی تعریف نشده است</x-alerts.danger>
+        <x-alert type="warning" :message="'جزئیاتی برای پاداش تعریف نشده است'" />
     @endif
+
+    <script>
+        var deleteBtns = document.querySelectorAll('[id^=delete-btn-]');
+
+        deleteBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                Swal.fire({
+                    title: 'آیا مطمئن هستید؟',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'بله',
+                    cancelButtonText: 'خیر'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        var id = btn.id.split('-')[2];
+                        @this.call('delete', id);
+                        showSwalNotification();
+                    }
+                });
+            });
+        });
+
+        function showSwalNotification() {
+            Toast.fire({
+                icon: 'success',
+                title: 'عملیات موفقیت آمیز بود.'
+            })
+        }
+    </script>
 </div>

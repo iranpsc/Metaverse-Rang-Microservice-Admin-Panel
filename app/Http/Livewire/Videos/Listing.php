@@ -18,7 +18,7 @@ class Listing extends Component
 {
     use WithPagination, WithFileUploads, SendsVerificationSms;
 
-    public $title, $description, $category, $subCategory, $image, $video, $creator_code;
+    public $title, $description, $category, $subCategory, $image, $video, $creator_code, $search;
 
     public $videoSubCategories;
 

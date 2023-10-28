@@ -18,7 +18,7 @@ class Pricing extends Component
         return view('livewire.lands.pricing', [
             'pricings' => SellFeatureRequest::with('feature')
             ->where('status', 0)
-            ->simplePaginate(10)
+            ->paginate(10)
         ]);
     }
 }

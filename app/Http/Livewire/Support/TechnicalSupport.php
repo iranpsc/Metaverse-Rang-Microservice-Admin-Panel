@@ -13,7 +13,7 @@ class TechnicalSupport extends Component
 {
     use WithFileUploads, WithPagination;
 
-    public $response, $attachment, $department, $importance;
+    public $response, $attachment, $department, $importance, $search;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -73,7 +73,7 @@ class TechnicalSupport extends Component
             'tickets' => Ticket::with('responses')
                 ->whereIn('department', ['technical_support'])
                 ->orderBy('status')
-                ->orderBy('importance', 'desc')->simplePaginate(10)
+                ->orderBy('importance', 'desc')->paginate(10)
         ]);
     }
 }

@@ -1,7 +1,12 @@
 <div>
+    <x-slot name="pageTitle">
+        {{ __('واریزی ها') }}
+    </x-slot>
+    
     <x-forms.search-box wire:model.debounce.1500="searchTerm"></x-forms.search-box>
+
     @if (count($payments) > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>نام کاربر</th>
                 <th>مبلغ تراکنش</th>
@@ -14,7 +19,7 @@
             </x-slot:headers>
             @foreach ($payments as $payment)
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $payment->id }}</td>
                     <td>{{ $payment->user->name }}</td>
                     <td>{{ $payment->amount }}</td>
                     <td>{{ $payment->ref_id }}</td>
@@ -25,9 +30,9 @@
                     <td>{{ jdate($payment->created_at)->format('h:m:s') }}</td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $payments->links() }}
     @else
-        <x-alerts.danger>تراکنشی یافت نشد</x-alerts.danger>
+        <x-alert type="warning" message="تراکنشی یافت نشد." />
     @endif
 </div>

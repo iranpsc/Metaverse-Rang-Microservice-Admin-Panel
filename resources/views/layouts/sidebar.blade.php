@@ -149,7 +149,7 @@
                          <li>
                              <a href="{{ route('access-management.employees') }}" class="">
                                  <i class="fa fa-user-plus"></i>
-                                 <span>مسئولیت ها و دسترسی های کارمندان</span>
+                                 <span>مدیران</span>
                              </a>
                          </li>
                          <li>

@@ -14,7 +14,7 @@ class Listing extends Component
 
     protected $paginationTheme = 'bootstrap';
 
-    public $slug, $name, $value;
+    public $slug, $name, $value, $search;
 
     protected $rules = [
         'slug' => 'required|string',

@@ -1,4 +1,8 @@
 <div>
+    <x-slot name="pageTitle">
+        لیست ورژن ها
+    </x-slot>
+    
     <x-button wire:click="openCreateModal" class="mb-2">
         <span class="fa fa-plus"></span>
     </x-button>

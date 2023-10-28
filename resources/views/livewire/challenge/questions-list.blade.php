@@ -1,6 +1,11 @@
 <div>
-    <x-buttons.btn-success data-bs-toggle="modal" data-bs-target="#import-question-modal">درون
-        ریزی</x-buttons.btn-success>
+    <x-slot name="pageTitle">
+        لیست سوالات
+    </x-slot>
+
+    <x-forms.search-box wire:model="search" />
+
+    <x-button data-bs-toggle="modal" data-bs-target="#import-question-modal">درون ریزی</x-button>
 
     <x-modals.modal id="import-question-modal" title="درون ریزی">
         <x-forms.group for="file" label="فایل درون ریزی">
@@ -11,13 +16,13 @@
             @enderror
         </x-forms.group>
         <x-slot name="footer">
-            <x-buttons.btn-success wire:click="upload">ثبت</x-buttons.btn-success>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button wire:click="upload">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
     </x-modals.modal>
 
     @if ($questions->count() > 0)
-        <x-tables.table class="mt-2">
+        <x-table class="mt-2">
             <x-slot:headers>
                 <th>عنوان</th>
                 <th>کد</th>
@@ -35,9 +40,9 @@
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $questions->links() }}
     @else
-        <x-alerts.danger>داده ای یافت نشد.</x-alerts.danger>
+        <x-alert type="danger" :message="'سوالی ثبت نشده است!'"/>
     @endif
 </div>

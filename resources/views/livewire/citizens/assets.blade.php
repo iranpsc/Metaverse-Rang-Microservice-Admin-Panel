@@ -1,6 +1,12 @@
 <div>
+    <x-slot name="pageTitle">
+        اطلاعات دارایی های شهروندان
+    </x-slot>
+    
+    <x-forms.search-box wire:model="searchTerm" />
+
     @if (count($assets) > 0)
-        <x-tables.table id="assets-table">
+        <x-table>
             <x-slot:headers>
                 <th>نام کاربر</th>
                 <th>دارایی های psc</th>
@@ -12,7 +18,7 @@
             </x-slot:headers>
             @foreach ($assets as $asset)
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $asset->id }}</td>
                     <td>{{ $asset->user->name }}</td>
                     <td>{{ number_format($asset->psc) }}</td>
                     <td>{{ number_format($asset->blue) }}</td>
@@ -22,9 +28,9 @@
                     <td>{{ count($asset->user->features) ?? 0 }}</td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $assets->links() }}
     @else
-        <x-alerts.danger>دارایی یافت نشد</x-alerts.danger>
+        <x-alert type="warning" message="کاربری یافت نشد." />
     @endif
 </div>

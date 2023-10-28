@@ -1,11 +1,5 @@
 <div>
     <x-modals.modal id="modal-kyc-{{ $kyc->id }}" title="جزئیات اطلاعات کاربر" size="modal-xl">
-        @if (session()->has('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-        @if (session()->has('error'))
-            <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
-        @endif
         <table class="table table-bordered table-hover table-striped text-center">
             <tbody>
                 <tr>

@@ -1,6 +1,12 @@
 <div>
-    <x-buttons.btn-primary class="mb-2" data-bs-toggle="modal" data-bs-target="#create-category-modal">ایجاد دسته
-        بندی</x-buttons.btn-primary>
+    <x-slot name="pageTitle">
+        دسته بندی ویدئو ها
+    </x-slot>
+
+    <x-button class="mb-2" data-bs-toggle="modal" data-bs-target="#create-category-modal">ایجاد دسته بندی</x-button>
+
+    <x-forms.search-box wire:model="search" />
+
     <x-modals.modal size="modal-xl" title="ایجاد دسته بندی" id="create-category-modal">
         <x-forms.group for="parentCategory" label="انتخاب دسته بندی پدر">
             <x-forms.select id="parentCategory" wire:model="parentCategory">
@@ -47,8 +53,8 @@
             @enderror
         </x-forms.group>
         <x-slot name="footer">
-            <x-buttons.btn-success id="save-btn">ثبت</x-buttons.btn-success>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button id="save-btn">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
     </x-modals.modal>
 
@@ -89,7 +95,7 @@
                             <td>{{ jdate($category->created_at)->format('H:m:s') }}
                             </td>
                             <td>
-                                <x-buttons.btn-primary data-bs-toggle="modal"
+                                <x-button data-bs-toggle="modal"
                                     data-bs-target="#edit-category-modal-{{ $category->id }}">ویرایش
                                     </x-button.btn-primary>
                                     <x-buttons.btn-danger class="confirm" title="deleteVideoCategory"
@@ -122,11 +128,11 @@
                                     <td>{{ jdate($item->created_at)->format('H:m:s') }}
                                     </td>
                                     <td>
-                                        <x-buttons.btn-primary data-bs-toggle="modal"
+                                        <x-button data-bs-toggle="modal"
                                             data-bs-target="#edit-sub-category-modal-{{ $item->id }}">ویرایش
-                                            </x-button.btn-primary>
-                                            <x-buttons.btn-danger class="confirm" title="deleteVideoSubCategory"
-                                                id="{{ $item->id }}">حذف</x-buttons.btn-danger>
+                                            </x-button>
+                                            <x-button color="danger" class="confirm" title="deleteVideoSubCategory"
+                                                id="{{ $item->id }}">حذف</x-button>
                                             <livewire:videos.edit-sub-category :subCategory="$item"
                                                 :wire:key="'edit-sub-category-'.$item->id">
                                     </td>
@@ -134,14 +140,14 @@
                             @endforeach
                         </x-tables.table>
                     @else
-                        <x-alerts.danger>زیر دسته ای تعریف نشده است.</x-alerts.danger>
+                        <x-alert type="warning" :message="'زیر دسته ای ثبت نشده است!'"/>
                     @endif
                 </div>
             @endforeach
         </div>
         {{ $categories->links() }}
     @else
-        <x-alerts.danger>دسته بندی تعریف نشده است.</x-alerts.danger>
+        <x-alert type="warning" :message="'دسته بندی ویدئویی ثبت نشده است!'"/>
     @endif
 
     <script>

@@ -14,7 +14,7 @@ class ColorOptions extends Component
 {
     use WithPagination, WithFileUploads, SendsVerificationSms;
 
-    public $asset, $amount, $image, $code;
+    public $asset, $amount, $image, $code, $search;
 
     protected $paginationTheme = 'bootstrap';
 

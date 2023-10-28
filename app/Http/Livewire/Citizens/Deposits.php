@@ -10,8 +10,6 @@ class Deposits extends Component
 {
     use WithPagination;
 
-    public $pageTitle = 'اطلاعات واریزی ها';
-
     public $searchTerm;
     private $payments;
 
@@ -25,7 +23,7 @@ class Deposits extends Component
     public function render()
     {
         return view('livewire.citizens.deposits', [
-            'payments' => $this->payments ?? Payment::latest()->with('user')->paginate(10)
+            'payments' => $this->payments ?? Payment::with('user:id,name')->paginate(10)
         ]);
     }
 }

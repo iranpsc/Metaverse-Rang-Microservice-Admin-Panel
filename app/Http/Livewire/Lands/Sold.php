@@ -22,7 +22,7 @@ class Sold extends Component
         return view('livewire.lands.sold', [
             'trades' => Trade::with('feature', 'buyer')
             ->where('seller_id', 1)
-            ->simplePaginate(10)
+            ->paginate(10)
         ]);
     }
 }

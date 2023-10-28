@@ -1,6 +1,10 @@
 <div>
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-message">ایجاد پیام
-    </x-buttons.btn-primary>
+    <x-slot name="pageTitle">
+        مدیریت پیام های سلسله
+    </x-slot>
+
+    <x-button color="primary" class="my-2" data-bs-toggle="modal" data-bs-target="#create-message">ایجاد پیام</x-button>
+
     <x-modals.modal id="create-message" size="modal-xl" title="تعریف پیام سلسله">
         <ul class="alert alert-primary fill">
             <li>لیست شورت کدهای پیامهای سلسله</li>
@@ -37,16 +41,16 @@
         <x-slot name="footer">
             <div class="row">
                 <div class="col-sm-6">
-                    <x-buttons.btn-primary id="save-btn">ذخیره</x-buttons.btn-primary>
+                    <x-button id="save-btn">ذخیره</x-button>
                 </div>
                 <div class="col-sm-6">
-                    <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+                    <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
                 </div>
             </div>
         </x-slot>
     </x-modals.modal>
     @if ($dynastyMessages->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot name="headers">
                 <th>نوع پیام</th>
                 <th>متن پیام</th>
@@ -57,26 +61,26 @@
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $message->getMessageTitle() }}</td>
                     <td>
-                        <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#view-{{ $message->id }}">مشاهده
-                        </x-buttons.btn-primary>
+                        <x-button data-bs-toggle="modal" data-bs-target="#view-{{ $message->id }}">مشاهده
+                        </x-button>
                         <x-modals.modal id="view-{{ $message->id }}" title="مشاهده پیام">
                             <p class="modal-text">{{ $message->message }}</p>
                             <x-slot name="footer">
-                                <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+                                <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
                             </x-slot>
                         </x-modals.modal>
                     </td>
                     <td>
-                        <x-buttons.btn-primary data-bs-toggle="modal"
-                        data-bs-target="#edit-message-{{ $message->id }}">ویرایش</x-buttons.btn-primary>
-                        <x-buttons.btn-danger class="confirm" title="deleteDynastyMessage" id="{{ $message->id }}">حذف</x-buttons.btn-danger>
+                        <x-button data-bs-toggle="modal"
+                        data-bs-target="#edit-message-{{ $message->id }}">ویرایش</x-button>
+                        <x-button color="danger" class="confirm" title="deleteDynastyMessage" id="{{ $message->id }}">حذف</x-button>
                         <livewire:dynasty.edit-messages :message="$message" :wire:key="'edit-message-'.$message->id">
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
     @else
-        <x-alerts.danger>پیامی تعریف نشده است</x-alerts.danger>
+        <x-alert type="danger" :message="'پیامی برای سلسله تعریف نشده است'" />
     @endif
 
     <script>

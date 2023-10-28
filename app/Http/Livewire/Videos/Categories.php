@@ -12,7 +12,7 @@ class Categories extends Component
 {
     use WithPagination, WithFileUploads;
 
-    public $name, $parentCategory, $image, $slug, $description;
+    public $name, $parentCategory, $image, $slug, $description, $search;
 
     protected $paginationTheme = 'bootstrap';
 

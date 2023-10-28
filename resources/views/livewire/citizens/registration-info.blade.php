@@ -1,8 +1,12 @@
 <div>
+    <x-slot name="pageTitle">
+        {{ __('اطلاعات ثبت نام') }}
+    </x-slot>
+    
     <x-forms.search-box wire:model="searchTerm"/>
 
     @if ($users->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>نام کاربری</th>
                 <th>ایمیل</th>
@@ -11,16 +15,16 @@
             </x-slot:headers>
             @foreach ($users as $user)
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $user->id }}</td>
                     <td>{{ $user->name }}</td>
                     <td>{{ $user->email }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($user->email_verified_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($user->email_verified_at)->format('Y/m/d') }}</td>
                     <td>{{ $user->ip }}</td>
                 <tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $users->links() }}
     @else
-        <x-alerts.danger>کاربری یافت نشد</x-alerts.danger>
+        <x-alert type="warning" :message="'کاربری تعریف نشده است'"/>
     @endif
 </div>

@@ -14,7 +14,7 @@ class QuestionsList extends Component
 {
     use WithFileUploads, WithPagination;
 
-    public $title, $code, $image, $prize, $creator_code, $file;
+    public $title, $code, $image, $prize, $creator_code, $file, $search;
     public $pageTitle = 'لیست سوالات';
 
     protected $paginationTheme = 'bootstrap';

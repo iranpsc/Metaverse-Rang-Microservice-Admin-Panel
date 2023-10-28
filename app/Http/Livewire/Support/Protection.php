@@ -14,7 +14,7 @@ class Protection extends Component
 
     use WithFileUploads, WithPagination;
 
-    public $response, $attachment, $department, $importance;
+    public $response, $attachment, $department, $importance, $search;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -75,7 +75,7 @@ class Protection extends Component
             'tickets' => Ticket::with('responses')
                 ->whereIn('department', ['protection'])
                 ->orderBy('status')
-                ->orderBy('importance', 'desc')->simplePaginate(10)
+                ->orderBy('importance', 'desc')->paginate(10)
         ]);
     }
 }

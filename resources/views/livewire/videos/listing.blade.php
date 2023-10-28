@@ -1,6 +1,11 @@
 <div>
-    <x-buttons.btn-success class="my-2" data-bs-toggle="modal" data-bs-target="#upload-video-modal">بارگذاری ویدیو
-    </x-buttons.btn-success>
+    <x-slot name="pageTitle">
+        لیست ویدئوها
+    </x-slot>
+
+    <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#upload-video-modal">بارگذاری ویدیو</x-button>
+
+    <x-forms.search-box wire:model="search" />
 
     <x-modals.modal size="modal-xl" id="upload-video-modal" title="بارگذاری فیلم آموزشی">
         <x-forms.group label="عنوان آموزش" for="title">
@@ -78,13 +83,13 @@
         <x-forms.verification />
 
         <x-slot:footer>
-            <x-buttons.btn-primary wire:loading.attr="disabled" id="save-btn">ثبت</x-buttons.btn-primary>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button wire:loading.attr="disabled" id="save-btn">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot:footer>
     </x-modals.modal>
 
     @if ($videos->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>عنوان</th>
                 <th>دسته</th>
@@ -118,18 +123,18 @@
                     <td>{{ $video->interactions->where('liked', 1)->count() }}</td>
                     <td>{{ $video->interactions->where('liked', 0)->count() }}</td>
                     <td>
-                        <x-buttons.btn-primary data-bs-target="#edit-video-modal-{{ $video->id }}"
-                            data-bs-toggle="modal">ویرایش</x-buttons.btn-primary>
-                        <x-buttons.btn-danger title="deleteTrainingVideo" class="confirm" id="{{ $video->id }}">حذف
-                        </x-buttons.btn-danger>
+                        <x-button data-bs-target="#edit-video-modal-{{ $video->id }}"
+                            data-bs-toggle="modal">ویرایش</x-button>
+                        <x-button color="danger" title="deleteTrainingVideo" class="confirm" id="{{ $video->id }}">حذف
+                        </x-button>
                         <livewire:videos.edit-video :videoDb="$video" :wire:key="'edit-video'.$video->id">
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $videos->links() }}
     @else
-        <x-alerts.danger>ویدئویی بارگذاری نشده است.</x-alerts.danger>
+        <x-alert type="danger" :message="'ویدئویی ثبت نشده است!'"/>
     @endif
 
     <script>

@@ -6,7 +6,7 @@ use Livewire\Component;
 
 class SpellingError extends Component
 {
-    public $reports;
+    public $reports, $search;
 
     public function mount($reports) {
         $this->reports = $reports->reject(function($report) {

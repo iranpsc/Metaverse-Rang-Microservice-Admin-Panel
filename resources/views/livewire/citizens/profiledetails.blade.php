@@ -1,4 +1,10 @@
 <div>
+    <x-slot name="pageTitle">
+        {{ __('جزئیات پروفایل') }}
+    </x-slot>
+
+    <x-forms.search-box wire:model="searchTerm"/>
+
     @if ($users->count() > 0)
         <x-table>
             <x-slot:headers>
@@ -12,7 +18,7 @@
             </x-slot:headers>
             @foreach ($users as $user)
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $user->id }}</td>
                     <td>{{ $user->code }}</td>
                     <td>{{ jdate($user->created_at)->format('Y/m/d H:i:s') }}</td>
                     <td>{{ $user->activities_sum_total ?? 0 }}</td>

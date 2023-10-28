@@ -10,7 +10,14 @@ class Profiledetails extends Component
 {
     use WithPagination;
 
+    public $searchTerm;
+
     protected $paginationTheme = 'bootstrap';
+
+    public function updatedSearchTerm()
+    {
+        // 
+    }
 
     public function render()
     {

@@ -1,6 +1,12 @@
 <div>
+    <x-slot name="pageTitle">
+        حراست
+    </x-slot>
+
+    <x-forms.search-box wire:model="search" />
+    
     @if ($tickets->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>کد پیام</th>
                 <th>تاریخ ارسال</th>
@@ -44,12 +50,10 @@
                     </td>
                     <td>{{ $ticket->responser_name }}</td>
                     <td>
-                        <x-buttons.btn-success data-bs-toggle="modal"
-                            data-bs-target="#protection-modal-{{ $ticket->id }}">مشاهده</x-buttons.btn-success>
+                        <x-button data-bs-toggle="modal" data-bs-target="#protection-modal-{{ $ticket->id }}">مشاهده</x-button>
+
                         @if ($ticket->status != 1)
-                            <x-buttons.btn-primary data-bs-toggle="modal"
-                                data-bs-target="#protection-modal-send-to-{{ $ticket->id }}">ارجا به
-                            </x-buttons.btn-primary>
+                            <x-button data-bs-toggle="modal" data-bs-target="#protection-modal-send-to-{{ $ticket->id }}">ارجا به</x-button>
                         @endif
                     </td>
                 </tr>
@@ -79,10 +83,9 @@
 
                     <x-slot:footer>
                         @if ($ticket->status != 1)
-                            <x-buttons.btn-success class="btn-block" wire:loading.attr="disabled"
-                                wire:click="sendResponse({{ $ticket->id }})">ارسال پاسخ</x-buttons.btn-success>
+                            <x-button class="btn-block" wire:loading.attr="disabled" wire:click="sendResponse({{ $ticket->id }})">ارسال پاسخ</x-button>
                         @endif
-                        <x-buttons.btn-danger class="btn-block" data-bs-dismiss="modal">بستن</x-buttons.danger>
+                        <x-button class="btn-block" data-bs-dismiss="modal">بستن</x-button>
                     </x-slot:footer>
 
                 </x-modals.modal>
@@ -132,15 +135,15 @@
                         <span class="text-danger">{{ $message }}</span>
                     @enderror
                     <x-slot:footer>
-                        <x-buttons.btn-primary wire:click="sendTo({{ $ticket->id }})">ارجا</x-buttons.btn-primary>
-                        <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+                        <x-button wire:click="sendTo({{ $ticket->id }})">ارجا</x-button>
+                        <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
                     </x-slot:footer>
 
                 </x-modals.modal>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $tickets->links() }}
     @else
-        <x-alerts.danger>تیکتی دریافت نشده است</x-alerts.danger>
+        <x-alert type="warning" :message="'تیکتی یافت نشد'"/>
     @endif
 </div>

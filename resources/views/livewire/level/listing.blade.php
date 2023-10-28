@@ -1,8 +1,14 @@
 <div>
-    <x-buttons.btn-success class="mb-2" data-bs-toggle="modal" data-bs-target="#create-level">تعریف سطح</x-buttons.btn-success>
+    <x-slot name="pageTitle">
+        مدیریت سطوح
+    </x-slot>
+
+    <x-button class="mb-2" data-bs-toggle="modal" data-bs-target="#create-level">تعریف سطح</x-button>
+
     @livewire('level.create', key('create-level'))
+
     @if ($levels->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot name="headers">
                 <th>نام سطح</th>
                 <th>امتیاز مورد نیاز</th>
@@ -78,9 +84,9 @@
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $levels->links() }}
     @else
-        <x-alerts.danger>سطحی تعریف نشده است</x-alerts.danger>
+        <x-alert type="warning" :message="'سطحی تعریف نشده است'" />
     @endif
 </div>

@@ -1,4 +1,8 @@
 <div>
+    <x-slot name="pageTitle">
+        مدیریت پیام ها
+    </x-slot>
+
     <x-modals.modal id="edit-message-{{ $message->id }}" title="ویرایش پیام">
         <div class="form-group">
             <label>متن پیام</label>
@@ -10,8 +14,8 @@
             @enderror
         </div>
         <x-slot name="footer">
-            <x-buttons.btn-primary id="save-btn-{{ $message->id }}">ذخیره</x-buttons.btn-primary>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button id="save-btn-{{ $message->id }}">ذخیره</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
     </x-modals.modal>
 

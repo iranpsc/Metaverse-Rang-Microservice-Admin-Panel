@@ -16,9 +16,7 @@ class EmployeeRolePermission extends Component
 {
     use SendsVerificationSms;
 
-    public $employee;
-    public $roles = [];
-    public $pageTitle = 'مدیریت دسترسی کارمندان';
+    public $employee, $roles = [], $search;
 
     protected $rules = [
         'employee' => 'required|exists:employees,id',
@@ -51,7 +49,7 @@ class EmployeeRolePermission extends Component
         $access_password = random_int(100000, 999999);
 
         $admin = Admin::create([
-            'name' => implode(' ', [$employee->fname, $employee->lname]),
+            'name' => $employee->fname . ' ' . $employee->lname,
             'email' => $employee->email,
             'phone' => $employee->phone,
             'password' => Hash::make($password),
@@ -74,20 +72,21 @@ class EmployeeRolePermission extends Component
                 $admin->removeRole($role);
             }
         }
+
         if ($admin->getDirectPermissions()) {
             $admin->revokePermissionTo($admin->getDirectPermissions());
         }
+
         $admin->delete();
         $this->emitSelf('adminDeleted');
     }
+
     public function render()
     {
         return view('livewire.access-management.employee-role-permission', [
-            'admins'      => Admin::whereNotIn('id', [Auth::id()])
-                ->with(['roles', 'permissions'])
-                ->lazy(),
-            'employees'   => Employee::select(['id', 'fname', 'lname'])->get(),
-            'defined_roles'       => Role::whereNotIn('name', ['super-admin'])->get(),
+            'admins' => Admin::whereNotIn('id', [Auth::id()])->with(['roles', 'permissions'])->get(),
+            'employees' => Employee::select(['id', 'fname', 'lname'])->get(),
+            'defined_roles' => Role::whereNotIn('name', ['super-admin'])->get(),
         ]);
     }
 }

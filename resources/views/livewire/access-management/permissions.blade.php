@@ -1,6 +1,13 @@
 <div>
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-permission-modal">ایجاد دسترسی
-    </x-buttons.btn-primary>
+    <x-slot name="pageTitle">
+        مدیریت دسترسی ها
+    </x-slot>
+
+    <x-button color="primary" class="my-2" data-bs-toggle="modal" data-bs-target="#create-permission-modal">
+        ایجاد دسترسی
+    </x-button>
+
+    <x-forms.search-box wire:model="search"/>
 
     <x-modals.modal id="create-permission-modal" title="ایجاد دسترسی">
         <x-forms.group for="title" label="عنوان دسترسی">
@@ -44,7 +51,7 @@
         </x-slot:footer>
     </x-modals.modal>
     @if ($permissions->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot name="headers">
                 <th>عنوان دسترسی</th>
                 <th>نام دسترسی</th>
@@ -70,9 +77,9 @@
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $permissions->links() }}
     @else
-        <x-alerts.danger>مسئولیتی تعریف نشده است!</x-alerts.danger>
+        <x-alert type="warning" :message="'دسترسی تعریف نشده است'"/>
     @endif
 </div>

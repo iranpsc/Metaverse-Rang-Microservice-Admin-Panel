@@ -13,7 +13,7 @@ class CitizensSafety extends Component
 {
     use WithFileUploads, WithPagination;
 
-    public $response, $attachment, $department, $importance;
+    public $response, $attachment, $department, $importance, $search;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -76,7 +76,7 @@ class CitizensSafety extends Component
             'tickets' => Ticket::with('responses')
                 ->whereIn('department', ['citizens_safety'])
                 ->orderBy('status')
-                ->orderBy('importance', 'desc')->simplePaginate(10)
+                ->orderBy('importance', 'desc')->paginate(10)
         ]);
     }
 }

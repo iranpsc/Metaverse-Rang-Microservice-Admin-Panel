@@ -1,5 +1,4 @@
 <div>
-    {{-- If your happiness depends on money, you will never be happy with yourself. --}}
     <ul class="nav nav-tabs border">
         <li class="nav-item">
             <a class="nav-link active" data-bs-toggle="tab" href="#tab1">غلط املایی</a>

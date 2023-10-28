@@ -11,7 +11,6 @@ class Kyc extends Component
     use WithPagination;
 
     public $searchTerm;
-    public $pageTitle = 'احراز هویت';
 
     protected $paginationTheme = 'bootstrap';
 
@@ -27,9 +26,7 @@ class Kyc extends Component
     public function render()
     {
         return view('livewire.citizens.kyc', [
-            'kycs' => $this->kycs ?? ModelKyc::with(['errors', 'user'])
-                ->orderByDesc('created_at')
-                ->paginate(10)
+            'kycs' => $this->kycs ?? ModelKyc::with(['errors', 'user'])->paginate(10)
         ]);
     }
 }

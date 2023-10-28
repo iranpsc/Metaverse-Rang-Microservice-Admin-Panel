@@ -1,7 +1,12 @@
 <div>
+    <x-slot name="pageTitle">
+        {{ __('حساب های بانکی') }}
+    </x-slot>
+
     <x-forms.search-box wire:model="searchTerm" placeholder="نام یا نام خانوادگی را وارد کنید"></x-forms.search-box>
+
     @if ($bankAccounts->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>نام</th>
                 <th>نام خانوادگی</th>
@@ -20,36 +25,19 @@
                     <td>{{ $bankAccount->shaba_num }}</td>
                     <td>{{ $bankAccount->card_num }}</td>
                     <td>
-                        @php
-                            switch ($bankAccount->status) {
-                                case 2:
-                                    echo '<span class="badge badge-warning">اصلاح شده</span>';
-                                    break;
-                                case 1:
-                                    echo '<span class="badge badge-success">تایید شده</span>';
-                                    break;
-
-                                case 0:
-                                    echo '<span class="badge badge-warning">درحال بررسی</span>';
-                                    break;
-
-                                case -1:
-                                    echo '<span class="badge badge-danger">رد شده</span>';
-                                    break;
-                            }
-                        @endphp
+                        @if ($bankAccount->status == 0)
+                            <x-badge type="warning">در انتظار بررسی</x-badge>
+                        @elseif($bankAccount->status == 1)
+                            <x-badge type="success">تایید شده</x-badge>
+                        @else
+                            <x-badge type="danger">رد شده</x-badge>
+                        @endif
                     </td>
                     <td>
-                        <x-buttons.btn-primary class="my-2" data-bs-toggle="modal"
-                            data-bs-target="#view-bank-accounts-modal-{{ $bankAccount->id }}">مشاهده
-                        </x-buttons.btn-primary>
+                        <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#view-bank-accounts-modal-{{ $bankAccount->id }}">
+                            مشاهده
+                        </x-button>
                         <x-modals.modal id="view-bank-accounts-modal-{{ $bankAccount->id }}" title="جزئیات حساب بانکی">
-                            @if (session('success'))
-                                <x-alerts.success>{{ session('success') }}</x-alerts.success>
-                            @endif
-                            @if (session('error'))
-                                <x-alerts.danger>{{ session('error') }}</x-alerts.danger>
-                            @endif
                             <x-tables.table>
                                 <x-slot name="headers">
                                     <th>عنوان</th>
@@ -136,9 +124,9 @@
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
     @else
-        <x-alerts.danger>حسباب بانکی ثبت نشده است</x-alerts.danger>
+        <x-alert type="warning" message="کاربری یافت نشد." />
     @endif
 </div>
 

@@ -1,7 +1,12 @@
 <div>
+    <x-slot name="pageTitle">
+        لیست معاملات
+    </x-slot>
+    
     <x-forms.search-box wire:model="search"></x-forms.search-box>
+    
     @if ($trades->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>کد زمین</th>
                 <th>خریدار</th>
@@ -27,7 +32,7 @@
                     <td>{{ $trade->commision->irr ?? 0 }}</td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $trades->links() }}
     @else
         <x-alerts.danger>معامله ای ثبت نشده است</x-alerts.danger>

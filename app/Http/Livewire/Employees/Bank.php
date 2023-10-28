@@ -13,6 +13,7 @@ class Bank extends Component
     use SendsVerificationSms;
 
     public $employee, $bank_name, $shaba_num, $card_num, $search;
+    private $bankAccounts;  // for pagination
 
     protected $rules = [
         'employee' => 'required|integer|exists:admins,id',
@@ -60,14 +61,17 @@ class Bank extends Component
 
     public function updatedSearch()
     {
-
+        $this->bankAccounts = BankAccount::whereHas('bankable', function ($query) {
+            $query->where('fname', 'like', '%' . $this->search . '%')
+                ->orWhere('lname', 'like', '%' . $this->search . '%');
+        })->paginate(10);
     }
 
     public function render()
     {
         return view('livewire.employees.bank', [
             'employees' => Employee::all(),
-            'bankAccounts' => Bankaccount::paginate(10)
+            'bankAccounts' => $bankAccounts ?? Bankaccount::paginate(10)
         ]);
     }
 }

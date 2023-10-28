@@ -1,5 +1,9 @@
 <div>
-    <x-tables.table>
+    <x-slot name="pageTitle">
+        مدیریت دسترسی ها
+    </x-slot>
+    
+    <x-table>
         <x-slot name="headers"></x-slot>
             <tr>
                 <td>
@@ -72,6 +76,6 @@
                 </td>
             </tr>
 
-    </x-tables.table>
-    <x-buttons.btn-info wire:click="update">ثبت</x-buttons.btn-info>
+    </x-table>
+    <x-button color="info" wire:click="update">ثبت</x-button>
 </div>

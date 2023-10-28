@@ -8,8 +8,6 @@ use App\Notifications\KycDeniedNotification;
 
 class Bankaccounts extends Component
 {
-    public $pageTitle = 'اطلاعات حساب های بانکی';
-
     public $bankAccounts, $searchTerm;
 
     public $bank_name_err;

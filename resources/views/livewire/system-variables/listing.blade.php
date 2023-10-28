@@ -1,7 +1,11 @@
 <div>
-    {{-- A good traveler has no fixed plans and is not intent upon arriving. --}}
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#create-variable-modal">ایجاد متغیر
-    </x-buttons.btn-primary>
+    <x-slot name="pageTitle">
+        متغیرهای سیستم
+    </x-slot>
+    <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#create-variable-modal">ایجاد متغیر</x-button>
+
+    <x-forms.search-box wire:model="search" />
+
     <x-modals.modal id="create-variable-modal" title="تعریف متغیر">
         <x-forms.group for="name" label="نام متغییر">
             <x-forms.input wire:model="name" id="name" />
@@ -25,13 +29,13 @@
         <x-forms.verification/>
 
         <x-slot name="footer">
-            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
     </x-modals.modal>
 
     @if ($variables->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot name="headers">
                 <th>نام</th>
                 <th>اسلاگ</th>
@@ -45,19 +49,19 @@
                     <td>{{ $variable->name }}</td>
                     <td>{{ $variable->slug }}</td>
                     <td>{{ $variable->value }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($variable->updated_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($variable->updated_at)->format('Y/m/d') }}</td>
                     <td>
-                        <x-buttons.btn-primary data-bs-toggle="modal"
-                            data-bs-target="#edit-system-variable-{{ $variable->id }}">ویرایش</x-buttons.btn-primary>
-                        <x-buttons.btn-danger class="confirm" id="{{ $variable->id }}" title="deleteSystemVariable">حذف
-                        </x-buttons.btn-danger>
+                        <x-button data-bs-toggle="modal"
+                            data-bs-target="#edit-system-variable-{{ $variable->id }}">ویرایش</x-button>
+                        <x-button color="danger" class="confirm" id="{{ $variable->id }}" title="deleteSystemVariable">حذف
+                        </x-button>
                         @if ($variable->changeLogs->count() > 0)
-                            <x-buttons.btn-info data-bs-toggle="modal"
+                            <x-button color="info" data-bs-toggle="modal"
                                 data-bs-target="#variable-history-{{ $variable->id }}">تاریخچه تغییرات
-                            </x-buttons.btn-info>
+                            </x-button>
                             <x-modals.modal size="modal-xl" id="variable-history-{{ $variable->id }}"
                                 title="تاریخچه تغییرات">
-                                <x-tables.table>
+                                <x-table>
                                     <x-slot name="headers">
                                         <th>نام متغییر</th>
                                         <th>تاریخ تغییر</th>
@@ -72,9 +76,9 @@
                                                 <tr>
                                                     <td>{{ $loop->iteration }}</td>
                                                     <td>{{ $changeLog->changeable->name }}</td>
-                                                    <td>{{ \Morilog\Jalali\Jalalian::forge($changeLog->created_at)->format('Y/m/d') }}
+                                                    <td>{{ jdate($changeLog->created_at)->format('Y/m/d') }}
                                                     </td>
-                                                    <td>{{ \Morilog\Jalali\Jalalian::forge($changeLog->created_at)->format('H:m:s') }}
+                                                    <td>{{ jdate($changeLog->created_at)->format('H:m:s') }}
                                                     </td>
                                                     <td>{{ $changeLog->changer_name }}</td>
                                                     <td>{{ $changeLog->previous_value }}</td>
@@ -83,19 +87,19 @@
                                                 </tr>
                                             @endforeach
                                         </tbody>
-                                </x-tables.table>
+                                </x-table>
                                 <x-slot:footer>
-                                    <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+                                    <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
                                 </x-slot:footer>
                             </x-modals.modal>
                         @endif
-                <livewire:system-variables.update :variable="$variable" :wire:key="'eidt-system-variable'.$variable->id">
-        </td>
-        </tr>
-        @endforeach
-        </x-tables.table>
+                        <livewire:system-variables.update :variable="$variable" :wire:key="'eidt-system-variable'.$variable->id">
+                    </td>
+                </tr>
+            @endforeach
+        </x-table>
         {{ $variables->links() }}
     @else
-        <x-alerts.danger>متغیری تعریف نشده است!</x-alerts.danger>
-        @endif
+        <x-alert type="warning" :message="'متغیری ثبت نشده است!'"/>
+    @endif
 </div>

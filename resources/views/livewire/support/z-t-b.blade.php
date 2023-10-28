@@ -1,6 +1,12 @@
 <div>
+    <x-slot name="pageTitle">
+        مدیریت کل ز.ت.ب
+    </x-slot>
+
+    <x-forms.search-box wire:model="search" />
+
     @if ($tickets->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>کد پیام</th>
                 <th>تاریخ ارسال</th>
@@ -44,11 +50,11 @@
                     </td>
                     <td>{{ $ticket->responser_name }}</td>
                     <td>
-                        <x-buttons.btn-success data-bs-toggle="modal" data-bs-target="#z-t-b-modal-{{ $ticket->id }}">
-                            مشاهده</x-buttons.btn-success>
-                        <x-buttons.btn-primary data-bs-toggle="modal"
+                        <x-button data-bs-toggle="modal" data-bs-target="#z-t-b-modal-{{ $ticket->id }}">
+                            مشاهده</x-button>
+                        <x-button data-bs-toggle="modal"
                             data-bs-target="#z-t-b-modal-send-to-{{ $ticket->id }}">ارجا به
-                        </x-buttons.btn-primary>
+                        </x-button>
                     </td>
                 </tr>
                 <x-modals.modal id="z-t-b-modal-{{ $ticket->id }}" title="چزئیات تیکت">
@@ -76,17 +82,17 @@
 
                     <x-slot:footer>
                         @if ($ticket->status != 1)
-                            <x-buttons.btn-success class="btn-block" wire:loading.attr="disabled"
-                                wire:click="sendResponse({{ $ticket->id }})">ارسال پاسخ</x-buttons.btn-success>
+                            <x-button class="btn-block" wire:loading.attr="disabled"
+                                wire:click="sendResponse({{ $ticket->id }})">ارسال پاسخ</x-button>
                         @endif
-                        <x-buttons.btn-danger class="btn-block" data-bs-dismiss="modal">بستن</x-buttons.danger>
+                        <x-button color="danger" class="btn-block" data-bs-dismiss="modal">بستن</x-button>
                     </x-slot:footer>
 
                 </x-modals.modal>
 
                 <x-modals.modal id="z-t-b-modal-send-to-{{ $ticket->id }}" title="ارجا به بخش دیگر">
-                     <div class="alert alert-info">درصورتی که این تیکت به حوضه شما مربوط نمی باشد می توانید به بخش مربوطه
-                        ارجا دهید</div>
+                    <x-alert type="warning" :message="__('در صورتی که این تیکت به حوضه شما مربوط نمی باشد می توانید به بخش مربوطه ارجاع دهید.')"
+                    class="mb-3" />
                     <x-forms.group for="divert-to-{{ $ticket->id }}" label="ارجا به">
                         <select wire:model="department" id="divert-to-{{ $ticket->id }}"
                             class="form-control rounded">
@@ -130,17 +136,17 @@
                     @enderror
                     <x-slot:footer>
                         @if ($ticket->status != 1)
-                            <x-buttons.btn-primary wire:click="sendTo({{ $ticket->id }})">ارجا
-                            </x-buttons.btn-primary>
+                            <x-button wire:click="sendTo({{ $ticket->id }})">ارجا
+                            </x-button>
                         @endif
-                        <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+                        <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
                     </x-slot:footer>
 
                 </x-modals.modal>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $tickets->links() }}
     @else
-        <x-alerts.danger>تیکتی دریافت نشده است</x-alerts.danger>
+        <x-alert type="warning" message="تیکتی یافت نشد!" />
     @endif
 </div>

@@ -1,7 +1,11 @@
 <div>
+    <x-slot name="pageTitle">
+        لیست کارمندان
+    </x-slot>
+
     <x-forms.search-box wire:model="search"></x-forms.search-box>
 
-    <x-buttons.btn-success class="my-2" data-bs-toggle="modal" data-bs-target="#create-employee-modal">تعریف کارمند</x-buttons.btn-success>
+    <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#create-employee-modal">تعریف کارمند</x-button>
 
     <x-modals.modal id="create-employee-modal" title="تعریف کارمند">
         <div class="row">
@@ -146,13 +150,13 @@
         <x-forms.verification/>
 
         <x-slot:footer>
-            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button color="success" wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot:footer>
     </x-modals.modal>
 
     @if ($employees->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>نام</th>
                 <th>نام خانوادگی</th>
@@ -181,27 +185,10 @@
                     <td>{{ $employee->hometown }}</td>
                     <td>{{ $employee->father_name }}</td>
                     <td>
-                    @switch($employee->gender)
-                        @case("male")
-                        مرد
-                            @break
-                        @case("female")
-                        زن
-                            @break
-                        @default
-                    @endswitch
+                        {{ $employee->male ? 'مرد' : 'زن' }}
                     </td>
                     <td>
-                    @switch($employee->marriage_status)
-                        @case("single")
-                        مجرد
-                            @break
-                        @case("married")
-                        متاهل
-                            @break
-                        @default
-
-                    @endswitch
+                        {{ $employee->marriage_status == 'married' ? 'متاهل' : 'مجرد' }}
                     </td>
                     <td>{{ $employee->home_phone }}</td>
                     <td>{{ $employee->phone }}</td>
@@ -210,15 +197,14 @@
                     <td>{{ $employee->employee_code }}</td>
                     <td>{{ $employee->entry_date}}</td>
                     <td>
-                        <x-buttons.btn-success data-bs-target="#edit-employee-modal-{{$employee->id}}" data-bs-toggle="modal">ویرایش</x-buttons.btn-success>
-                        <x-buttons.btn-danger title="deleteEmloyee" class="confirm" id="{{ $employee->id }}">حذف</x-buttons.btn-danger>
-
+                        <x-button data-bs-target="#edit-employee-modal-{{$employee->id}}" data-bs-toggle="modal">ویرایش</x-button>
+                        <x-button color="danger" title="deleteEmloyee" class="confirm" id="{{ $employee->id }}">حذف</x-button>
                     </td>
                 </tr>
                 @livewire('employees.edit.employee-info', ['employee' => $employee], key('employee-'.$employee->id))
             @endforeach
-        </x-tables.table>
+        </x-table>
     @else
-        <x-alerts.danger>کارمندی تعریف نشده است</x-alerts.danger>
+        <x-alert type="danger" :message="'کارمندی یافت نشد'"/>
     @endif
 </div>

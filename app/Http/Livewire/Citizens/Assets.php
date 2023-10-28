@@ -15,7 +15,7 @@ class Assets extends Component
     public function render()
     {
         return view('livewire.citizens.assets', [
-            'assets' => Asset::with('user', 'user.features')->paginate(10)
+            'assets' => Asset::with('user:id,name', 'user.features:id,owner_id')->paginate(10)
         ]);
     }
 }

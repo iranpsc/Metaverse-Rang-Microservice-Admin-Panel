@@ -1,8 +1,12 @@
 <div>
+    <x-slot name="pageTitle">
+        لیست قیمت گذاری ها
+    </x-slot>
+    
     <x-forms.search-box wire:model="search"></x-forms.search-box>
 
     @if ($pricings->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot:headers>
                 <th>کد زمین</th>
                 <th>مبلغ قیمت گذاری psc</th>
@@ -20,8 +24,8 @@
                     <td>{{ jdate($pricing->created_at)->format('H:m:s') }}</td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
     @else
-        <x-alerts.danger>ملکی قیمت گذاری نشده است</x-alerts.danger>
+        <x-alert type="danger" :message="'ملکی یافت نشد'"/>
     @endif
 </div>

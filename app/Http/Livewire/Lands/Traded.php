@@ -23,7 +23,7 @@ class Traded extends Component
         return view('livewire.lands.traded', [
             'trades' => Trade::with('feature', 'buyer', 'seller', 'commision')
             ->whereNot('seller_id', 1)
-            ->simplePaginate('10')
+            ->paginate('10')
         ]);
     }
 }
