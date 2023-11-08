@@ -119,7 +119,7 @@ class Listing extends Component
 
         $fileName = strtolower($translation->code) . '.json';
 
-        $translation->update(['file_url' => 'https://play.irpsc.com/metaverse/lang/' . $fileName]);
+        $translation->update(['file_url' => 'https://rgb.irpsc.com/lang/' . $fileName]);
 
         if (!Storage::disk('ftp')->put('lang/' . $fileName, $content)) {
             $this->dispatchBrowserEvent('resourceModified', [
