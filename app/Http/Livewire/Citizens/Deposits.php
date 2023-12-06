@@ -5,6 +5,7 @@ namespace App\Http\Livewire\Citizens;
 use App\Models\Payment;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Exports\PaymentsExport;
 
 class Deposits extends Component
 {
@@ -18,6 +19,10 @@ class Deposits extends Component
     public function updatedSearchTerm() {
         $this->payments = Payment::search($this->searchTerm)->with('user')->paginate(10);
         $this->resetPage();
+    }
+
+    public function export() {
+        return (new PaymentsExport)->download('transactions.xlsx');
     }
 
     public function render()

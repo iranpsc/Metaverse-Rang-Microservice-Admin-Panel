@@ -4,6 +4,7 @@
     </x-slot>
     
     <x-forms.search-box wire:model.debounce.1500="searchTerm"></x-forms.search-box>
+    <button type="button" class="btn btn-primary btn-sm round my-2" wire:click="export">دانلود خروجی اکسل</button>
 
     @if (count($payments) > 0)
         <x-table>
