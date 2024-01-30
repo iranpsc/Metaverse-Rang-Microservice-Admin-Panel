@@ -52,6 +52,15 @@
                 <span class="text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
+
+        <x-forms.group for="icon" label="آیکون">
+            <x-forms.input type="file" wire:model.lazy="icon" />
+            <x-progress-bar />
+            @error('icon')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
         <x-slot name="footer">
             <x-button id="save-btn">ثبت</x-button>
             <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
@@ -80,6 +89,7 @@
                             <th>نام</th>
                             <th>نامک</th>
                             <th>تصویر</th>
+                            <th>آیکون</th>
                             <th>تاریخ ایجاد</th>
                             <th>ساعت ایجاد</th>
                             <th>مدیریت</th>
@@ -89,6 +99,8 @@
                             <td>{{ $category->name }}</td>
                             <td>{{ $category->slug }}</td>
                             <td><a href="{{ asset('uploads/' . $category->image) }}" target="_blank"
+                                    class="btn btn-primary btn-sm round">مشاهده</a></td>
+                            <td><a href="{{ asset('uploads/' . $category->icon) }}" target="_blank"
                                     class="btn btn-primary btn-sm round">مشاهده</a></td>
                             <td>{{ jdate($category->created_at)->format('Y/m/d') }}
                             </td>
@@ -112,6 +124,7 @@
                                 <th>نام</th>
                                 <th>نامک</th>
                                 <th>تصویر</th>
+                                <th>آیکون</th>
                                 <th>تاریخ ایجاد</th>
                                 <th>ساعت ایجاد</th>
                                 <th>مدیریت</th>
@@ -122,6 +135,8 @@
                                     <td>{{ $item->name }}</td>
                                     <td>{{ $item->slug }}</td>
                                     <td><a href="{{ asset('uploads/' . $item->image) }}" target="_blank"
+                                            class="btn btn-primary btn-sm round">مشاهده</a></td>
+                                    <td><a href="{{ asset('uploads/' . $item->icon) }}" target="_blank"
                                             class="btn btn-primary btn-sm round">مشاهده</a></td>
                                     <td>{{ jdate($item->created_at)->format('Y/m/d') }}
                                     </td>

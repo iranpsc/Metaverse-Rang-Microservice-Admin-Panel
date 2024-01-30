@@ -24,6 +24,14 @@
             @enderror
         </x-forms.group>
 
+        <x-forms.group for="icon" label="آیکون">
+            <x-forms.input type="file" wire:model.lazy="icon" />
+            <x-progress-bar />
+            @error('icon')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
         <x-forms.verification/>
 
         <x-slot name="footer">

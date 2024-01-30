@@ -10,7 +10,7 @@ class EditSubCategory extends Component
 {
     use WithFileUploads, SendsVerificationSms;
 
-    public $subCategory, $name, $description, $image;
+    public $subCategory, $name, $description, $image, $icon;
 
     public function mount()
     {
@@ -23,6 +23,7 @@ class EditSubCategory extends Component
         'name' => 'required|string|max:255',
         'description' => 'required|string|max:20000',
         'image' => 'nullable|image|max:5024',
+        'icon' => 'nullable|file|mimes:svg|max:1024',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
@@ -32,10 +33,17 @@ class EditSubCategory extends Component
         $data = $this->validate();
 
         if ($this->image) {
-            $url = $this->image->store('tutorials/' . $this->subCategory->slug, 'public');
-            $data['image'] = $url;
+            $imageUrl = $this->image->store('tutorials/' . $this->subCategory->slug, 'public');
+            $data['image'] = $imageUrl;
         } else {
             $data['image'] = $this->subCategory->image;
+        }
+
+        if ($this->icon) {
+            $iconUrl = $this->icon->store('tutorials/' . $this->subCategory->slug, 'public');
+            $data['icon'] = $iconUrl;
+        } else {
+            $data['icon'] = $this->subCategory->icon;
         }
 
         // Pop the phoneVerification and access_password properties from the end of $data
