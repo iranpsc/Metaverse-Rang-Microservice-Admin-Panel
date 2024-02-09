@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         // \App\Models\/User::factory()->count(1)->create();
-        DB::table('videos')->each(function ($video) {
+        DB::table('videos')->orderBy('id')->each(function ($video) {
             $video->slug = Str::random(10);
             $video->save();
         });
