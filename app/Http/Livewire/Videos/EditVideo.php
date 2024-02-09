@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Traits\SendsVerificationSms;
 use Livewire\WithFileUploads;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
 use Pion\Laravel\ChunkUpload\Handler\HandlerFactory;
 
@@ -13,10 +14,11 @@ class EditVideo extends Component
 {
     use WithFileUploads, SendsVerificationSms;
 
-    public $videoDb, $title, $description, $image, $video;
+    public $videoDb, $title, $slug, $description, $image, $video;
 
     protected $rules = [
-        'title' => 'required',
+        'title' => 'required|string|max:255',
+        'slug' => 'required|string|max:255|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/|unique:videos,slug',
         'description' => 'required|string|max:20000',
         'image' => 'nullable|image|max:1024',
         'video' => 'nullable|string',
@@ -28,6 +30,7 @@ class EditVideo extends Component
     {
         $this->admin = auth()->guard('admin')->user();
         $this->title = $this->videoDb->title;
+        $this->slug = $this->videoDb->slug;
         $this->description = $this->videoDb->description;
     }
 
@@ -52,6 +55,7 @@ class EditVideo extends Component
 
         $this->videoDb->update([
             'title' => $this->title,
+            'slug' => Str::slug($this->slug),
             'description' => $this->description,
             'fileName' => $videoUrl ?? $this->videoDb->fileName,
             'image' => $imageUrl ?? $this->videoDb->image,

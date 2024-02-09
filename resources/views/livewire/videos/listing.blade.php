@@ -14,6 +14,12 @@
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
         </x-forms.group>
+        <x-forms.group label="نامک" for="slug">
+            <x-forms.input id="title" wire:model="slug" />
+            @error('slug')
+                <span class="form-text text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
         <x-forms.group for="description" label="توضیحات متنی">
             <div wire:ignore>
                 <textarea name="description" id="description"></textarea>
@@ -92,12 +98,12 @@
         <x-table>
             <x-slot:headers>
                 <th>عنوان</th>
+                <th>نامک</th>
                 <th>دسته</th>
                 <th>تصویر</th>
                 <th>فایل</th>
                 <th>ایجاد کننده</th>
                 <th>تاریخ ایجاد</th>
-                <th>ساعت ایجاد</th>
                 <th>تعداد بازدید</th>
                 <th>لایک ها</th>
                 <th>دیسلایک ها</th>
@@ -107,6 +113,7 @@
                 <tr>
                     <td>{{ $video->id }}</td>
                     <td>{{ $video->title }}</td>
+                    <td>{{ $video->slug }}</td>
                     <td>{{ $video->category->name }}</td>
                     <td>
                         <a target="_blank" href="{{ asset('uploads/' . $video->image) }}"
@@ -118,7 +125,6 @@
                     </td>
                     <td>{{ $video->creator_code }}</td>
                     <td>{{ jdate($video->created_at)->format('Y/m/d') }}</td>
-                    <td>{{ jdate($video->created_at)->format('H:m:s') }}</td>
                     <td>{{ $video->views->count() }}</td>
                     <td>{{ $video->interactions->where('liked', 1)->count() }}</td>
                     <td>{{ $video->interactions->where('liked', 0)->count() }}</td>

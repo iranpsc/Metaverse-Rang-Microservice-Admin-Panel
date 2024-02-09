@@ -11,6 +11,7 @@ use Livewire\WithPagination;
 use App\Models\VideoSubCategory;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
 use Pion\Laravel\ChunkUpload\Handler\HandlerFactory;
 
@@ -18,7 +19,7 @@ class Listing extends Component
 {
     use WithPagination, WithFileUploads, SendsVerificationSms;
 
-    public $title, $description, $category, $subCategory, $image, $video, $creator_code, $search;
+    public $title, $slug, $description, $category, $subCategory, $image, $video, $creator_code, $search;
 
     public $videoSubCategories;
 
@@ -42,7 +43,8 @@ class Listing extends Component
     }
 
     protected $rules = [
-        'title' => 'required',
+        'title' => 'required|string|max:255',
+        'slug' => 'required|string|max:255|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/|unique:videos,slug',
         'description' => 'required|string|max:20000',
         'category' => 'required|integer|exists:video_categories,id',
         'subCategory' => 'required|integer|exists:video_sub_categories,id',
@@ -74,6 +76,7 @@ class Listing extends Component
 
         $this->subCategory->videos()->create([
             'title' => $this->title,
+            'slug' => Str::slug($this->slug),
             'description' => $this->description,
             'creator_code' => strtolower($this->creator_code),
             'fileName' => $videoUrl,

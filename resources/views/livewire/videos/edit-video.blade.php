@@ -7,6 +7,13 @@
             @enderror
         </x-forms.group>
 
+        <x-forms.group label="نامک" for="slug">
+            <x-forms.input id="title" wire:model="slug" />
+            @error('slug')
+                <span class="form-text text-danger">{{ $message }}</span>
+            @enderror
+        </x-forms.group>
+
         <x-forms.group for="description-{{ $videoDb->id }}" label="توضیحات متنی">
             <div wire:ignore>
                 <textarea id="description-{{ $videoDb->id }}">{{ $videoDb->description }}</textarea>
