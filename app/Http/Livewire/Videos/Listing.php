@@ -19,7 +19,7 @@ class Listing extends Component
 {
     use WithPagination, WithFileUploads, SendsVerificationSms;
 
-    public $title, $slug, $description, $category, $subCategory, $image, $video, $creator_code, $search;
+    public $title, $description, $category, $subCategory, $image, $video, $creator_code, $search;
 
     public $videoSubCategories;
 
@@ -69,14 +69,14 @@ class Listing extends Component
             $this->addError('video', 'فایل ویدیو را بارگذاری کنید.');
             return;
         } else {
-            rename(storage_path('app/public/resumable-tmp/' . $this->video), storage_path('app/public/'.$videoUrl));
+            rename(storage_path('app/public/resumable-tmp/' . $this->video), storage_path('app/public/' . $videoUrl));
         }
 
         $imageUrl = $this->image->store('tutorials/' . $this->category->slug . '/' . $this->subCategory->slug, 'public');
 
         $this->subCategory->videos()->create([
             'title' => $this->title,
-            'slug' => Str::slug($this->slug),
+            'slug' => Str::random(15),
             'description' => $this->description,
             'creator_code' => strtolower($this->creator_code),
             'fileName' => $videoUrl,
@@ -129,7 +129,7 @@ class Listing extends Component
     {
         return view('livewire.videos.listing', [
             'videoCategories' => VideoCategory::all(),
-            'videos' => Video::with(['category', 'interactions', 'views'])->simplePaginate(10)
+            'videos' => Video::with(['category', 'interactions', 'views'])->latest()->simplePaginate(10)
         ]);
     }
 }
