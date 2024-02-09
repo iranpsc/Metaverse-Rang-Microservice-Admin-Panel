@@ -3,8 +3,9 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+
+use App\Models\Video;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
@@ -17,9 +18,10 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         // \App\Models\/User::factory()->count(1)->create();
-        DB::table('videos')->orderBy('id')->each(function ($video) {
-            $video->slug = Str::random(10);
-            $video->save();
+        Video::all()->each(function ($video) {
+            $video->update([
+                'slug' => Str::random(10),
+            ]);
         });
     }
 }
