@@ -44,7 +44,6 @@ class Listing extends Component
 
     protected $rules = [
         'title' => 'required|string|max:255',
-        'slug' => 'required|string|max:255|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/|unique:videos,slug',
         'description' => 'required|string|max:20000',
         'category' => 'required|integer|exists:video_categories,id',
         'subCategory' => 'required|integer|exists:video_sub_categories,id',
