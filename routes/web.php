@@ -55,6 +55,7 @@ use App\Http\Livewire\Translations\Modal;
 use App\Http\Livewire\Translations\Tab;
 use App\Http\Livewire\Versions;
 use App\Http\Livewire\Calendar;
+use App\Http\Livewire\IsicCodes;
 
 /*
 |--------------------------------------------------------------------------
@@ -164,4 +165,6 @@ Route::middleware('auth:admin')->group(function () {
         Route::get('/{translation}/modals/{modal}/tabs', Tab::class)->can('manage-translations')->name('tabs');
         Route::get('/{translation}/modals/{modal}/tabs/{tab}/fields', Field::class)->can('manage-translations')->name('fields');
     });
+
+    Route::get('/isic-codes', IsicCodes::class)->can('manage-isic-codes')->name('isic-codes');
 });

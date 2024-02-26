@@ -480,6 +480,15 @@
                     </a>
                 </li>
              @endhasanyrole
+
+             @hasanyrole('isic-codes-management|super-admin')
+                <li>
+                    <a href="{{ route('isic-codes') }}">
+                        <span class="fa fa-list"></span>
+                        <span>کدهای ISIC</span>
+                    </a>
+                </li>
+             @endhasanyrole
          </ul><!-- /#side-menu -->
      </div><!-- /.side-menu-container -->
  </div><!-- /#sidebar -->

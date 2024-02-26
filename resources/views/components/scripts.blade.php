@@ -1,6 +1,7 @@
 <script>
     window.addEventListener('livewire:load', function() {
-        var content = CKEDITOR.replace('content');
+        var textBox = document.getElementById('content');
+        var content = textBox ? CKEDITOR.replace('content') : null;
         var saveBtn = document.getElementById('store-btn');
         var deleteBtns = document.querySelectorAll('[id^=delete-btn-]');
         var editBtns = document.querySelectorAll('[id^=edit-btn-]');
@@ -9,6 +10,10 @@
 
         var modal = new bootstrap.Modal(document.getElementById('modal'), {
             keyboard: false
+        });
+
+        $('#modal').on('hidden.bs.modal', function() {
+            @this.call('resetForm');
         });
 
         const Toast = Swal.mixin({
@@ -24,40 +29,42 @@
             }
         })
 
-        CKEDITOR.editorConfig = function(config) {
-            config.language = 'fa';
-            config.uiColor = '#F7B42C';
-            config.height = 300;
-            config.toolbarCanCollapse = true;
-        };
+        if (content) {
+            CKEDITOR.editorConfig = function(config) {
+                config.language = 'fa';
+                config.uiColor = '#F7B42C';
+                config.height = 300;
+                config.toolbarCanCollapse = true;
+            };
+        }
 
         window.addEventListener('openCreateModal', event => {
             modal.show();
-            content.setData('');
+            if (content) content.setData('');
         });
 
         window.addEventListener('closeCreateModal', event => {
             modal.hide();
-            content.setData('');
+            if (content) content.setData('');
             showSwalNotification();
         });
 
         window.addEventListener('openEditModal', event => {
             action = 'update';
             id = event.detail.id;
-            content.setData(event.detail.content);
+            if (content) content.setData(event.detail.content);
             modal.show();
         });
 
         window.addEventListener('closeEditModal', event => {
             modal.hide();
-            content.setData('');
+            if (content) content.setData('');
             action = 'store';
             showSwalNotification();
         });
 
         saveBtn.addEventListener('click', function() {
-            @this.set('content', content.getData());
+            if (content) @this.set('content', content.getData());
 
             if (action == 'store') {
                 @this.call('store');

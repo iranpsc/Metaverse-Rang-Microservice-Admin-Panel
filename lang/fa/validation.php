@@ -190,6 +190,7 @@ return [
         'created_at' => 'تاریخ ایجاد',
         'subcategory' => 'زیر شاخه',
         'access_password' => 'رمز دسترسی',
-        'phone_verification' => 'کد تایید شماره تلفن'
+        'phone_verification' => 'کد تایید شماره تلفن',
+        'code' => 'کد',
     ],
 ];
