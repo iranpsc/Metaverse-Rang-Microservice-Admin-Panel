@@ -71,7 +71,7 @@ class IsicCodes extends LivewireComponent
 
     public function update($id)
     {
-        array_merge($this->rules, $this->getVerficationRules());
+        $this->validate(array_merge($this->rules, $this->getVerficationRules()));
 
         IsicCode::find($id)->update([
             'code' => $this->code,
