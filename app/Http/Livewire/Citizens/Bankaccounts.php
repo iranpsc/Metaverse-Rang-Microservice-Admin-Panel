@@ -5,10 +5,15 @@ namespace App\Http\Livewire\Citizens;
 use App\Models\BankAccount;
 use Livewire\Component;
 use App\Notifications\KycDeniedNotification;
+use Livewire\WithPagination;
 
 class Bankaccounts extends Component
 {
-    public $bankAccounts, $searchTerm;
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
+    public $searchTerm;
 
     public $bank_name_err;
     public $shaba_num_err;
@@ -16,50 +21,32 @@ class Bankaccounts extends Component
 
     public $bankAccount_errors = [];
 
-    public function mount()
-    {
-        $this->bankAccounts = BankAccount::with('errors', 'bankable')->latest()->get();
-    }
+    private $bankAccounts = null;
 
     public function updated()
     {
         $this->bankAccounts = BankAccount::where('card_num', 'like', '%' . $this->searchTerm . '%')
             ->orWhere('shaba_num', 'like', '%' . $this->searchTerm . '%')
-            ->get();
+            ->paginate(10);
     }
 
-    public function save_errors($input, BankAccount $bankAccount)
+    public function save_errors($input)
     {
-
-        switch ($input) {
-            case 'bank_name_err':
-                array_push($this->bankAccount_errors, ['bank_name' => $this->bank_name_err]);
-                break;
-            case 'card_num_err':
-                array_push($this->bankAccount_errors, ['card_num' => $this->card_num_err]);
-                break;
-            case 'shaba_num_err':
-                array_push($this->bankAccount_errors, ['shaba_num' => $this->shaba_num_err]);
-                break;
-            default:
-        }
+        $this->bankAccount_errors[] = [
+            'name' => $input,
+            'message' => $this->{$input}
+        ];
     }
 
     public function save(BankAccount $bankAccount)
     {
         if (!empty($this->bankAccount_errors)) {
-            for ($i = 0; $i < count($this->bankAccount_errors); $i++) {
-                $arr = $this->bankAccount_errors[$i];
-                foreach ($arr as $key => $value) {
-                    $bankAccount->errors()->create([
-                        'key' => $key,
-                        'value' => $value
-                    ]);
-                }
-            }
             $bankAccount->update([
-                'status' => -1
+                'status' => -1,
+                'errors' => $this->bankAccount_errors
             ]);
+
+            $this->bankAccount_errors = [];
 
             $user = $bankAccount->bankable;
             $message = 'حساب بانکی تایید نشد.';
@@ -76,6 +63,7 @@ class Bankaccounts extends Component
 
     public function render()
     {
-        return view('livewire.citizens.bankaccounts');
+        return view('livewire.citizens.bankaccounts')
+            ->with('bankAccounts', $this->bankAccounts ?? BankAccount::with('bankable')->latest()->paginate(10));
     }
 }

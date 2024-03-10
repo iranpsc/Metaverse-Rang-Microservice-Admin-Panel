@@ -60,7 +60,7 @@
                                                     </div>
                                                     <div class="card-footer">
                                                         <button class="btn btn-primary round btn-sm save"
-                                                            wire:click="save_errors('bank_name_err', {{$bankAccount}})">ثبت</button>
+                                                            wire:click="save_errors('bank_name_err')">ثبت</button>
                                                         <button class="btn btn-danger round btn-sm close-btn">بستن</button>
                                                     </div>
                                                 </div>
@@ -82,7 +82,7 @@
                                                 </div>
                                                 <div class="card-footer">
                                                     <button class="btn btn-primary round btn-sm save"
-                                                        wire:click="save_errors('shaba_num_err', {{$bankAccount}})">ثبت</button>
+                                                        wire:click="save_errors('shaba_num_err')">ثبت</button>
                                                     <button class="btn btn-danger round btn-sm close-btn">بستن</button>
                                                 </div>
                                             </div>
@@ -104,7 +104,7 @@
                                                 </div>
                                                 <div class="card-footer">
                                                     <button class="btn btn-primary round btn-sm save"
-                                                    wire:click="save_errors('card_num_err', {{$bankAccount}})">ثبت</button>
+                                                    wire:click="save_errors('card_num_err')">ثبت</button>
                                                     <button class="btn btn-danger round btn-sm close-btn">بستن</button>
                                                 </div>
                                             </div>
@@ -114,17 +114,19 @@
                                 </tr>
                             </x-tables.table>
                             <x-slot name="footer">
-                                @unless ($bankAccount->status == 1)
-                                    <button class="mx-auto btn btn-primary round"
+                                @if ($bankAccount->status == 0)
+                                    <button class="mx-auto btn btn-primary round w-50"
                                         wire:click="save({{$bankAccount}})">ثبت</button>
-                                @endunless
-                                <button class="btn btn-danger round mx-auto" data-bs-dismiss="modal">بستن</button>
+                                @endif
+                                <button class="btn btn-danger round mx-auto w-25" data-bs-dismiss="modal">بستن</button>
                             </x-slot>
                         </x-modals.modal>
                     </td>
                 </tr>
             @endforeach
         </x-table>
+
+        {{ $bankAccounts->links() }}
     @else
         <x-alert type="warning" message="کاربری یافت نشد." />
     @endif

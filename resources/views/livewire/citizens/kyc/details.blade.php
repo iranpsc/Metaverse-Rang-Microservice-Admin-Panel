@@ -221,21 +221,21 @@
 
                     </td>
                     @unless ($kyc->status == 1)
-                    <td class="form-box">
-                        <button class="btn btn-danger btn-sm round reject">وارد کردن دلیل اشکال</button>
-                        <div class="textarea">
-                            <div class="card">
-                                <div class="card-body">
-                                    <textarea wire:model.defer="prove_picture_err" class="form-control rounded" cols="20" rows="2"></textarea>
-                                </div>
-                                <div class="card-footer">
-                                    <button class="btn btn-primary round btn-sm save"
-                                        wire:click="save_errors('prove_picture_err')">ثبت</button>
-                                    <button class="btn btn-danger round btn-sm close-btn">بستن</button>
+                        <td class="form-box">
+                            <button class="btn btn-danger btn-sm round reject">وارد کردن دلیل اشکال</button>
+                            <div class="textarea">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <textarea wire:model.defer="prove_picture_err" class="form-control rounded" cols="20" rows="2"></textarea>
+                                    </div>
+                                    <div class="card-footer">
+                                        <button class="btn btn-primary round btn-sm save"
+                                            wire:click="save_errors('prove_picture_err')">ثبت</button>
+                                        <button class="btn btn-danger round btn-sm close-btn">بستن</button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </td>
+                        </td>
                     @endunless
                 </tr>
                 <tr>
@@ -266,10 +266,10 @@
             </tbody>
         </table>
         <x-slot name='footer'>
-            @unless ($kyc->status == 1)
+            @if ($kyc->status == 0)
                 <button class="w-50 btn btn-primary round"
                     wire:click="save">ثبت</button>
-            @endunless
+            @endif
             <button class="btn btn-danger round w-25 mx-auto" data-bs-dismiss="modal">بستن</button>
         </x-slot>
     </x-modals.modal>

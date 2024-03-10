@@ -11,18 +11,12 @@ class BankAccount extends Model
 
     protected $guarded = [];
 
-    protected $attributes = [
-        'status' => 1,
+    protected $casts = [
+        'errors' => 'array',
     ];
 
     public function bankable()
     {
         return $this->morphTo();
     }
-
-    public function errors()
-    {
-        return $this->morphMany(KycError::class, 'errorable');
-    }
-
 }

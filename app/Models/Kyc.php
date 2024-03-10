@@ -9,35 +9,13 @@ class Kyc extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'shaba',
-        'bank',
-        'melli_card',
-        'prove_picture',
-        'resume',
-        'fname',
-        'lname',
-        'father_name',
-        'melli_code',
-        'phone',
-        'email',
-        'province',
-        'city',
-        'street',
-        'number',
-        'postal_code',
-        'address',
-        'site',
-        'status',
-        'user_id'
+    protected $guarded = [];
+
+    protected $casts = [
+        'errors' => 'array',
     ];
 
     public function user() {
         return $this->belongsTo(User::class);
-    }
-
-    public function errors()
-    {
-        return $this->morphMany(KycError::class, 'errorable');
     }
 }
