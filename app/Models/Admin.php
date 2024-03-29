@@ -17,8 +17,8 @@ class Admin extends Authenticatable
 {
     use Notifiable, HasFactory, HasRoles, HasPermissions;
 
-    protected $dates = [
-        'email_verified_at'
+    protected $casts = [
+        'email_verified_at' => 'datetime',
     ];
 
     protected $hidden = [

@@ -1,11 +1,11 @@
 <?php
 
-    namespace App\Models;
+namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Factories\HasFactory;
-    use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
-    /**
+/**
  * App\Models\Asset
  *
  * @property int $id
@@ -28,26 +28,23 @@
  * @mixin \Eloquent
  */
 class Asset extends Model
+{
+    use HasFactory;
+
+    protected $table = "assets";
+
+    protected $fillable = [
+        'user_id',
+        'psc', 'irr', 'blue', 'red', 'green', 'satisfaction', 'effect',
+    ];
+
+    public function user()
     {
-        use HasFactory;
-
-        protected $table = "assets";
-
-        protected $fillable = [
-            'user_id',
-            'psc', 'irr', 'blue', 'red', 'green', 'satisfaction', 'effect',
-        ];
-
-
-        public function user()
-        {
-            return $this->belongsTo(User::class);
-        }
-
-        public function variable()
-        {
-            return $this->belongsTo(Variable::class);
-        }
-
-        
+        return $this->belongsTo(User::class);
     }
+
+    public function variable()
+    {
+        return $this->belongsTo(Variable::class);
+    }
+}

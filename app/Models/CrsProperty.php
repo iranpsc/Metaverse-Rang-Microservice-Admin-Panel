@@ -46,6 +46,6 @@ class CrsProperty extends Model
 
 	public function crs()
 	{
-		return $this->belongsTo(Cr::class, 'crs_id');
+		return $this->belongsTo(Crs::class, 'crs_id');
 	}
 }
