@@ -1,53 +1,27 @@
 <div>
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#upload-map-modal">بارگذاری نقشه</x-buttons.btn-primary>
-    <x-modals.modal id="upload-map-modal" title="بارگذاری فایل نقشه">
-        <x-forms.group for="name" label="نام آبادی">
-            <x-forms.input wire:model="name" id="name" />
-            @error('name')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+    <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#upload-map-modal">بارگذاری نقشه</x-button>
 
-        <x-forms.group for="mapFile" label="بارگذاری نقشه">
-            <x-forms.input type="file" wire:model="mapFile" id="mapFile" />
-            <x-progress-bar wire:loading wire:target="mapFile" />
-            @error('mapFile')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+    <x-modal id="upload-map-modal" title="بارگذاری فایل نقشه">
+        <x-form.input name="name" label="نام آبادی" />
 
-        <x-forms.group for="pointFile" label="بارگذاری فایل نقطه مرکزی">
-            <x-forms.input type="file" wire:model="pointFile" id="pointFile" />
-            <x-progress-bar wire:loading wire:target="pointFile" />
-            @error('pointFile')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input type="file" name="map_file" label="فایل نقشه" />
 
-        <x-forms.group for="borderFile" label="بارگذاری فایل مرز">
-            <x-forms.input type="file" wire:model="borderFile" id="borderFile" />
-            <x-progress-bar wire:loading wire:target="borderFile" />
-            @error('borderFile')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input type="file" name="point_file" label="فایل نقطه مرکزی" />
 
-        <x-forms.group for="color" label="رنگ محدوده">
-            <x-forms.input type="color" wire:model="color" id="color" />
-            @error('color')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input type="file" name="border_file" label="فایل مرز" />
 
-        <x-forms.verification/>
+        <x-form.input name="color" label="رنگ محدوده" />
+
+        <x-form.verification />
 
         <x-slot name="footer">
-            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">بارگذاری</x-buttons.btn-success>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button wire:loading.attr="disabled" wire:click="save">بارگذاری</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
     </x-modals.modal>
+
     @if ($maps->count() > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot name="headers">
                 <th>نام آبادی</th>
                 <th>تاریخ انتشار</th>
@@ -60,7 +34,7 @@
                 <th>مدیریت</th>
             </x-slot>
             @foreach ($maps as $map)
-                <tr>
+                <tr wire:key="{{ $map->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $map->name }}</td>
                     <td>{{ $map->publish_date }}</td>
@@ -78,20 +52,24 @@
                     </td>
                     <td>
                         @unless ($map->isPublished())
-                            <x-buttons.btn-primary data-bs-toggle="modal" data-bs-target="#map-modal-{{ $map->id }}">انتشار</x-buttons.btn-primary>
+                            <x-button data-bs-toggle="modal"
+                                data-bs-target="#map-modal-{{ $map->id }}">انتشار</x-button>
                         @endunless
 
-                        <x-buttons.btn-info data-bs-toggle="modal" data-bs-target="#update-map-modal-{{ $map->id }}">ویرایش</x-buttons.btn-info>
-                        <x-buttons.btn-danger class="confirm" id="{{ $map->id }}" title="deleteMap">حذف</x-buttons.btn-danger>
+                        <x-button data-bs-toggle="modal"
+                            data-bs-target="#update-map-modal-{{ $map->id }}">ویرایش</x-button>
+
+                        <x-button color="danger" wire:confirm="می خواهید حذف کنید؟"
+                            wire:click="delete({{ $map->id }})">حذف</x-button>
 
                         <livewire:maps.update :map="$map" :wire:key="'map-update-' . $map->id" />
-                        <livewire:maps.insert-into-database :map="$map" :wire:key="'insert-into-database-' . $map->id" />
+                        <livewire:maps.insert-into-database :$map :key="$map->id" />
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $maps->links() }}
     @else
-        <x-alerts.danger>نقشه ای یافت نشد</x-alerts.danger>
+        <x-alert type="warning" message="هیچ نقشه ای برای نمایش وجود ندارد." />
     @endif
 </div>

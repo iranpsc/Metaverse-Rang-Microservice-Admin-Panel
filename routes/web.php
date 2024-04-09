@@ -1,61 +1,63 @@
 <?php
 
-use App\Http\Controllers\SendVerificationCodeController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Livewire\Dashboard\Dashboard;
-use App\Http\Livewire\Employees\Listing as EmployeesInfo;
-use App\Http\Livewire\Employees\Bank as EmployeesBankInfo;
-use App\Http\Livewire\Employees\Documents as EmployeesDocuments;
-use App\Http\Livewire\Employees\Salary as EmployeesSalary;
-use App\Http\Livewire\Employees\Time as EmployeesTimeCard;
-use App\Http\Livewire\Employees\Tasks as EmployeesTasks;
-use App\Http\Livewire\Lands\Listing as AllFeatures;
-use App\Http\Livewire\Lands\Prices as FeaturesPrices;
-use App\Http\Livewire\Lands\Sold as SoldFeatures;
-use App\Http\Livewire\Lands\Pricing as PricedFeatures;
-use App\Http\Livewire\Lands\Traded as TradedFeatures;
-use App\Http\Livewire\Level\Listing as LevelListing;
-use App\Http\Livewire\Support\CitizensSafety as SupportCitizensSafety;
-use App\Http\Livewire\Support\TechnicalSupport as SupportTechnicalSupport;
-use App\Http\Livewire\Support\Investment as SupportInvestment;
-use App\Http\Livewire\Support\Inspection as SupportInspection;
-use App\Http\Livewire\Support\Protection as SupportProtection;
-use App\Http\Livewire\Support\ZTB as SupportZTBManagement;
-use App\Http\Livewire\Variables\ColorOptions as StorePackages;
-use App\Http\Livewire\Variables\ColorsPrice as StoreCurrencies;
-use App\Http\Livewire\Dynasty\Prize as DynastyPrizes;
-use App\Http\Livewire\Dynasty\DynastyMessages;
-use App\Http\Livewire\Dynasty\Permissions as DynastyPermissions;
-use App\Http\Livewire\Maps\Listing as MapListing;
-use App\Http\Livewire\Reports\Listing as ReportsListing;
-use App\Http\Livewire\SystemVariables\Listing as SystemVariablesListing;
-use App\Http\Livewire\AccessManagement\EmployeeRolePermission as EmployeesAccessManagement;
-use App\Http\Livewire\AccessManagement\Roles as EmployeesRoles;
-use App\Http\Livewire\AccessManagement\Permissions as EmployeesPermissions;
-use App\Http\Livewire\Challenge\QuestionsList;
-use App\Http\Livewire\Citizens\Assets;
-use App\Http\Livewire\Citizens\Bankaccounts;
-use App\Http\Livewire\Citizens\Deposits;
-use App\Http\Livewire\Citizens\Kyc;
-use App\Http\Livewire\Citizens\Profiledetails;
-use App\Http\Livewire\Citizens\RegistrationInfo;
-use App\Http\Livewire\Citizens\Withdraws;
-use App\Http\Livewire\IpManagement\ApiAllowedIps;
-use App\Http\Livewire\IpManagement\AdminAllowedIps;
-use App\Http\Livewire\IpManagement\ApiIpRanges;
-use App\Http\Livewire\IpManagement\WhiteListRequests;
-use App\Http\Livewire\Panel\Profile;
-use App\Http\Livewire\Translations\Field;
-use App\Http\Livewire\Videos\Listing as VideoListing;
-use App\Http\Livewire\Videos\Categories as VideoCategories;
-use App\Http\Livewire\Videos\EditVideo;
-use App\Http\Livewire\Translations\Listing as TranslationsListing;
-use App\Http\Livewire\Translations\Modal;
-use App\Http\Livewire\Translations\Tab;
-use App\Http\Livewire\Versions;
-use App\Http\Livewire\Calendar;
-use App\Http\Livewire\IsicCodes;
+use App\Livewire\Calendar\Listing as CalendarListing;
+use App\Livewire\Dashboard;
+use App\Livewire\Employees\Listing as EmployeesInfo;
+use App\Livewire\Employees\Bank as EmployeesBankInfo;
+use App\Livewire\Employees\Documents as EmployeesDocuments;
+use App\Livewire\Employees\Salary as EmployeesSalary;
+use App\Livewire\Employees\Time as EmployeesTimeCard;
+use App\Livewire\Employees\Tasks as EmployeesTasks;
+use App\Livewire\Lands\Listing as AllFeatures;
+use App\Livewire\Lands\Prices as FeaturesPrices;
+use App\Livewire\Lands\Sold as SoldFeatures;
+use App\Livewire\Lands\Pricing as PricedFeatures;
+use App\Livewire\Lands\Traded as TradedFeatures;
+use App\Livewire\Level\Listing as LevelListing;
+use App\Livewire\Support\CitizensSafety as SupportCitizensSafety;
+use App\Livewire\Support\TechnicalSupport as SupportTechnicalSupport;
+use App\Livewire\Support\Investment as SupportInvestment;
+use App\Livewire\Support\Inspection as SupportInspection;
+use App\Livewire\Support\Protection as SupportProtection;
+use App\Livewire\Support\ZTB as SupportZTBManagement;
+use App\Livewire\Variables\ColorOptions as StorePackages;
+use App\Livewire\Variables\ColorsPrice as StoreCurrencies;
+use App\Livewire\Dynasty\Prize as DynastyPrizes;
+use App\Livewire\Dynasty\DynastyMessages;
+use App\Livewire\Dynasty\Permissions as DynastyPermissions;
+use App\Livewire\Maps\Listing as MapListing;
+use App\Livewire\Reports\Listing as ReportsListing;
+use App\Livewire\SystemVariables\Listing as SystemVariablesListing;
+use App\Livewire\AccessManagement\EmployeeRolePermission as EmployeesAccessManagement;
+use App\Livewire\AccessManagement\Roles as EmployeesRoles;
+use App\Livewire\AccessManagement\Permissions as EmployeesPermissions;
+use App\Livewire\Challenge\QuestionsList;
+use App\Livewire\Citizens\Assets;
+use App\Livewire\Citizens\Bankaccounts;
+use App\Livewire\Citizens\Deposits;
+use App\Livewire\Citizens\Kyc;
+use App\Livewire\Citizens\Profiledetails;
+use App\Livewire\Citizens\RegistrationInfo;
+use App\Livewire\Citizens\Withdraws;
+use App\Livewire\IpManagement\ApiAllowedIps;
+use App\Livewire\IpManagement\AdminAllowedIps;
+use App\Livewire\IpManagement\ApiIpRanges;
+use App\Livewire\IpManagement\WhiteListRequests;
+use App\Livewire\Profile;
+use App\Livewire\Translations\Field;
+use App\Livewire\Videos\Listing as VideoListing;
+use App\Livewire\Videos\Categories as VideoCategories;
+use App\Livewire\Videos\EditVideo;
+use App\Livewire\Translations\Listing as TranslationsListing;
+use App\Livewire\Translations\Modal;
+use App\Livewire\Translations\Tab;
+use App\Livewire\Versions;
+use App\Livewire\IsicCodes;
+use App\Livewire\Lands\FeaturePricingLimits;
+use App\Http\Controllers\UploadVideoController;
+use App\Livewire\Lands\FeatureLimits;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +95,8 @@ Route::middleware('auth:admin')->group(function () {
         Route::get('/sold', SoldFeatures::class)->can('view-sold-features')->name('sold');
         Route::get('/trades', TradedFeatures::class)->can('view-features-trades')->name('trades');
         Route::get('/priced', PricedFeatures::class)->can('view-priced-features')->name('priced');
+        Route::get('/pricing-limits', FeaturePricingLimits::class)->can('manage-features-pricing-limits')->name('pricing-limits');
+        Route::get('/limits', FeatureLimits::class)->can('manage-features-limits')->name('limits');
     });
 
     Route::prefix('access-management')->middleware('can:manage-access')->as('access-management.')->group(function () {
@@ -139,25 +143,19 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::get('levels', LevelListing::class)->can('manage-level')->name('level');
     Route::get('maps', MapListing::class)->can('manage-maps')->name('map-management');
-    Route::get('calendar', Calendar::class)->can('manage-calendar')->name('calendar');
+    Route::get('calendar', CalendarListing::class)->can('manage-calendar')->name('calendar');
     Route::get('versions', Versions::class)->can('manage-versions')->name('versions');
     Route::get('reports', ReportsListing::class)->can('manage-reports')->name('reports');
     Route::get('system-variables', SystemVariablesListing::class)->can('manage-system-variables')->name('system-variables');
 
     Route::get('videos', VideoListing::class)->can('manage-tutorials')->name('videos');
-    Route::post('videos', [VideoListing::class, 'upload'])->can('manage-tutorials')->name('videos.upload');
-    Route::post('videos/edit', [EditVideo::class, 'upload'])->can('manage-tutorials')->name('videos.edit.upload');
+    Route::post('videos', [UploadVideoController::class, 'upload'])->can('manage-tutorials')->name('videos.upload');
 
     Route::get('video-categories', VideoCategories::class)->can('manage-tutorials')->name('video.categories');
 
     Route::get('challenge', QuestionsList::class)->can('manage-challenge')->name('challenge');
 
     Route::get('profile', Profile::class)->name('profile');
-
-    Route::controller(SendVerificationCodeController::class)->prefix('code')->group(function () {
-        Route::get('/send', [SendVerificationCodeController::class, 'send']);
-        Route::post('/verify', [SendVerificationCodeController::class, 'verify']);
-    });
 
     Route::prefix('translations')->group(function () {
         Route::get('/', TranslationsListing::class)->can('manage-translations')->name('translations');

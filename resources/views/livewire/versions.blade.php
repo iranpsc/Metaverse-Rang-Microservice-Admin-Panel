@@ -1,11 +1,34 @@
 <div>
-    <x-slot name="pageTitle">
-        لیست ورژن ها
-    </x-slot>
-    
-    <x-button wire:click="openCreateModal" class="mb-2">
+    <x-button data-bs-toggle="modal" data-bs-target="#modal" class="mb-2">
         <span class="fa fa-plus"></span>
+        تعریف ورژن
     </x-button>
+
+    <x-modal size="modal-xl" id="modal" title="تعریف ورژن">
+
+        <x-form.input name="versionTitle" label="شناسه نسخه" />
+
+        <x-form.input name="title" label="عنوان" />
+
+        <div class="form-group">
+            <label for="content">متن</label>
+            <div wire:ignore>
+                <textarea id="content" class="form-control"></textarea>
+            </div>
+            @error('content')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
+        </div>
+
+        <x-form.input type="date" name="startsAt" label="تاریخ شروع" />
+
+        <x-form.verification />
+
+        <x-slot name="footer">
+            <x-button id="save-btn">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بازگشت</x-button>
+        </x-slot>
+    </x-modal>
 
     @if ($versions->count() > 0)
         <x-table>
@@ -19,7 +42,7 @@
             </x-slot>
 
             @foreach ($versions as $version)
-                <tr>
+                <tr wire:key="{{ $version->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $version->title }}</td>
                     <td>{{ Str::limit($version->content, 20) }}</td>
@@ -27,58 +50,37 @@
                     <td>{{ jdate($version->starts_at)->format('Y/m/d') }}</td>
                     <td>{{ $version->views->count() }}</td>
                     <td>
-                        <x-button id="edit-btn-{{ $version->id }}">
-                            <span class="fa fa-edit"></span>
-                        </x-button>
-                        <x-button color="danger" id="delete-btn-{{ $version->id }}">
+                        <x-button color="danger" wire:confirm="آیا می خواهید حذف کنید؟"
+                            wire:click="delete({{ $version->id }})">
                             <span class="fa fa-trash"></span>
+                            حذف
                         </x-button>
                     </td>
                 </tr>
             @endforeach
         </x-table>
+
         {{ $versions->links() }}
     @else
         <x-alert type="warning" message="ورژنی یافت نشد!" />
     @endif
-
-    <x-modal size="modal-xl" id="modal" title="تعریف ورژن">
-
-        <x-forms.group for="versionTitle" label="شناسه نسخه">
-            <x-forms.input id="versionTitle" wire:model.defer="versionTitle" placeholder="V1.0.1.1" />
-            @error('versionTitle')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-
-        <x-forms.group for="title" label="عنوان">
-            <x-forms.input id="title" wire:model.defer="title" />
-            @error('title')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-
-        <x-forms.group for="content" label="متن">
-            <div wire:ignore>
-                <textarea id="content"></textarea>
-            </div>
-            @error('content')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-
-        <x-forms.group for="startsAt" label="تاریخ شروع">
-            <x-forms.input type="date" id="startsAt" wire:model.defer="startsAt" />
-            @error('startsAt')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-
-        @production
-            <x-forms.verification />
-        @endproduction
-
-    </x-modal>
-
-    <x-scripts/>
 </div>
+
+@script
+    <script>
+        let content = CKEDITOR.replace('content');
+        let saveBtn = document.getElementById('save-btn');
+
+        CKEDITOR.editorConfig = function(config) {
+            config.language = 'fa';
+            config.uiColor = '#F7B42C';
+            config.height = 300;
+            config.toolbarCanCollapse = true;
+        };
+
+        saveBtn.addEventListener('click', function() {
+            $wire.set('content', content.getData());
+            $wire.call('save');
+        });
+    </script>
+@endscript

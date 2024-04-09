@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "903981bbcf2c49f767add1d6ab255621",
+    "content-hash": "57a0fa05a6523910135734a94c00ceb5",
     "packages": [
         {
             "name": "beberlei/assert",
@@ -7287,48 +7287,6 @@
                 "source": "https://github.com/webmozarts/assert/tree/1.11.0"
             },
             "time": "2022-06-03T18:03:27+00:00"
-        },
-        {
-            "name": "webpajooh/persian-faker",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/muhammadmp97/PersianFaker.git",
-                "reference": "f02cb562b98e2b72cfd7aab8e1bbfa1ffaa52789"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/muhammadmp97/PersianFaker/zipball/f02cb562b98e2b72cfd7aab8e1bbfa1ffaa52789",
-                "reference": "f02cb562b98e2b72cfd7aab8e1bbfa1ffaa52789",
-                "shasum": ""
-            },
-            "default-branch": true,
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PersianFaker\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "WebPajooh",
-                    "email": "webpajooh@gmail.com"
-                }
-            ],
-            "description": "Do you need some fake data?",
-            "keywords": [
-                "faker",
-                "persian"
-            ],
-            "support": {
-                "issues": "https://github.com/muhammadmp97/PersianFaker/issues",
-                "source": "https://github.com/muhammadmp97/PersianFaker/tree/master"
-            },
-            "time": "2021-05-08T14:47:57+00:00"
         }
     ],
     "packages-dev": [
@@ -9921,9 +9879,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "webpajooh/persian-faker": 20
-    },
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

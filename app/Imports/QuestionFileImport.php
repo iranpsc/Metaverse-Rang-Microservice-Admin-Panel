@@ -13,5 +13,6 @@ class QuestionFileImport implements ToArray
 
     public function array(array $array)
     {
+        return $array;
     }
 }

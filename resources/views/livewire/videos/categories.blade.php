@@ -1,65 +1,47 @@
 <div>
-    <x-slot name="pageTitle">
-        دسته بندی ویدئو ها
-    </x-slot>
-
     <x-button class="mb-2" data-bs-toggle="modal" data-bs-target="#create-category-modal">ایجاد دسته بندی</x-button>
 
-    <x-forms.search-box wire:model="search" />
+    <x-form.search-box wire:model="search" />
 
-    <x-modals.modal size="modal-xl" title="ایجاد دسته بندی" id="create-category-modal">
-        <x-forms.group for="parentCategory" label="انتخاب دسته بندی پدر">
-            <x-forms.select id="parentCategory" wire:model="parentCategory">
-                @if ($categories->count() > 0)
-                    <option value="" selected>انتخاب کنید</option>
-                    @foreach ($categories as $category)
-                        <option value="{{ $category->id }}">{{ $category->name }}</option>
-                    @endforeach
-                @else
-                    <option value="" selected>دسته بندی تعریف نشده است.</option>
-                @endif
-            </x-forms.select>
-            @error('category')
-                <span class="form-text text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+    <x-modal size="modal-xl" title="ایجاد دسته بندی" id="create-category-modal">
+        <div class="row form-group">
+            <label for="parentCategory" class="col-sm-4 col-form-label">انتخاب دسته بندی پدر</label>
+            <div class="col-sm-8">
+                <select id="parentCategory" wire:model="parentCategory" class="form-control rounded">
+                    @if ($categories->count() > 0)
+                        <option value="" selected>انتخاب کنید</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    @else
+                        <option value="" selected>دسته بندی تعریف نشده است.</option>
+                    @endif
+                </select>
+                @error('category')
+                    <span class="form-text text-danger">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
 
-        <x-forms.group for="name" label="نام دسته بندی">
-            <x-forms.input wire:model.lazy="name" />
-            @error('name')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-        <x-forms.group for="slug" label="نامک">
-            <x-forms.input wire:model.lazy="slug" />
-            @error('slug')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-        <x-forms.group for="description" label="توضیحات">
+        <x-form.input name="name" label="نام" />
+
+        <x-form.input name="slug" label="نامک" />
+
+        <div class="form-group">
+            <label for="description">توضیحات</label>
             <div wire:ignore>
-                <textarea id="description"></textarea>
+                <textarea id="description" class="form-control"></textarea>
             </div>
             @error('description')
                 <span class="text-danger">{{ $message }}</span>
             @enderror
-        </x-forms.group>
+        </div>
 
-        <x-forms.group for="image" label="تصویر">
-            <x-forms.input type="file" wire:model.lazy="image" />
-            <x-progress-bar />
-            @error('image')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input type="file" name="image" label="تصویر" />
 
-        <x-forms.group for="icon" label="آیکون">
-            <x-forms.input type="file" wire:model.lazy="icon" />
-            <x-progress-bar />
-            @error('icon')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input type="file" name="icon" label="آیکون" />
+
+        <x-form.verification />
 
         <x-slot name="footer">
             <x-button id="save-btn">ثبت</x-button>
@@ -70,7 +52,7 @@
     @if ($categories->count() > 0)
         <ul class="nav nav-tabs">
             @foreach ($categories as $index => $category)
-                <li class="nav-item">
+                <li class="nav-item" wire:key="{{ $category->id }}">
                     <a class="nav-link @if ($index == 0) active @endif" href="{{ '#tab' . $index + 1 }}"
                         data-bs-toggle="tab">
                         <span>
@@ -83,8 +65,8 @@
         <div class="tab-content">
             @foreach ($categories as $index => $category)
                 <div class="tab-pane fade @if ($index == 0) active show @endif"
-                    id="{{ 'tab' . $index + 1 }}">
-                    <x-tables.table>
+                    id="{{ 'tab' . $index + 1 }}" wire:key="{{ $category->id }}">
+                    <x-table>
                         <x-slot name="headers">
                             <th>نام</th>
                             <th>نامک</th>
@@ -107,19 +89,17 @@
                             <td>{{ jdate($category->created_at)->format('H:m:s') }}
                             </td>
                             <td>
-                                <x-button data-bs-toggle="modal"
-                                    data-bs-target="#edit-category-modal-{{ $category->id }}">ویرایش
-                                    </x-button.btn-primary>
-                                    <x-buttons.btn-danger class="confirm" title="deleteVideoCategory"
-                                        id="{{ $category->id }}">حذف</x-buttons.btn-danger>
-                                    <livewire:videos.edit-category :category="$category"
-                                        :wire:key="'edit-category-'.$category->id">
+                                <x-button data-bs-toggle="modal" data-bs-target="#edit-category-modal-{{ $category->id }}">ویرایش</x-button>
+
+                                <x-button color="danger" wire:confirm="آیا از حذف این دسته بندی اطمینان دارید؟" wire:click="deleteCategory({{ $category->id }})">حذف</x-button>
+
+                                <livewire:videos.edit-category :category="$category" :key="'edit-category-'.$category->id">
                             </td>
                         </tr>
-                    </x-tables.table>
+                    </x-table>
                     @if ($category->subCategories->count() > 0)
                         <p class="alert alert-info">زیر دسته ها</p>
-                        <x-tables.table>
+                        <x-table>
                             <x-slot name="headers">
                                 <th>نام</th>
                                 <th>نامک</th>
@@ -130,7 +110,7 @@
                                 <th>مدیریت</th>
                             </x-slot>
                             @foreach ($category->subCategories as $item)
-                                <tr>
+                                <tr wire:key="{{ $item->id }}">
                                     <td>{{ $loop->iteration }}</td>
                                     <td>{{ $item->name }}</td>
                                     <td>{{ $item->slug }}</td>
@@ -143,17 +123,13 @@
                                     <td>{{ jdate($item->created_at)->format('H:m:s') }}
                                     </td>
                                     <td>
-                                        <x-button data-bs-toggle="modal"
-                                            data-bs-target="#edit-sub-category-modal-{{ $item->id }}">ویرایش
-                                            </x-button>
-                                            <x-button color="danger" class="confirm" title="deleteVideoSubCategory"
-                                                id="{{ $item->id }}">حذف</x-button>
-                                            <livewire:videos.edit-sub-category :subCategory="$item"
-                                                :wire:key="'edit-sub-category-'.$item->id">
+                                        <x-button data-bs-toggle="modal" data-bs-target="#edit-sub-category-modal-{{ $item->id }}">ویرایش</x-button>
+                                        <x-button color="danger" wire:confirm="آیا از حذف این زیر دسته اطمینان دارید؟" wire:click="deleteSubCategory({{ $item->id }})">حذف</x-button>
+                                        <livewire:videos.edit-sub-category :subCategory="$item" :key="'edit-sub-category-'.$item->id" />
                                     </td>
                                 </tr>
                             @endforeach
-                        </x-tables.table>
+                        </x-table>
                     @else
                         <x-alert type="warning" :message="'زیر دسته ای ثبت نشده است!'"/>
                     @endif
@@ -165,22 +141,23 @@
         <x-alert type="warning" :message="'دسته بندی ویدئویی ثبت نشده است!'"/>
     @endif
 
-    <script>
-        window.addEventListener('livewire:load', function() {
-            var description = CKEDITOR.replace('description');
-            var saveBtn = document.getElementById('save-btn');
-
-            CKEDITOR.editorConfig = function( config ) {
-                config.language = 'fa';
-                config.uiColor = '#F7B42C';
-                config.height = 300;
-                config.toolbarCanCollapse = true;
-            };
-
-            saveBtn.addEventListener('click', function() {
-                @this.set('description', description.getData());
-                @this.call('save');
-            });
-        })
-    </script>
 </div>
+
+@script
+    <script>
+        let description = CKEDITOR.replace('description');
+        let saveBtn = document.getElementById('save-btn');
+
+        CKEDITOR.editorConfig = function( config ) {
+            config.language = 'fa';
+            config.uiColor = '#F7B42C';
+            config.height = 300;
+            config.toolbarCanCollapse = true;
+        };
+
+        saveBtn.addEventListener('click', function() {
+            $wire.set('description', description.getData());
+            $wire.call('save');
+        });
+    </script>
+@endscript

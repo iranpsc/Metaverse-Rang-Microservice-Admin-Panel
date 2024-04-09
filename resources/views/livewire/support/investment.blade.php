@@ -1,9 +1,5 @@
 <div>
-    <x-slot name="pageTitle">
-        سرمایه گذاری
-    </x-slot>
-
-    <x-forms.search-box wire:model="search" />
+    <x-form.search-box wire:model="search"/>
 
     @if ($tickets->count() > 0)
         <x-table>
@@ -20,7 +16,7 @@
                 <th>مدیریت</th>
             </x-slot:headers>
             @foreach ($tickets as $ticket)
-                <tr>
+                <tr wire:key="{{ $ticket->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $ticket->code }}</td>
                     <td>{{ jdate($ticket->created_at)->format('Y/m/d') }}</td>
@@ -50,15 +46,16 @@
                     </td>
                     <td>{{ $ticket->responser_name }}</td>
                     <td>
-                        <x-button data-bs-toggle="modal" data-bs-target="#investment-modal-{{ $ticket->id }}">مشاهده</x-button>
-
+                        <x-button data-bs-toggle="modal" data-bs-target="#citizens-safety-modal-{{ $ticket->id }}">مشاهده</x-button>
                         @if ($ticket->status != 1)
-                            <x-button data-bs-toggle="modal" data-bs-target="#investment-modal-send-to-{{ $ticket->id }}">ارجا به</x-button>
+                            <x-button data-bs-toggle="modal" data-bs-target="#citizens-safety-modal-send-to-{{ $ticket->id }}">
+                                ارجا به
+                            </x-button>
                         @endif
                     </td>
                 </tr>
-                <x-modals.modal id="investment-modal-{{ $ticket->id }}" title="چزئیات تیکت">
-                     <span>شماره تیکت: {{ $ticket->code }}</span>
+                <x-modal id="citizens-safety-modal-{{ $ticket->id }}" title="چزئیات تیکت">
+                    <span>شماره تیکت: {{ $ticket->code }}</span>
                     <h5 class="modal-title">عنوان: {{ $ticket->title }}</h5>
                     <p class="modal-text">متن: {{ $ticket->content }}</p>
                     <hr>
@@ -71,80 +68,77 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
 
-                        <x-forms.group class="my-3" for="attachment-{{ $ticket->id }}" label="پیوست">
-                            <x-forms.input wire:model="attachment" type="file"
-                                id="attachment-{{ $ticket->id }}" />
-                        </x-forms.group>
-                        @error('attachment')
-                            <span class="text-danger">{{ $message }}</span>
-                        @enderror
+                        <x-form.input type="file" name="attachment" label="پیوست" />
                     @endif
-
 
                     <x-slot:footer>
                         @if ($ticket->status != 1)
-                            <x-button class="btn-block" wire:loading.attr="disabled" wire:click="sendResponse({{ $ticket->id }})">ارسال پاسخ</x-button>
+                            <x-button wire:loading.attr="disabled" wire:click="sendResponse({{ $ticket->id }})">ارسال پاسخ</x-button>
                         @endif
-                        <x-button color="danger" class="btn-block" data-bs-dismiss="modal">بستن</x-button>
+                        <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
                     </x-slot:footer>
 
                 </x-modals.modal>
 
-                <x-modals.modal id="investment-modal-send-to-{{ $ticket->id }}" title="ارجا به بخش دیگر">
-                    <x-alert type="warning" :message="__('در صورتی که این تیکت به حوضه شما مربوط نمی باشد می توانید به بخش مربوطه ارجاع دهید.')"
-                        class="mb-3" />
-                    <x-forms.group for="divert-to-{{ $ticket->id }}" label="ارجا به">
-                        <select wire:model="department" id="divert-to-{{ $ticket->id }}"
-                            class="form-control rounded">
-                            <option>انتخاب کنید</option>
-                            @if ($ticket->department != 'technical_support')
-                                <option value="technical_support">پشتیبانی فنی</option>
-                            @endif
-                            @if ($ticket->department != 'citizens_safety')
-                                <option value="citizens_safety">امنیت شهروندان</option>
-                            @endif
-                            @if ($ticket->department != 'investment')
-                                <option value="investment">سرمایه گذاری</option>
-                            @endif
-                            @if ($ticket->department != 'inspection')
-                                <option value="inspection">بازرسی</option>
-                            @endif
-                            @if ($ticket->department != 'protection')
-                                <option value="protection">حراست</option>
-                            @endif
-                            @if ($ticket->department != 'ztb')
-                                <option value="ztb">مدیریت کل ز.ت.ب</option>
-                            @endif
-                        </select>
-                    </x-forms.group>
+                <x-modal id="citizens-safety-modal-send-to-{{ $ticket->id }}" title="ارجا به بخش دیگر">
+                    <x-alert type="info" :message="__('در صورتی که این تیکت به حوضه شما مربوط نمی باشد می توانید به بخش مربوطه ارجاع دهید.')"
+                    class="mb-3" />
+                    <div class="form-group row">
+                        <label for="divert-to-{{ $ticket->id }}" class="col-sm-3 col-form-label">بخش مقصد:</label>
+                        <div class="col-sm-9">
+                            <select wire:model="department" id="divert-to-{{ $ticket->id }}"
+                                class="form-control rounded">
+                                <option>انتخاب کنید</option>
+                                @if ($ticket->department != 'technical_support')
+                                    <option value="technical_support">پشتیبانی فنی</option>
+                                @endif
+                                @if ($ticket->department != 'citizens_safety')
+                                    <option value="citizens_safety">امنیت شهروندان</option>
+                                @endif
+                                @if ($ticket->department != 'investment')
+                                    <option value="investment">سرمایه گذاری</option>
+                                @endif
+                                @if ($ticket->department != 'inspection')
+                                    <option value="inspection">بازرسی</option>
+                                @endif
+                                @if ($ticket->department != 'protection')
+                                    <option value="protection">حراست</option>
+                                @endif
+                                @if ($ticket->department != 'ztb')
+                                    <option value="ztb">مدیریت کل ز.ت.ب</option>
+                                @endif
+                            </select>
+                            @error('department')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
 
-                    @error('department')
-                        <span class="text-danger">{{ $message }}</span>
-                    @enderror
-
-                    <x-forms.group for="importance-{{ $ticket->id }}" label="درجه ارزش">
-                        <select wire:model="importance" id="importance-{{ $ticket->id }}"
-                            class="form-control rounded">
-                            <option selected>انتخاب کنید</option>
-                            <option value="-1">کم</option>
-                            <option value="0">متوسط</option>
-                            <option value="1">زیاد</option>
-                        </select>
-                    </x-forms.group>
-                    @error('importance')
-                        <span class="text-danger">{{ $message }}</span>
-                    @enderror
+                    <div class="form-group row">
+                        <label for="importance-{{ $ticket->id }}" class="col-sm-3 col-form-label">درجه اهمیت:</label>
+                        <div class="col-sm-9">
+                            <select wire:model="importance" id="importance-{{ $ticket->id }}"
+                                class="form-control rounded">
+                                <option selected>انتخاب کنید</option>
+                                <option value="-1">کم</option>
+                                <option value="0">متوسط</option>
+                                <option value="1">زیاد</option>
+                            </select>
+                            @error('importance')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
                     <x-slot:footer>
                         <x-button wire:click="sendTo({{ $ticket->id }})">ارجا</x-button>
-                        <x-button data-bs-dismiss="modal">بستن</x-button>
+                        <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
                     </x-slot:footer>
 
                 </x-modals.modal>
             @endforeach
         </x-table>
         {{ $tickets->links() }}
-
     @else
-        <x-alert type="warning" :message="__('تیکتی یافت نشد!')" />
+        <x-alert type="warning" message="تیکتی یافت نشد!" />
     @endif
 </div>

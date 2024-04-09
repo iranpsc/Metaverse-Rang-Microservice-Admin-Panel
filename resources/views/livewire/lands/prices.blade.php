@@ -1,9 +1,5 @@
 <div>
-    <x-slot name="pageTitle">
-        لیست پیشنهادات قیمت
-    </x-slot>
-    
-    <x-forms.search-box wire:model="search"></x-forms.search-box>
+    <x-form.search-box wire:model="search"/>
 
     @if (count($features) > 0)
         <x-table>
@@ -15,7 +11,7 @@
                 <th>تاریخ ثبت پیشنهاد قیمت</th>
             </x-slot:headers>
             @foreach ($features as $feature)
-                <tr>
+                <tr wire:key="{{ $feature->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $feature->properties->id }}</td>
                     <td>{{ $feature->properties->getApplicationTitle() }}</td>

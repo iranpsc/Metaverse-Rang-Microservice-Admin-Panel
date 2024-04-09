@@ -1,67 +1,44 @@
 <div>
-    <x-slot name="pageTitle">
-        مدیریت پاداش ها
-    </x-slot>
-    
     <x-button color="primary" class="my-2" data-bs-toggle="modal" data-bs-target="#create-prize">
         تعریف جوایز
     </x-button>
 
-    <x-modals.modal size="modal-xl" id="create-prize" title="تعریف جوایز سلسله خانوادگی">
+    <x-modal size="modal-xl" id="create-prize" title="تعریف جوایز سلسله خانوادگی">
         <div class="row">
             <div class="col-sm-6">
-                <x-forms.group for="member" label="نسبت خانوادگی">
-                    <x-forms.select id="member" wire:model="member">
-                        <option selected value="">انتخاب کنید</option>
-                        <option value="father">پدر</option>
-                        <option value="mother">مادر</option>
-                        <option value="husband">شوهر</option>
-                        <option value="wife">زن</option>
-                        <option value="sister">خواهر</option>
-                        <option value="brother">برادر</option>
-                        <option value="offspring">فرزند</option>
-                    </x-forms.select>
-                    @error('member')
-                        <span class="form-text text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
-                <x-forms.group for="introduction-profit-increase" label="افزایش سود پاداش معرفی(%)">
-                    <x-forms.input id="introduction-profit-increase" wire:model="introduction_profit_increase" />
-                    @error('introduction_profit_increase')
-                        <span class="form-text text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
-                <x-forms.group for="accumulated-capital-reserve" label="ذخیره سرمایه انباشته(%)">
-                    <x-forms.input id="accumulated-capital-reserve" wire:model="accumulated_capital_reserve" />
-                    @error('accumulated_capital_reserve')
-                        <span class="form-text text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
+                <div class="form-group row">
+                    <label for="member" class="col-form-label col-md-4">نسبت خانوادگی</label>
+                    <div class="col-md-8">
+                        <select class="form-control rounded" id="member" wire:model="member">
+                            <option selected value="">انتخاب کنید</option>
+                            <option value="father">پدر</option>
+                            <option value="mother">مادر</option>
+                            <option value="husband">شوهر</option>
+                            <option value="wife">زن</option>
+                            <option value="sister">خواهر</option>
+                            <option value="brother">برادر</option>
+                            <option value="offspring">فرزند</option>
+                        </select>
+                        @error('member')
+                            <span class="form-text text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                </div>
+
+                <x-form.input name="introduction-profit-increase" label="افزایش سود پاداش معرفی(%)" />
+
+                <x-form.input name="accumulated-capital-reserve" label="ذخیره سرمایه انباشته(%)" />
+
             </div>
             <div class="col-sm-6">
-                <x-forms.group for="data-storage" label="ذخیره دیتا(%)">
-                    <x-forms.input name="data-storage" wire:model="data_storage" />
-                    @error('data_storage')
-                        <span class="form-text text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
-                <x-forms.group for="psc" label="پاداش معرفی (ریال به psc)">
-                    <x-forms.input name="psc" wire:model="psc" />
-                    @error('psc')
-                        <span class="form-text text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
-                <x-forms.group for="satisfaction" label="رضایت">
-                    <x-forms.input name="satisfaction" wire:model="satisfaction" />
-                    @error('satisfaction')
-                        <span class="form-text text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
+                <x-form.input name="data-storage" label="ذخیره دیتا(%)" />
+                <x-form.input name="psc" label="پاداش معرفی PSC (ریال)" />
+                <x-form.input name="satisfaction" label="رضایت" />
             </div>
         </div>
         <x-slot name="footer">
-            <x-buttons.btn-primary wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-primary>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button wire:click="save">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
     </x-modals.modal>
 
@@ -73,45 +50,42 @@
                 <th>مدیریت</th>
             </x-slot>
             @foreach ($prizes as $prize)
-                <tr>
+                <tr wire:key="{{ $prize->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $prize->getRelationTitle() }}</td>
                     <td>
-                        <x-button color="info" data-bs-toggle="modal" data-bs-target="#view-prize-{{ $prize->id }}">
+                        <x-button color="info" data-bs-toggle="modal"
+                            data-bs-target="#view-prize-{{ $prize->id }}">
                             مشاهده
                         </x-button>
 
-                        <x-modals.modal size="modal-xl" id="view-prize-{{ $prize->id }}" title="جزئیات پاداش">
+                        <x-modal size="modal-xl" id="view-prize-{{ $prize->id }}" title="جزئیات پاداش">
                             <div class="row">
-                                <div class="col-sm-6">
-                                    <x-forms.group for="member-{{ $prize->id }}" label="نسبت خانوادگی">
-                                        <x-forms.input id="member-{{ $prize->id }}" disabled
-                                            value="{{ $prize->getRelationTitle() }}" />
-                                    </x-forms.group>
-                                    <x-forms.group for="introduction_profit_increase-{{ $prize->id }}"
-                                        label="افزایش سود پاداش معرفی(%)">
-                                        <x-forms.input id="introduction_profit_increase-{{ $prize->id }}" disabled
-                                            value="{{ $prize->introduction_profit_increase * 100 }}" />
-                                    </x-forms.group>
-                                    <x-forms.group for="accumulated_capital_reserve-{{ $prize->id }}"
-                                        label="ذخیره سرمایه انباشته(%)">
-                                        <x-forms.input id="accumulated_capital_reserve-{{ $prize->id }}" disabled
-                                            value="{{ $prize->accumulated_capital_reserve * 100 }}" />
-                                    </x-forms.group>
-                                </div>
-                                <div class="col-sm-6">
-                                    <x-forms.group for="data_storage-{{ $prize->id }}" label="ذخیره دیتا(%)">
-                                        <x-forms.input id="data_storage-{{ $prize->id }}" disabled
-                                            value="{{ $prize->data_storage * 100 }}" />
-                                    </x-forms.group>
-                                    <x-forms.group for="psc-{{ $prize->id }}" label="پاداش معرفی PSC (ریال)">
-                                        <x-forms.input id="psc-{{ $prize->id }}" disabled
-                                            value="{{ $prize->psc }}" />
-                                    </x-forms.group>
-                                    <x-forms.group for="satisfaction-{{ $prize->id }}" label="رضایت">
-                                        <x-forms.input id="satisfaction-{{ $prize->id }}" disabled
-                                            value="{{ $prize->satisfaction }}" />
-                                    </x-forms.group>
+                                <div class="col-sm-12">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>نسبت خانوادگی</th>
+                                                <th>افزایش سود پاداش معرفی(%)</th>
+                                                <th>ذخیره سرمایه انباشته(%)</th>
+                                                <th>ذخیره دیتا(%)</th>
+                                                <th>پاداش معرفی PSC (ریال)</th>
+                                                <th>رضایت</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($prizes as $prize)
+                                                <tr>
+                                                    <td>{{ $prize->getRelationTitle() }}</td>
+                                                    <td>{{ $prize->introduction_profit_increase }}</td>
+                                                    <td>{{ $prize->accumulated_capital_reserve }}</td>
+                                                    <td>{{ $prize->data_storage }}</td>
+                                                    <td>{{ $prize->psc }}</td>
+                                                    <td>{{ $prize->satisfaction }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                             <x-slot name="footer">
@@ -120,11 +94,13 @@
                         </x-modals.modal>
                     </td>
                     <td>
-                        <x-button color="info" data-bs-toggle="modal" data-bs-target="#edit-prize-{{ $prize->id }}">
+                        <x-button color="info" data-bs-toggle="modal"
+                            data-bs-target="#edit-prize-{{ $prize->id }}">
                             ویرایش
                         </x-button>
-                        <x-button color="danger" id="delete-btn-{{ $prize->id }}">حذف</x-button>
-                        <livewire:dynasty.edit-prize :prize="$prize" :wire:key="'edit-prize-'.$prize->id">
+                        <x-button color="danger" wire:confirm="آیا می خواهید حذف کنید؟"
+                            wire:click="delete({{ $prize->id }})">حذف</x-button>
+                        <livewire:dynasty.edit-prize :$prize :key="$prize->id">
                     </td>
                 </tr>
             @endforeach
@@ -133,35 +109,4 @@
     @else
         <x-alert type="warning" :message="'جزئیاتی برای پاداش تعریف نشده است'" />
     @endif
-
-    <script>
-        var deleteBtns = document.querySelectorAll('[id^=delete-btn-]');
-
-        deleteBtns.forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                Swal.fire({
-                    title: 'آیا مطمئن هستید؟',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'بله',
-                    cancelButtonText: 'خیر'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        var id = btn.id.split('-')[2];
-                        @this.call('delete', id);
-                        showSwalNotification();
-                    }
-                });
-            });
-        });
-
-        function showSwalNotification() {
-            Toast.fire({
-                icon: 'success',
-                title: 'عملیات موفقیت آمیز بود.'
-            })
-        }
-    </script>
 </div>

@@ -1,94 +1,58 @@
-<div class="text-right">
-    
+<div>
+
     <div class="row">
         <div class="col-md-6">
 
-            <x-forms.group for="level-{{ $level->id }}-name" label="نام سنگ">
-                <x-forms.input id="level-{{ $level->id }}-name" wire:model="name" />
-                @error('name')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="name" label="نام سنگ" />
 
-            <x-forms.group for="level-{{ $level->id }}-thread" label="تراشه نگین">
-                <x-forms.input id="level-{{ $level->id }}-thread" wire:model="thread" />
-                @error('thread')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
 
-            <x-forms.group for="level-{{ $level->id }}-gem-pionts" label="تعداد پوینت های نگین">
-                <x-forms.input id="level-{{ $level->id }}-gem-pionts" wire:model="points" />
-                @error('points')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="thread" label="تراشه نگین" />
 
-            <x-forms.group for="level-{{ $level->id }}-volume" label="حجم نگین">
-                <x-forms.input id="level-{{ $level->id }}-volume" wire:model="volume" />
-                @error('volume')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
-            <x-forms.group for="level-{{ $level->id }}-color" label="رنگ نگین">
-                <x-forms.input id="level-{{ $level->id }}-color" wire:model="color" />
-                @error('color')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="points" label="تعداد پوینت های نگین" />
 
-            <x-forms.group for="level-{{ $level->id }}-gem-animation" label="انیمیشن">
-                <x-forms.select wire:model="has_animation" id="level-{{ $level->id }}-gem-animation">
-                    <option @selected($has_animation) value="0">ندارد</option>
-                    <option @selected($has_animation) value="1">دارد</option>
-                </x-forms.select>
-                @error('animation')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="volume" label="حجم نگین" />
+
+            <x-form.input name="color" label="رنگ نگین" />
+
+
+            <div class="form-group row">
+                <label for="level-{{ $level->id }}-gem-animation" class="col-md-4 col-form-label">انیمیشن</label>
+                <div class="col-md-8">
+                    <select wire:model="has_animation" id="level-{{ $level->id }}-gem-animation"
+                        class="form-control rounded">
+                        <option @selected($has_animation) value="0">ندارد</option>
+                        <option @selected($has_animation) value="1">دارد</option>
+                    </select>
+                    @error('animation')
+                        <span class="form-text text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+            </div>
 
         </div>
         <div class="col-md-6">
 
-            <x-forms.group for="level-{{ $level->id }}-png-file" label="فایل png نگین">
-                <x-forms.input type="file" id="level-{{ $level->id }}-png-file" wire:model="png_file" />
-                <x-progress-bar/>
-                @error('png_file')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input type="file" name="png_file" label="فایل png نگین" />
 
-            <x-forms.group for="level-{{ $level->id }}-fbx-file" label="فایل fbx نگین">
-                <x-forms.input type="file" id="level-{{ $level->id }}-fbx-file" wire:model="fbx_file" />
-                <x-progress-bar/>
-                @error('fbx_file')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input type="file" name="fbx_file" label="فایل fbx نگین" />
 
-            <x-forms.group for="level-{{ $level->id }}-gem-lines" label="تعداد خطوط مدل سه بعدی سنگ">
-                <x-forms.input id="level-{{ $level->id }}-gem-lines" wire:model="lines" />
-                @error('lines')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="lines" label="تعداد خطوط مدل سه بعدی سنگ" />
 
-            <x-forms.group for="level-{{ $level->id }}-encryption" label="رمزنگاری مرکزی">
-                <x-forms.select wire:model="encryption" id="level-{{ $level->id }}-encryption">
-                    <option @selected($encryption) value="0">خیر</option>
-                    <option @selected($encryption) value="1">بله</option>
-                </x-forms.select>
-                @error('encryption')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <div class="form-group row">
+                <label for="level-{{ $level->id }}-encryption" class="col-md-4 col-form-label">رمزگذاری</label>
+                <div class="col-md-8">
+                    <select class="form-control rounded" wire:model="encryption"
+                        id="level-{{ $level->id }}-encryption">
+                        <option @selected($encryption) value="0">خیر</option>
+                        <option @selected($encryption) value="1">بله</option>
+                    </select>
+                    @error('encryption')
+                        <span class="form-text text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+            </div>
 
-            <x-forms.group for="level-{{ $level->id }}-gem-designer" label="طراح نگین">
-                <x-forms.input id="level-{{ $level->id }}-gem-designer" wire:model="designer" />
-                @error('designer')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="designer" label="طراح نگین" />
 
         </div>
     </div>
@@ -104,27 +68,29 @@
     </div>
 
     <hr>
-    <x-forms.verification/>
+    <x-form.verification />
     <hr>
 
-    <x-buttons.btn-primary class="w-25" id="save-btn-{{ $level->id }}-gem">ثبت</x-buttons.btn-primary>
+    <x-button class="w-25" id="save-btn-{{ $level->id }}-gem">ثبت</x-button>
 
-    <script>
-        window.addEventListener('livewire:load', function() {
-            var level_{{ $level->id }}_gem_description = CKEDITOR.replace('level-{{ $level->id }}-gem-description');
-            var saveBtn{{$level->id}} = document.getElementById('save-btn-{{$level->id}}-gem');
-
-            CKEDITOR.editorConfig = function( config ) {
-                config.language = 'fa';
-                config.uiColor = '#F7B42C';
-                config.height = 300;
-                config.toolbarCanCollapse = true;
-            };
-
-            saveBtn{{$level->id}}.addEventListener('click', function() {
-                @this.set('description', level_{{ $level->id }}_gem_description.getData());
-                @this.call('save');
-            });
-        })
-    </script>
 </div>
+
+@script
+    <script>
+        let level_{{ $level->id }}_gem_description = CKEDITOR.replace(
+            'level-{{ $level->id }}-gem-description');
+        let saveBtn{{ $level->id }} = document.getElementById('save-btn-{{ $level->id }}-gem');
+
+        CKEDITOR.editorConfig = function(config) {
+            config.language = 'fa';
+            config.uiColor = '#F7B42C';
+            config.height = 300;
+            config.toolbarCanCollapse = true;
+        };
+
+        saveBtn{{ $level->id }}.addEventListener('click', function() {
+            @this.set('description', level_{{ $level->id }}_gem_description.getData());
+            @this.call('save');
+        });
+    </script>
+@endscript

@@ -32,11 +32,11 @@
                 <th>اقدام</th>
             </x-slot:headers>
             @forelse ($translations as $translation)
-                <tr>
+                <tr wire:key="{{ $translation->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>
                         <img src="{{ asset('assets/images/flags/' . Str::upper($translation->code)) }}.svg"
-                        style="width: 30px; height: 30px">
+                            style="width: 30px; height: 30px">
                     </td>
                     <td>{{ $translation->name }}</td>
                     <td></td>
@@ -52,7 +52,8 @@
                             <span class="fa fa-download"></span>
                         </x-button>
 
-                        <x-button color="danger" id="deleteTranslation-{{ $translation->id }}">
+                        <x-button color="danger" wire:click="delete({{ $translation->id }})"
+                            wire:confirm="آیا می خواهید حذف کنید؟">
                             <span class="fa fa-trash"></span>
                         </x-button>
                     </td>
@@ -63,57 +64,4 @@
     @else
         <x-alert type="warning" message="هیچ ترجمه ای یافت نشد!" />
     @endif
-
-
-    <script>
-        window.addEventListener('livewire:load', function() {
-            $(document).ready(function() {
-                $('#languages').select2();
-
-                $('#languages').on('select2:select', function(e) {
-                    var data = e.params.data;
-                    @this.set('selectedLanguage', data.id);
-                });
-
-                let deleteTranslation = document.querySelectorAll("[id^='deleteTranslation-']");
-                let exportBtns = document.querySelectorAll("[id^='export-']");
-
-                deleteTranslation.forEach(function(element) {
-                    element.addEventListener('click', function() {
-                        let translationId = element.id.split('-')[1];
-                        Swal.fire({
-                            title: 'آیا از حذف این ترجمه مطمئن هستید؟',
-                            text: "این عمل غیر قابل بازگشت است!",
-                            icon: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#3085d6',
-                            cancelButtonColor: '#d33',
-                            confirmButtonText: 'بله، حذف کن!',
-                            cancelButtonText: 'لغو'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                @this.call('deleteTranslation', translationId);
-                            }
-                        });
-                    });
-                });
-
-                let languageStatus = document.querySelectorAll("[id^='languageStatus-']");
-
-                languageStatus.forEach(function(element) {
-                    element.addEventListener('change', function() {
-                        let translationId = element.id.split('-')[1];
-                        @this.call('toggleTranslationStatus', translationId);
-                    });
-                });
-
-                exportBtns.forEach(function(element) {
-                    element.addEventListener('click', function() {
-                        let translationId = element.id.split('-')[1];
-                        @this.call('export', translationId);
-                    });
-                });
-            });
-        });
-    </script>
 </div>

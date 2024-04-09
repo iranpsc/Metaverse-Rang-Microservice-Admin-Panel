@@ -1,9 +1,6 @@
 <div>
-    <x-slot name="pageTitle">
-        {{ __('واریزی ها') }}
-    </x-slot>
-    
-    <x-forms.search-box wire:model.debounce.1500="searchTerm"></x-forms.search-box>
+    <x-form.search-box wire:model.live="searchTerm" />
+
     <button type="button" class="btn btn-primary btn-sm round my-2" wire:click="export">دانلود خروجی اکسل</button>
 
     @if (count($payments) > 0)
@@ -19,7 +16,7 @@
                 <td>ساعت واریز</td>
             </x-slot:headers>
             @foreach ($payments as $payment)
-                <tr>
+                <tr wire:key="{{ $payment->id }}">
                     <td>{{ $payment->id }}</td>
                     <td>{{ $payment->user->name }}</td>
                     <td>{{ $payment->amount }}</td>

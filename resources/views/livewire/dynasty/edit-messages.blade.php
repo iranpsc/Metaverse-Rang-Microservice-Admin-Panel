@@ -1,13 +1,9 @@
 <div>
-    <x-slot name="pageTitle">
-        مدیریت پیام ها
-    </x-slot>
-
-    <x-modals.modal id="edit-message-{{ $message->id }}" title="ویرایش پیام">
+    <x-modal id="edit-message-{{ $message->id }}" title="ویرایش پیام">
         <div class="form-group">
             <label>متن پیام</label>
             <div wire:ignore>
-                <textarea id="content-{{ $message->id }}">{{ $message->message }}</textarea>
+                <textarea id="content-{{ $message->id }}"></textarea>
             </div>
             @error('content')
                 <span class="form-text text-danger">{{ $message }}</span>
@@ -19,22 +15,25 @@
         </x-slot>
     </x-modals.modal>
 
-    <script>
-        window.addEventListener('livewire:load', function() {
-            var content{{$message->id}} = CKEDITOR.replace('content-{{$message->id}}');
-            var saveBtn = document.getElementById('save-btn-{{$message->id}}');
-
-            CKEDITOR.editorConfig = function( config ) {
-                config.language = 'fa';
-                config.uiColor = '#F7B42C';
-                config.height = 300;
-                config.toolbarCanCollapse = true;
-            };
-
-            saveBtn.addEventListener('click', function() {
-                @this.set('content', content{{$message->id}}.getData());
-                @this.call('save');
-            });
-        })
-    </script>
 </div>
+
+@script
+    <script>
+        let content_{{ $message->id }} = CKEDITOR.replace('content-{{ $message->id }}');
+        let saveBtn = document.getElementById('save-btn-{{ $message->id }}');
+
+        content_{{ $message->id }}.setData(`{{ $message->message }}`);
+
+        CKEDITOR.editorConfig = function(config) {
+            config.language = 'fa';
+            config.uiColor = '#F7B42C';
+            config.height = 300;
+            config.toolbarCanCollapse = true;
+        };
+
+        saveBtn.addEventListener('click', function() {
+            @this.set('content', content_{{ $message->id }}.getData());
+            @this.call('save');
+        });
+    </script>
+@endscript

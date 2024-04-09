@@ -18,19 +18,19 @@
     </ul>
     <div class="tab-content">
         <div id="tab1" class="tab-pane fade show active">
-            <livewire:reports.spelling-error :reports="$reports">
+            <livewire:reports.spelling-error :$reports />
         </div>
         <div id="tab2" class="tab-pane fade">
-            <livewire:reports.fps-error :reports="$reports">
+            <livewire:reports.fps-error :$reports />
         </div>
         <div id="tab3" class="tab-pane fade">
-            <livewire:reports.disrespect :reports="$reports">
+            <livewire:reports.disrespect :$reports />
         </div>
         <div id="tab4" class="tab-pane fade">
-            <livewire:reports.display-error :reports="$reports">
+            <livewire:reports.display-error :$reports />
         </div>
         <div id="tab5" class="tab-pane fade">
-            <livewire:reports.coding-error :reports="$reports">
+            <livewire:reports.coding-error :$reports />
         </div>
     </div>
 </div>

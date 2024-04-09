@@ -1,76 +1,67 @@
 <div>
-    {{-- If you look to others for fulfillment, you will never truly be fulfilled. --}}
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#api-ip-range-modal">تعریف رنج IP
-    </x-buttons.btn-primary>
-    {{-- If you look to others for fulfillment, you will never truly be fulfilled. --}}
-    <x-buttons.btn-primary class="my-2" data-bs-toggle="modal" data-bs-target="#import-api-ip-range-modal">درون ریزی
+    <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#api-ip-range-modal">تعریف رنج IP</x-button>
+
+    <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#import-api-ip-range-modal">درون ریزی
         رنج آی پی
-    </x-buttons.btn-primary>
-    <x-buttons.btn-danger wire:click="flushIpRanges">Flush</x-buttons.btn-danger>
+    </x-button>
 
-    <x-forms.search-box wire:model="searchTerm" />
+    <x-button color="danger" wire:click="flushIpRanges">Flush</x-button>
 
-    <x-modals.modal id="api-ip-range-modal" title="تعریف رنج آی پی Api">
-        <x-forms.group for="title" label="عنوان">
-            <x-forms.input wire:model="title" />
-            @error('title')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-            </x-fomrs.gourp>
-            <x-forms.group for="starting_ip" label="آی پی شروع">
+    <x-form.search-box wire:model.live="searchTerm" />
+
+    <x-modal id="api-ip-range-modal" title="تعریف رنج آی پی Api">
+        <x-form.input name="title" label="عنوان" />
+
+        <div class="form-group row">
+            <label for="starting_ip" class="form-col-form-label col-sm-4">آی پی شروع</label>
+            <div class="col-sm-4">
                 <div class="row">
                     @for ($i = 0; $i < 4; $i++)
                         <div class="col">
-                            <x-forms.input wire:model="starting_ip.{{ 3 - $i }}" />
+                            <input class="form-control rounded" wire:model="starting_ip.{{ 3 - $i }}">
                             @error('starting_ip.' . (3 - $i))
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
                     @endfor
                 </div>
-            </x-forms.group>
-            <x-forms.group for="ending_ip" label="آی پی پایانی">
+            </div>
+        </div>
+
+        <div class="form-group row">
+            <label for="ending_ip" class="form-col-form-label col-sm-4">آی پی پایان</label>
+            <div class="col-sm-4">
                 <div class="row">
                     @for ($i = 0; $i < 4; $i++)
                         <div class="col">
-                            <x-forms.input wire:model="ending_ip.{{ 3 - $i }}" />
+                            <input class="form-control rounded" wire:model="ending_ip.{{ 3 - $i }}">
                             @error('ending_ip.' . (3 - $i))
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
                     @endfor
                 </div>
-            </x-forms.group>
-           <x-forms.verification/>
-            <x-slot name="footer">
-                <x-buttons.btn-info wire:loading.attr="disabled" wire:click="update">ثبت</x-buttons.btn-info>
-                <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
-            </x-slot>
+            </div>
+        </div>
+
+        <x-form.verification />
+
+        <x-slot name="footer">
+            <x-button wire:click="update">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
+        </x-slot>
     </x-modals.modal>
 
-    <x-modals.modal id="import-api-ip-range-modal" title="درون ریزی رنج آی پی">
-        @if (session('success'))
-            <x-alerts.success>{{ session('success') }}</x-alerts.success>
-        @endif
-        <x-forms.group for="import-title" label="عنوان">
-            <x-forms.input wire:model="title" id="import-file" />
-            @error('title')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-            </x-fomrs.gourp>
-            <x-forms.group for="import-file" label="فایل">
-                <x-forms.input type="file" wire:model="file" id="import-file" />
-                <span class="text-success" wire:loading wire:target="file">در حال بارگذاری ...</span>
-                @error('file')
-                    <span class="text-danger">{{ $message }}</span>
-                @enderror
-                </x-fomrs.gourp>
-               <x-forms.verification/>
-                <x-slot name="footer">
-                    <x-buttons.btn-info wire:loading.attr="disabled" wire:click="import">ثبت</x-buttons.btn-info>
-                    <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
-                </x-slot>
+    <x-modal id="import-api-ip-range-modal" title="درون ریزی رنج آی پی">
+        <x-form.input name="title" label="عنوان" />
+        <x-form.input type="file" name="file" label="فایل" />
+        <x-form.verification />
+        <x-slot name="footer">
+            <x-button wire:click="import">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
+        </x-slot>
     </x-modals.modal>
+
     @if (count($ip_ranges) > 0)
         <x-tables.table id="ips-table">
             <x-slot name="headers">
@@ -82,22 +73,21 @@
                 <th>ملاحضات</th>
             </x-slot>
             @foreach ($ip_ranges as $ip_range)
-                <tr>
+                <tr wire:key="{{ $ip_range->id }}">
                     <td>{{ $ip_range->id }}</td>
                     <td>{{ $ip_range->title }}</td>
                     <td>{{ $ip_range->from }}</td>
                     <td>{{ $ip_range->to }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($ip_range->created_at)->format('Y/m/d') }}</td>
-                    <td>{{ \Morilog\Jalali\Jalalian::forge($ip_range->created_at)->format('H:m:s') }}</td>
+                    <td>{{ jdate($ip_range->created_at)->format('Y/m/d') }}</td>
+                    <td>{{ jdate($ip_range->created_at)->format('H:m:s') }}</td>
                     <td>
-                        <x-buttons.btn-danger class="confirm" id="{{ $ip_range->id }}" title="deleteIpRange">حذف
-                        </x-buttons.btn-danger>
+                        <x-button color="danger" wire:click="delete({{ $ip_range->id }})" wire:confirm="آیا از حذف این مورد اطمینان دارید؟">حذف</x-button>
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $ip_ranges->links() }}
     @else
-        <x-alerts.danger>رنچ آی پی تعریف نشده است</x-alerts.danger>
+    <x-alert type="info" message="هیچ رنج آی پی ای برای نمایش وجود ندارد." />
     @endif
 </div>

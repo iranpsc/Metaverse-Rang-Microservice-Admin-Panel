@@ -1,10 +1,6 @@
 <div>
-    <x-slot name="pageTitle">
-        لیست معاملات
-    </x-slot>
-    
-    <x-forms.search-box wire:model="search"></x-forms.search-box>
-    
+    <x-form.search-box wire:model="search" />
+
     @if ($trades->count() > 0)
         <x-table>
             <x-slot:headers>
@@ -19,7 +15,7 @@
                 <th>کمیسیون سیستم ریال</th>
             </x-slot:headers>
             @foreach ($trades as $trade)
-                <tr>
+                <tr wire:key="{{ $trade->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $trade->feature->properties->id }}</td>
                     <td>{{ $trade->buyer->name }}</td>
@@ -35,6 +31,6 @@
         </x-table>
         {{ $trades->links() }}
     @else
-        <x-alerts.danger>معامله ای ثبت نشده است</x-alerts.danger>
+        <x-alert type="danger" :message="'ملکی یافت نشد'" />
     @endif
 </div>

@@ -1,9 +1,6 @@
 <div>
-    <x-slot name="pageTitle">
-        {{ __('اطلاعات احراز هویت') }}
-    </x-slot>
 
-    <x-forms.search-box wire:model="searchTerm" placeholder="کد ملی را وارد کنید" />
+    <x-form.search-box wire:model.live="searchTerm" placeholder="کد ملی را وارد کنید" />
 
     @if ($kycs->count() > 0)
         <x-table>
@@ -18,7 +15,7 @@
                 <th>وضعیت</th>
             </x-slot:headers>
             @foreach ($kycs as $kyc)
-                <tr>
+                <tr wire:key="{{ $kyc->id }}">
                     <td>{{ $kyc->id }}</td>
                     <td>{{ $kyc->fname }}</td>
                     <td>{{ $kyc->lname }}</td>
@@ -28,7 +25,7 @@
                     <td>{{ $kyc->user->email }}</td>
                     <td>
                         <x-button data-bs-toggle="modal" data-bs-target="#modal-kyc-{{ $kyc->id }}">مشاهده</x-button>
-                        <livewire:citizens.kyc.details :kyc="$kyc" :wire:key="'kyc-'.$kyc->id">
+                        <livewire:citizens.kyc-details :$kyc :key="$kyc->id" />
                     </td>
                     <td>
                         @if ($kyc->status == 0)
@@ -44,6 +41,6 @@
         </x-table>
         {{ $kycs->links() }}
     @else
-        <x-alert type="warning" :message="'اطلاعاتی تعریف نشده است'"/>
+        <x-alert type="warning" message="اطلاعاتی تعریف نشده است" />
     @endif
 </div>

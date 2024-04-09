@@ -1,126 +1,54 @@
-<div class="text-right">
+<div>
     <div class="row">
         <div class="col-md-6">
 
-            <x-forms.group for="level-{{ $level->id }}-score" label="امتیاز مورد نیاز">
-                <x-forms.input id="level-{{ $level->id }}-score" wire:model="score" />
-                @error('score')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="score" label="امتیاز مورد نیاز" />
 
-            <x-forms.group for="level-{{ $level->id }}-rank" label="رتبه سطح">
-                <x-forms.input id="level-{{ $level->id }}-rank" wire:model="rank" />
-                @error('rank')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="rank" label="رتبه سطح" />
 
-            <x-forms.group for="level-{{ $level->id }}-subcategories" label="تعداد زیرشاخه">
-                <x-forms.input id="level-{{ $level->id }}-subcategories" wire:model="subcategories" />
-                @error('subcategories')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="subcategories" label="تعداد زیر شاخه" />
 
-            <x-forms.group for="level-{{ $level->id }}-created-at" label="تاریخ ایجاد سطح">
-                <x-forms.input id="level-{{ $level->id }}-created-at" wire:model="creation_date" />
-                @error('creation_date')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="creation_date" label="تاریخ ایجاد" />
 
-            <x-forms.group for="level-{{ $level->id }}-persian-font" label="فونت مورد استفاده فارسی">
-                <x-forms.input id="level-{{ $level->id }}-persian-font" wire:model="persian_font" />
-                @error('persian_font')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="english_font" label="فونت مورد استفاده انگلیسی" />
 
-            <x-forms.group for="level-{{ $level->id }}-english-font" label="فونت مورد استفاده انگلیسی">
-                <x-forms.input id="level-{{ $level->id }}-english-font" wire:model="english_font" />
-                @error('english_font')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="persian_font" label="فونت مورد استفاده فارسی" />
 
-            <x-forms.group for="level-{{ $level->id }}-general-info-animation" label="انیمیشن">
-                <x-forms.select wire:model="has_animation" id="level-{{ $level->id }}-general-info-animation">
-                    <option @selected($has_animation) value="0">ندارد</option>
-                    <option @selected($has_animation) value="1">دارد</option>
-                </x-forms.select>
-                @error('animation')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
-            <x-forms.group for="level-{{ $level->id }}-general-info-png-file" label="فایل png">
-                <x-forms.input type="file" id="level-{{ $level->id }}-general-info-png-file" wire:model="png_file" />
-                <x-progress-bar/>
-                @error('png_file')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <div class="form-group row">
+                <label for="level-{{ $level->id }}-general-info-animation"
+                    class="col-md-4 col-form-label">انیمیشن</label>
+                <div class="col-md-8">
+                    <select wire:model="has_animation" id="level-{{ $level->id }}-general-info-animation"
+                        class="form-control rounded">
+                        <option @selected($has_animation) value="0">ندارد</option>
+                        <option @selected($has_animation) value="1">دارد</option>
+                    </select>
+                    @error('animation')
+                        <span class="form-text text-danger">{{ $message }}</span>
+                    @enderror
+                </div>
+            </div>
+
+            <x-form.input type="file" name="png_file" label="فایل png" />
 
         </div>
         <div class="col-md-6">
 
-            <x-forms.group for="level-{{ $level->id }}-general-info-fbx-file" label="فایل fbx">
-                <x-forms.input type="file" id="level-{{ $level->id }}-general-info-fbx-file" wire:model="fbx_file" />
-                <x-progress-bar/>
-                @error('fbx_file')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input type="file" name="gif_file" label="فایل gif" />
 
-            <x-forms.group for="level-{{ $level->id }}-general-info-gif-file" label="فایل gif">
-                <x-forms.input type="file" id="level-{{ $level->id }}-general-info-gif-file" wire:model="gif_file" />
-                <x-progress-bar/>
-                @error('gif_file')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input type="file" name="fbx_file" label="فایل fbx" />
 
-            <x-forms.group for="level-{{ $level->id }}-file-volume" label="حجم فایل">
-                <x-forms.input id="level-{{ $level->id }}-file-volume" wire:model="file_volume" />
-                @error('file_volume')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="file_volume" label="حجم فایل" />
 
-            <x-forms.group for="level-{{ $level->id }}-used-colors" label="رنگ های مورد استفاده">
-                <x-forms.input id="level-{{ $level->id }}-used-colors" wire:model="used_colors" />
-                @error('used_colors')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="used_colors" label="رنگ های مورد استفاده" />
 
-            <x-forms.group for="level-{{ $level->id }}-points" label="تعداد پوینت های سطح">
-                <x-forms.input id="level-{{ $level->id }}" wire:model="points" />
-                @error('points')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="points" label="تعداد پوینت های سطح" />
 
-            <x-forms.group for="level-{{ $level->id }}-lines" label="تعداد خطوط مدل سطح">
-                <x-forms.input id="level-{{ $level->id }}-lines" wire:model="lines" />
-                @error('lines')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="lines" label="تعداد خطوط مدل سطح" />
 
-            <x-forms.group for="level-{{ $level->id }}-designer" label="طراح سطح">
-                <x-forms.input id="level-{{ $level->id }}" wire:model="designer" />
-                @error('designer')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="designer" label="طراح سطح" />
 
-            <x-forms.group for="level-{{ $level->id }}-3d-model-designer" label="طراح مدل سه بعدی">
-                <x-forms.input id="level-{{ $level->id }}-3d-model-designer" wire:model="model_designer" />
-                @error('model_designer')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </x-forms.group>
+            <x-form.input name="model_designer" label="طراح مدل سه بعدی" />
 
         </div>
     </div>
@@ -128,7 +56,7 @@
     <div class="form-group my-2">
         <label for="level-{{ $level->id }}-description">توضیحات سطح</label>
         <div wire:ignore>
-            <textarea id="level-{{ $level->id }}-description">{{ $description }}</textarea>
+            <textarea id="level-{{ $level->id }}-description"></textarea>
         </div>
         @error('description')
             <span class="form-text text-danger">{{ $message }}</span>
@@ -136,28 +64,31 @@
     </div>
 
     <hr>
-    <x-forms.verification/>
+    <x-form.verification />
     <hr>
 
-    <x-buttons.btn-primary class="w-25" id="save-btn-{{$level->id}}-general-info">ثبت</x-buttons.btn-primary>
-
-    <script>
-        window.addEventListener('livewire:load', function() {
-            var level_{{ $level->id }}_general_info_description = CKEDITOR.replace('level-{{ $level->id }}-description');
-            var saveBtn{{$level->id}} = document.getElementById('save-btn-{{$level->id}}-general-info');
-
-            CKEDITOR.editorConfig = function( config ) {
-                config.language = 'fa';
-                config.uiColor = '#F7B42C';
-                config.height = 300;
-                config.toolbarCanCollapse = true;
-            };
-
-            saveBtn{{$level->id}}.addEventListener('click', function() {
-                @this.set('description', level_{{ $level->id }}_general_info_description.getData());
-                @this.call('save');
-            });
-        })
-    </script>
-
+    <x-button class="w-25" id="save-btn-{{ $level->id }}-general-info">ثبت</x-button>
 </div>
+
+@script
+    <script>
+        let level_{{ $level->id }}_general_info_description = CKEDITOR.replace(
+            'level-{{ $level->id }}-description');
+
+        let saveBtn_{{ $level->id }} = document.getElementById('save-btn-{{ $level->id }}-general-info');
+
+        level_{{ $level->id }}_general_info_description.setData(`{{ $description }}`);
+
+        CKEDITOR.editorConfig = function(config) {
+            config.language = 'fa';
+            config.uiColor = '#F7B42C';
+            config.height = 300;
+            config.toolbarCanCollapse = true;
+        };
+
+        saveBtn_{{ $level->id }}.addEventListener('click', function() {
+            @this.set('description', level_{{ $level->id }}_general_info_description.getData());
+            @this.call('save');
+        });
+    </script>
+@endscript

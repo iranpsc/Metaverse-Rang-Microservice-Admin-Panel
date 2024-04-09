@@ -1,20 +1,16 @@
 <div>
-    <x-slot name="pageTitle">
-        لیست ملک های فروخته شده
-    </x-slot>
-    
-    <x-forms.search-box wire:model="search"></x-forms.search-box>
+    <x-form.search-box wire:model="search" />
 
     @if (count($trades) > 0)
         <x-table>
             <x-slot:headers>
-                    <th>کد زمین</th>
-                    <th>خریدار</th>
-                    <th>تاریخ خرید</th>
-                    <th>ساعت خرید</th>
+                <th>کد زمین</th>
+                <th>خریدار</th>
+                <th>تاریخ خرید</th>
+                <th>ساعت خرید</th>
             </x-slot:headers>
             @foreach ($trades as $trade)
-                <tr>
+                <tr wire:key="{{ $trade->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $trade->feature->properties->id }}</td>
                     <td>{{ $trade->buyer->name }}</td>
@@ -24,6 +20,6 @@
             @endforeach
         </x-table>
     @else
-        <x-alerts.danger>ملکی فروخته نشده است</x-alerts.danger>
+        <x-alert type="danger" :message="'ملکی یافت نشد'" />
     @endif
 </div>

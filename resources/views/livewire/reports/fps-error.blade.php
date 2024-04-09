@@ -1,9 +1,6 @@
 <div>
-    <x-slot name="pageTitle">
-        گزارشات خطاهای FPS
-    </x-slot>
 
-    <x-forms.search-box wire:model="search" />
+    <x-form.search-box wire:model="search" />
 
     @if ($reports->count() > 0)
         <x-table>
@@ -17,12 +14,12 @@
                 <th>ساعت گزارش</th>
             </x-slot:headers>
             @foreach ($reports as $report)
-                <tr>
+                <tr wire:key="{{ $report->id }}">
                     <td>{{ $report->id }}</td>
                     <td>{{ $report->title }}</td>
                     <td>
                         <x-button data-bs-toggle="modal" data-bs-target="#view-report-{{ $report->id }}">مشاهده</x-button>
-                        <x-modals.modal id="view-report-{{ $report->id }}" title="توضیحات گزارش">
+                        <x-modal id="view-report-{{ $report->id }}" title="توضیحات گزارش">
                             <p class="modal-text">{{ $report->content }}</p>
                             <x-slot:footer>
                                 <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>

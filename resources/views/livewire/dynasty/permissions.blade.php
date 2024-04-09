@@ -1,8 +1,4 @@
 <div>
-    <x-slot name="pageTitle">
-        مدیریت دسترسی ها
-    </x-slot>
-    
     <x-table>
         <x-slot name="headers"></x-slot>
             <tr>

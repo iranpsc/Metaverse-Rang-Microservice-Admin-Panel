@@ -1,18 +1,7 @@
 <div>
-    {{-- Success is as dangerous as failure. --}}
-    <x-modals.modal size="modal-xl" id="update-role-modal-{{ $role->id }}" title="ویرایش مسئولیت">
-        <x-forms.group for="title-{{ $role->id }}" label="عنوان مسئولیت">
-            <x-forms.input wire:model="title" id="title-{{ $role->id }}" />
-            @error('title')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-        <x-forms.group for="name-{{ $role->id }}" label="نام مسئولیت">
-            <x-forms.input type="name" wire:model="name" id="name-{{ $role->id }}" />
-            @error('name')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+    <x-modal size="modal-xl" id="update-role-modal-{{ $role->id }}" title="ویرایش مسئولیت">
+        <x-form.input wire:model="title" name="title" label="عنوان مسئولیت" />
+        <x-form.input wire:model="name" name="name" label="نام مسئولیت" />
         <p>دسترسی های اختصاص داده شده به این مسئولیت:</p>
 
         @if ($role->permissions->count() > 0)
@@ -20,13 +9,13 @@
                 @foreach ($role->permissions as $rolePermissions)
                     <li>
                         <span>{{ $rolePermissions->title }}</span>
-                        <x-buttons.btn-danger id="{{ $rolePermissions->id }}" class="confirm"
-                            title="removeRolePermission">حذف</x-buttons.btn-danger>
+                        <x-button color="danger" wire:click="removePermission({{ $rolePermissions->id }})"
+                            wire:confirm="آیا می خواهید این دسترسی را حذف کنید؟">حذف</x-button>
                     </li>
                 @endforeach
             </ul>
         @else
-            <x-alerts.danger>هیچ دسترسی به این مسئولیت اختصاص داده نشده است!</x-alert.info>
+            <x-alert type="warning">دسترسی ای تعریف نشده است!</x-alert>
         @endif
         <p class="modal-text">کدام دسترسی ها را به این مسئولیت می دهید؟</p>
         @forelse ($permissions->chunk(4) as $permission)
@@ -34,7 +23,7 @@
                 @foreach ($permission as $item)
                     <div class="col-sm-3">
                         <div class="input-group">
-                            <input class="normal" value="{{ $item->id }}" wire:model="addedPermissions"
+                            <input class="normal" value="{{ $item->name }}" wire:model="addedPermissions"
                                 type="checkbox" id="role-permissions-{{ $item->id }}">
                             <label for="role-permissions-{{ $item->id }}">{{ $item->title }}</label>
                         </div>
@@ -42,11 +31,11 @@
                 @endforeach
             </div>
         @empty
-            <x-alerts.danger>نقشی تعریف نشده است!</x-alerts.danger>
+            <x-alert type="warning">دسترسی ای تعریف نشده است!</x-alert>
         @endforelse
         <x-slot name="footer">
-            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
     </x-modals.modal>
 </div>

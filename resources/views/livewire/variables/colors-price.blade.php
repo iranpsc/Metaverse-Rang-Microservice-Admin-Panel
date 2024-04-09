@@ -1,29 +1,16 @@
 <div>
-    <x-slot name="pageTitle">
-        مدیریت ارز ها
-    </x-slot>
-
     <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#create-asset-modal">ایجاد ارز</x-button>
 
-    <x-forms.search-box wire:model="search" />
+    <x-form.search-box wire:model="search" />
 
-    <x-modals.modal id="create-asset-modal" title="تعریف ارز">
+    <x-modal id="create-asset-modal" title="تعریف ارز">
 
-        <x-forms.group for="variables-asset" label="ارز">
-            <x-forms.input id="variables-asset" wire:model="asset" placeholder="نام ارز را به انگلیسی وارد کنید" />
-            @error('asset')
-                <span class="form-text text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input name="asset" label="نام ارز" placeholder="نام ارز را به انگلیسی وارد کنید" />
 
-        <x-forms.group for="price" label="قیمت واحد">
-            <x-forms.input id="price" wire:model="price" class="only-number" />
-            @error('price')
-                <span class="form-text text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input name="price" label="قیمت واحد" placeholder="قیمت واحد را به تومان وارد کنید"
+            class="only-number" />
 
-        <x-forms.verification />
+        <x-form.verification />
 
         <x-slot:footer>
             <x-button wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
@@ -41,20 +28,22 @@
                 <th>مدیریت</th>
             </x-slot:headers>
             @foreach ($variables as $variable)
-                <tr>
+                <tr wire:key="{{ $variable->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $variable->getAssetTitle() }}</td>
                     <td>{{ $variable->price }}</td>
                     <td>{{ jdate($variable->updated_at) }}</td>
                     <td>{{ $variable->note }}</td>
                     <td>
-                        <x-button data-bs-toggle="modal" data-bs-target="#edit-currency-modal-{{ $variable->id }}">بروزرسانی</x-button>
-                        <x-button color="danger" class="confirm" title="deleteCurrency" id="{{ $variable->id }}">حذف</x-button>
+                        <x-button data-bs-toggle="modal"
+                            data-bs-target="#edit-currency-modal-{{ $variable->id }}">بروزرسانی</x-button>
+                        <x-button color="danger" wire:click="delete({{ $variable->id }})"
+                            wire:confirm="آیا این ارز را حذف می کنید؟">حذف</x-button>
 
                         @if ($variable->priceChangeLogs->count() > 0)
                             <x-button color="info" data-bs-toggle="modal" data-bs-target="#variable-history-{{ $variable->id }}">تاریخچه تغییرات</x-button>
 
-                            <x-modals.modal size="modal-xl" id="variable-history-{{ $variable->id }}" title="تاریخچه تغییرات">
+                            <x-modal size="modal-xl" id="variable-history-{{ $variable->id }}" title="تاریخچه تغییرات">
                                 <x-table>
                                     <x-slot name="headers">
                                         <th>دارایی</th>
@@ -66,29 +55,27 @@
                                         <th>توضیحات</th>
                                     </x-slot>
 
-                                    <tbody>
-                                        @foreach ($variable->priceChangeLogs as $changeLog)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>ارز {{ $changeLog->changeable->getAssetTitle() }}</td>
-                                                <td>{{ jdate($changeLog->created_at)->format('Y/m/d') }}
-                                                </td>
-                                                <td>{{ jdate($changeLog->created_at)->format('H:m:s') }}
-                                                </td>
-                                                <td>{{ $changeLog->changer_name }}</td>
-                                                <td>{{ $changeLog->previous_value }}</td>
-                                                <td>{{ $changeLog->current_value }}</td>
-                                                <td>{{ $changeLog->note }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
+                                    @foreach ($variable->priceChangeLogs as $changeLog)
+                                        <tr wire:key="{{ $changeLog->id }}">
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td>ارز {{ $changeLog->changeable->getAssetTitle() }}</td>
+                                            <td>{{ jdate($changeLog->created_at)->format('Y/m/d') }}
+                                            </td>
+                                            <td>{{ jdate($changeLog->created_at)->format('H:m:s') }}
+                                            </td>
+                                            <td>{{ $changeLog->changer_name }}</td>
+                                            <td>{{ $changeLog->previous_value }}</td>
+                                            <td>{{ $changeLog->current_value }}</td>
+                                            <td>{{ $changeLog->note }}</td>
+                                        </tr>
+                                    @endforeach
                                 </x-table>
                                 <x-slot:footer>
                                     <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
                                 </x-slot:footer>
                             </x-modals.modal>
                         @endif
-                        <livewire:variables.edit.edit-colors :asset="$variable" :wire:key="'edit-asset-price-'.$variable->id">
+                        <livewire:variables.edit.edit-colors :asset="$variable" :key="'edit-asset-price-'.$variable->id">
                     </td>
                 </tr>
             @endforeach

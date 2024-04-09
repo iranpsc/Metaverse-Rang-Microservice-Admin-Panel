@@ -1,40 +1,20 @@
 <div>
-    <x-modals.modal id="edit-level-modal-{{ $level->id }}" title="بروزرسانی سطح">
-        <x-forms.group for="name-{{ $level->id }}" label="نام سطح">
-            <x-forms.input id="name{{ $level->id }}" wire:model="name" />
-            @error('name')
-                <span class="form-text text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+    <x-modal id="edit-level-modal-{{ $level->id }}" title="بروزرسانی سطح">
+        <x-form.input name="name" label="نام سطح" />
 
-        <x-forms.group label="تصویر" for="image-{{ $level->id }}">
-            <x-forms.input type="file" id="image-{{ $level->id }}" wire:model="image" />
-            <x-progress-bar />
-            @error('image')
-                <span class="form-text text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input name="slug" label="نامک" />
 
-        <x-forms.group label="تصویر پس زمینه" for="backgroundImage-{{ $level->id }}">
-            <x-forms.input type="file" id="backgroundImage-{{ $level->id }}" wire:model="backgroundImage" />
-            <x-progress-bar />
-            @error('backgroundImage')
-                <span class="form-text text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input type="file" name="image" label="تصویر" />
 
-        <x-forms.group for="score-{{ $level->id }}" label="امتیاز مورد نیاز">
-            <x-forms.input id="score{{ $level->id }}" wire:model="score" />
-            @error('score')
-                <span class="form-text text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input type="file" name="background_image" label="تصویر پس زمینه" />
 
-        <x-forms.verification/>
+        <x-form.input name="score" label="امتیاز" />
+
+        <x-form.verification/>
 
         <x-slot:footer>
-            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بازگشت</x-buttons.btn-danger>
+            <x-button wire:click="save">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بازگشت</x-button>
         </x-slot:footer>
     </x-modals.modal>
 </div>

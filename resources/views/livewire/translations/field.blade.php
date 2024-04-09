@@ -13,22 +13,14 @@
 
     <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#create-field">ایجاد عبارت جدید</x-button>
 
-    <x-modals.modal id="create-field" title="ایجاد عبارت جدید">
-        <x-forms.group for="name" label="نام عبارت">
-            <x-forms.input wire:model.defer="name" id="name" />
-            @error('name')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-        <x-forms.group for="value" label="ترجمه">
-            <x-forms.input wire:model.defer="value" id="value" />
-            @error('value')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+    <x-modal id="create-field" title="ایجاد عبارت جدید">
+        <x-form.input name="name" label="نام عبارت" />
+
+        <x-form.input name="value" label="ترجمه" />
+
         <x-slot name="footer">
-            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">ثبت</x-buttons.btn-success>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
     </x-modals.modal>
 
@@ -40,7 +32,7 @@
                 <th>اقدام</th>
             </x-slot:headers>
             @forelse ($fields as $field)
-                <tr>
+                <tr wire:key="{{ $field->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $field->name }}</td>
                     <td>{{ $field->translation }}</td>
@@ -48,10 +40,10 @@
                         <x-button data-bs-toggle="modal" data-bs-target="#edit-field-{{ $field->id }}">
                             <span class="fa fa-edit"></span>
                         </x-button>
-                        <x-button color="danger" id="deleteField-{{ $field->id }}">
+                        <x-button color="danger" wire:click="delete({{ $field->id }})" wire:confirm="آیا می خواهید این فیلد را حذف کنید؟">
                             <span class="fa fa-trash"></span>
                         </x-button>
-                        <livewire:translations.edit-field :field="$field" :key="'fields-'.$field->id" />
+                        <livewire:translations.edit-field :$field :key="$field->id" />
                     </td>
                 </tr>
             @endforeach
@@ -60,30 +52,4 @@
     @else
         <x-alert type="danger" message="هیچ اطلاعاتی موجود نیست"/>
     @endif
-
-    <script>
-        window.addEventListener('livewire:load', function() {
-            let deleteTranslation = document.querySelectorAll("[id^='deleteField-']");
-
-            deleteTranslation.forEach(function(element) {
-                element.addEventListener('click', function() {
-                    let fieldId = element.id.split('-')[1];
-                    Swal.fire({
-                        title: 'آیا از حذف این عبارت مطمئن هستید؟',
-                        text: "این عمل غیر قابل بازگشت است!",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#d33',
-                        confirmButtonText: 'بله، حذف کن!',
-                        cancelButtonText: 'لغو'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            @this.call('deleteField', fieldId);
-                        }
-                    });
-                });
-            });
-        });
-    </script>
 </div>

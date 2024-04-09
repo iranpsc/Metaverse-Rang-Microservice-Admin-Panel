@@ -1,11 +1,7 @@
 <div>
-    <x-slot name="pageTitle">
-        مدیریت پیام های سلسله
-    </x-slot>
-
     <x-button color="primary" class="my-2" data-bs-toggle="modal" data-bs-target="#create-message">ایجاد پیام</x-button>
 
-    <x-modals.modal id="create-message" size="modal-xl" title="تعریف پیام سلسله">
+    <x-modal id="create-message" size="modal-xl" title="تعریف پیام سلسله">
         <ul class="alert alert-primary fill">
             <li>لیست شورت کدهای پیامهای سلسله</li>
             <li>نسبت خانوادگی: [relationship]</li>
@@ -15,19 +11,21 @@
             <li>نام فرستنده: [sender-name]</li>
             <li>نام دریافت کننده: [reciever-name]</li>
         </ul>
-        <x-forms.group for="type" label="عنوان پیام">
-            <x-forms.select id="type" wire:model="type">
+        <div class="form-group row">
+            <label for="type" class="col-form-label col-lg-3">نوع پیام</label>
+            <select class="form-control rounded" id="type" wire:model="type">
                 <option selected value="">انتخاب کنید</option>
                 <option value="requester_confirmation_message">پیام تایید درخواست کننده</option>
                 <option value="reciever_message">پیام دریافت کننده درخواست</option>
                 <option value="reciever_accept_message">پیام تایید پذیرش پیوستن به سلسله</option>
-                <option value="requester_accept_message">پیام ارسالی به درخواست کننده مبنی بر پذیرش درخواست و پاداش دریافتی
+                <option value="requester_accept_message">پیام ارسالی به درخواست کننده مبنی بر پذیرش درخواست و پاداش
+                    دریافتی
                 </option>
-            </x-forms.select>
+            </select>
             @error('type')
                 <span class="form-text text-danger">{{ $message }}</span>
             @enderror
-        </x-forms.group>
+        </div>
 
         <div class="form-group">
             <label>متن پیام</label>
@@ -57,13 +55,13 @@
                 <th>مدیریت</th>
             </x-slot>
             @foreach ($dynastyMessages as $message)
-                <tr>
+                <tr wire:key="{{ $message->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $message->getMessageTitle() }}</td>
                     <td>
                         <x-button data-bs-toggle="modal" data-bs-target="#view-{{ $message->id }}">مشاهده
                         </x-button>
-                        <x-modals.modal id="view-{{ $message->id }}" title="مشاهده پیام">
+                        <x-modal id="view-{{ $message->id }}" title="مشاهده پیام">
                             <p class="modal-text">{{ $message->message }}</p>
                             <x-slot name="footer">
                                 <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
@@ -72,9 +70,12 @@
                     </td>
                     <td>
                         <x-button data-bs-toggle="modal"
-                        data-bs-target="#edit-message-{{ $message->id }}">ویرایش</x-button>
-                        <x-button color="danger" class="confirm" title="deleteDynastyMessage" id="{{ $message->id }}">حذف</x-button>
-                        <livewire:dynasty.edit-messages :message="$message" :wire:key="'edit-message-'.$message->id">
+                            data-bs-target="#edit-message-{{ $message->id }}">ویرایش</x-button>
+
+                        <x-button color="danger" wire:confirm="آیا می خواهید این پیام را حذف کنید؟"
+                            wire:click="delete({{ $message->id }})">حذف</x-button>
+
+                        <livewire:dynasty.edit-messages :$message :key="$message->id">
                     </td>
                 </tr>
             @endforeach
@@ -83,22 +84,23 @@
         <x-alert type="danger" :message="'پیامی برای سلسله تعریف نشده است'" />
     @endif
 
-    <script>
-        window.addEventListener('livewire:load', function() {
-            var description = CKEDITOR.replace('content');
-            var saveBtn = document.getElementById('save-btn');
-
-            CKEDITOR.editorConfig = function( config ) {
-                config.language = 'fa';
-                config.uiColor = '#F7B42C';
-                config.height = 300;
-                config.toolbarCanCollapse = true;
-            };
-
-            saveBtn.addEventListener('click', function() {
-                @this.set('content', description.getData());
-                @this.call('save');
-            });
-        })
-    </script>
 </div>
+
+@script
+    <script>
+        let description = CKEDITOR.replace('content');
+        let saveBtn = document.getElementById('save-btn');
+
+        CKEDITOR.editorConfig = function(config) {
+            config.language = 'fa';
+            config.uiColor = '#F7B42C';
+            config.height = 300;
+            config.toolbarCanCollapse = true;
+        };
+
+        saveBtn.addEventListener('click', function() {
+            @this.set('content', description.getData());
+            @this.call('save');
+        });
+    </script>
+@endscript

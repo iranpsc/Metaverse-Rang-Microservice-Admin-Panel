@@ -1,32 +1,16 @@
 <div>
-    <x-slot name="pageTitle">
-        متغیرهای سیستم
-    </x-slot>
     <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#create-variable-modal">ایجاد متغیر</x-button>
 
-    <x-forms.search-box wire:model="search" />
+    <x-form.search-box wire:model="search" />
 
-    <x-modals.modal id="create-variable-modal" title="تعریف متغیر">
-        <x-forms.group for="name" label="نام متغییر">
-            <x-forms.input wire:model="name" id="name" />
-            @error('name')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-        <x-forms.group for="slug" label="اسلاگ">
-            <x-forms.input type="slug" wire:model="slug" id="slug" />
-            @error('slug')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
-        <x-forms.group for="value" label="مقدار">
-            <x-forms.input type="value" wire:model="value" id="value" />
-            @error('value')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+    <x-modal id="create-variable-modal" title="تعریف متغیر">
+        <x-form.input name="name" id="name" label="نام متغییر" />
 
-        <x-forms.verification/>
+        <x-form.input name="slug" id="slug" label="اسلاگ" />
+
+        <x-form.input name="value" id="value" label="مقدار" />
+
+        <x-form.verification/>
 
         <x-slot name="footer">
             <x-button wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
@@ -44,7 +28,7 @@
                 <th>مدیریت</th>
             </x-slot>
             @foreach ($variables as $variable)
-                <tr>
+                <tr wire:key="{{ $variable->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $variable->name }}</td>
                     <td>{{ $variable->slug }}</td>
@@ -53,13 +37,13 @@
                     <td>
                         <x-button data-bs-toggle="modal"
                             data-bs-target="#edit-system-variable-{{ $variable->id }}">ویرایش</x-button>
-                        <x-button color="danger" class="confirm" id="{{ $variable->id }}" title="deleteSystemVariable">حذف
+                        <x-button color="danger" wire:confirm="آیا می خواهید حذف کنید؟" wire:click="delete({{ $variable->id }})">حذف
                         </x-button>
                         @if ($variable->changeLogs->count() > 0)
                             <x-button color="info" data-bs-toggle="modal"
                                 data-bs-target="#variable-history-{{ $variable->id }}">تاریخچه تغییرات
                             </x-button>
-                            <x-modals.modal size="modal-xl" id="variable-history-{{ $variable->id }}"
+                            <x-modal size="modal-xl" id="variable-history-{{ $variable->id }}"
                                 title="تاریخچه تغییرات">
                                 <x-table>
                                     <x-slot name="headers">
@@ -93,7 +77,7 @@
                                 </x-slot:footer>
                             </x-modals.modal>
                         @endif
-                        <livewire:system-variables.update :variable="$variable" :wire:key="'eidt-system-variable'.$variable->id">
+                        <livewire:system-variables.update :$variable :key="$variable->id">
                     </td>
                 </tr>
             @endforeach

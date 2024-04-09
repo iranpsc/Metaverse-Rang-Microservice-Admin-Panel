@@ -1,9 +1,5 @@
 <div>
-    <x-slot name="pageTitle">
-        {{ __('اطلاعات ثبت نام') }}
-    </x-slot>
-    
-    <x-forms.search-box wire:model="searchTerm"/>
+    <x-form.search-box wire:model.live="searchTerm"/>
 
     @if ($users->count() > 0)
         <x-table>
@@ -14,7 +10,7 @@
                 <th>آی پی ثبت نام</th>
             </x-slot:headers>
             @foreach ($users as $user)
-                <tr>
+                <tr wire:key="{{ $user->id }}">
                     <td>{{ $user->id }}</td>
                     <td>{{ $user->name }}</td>
                     <td>{{ $user->email }}</td>

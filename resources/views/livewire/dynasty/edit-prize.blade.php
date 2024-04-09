@@ -1,39 +1,14 @@
 <div>
-    <x-modals.modal size="modal-xl" id="edit-prize-{{ $prize->id }}" title="ویرایش پاداشهای معرفی {{ $prize->getRelationTitle() }}">
+    <x-modal size="modal-xl" id="edit-prize-{{ $prize->id }}" title="ویرایش پاداشهای معرفی {{ $prize->getRelationTitle() }}">
         <div class="row">
             <div class="col-sm-6">
-                <x-forms.group for="introduction-profit-increase-{{ $prize->id }}" label="افزایش سود پاداش معرفی(%)">
-                    <x-forms.input id="introduction-profit-increase-{{ $prize->id }}" wire:model="introduction_profit_increase" />
-                    @error('introduction_profit_increase')
-                        <span class="form-text text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
-                <x-forms.group for="accumulated-capital-reserve-{{ $prize->id }}" label="ذخیره سرمایه انباشته(%)">
-                    <x-forms.input id="accumulated-capital-reserve-{{ $prize->id }}" wire:model="accumulated_capital_reserve" />
-                    @error('accumulated_capital_reserve')
-                        <span class="form-text text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
+                <x-form.input id="introduction-profit-increase-{{ $prize->id }}" label="افزایش سود پاداش معرفی(%)" name="introduction_profit_increase" />
+                <x-form.input id="accumulated-capital-reserve-{{ $prize->id }}" label="ذخیره سرمایه انباشته(%)" name="accumulated_capital_reserve" />
             </div>
             <div class="col-sm-6">
-                <x-forms.group for="data-storage-{{ $prize->id }}" label="ذخیره دیتا(%)">
-                    <x-forms.input name="data-storage-{{ $prize->id }}" wire:model="data_storage" />
-                    @error('data_storage')
-                        <span class="form-text text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
-                <x-forms.group for="psc-{{ $prize->id }}" label="پاداش معرفی PSC (ریال به psc)">
-                    <x-forms.input name="psc-{{ $prize->id }}" wire:model="psc" />
-                    @error('psc')
-                        <span class="form-text text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
-                <x-forms.group for="satisfaction-{{ $prize->id }}" label="رضایت">
-                    <x-forms.input name="satisfaction-{{ $prize->id }}" wire:model="satisfaction" />
-                    @error('satisfaction')
-                        <span class="form-text text-danger">{{ $message }}</span>
-                    @enderror
-                </x-forms.group>
+                <x-form.input id="data-storage-{{ $prize->id }}" label="ذخیره دیتا(%)" name="data_storage" />
+                <x-form.input id="psc-{{ $prize->id }}" label="پاداش معرفی PSC (ریال)" name="psc" />
+                <x-form.input id="satisfaction-{{ $prize->id }}" label="رضایت" name="satisfaction" />
             </div>
         </div>
         <x-slot name="footer">

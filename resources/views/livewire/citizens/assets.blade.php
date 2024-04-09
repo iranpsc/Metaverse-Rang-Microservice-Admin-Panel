@@ -1,9 +1,6 @@
 <div>
-    <x-slot name="pageTitle">
-        اطلاعات دارایی های شهروندان
-    </x-slot>
-    
-    <x-forms.search-box wire:model="searchTerm" />
+
+    <x-form.search-box wire:model="searchTerm" />
 
     @if (count($assets) > 0)
         <x-table>
@@ -17,7 +14,7 @@
                 <td>تعداد املاک</td>
             </x-slot:headers>
             @foreach ($assets as $asset)
-                <tr>
+                <tr wire:key="{{ $asset->id }}">
                     <td>{{ $asset->id }}</td>
                     <td>{{ $asset->user->name }}</td>
                     <td>{{ number_format($asset->psc) }}</td>

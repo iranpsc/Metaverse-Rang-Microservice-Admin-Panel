@@ -1,41 +1,19 @@
 <div>
-    <x-modals.modal id="update-map-modal-{{ $map->id }}" title="بروزرسانی نقشه">
+    <x-modal id="update-map-modal-{{ $map->id }}" title="بروزرسانی نقشه">
 
-        <x-forms.group for="name-{{$map->id}}" label="نام آبادی">
-            <x-forms.input wire:model="name" id="name-{{$map->id}}" />
-            @error('name')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input name="name" label="نام آبادی" />
 
-        <x-forms.group for="pointFile-{{ $map->id }}" label="بارگذاری فایل نقطه مرکزی">
-            <x-forms.input type="file" wire:model="pointFile" id="pointFile-{{ $map->id }}" />
-            <x-progress-bar wire:loading wire:target="pointFile" />
-            @error('pointFile')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input type="file" name="pointFile" label="بارگذاری فایل نقطه مرکزی" />
 
-        <x-forms.group for="borderFile-{{ $map->id }}" label="بارگذاری فایل مرز">
-            <x-forms.input type="file" wire:model="borderFile" id="borderFile-{{ $map->id }}" />
-            <x-progress-bar wire:loading wire:target="borderFile" />
-            @error('borderFile')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input type="file" name="borderFile" label="بارگذاری فایل مرز" />
 
-        <x-forms.group for="color" label="رنگ محدوده">
-            <x-forms.input type="color" wire:model="color" id="color" />
-            @error('color')
-                <span class="text-danger">{{ $message }}</span>
-            @enderror
-        </x-forms.group>
+        <x-form.input type="color" name="color" label="رنگ محدوده" />
 
-        <x-forms.verification/>
+        <x-form.verification/>
 
         <x-slot name="footer">
-            <x-buttons.btn-success wire:loading.attr="disabled" wire:click="save">بارگذاری</x-buttons.btn-success>
-            <x-buttons.btn-danger data-bs-dismiss="modal">بستن</x-buttons.btn-danger>
+            <x-button wire:loading.attr="disabled" wire:click="save">بارگذاری</x-button>
+            <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
     </x-modals.modal>
 </div>

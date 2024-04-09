@@ -1,9 +1,5 @@
 <div>
-    <x-slot name="pageTitle">
-        لیست قیمت گذاری ها
-    </x-slot>
-    
-    <x-forms.search-box wire:model="search"></x-forms.search-box>
+    <x-form.search-box wire:model="search" />
 
     @if ($pricings->count() > 0)
         <x-table>
@@ -15,7 +11,7 @@
                 <th>ساعت قیمت گذاری</th>
             </x-slot:headers>
             @foreach ($pricings as $pricing)
-                <tr>
+                <tr wire:key="{{ $pricing->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $pricing->feature->properties->id }}</td>
                     <td>{{ $pricing->price_psc }}</td>
@@ -26,6 +22,6 @@
             @endforeach
         </x-table>
     @else
-        <x-alert type="danger" :message="'ملکی یافت نشد'"/>
+        <x-alert type="danger" :message="'ملکی یافت نشد'" />
     @endif
 </div>

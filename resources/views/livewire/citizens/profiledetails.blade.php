@@ -1,9 +1,5 @@
 <div>
-    <x-slot name="pageTitle">
-        {{ __('جزئیات پروفایل') }}
-    </x-slot>
-
-    <x-forms.search-box wire:model="searchTerm"/>
+    <x-form.search-box wire:model="searchTerm"/>
 
     @if ($users->count() > 0)
         <x-table>
@@ -17,7 +13,7 @@
                 <th>کل امتیاز دریافتی</th>
             </x-slot:headers>
             @foreach ($users as $user)
-                <tr>
+                <tr wire:key="{{ $user->id }}">
                     <td>{{ $user->id }}</td>
                     <td>{{ $user->code }}</td>
                     <td>{{ jdate($user->created_at)->format('Y/m/d H:i:s') }}</td>
