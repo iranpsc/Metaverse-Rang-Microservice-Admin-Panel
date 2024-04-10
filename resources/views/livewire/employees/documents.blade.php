@@ -1,7 +1,7 @@
 <div>
     <x-form.search-box wire:model.live="searchTerm" />
 
-    <x-tables.table>
+    <x-table>
         <x-slot:headers>
             <th>نام پرسنل</th>
             <th>درخواست عضویت</th>
@@ -16,5 +16,5 @@
 
 
 
-    </x-tables.table>
+    </x-table>
 </div>

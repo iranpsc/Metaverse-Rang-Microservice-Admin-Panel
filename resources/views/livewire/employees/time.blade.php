@@ -1,8 +1,7 @@
 <div>
-    {{-- Nothing in the world is as soft and yielding as water. --}}
-    <x-forms.search-box></x-forms.search-box>
+    <x-form.search-box wire:model="search" />
 
-    <x-tables.table>
+    <x-table>
         <x-slot:headers>
            <th>نام پرسنل</th>
            <th>هفته کارکرد</th>
@@ -15,5 +14,5 @@
 
 
 
-    </x-tables.table>
+    </x-table>
 </div>

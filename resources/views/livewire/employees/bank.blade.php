@@ -63,7 +63,7 @@
                         </x-button>
                     </td>
                 </tr>
-                <livewire:employees.edit.bank :$account :key="$account->id">
+                <livewire:employees.edit.bank :$account :key="$account->id" />
             @endforeach
         </x-table>
         {{ $bankAccounts->links() }}

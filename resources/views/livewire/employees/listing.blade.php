@@ -108,7 +108,7 @@
             <x-button color="success" wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
             <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot:footer>
-    </x-modals.modal>
+    </x-modal>
 
     @if ($employees->count() > 0)
         <x-table>

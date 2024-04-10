@@ -50,7 +50,7 @@
             <x-button wire:click="update">ثبت</x-button>
             <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
-    </x-modals.modal>
+    </x-modal>
 
     <x-modal id="import-api-ip-range-modal" title="درون ریزی رنج آی پی">
         <x-form.input name="title" label="عنوان" />
@@ -60,10 +60,10 @@
             <x-button wire:click="import">ثبت</x-button>
             <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
-    </x-modals.modal>
+    </x-modal>
 
     @if (count($ip_ranges) > 0)
-        <x-tables.table id="ips-table">
+        <x-table id="ips-table">
             <x-slot name="headers">
                 <th>عنوان</th>
                 <th>از آی پی</th>

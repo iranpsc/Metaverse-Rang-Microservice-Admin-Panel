@@ -28,7 +28,7 @@
         </x-slot>
     </x-modals.modal>
     @if (count($ips) > 0)
-        <x-tables.table>
+        <x-table>
             <x-slot name="headers">
                 <th>عنوان</th>
                 <th>آی پی</th>
@@ -51,7 +51,7 @@
                     </td>
                 </tr>
             @endforeach
-        </x-tables.table>
+        </x-table>
         {{ $ips->links() }}
     @else
         <x-alert type="info" message="هیچ آی پی ای برای نمایش وجود ندارد." />
