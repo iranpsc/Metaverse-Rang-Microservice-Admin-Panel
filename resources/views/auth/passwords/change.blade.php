@@ -48,7 +48,6 @@
                             </div><!-- /.input-group -->
                         </div>
                     </div><!-- /.form-group -->
-                    <x-forms.verification/>
                 </div><!-- /.form-body -->
                 <div class="form-actions">
                     <button type="submit" class="btn btn-info btn-round w-25">
