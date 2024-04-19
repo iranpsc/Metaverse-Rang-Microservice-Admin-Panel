@@ -88,13 +88,13 @@ class Gift extends Component
 
         $data['fbx_file'] = $this->fbx_file
             ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public'))
-            : $this->gift->fbx_file;
+            : $this->gift?->fbx_file;
         $data['png_file'] = $this->png_file
             ? url('uploads/' . $this->png_file->store('levels', 'public'))
-            : $this->gift->png_file;
+            : $this->gift?->png_file;
         $data['gif_file'] = $this->gif_file
             ? url('uploads/' . $this->gif_file->store('levels', 'public'))
-            : $this->gift->gif_file;
+            : $this->gift?->gif_file;
 
         if ($this->gift) {
             $this->gift->update($data);

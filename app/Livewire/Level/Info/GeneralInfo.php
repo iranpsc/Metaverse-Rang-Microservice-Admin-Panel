@@ -70,15 +70,15 @@ class GeneralInfo extends Component
 
         $data['png_file'] = $this->png_file
             ? url('uploads/' . $this->png_file->store('levels', 'public'))
-            : $this->generalInfo->png_file;
+            : $this->generalInfo?->png_file;
 
         $data['fbx_file'] = $this->fbx_file
             ? url('uploads/' . $this->fbx_file->storeAs('levels', $this->fbx_file->getClientOriginalName(), 'public'))
-            : $this->generalInfo->fbx_file;
+            : $this->generalInfo?->fbx_file;
 
         $data['gif_file'] = $this->gif_file
             ? url('uploads/' . $this->gif_file->store('levels', 'public'))
-            : $this->generalInfo->gif_file;
+            : $this->generalInfo?->gif_file;
 
         unset($data['phone_verification']);
         unset($data['access_password']);
