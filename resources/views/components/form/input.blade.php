@@ -8,5 +8,8 @@
         @error($name)
             <span class="text-danger">{{ $message }}</span>
         @enderror
+        @if($type === 'file')
+            <div class="form-text text-success" wire:loading wire:target="{{ $name }}">در حال بارگذاری ...</div>
+        @endif
     </div>
 </div>
