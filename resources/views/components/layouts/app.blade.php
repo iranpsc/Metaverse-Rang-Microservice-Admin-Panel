@@ -736,8 +736,24 @@
                 title: `${event.detail.message}`
             })
         });
+
+        document.addEventListener('livewire-upload-start', function(event) {
+            let progressBarContainer = event.target.nextElementSibling;
+            progressBarContainer.classList.remove('d-none');
+        });
+
+        document.addEventListener('livewire-upload-progress', function(event) {
+            let progressBar = event.target.nextElementSibling.querySelector('.progress-bar');
+            progressBar.style.width = event.detail.progress + '%';
+            progressBar.innerText = event.detail.progress + '%';
+        });
+
+        document.addEventListener('livewire-upload-finish', function() {
+            let progressBarContainer = event.target.nextElementSibling;
+            progressBarContainer.classList.add('d-none');
+        });
     </script>
-    @stack('js')
+    @stack('scripts')
 </body>
 
 </html>

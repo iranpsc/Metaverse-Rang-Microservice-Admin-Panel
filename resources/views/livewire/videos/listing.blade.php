@@ -54,19 +54,7 @@
             </div>
         </div>
 
-        <div class="form-group row">
-            <label class="form-col-label col-sm-4" for="image">تصویر</label>
-            <div class="col-sm-8">
-                <input type="file" id="image" class="form-control rounded" wire:model="image">
-                <x-progress-bar />
-                <span class="form-text text-danger d-none" id="internet-disconnected-alert">اینترنت متصل نیست. به محض
-                    اتصال
-                    مجدد بارگذاری ادامه خواهد یافت.</span>
-                @error('image')
-                    <span class="form-text text-danger">{{ $message }}</span>
-                @enderror
-            </div>
-        </div>
+        <x-form.input name="image" label="تصویر آموزش" type="file" />
 
         <div class="row form-group">
             <label for="videoFile" class="col-sm-4 col-form-label">فایل ویدئو</label>
