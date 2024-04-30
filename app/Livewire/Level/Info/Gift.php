@@ -45,7 +45,7 @@ class Gift extends Component
         'three_d_model_lines' => 'required|integer|min:0',
         'has_animation' => 'required|boolean',
         'png_file' => 'nullable|image|mimes:png|max:5000',
-        'fbx_file' => 'nullable|file|max:100000',
+        'fbx_file' => 'nullable|file|max:300000',
         'gif_file' => 'nullable|file|mimes:gif|max:5000',
         'rent' => 'required|boolean',
         'vod_count' => 'required|integer|min:0',

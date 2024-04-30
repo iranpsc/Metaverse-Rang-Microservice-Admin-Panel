@@ -42,7 +42,7 @@ class Gem extends Component
         'volume' => 'required|decimal:0,3|min:0',
         'color' => 'required|string|max:255',
         'png_file' => 'required|image|mimes:png|max:5024',
-        'fbx_file' => 'required|file|max:100000',
+        'fbx_file' => 'required|file|max:300000',
         'encryption' => 'required|boolean',
         'designer' => 'required|string|max:255',
         'has_animation' => 'required|boolean',
