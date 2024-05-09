@@ -113,12 +113,12 @@ class Listing extends Component
         $translation->update(['file_url' => 'https://rgb.irpsc.com/lang/' . $fileName]);
 
         if (!Storage::disk('ftp')->put('lang/' . $fileName, $content)) {
-            $this->dispatchBrowserEvent('notify',
+            $this->dispatch('notify',
                 type: 'error',
                 message: 'خطا در ذخیره فایل'
             );
         } else {
-            $this->dispatchBrowserEvent('notify',
+            $this->dispatch('notify',
                 message: 'فایل ذخیره شد'
             );
         }
