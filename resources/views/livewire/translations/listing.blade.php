@@ -48,7 +48,7 @@
                             <span class="fa fa-edit"></span>
                         </a>
 
-                        <x-button color="success" id="export-{{ $translation->id }}">
+                        <x-button color="success" id="export-{{ $translation->id }}" wire:click="export">
                             <span class="fa fa-download"></span>
                         </x-button>
 
