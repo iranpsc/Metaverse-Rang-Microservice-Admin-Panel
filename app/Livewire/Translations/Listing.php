@@ -100,27 +100,35 @@ class Listing extends Component
         $translation->modals->each->tabs->each->fields->makeHidden(['id', 'tab_id']);
 
         $fileName = $translation->code . '.json';
-        $file = fopen(public_path('lang/' . $fileName), 'w');
-        fwrite($file, json_encode($translation->toArray(), JSON_PRETTY_PRINT));
-        fclose($file);
+        $filePath = public_path('lang/' . $fileName);
+        $content = json_encode($translation->toArray(), JSON_PRETTY_PRINT);
 
-        $content = file_get_contents(public_path('lang/' . $fileName));
+        file_put_contents($filePath, $content);
 
         $translation->increment('version');
 
         $fileName = strtolower($translation->code) . '.json';
+        $fileUrl = 'https://rgb.irpsc.com/lang/' . $fileName;
 
-        $translation->update(['file_url' => 'https://rgb.irpsc.com/lang/' . $fileName]);
+        $translation->update(['file_url' => $fileUrl]);
 
-        if (!Storage::disk('ftp')->put('lang/' . $fileName, $content)) {
-            $this->dispatch('notify',
-                type: 'error',
-                message: 'خطا در ذخیره فایل'
-            );
+        $content = json_decode($content, true);
+        $content['file_url'] = $fileUrl;
+        $content = json_encode($content, JSON_PRETTY_PRINT);
+
+        file_put_contents($filePath, $content);
+
+        if (app()->environment('local')) {
+            return response()->download(public_path('lang/' . $fileName), $fileName);
         } else {
-            $this->dispatch('notify',
-                message: 'فایل ذخیره شد'
-            );
+            try {
+                if (!Storage::disk('ftp')->put('lang/' . $fileName, $content)) {
+                    throw new \Exception('خطا در ذخیره فایل');
+                }
+                $this->dispatch('notify', message: 'فایل ذخیره شد');
+            } catch (\Exception $e) {
+                $this->dispatch('notify', type: 'error', message: $e->getMessage());
+            }
         }
     }
 

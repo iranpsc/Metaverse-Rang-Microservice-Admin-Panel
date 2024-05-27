@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use App\Models\VideoCategory;
 use App\Models\VideoSubCategory;
 use App\Traits\SendsVerificationSms;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\WithFileUploads;
 
@@ -26,6 +27,11 @@ class Categories extends Component
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
     ];
+
+    public function mount()
+    {
+        $this->admin = Auth::guard('admin')->user();
+    }
 
     public function save()
     {
@@ -61,29 +67,22 @@ class Categories extends Component
 
     public function deleteCategory(VideoCategory $category)
     {
-        foreach ($category->subCategories as $item) {
-            unlink(public_path('uploads/' . $item->image));
-            unlink(public_path('uploads/' . $item->icon));
-            $item->delete();
-        }
-        unlink(public_path('uploads/' . $category->image));
-        unlink(public_path('uploads/' . $category->icon));
+        $category->subCategories()->delete();
         $category->delete();
+        $this->dispatch('notify', message: 'دسته بندی حذف شد');
     }
 
     public function deleteSubCategory(VideoSubCategory $videoSubCategory)
     {
-        unlink(public_path('uploads/' . $videoSubCategory->image));
-        unlink(public_path('uploads/' . $videoSubCategory->icon));
         $videoSubCategory->delete();
-        $this->dispatch('categoryDeleted')->self();
+        $this->dispatch('notify', message: 'زیر دسته بندی حذف شد');
     }
 
     #[Title('دسته بندی ویدیوها')]
     public function render()
     {
         return view('livewire.videos.categories', [
-            'categories' => VideoCategory::with('subCategories')->paginate(10),
+            'categories' => VideoCategory::with('subCategories')->paginate(5),
         ]);
     }
 }

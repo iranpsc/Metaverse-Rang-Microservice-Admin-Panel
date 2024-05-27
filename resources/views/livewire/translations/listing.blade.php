@@ -43,13 +43,13 @@
                     <td></td>
                     <td></td>
                     <td>
-                        <input type="checkbox" @checked($translation->status) id="languageStatus-{{ $translation->id }}">
+                        <input type="checkbox" @checked($translation->status) />
                         <a href="{{ route('modals', $translation->id) }}" class="btn btn-primary rounded">
                             <span class="fa fa-edit"></span>
                         </a>
 
-                        <x-button color="success" id="export-{{ $translation->id }}" wire:click="export">
-                            <span class="fa fa-download"></span>
+                        <x-button color="success" wire:click="export({{ $translation->id }})">
+                            <span class="fa fa-upload"></span>
                         </x-button>
 
                         <x-button color="danger" wire:click="delete({{ $translation->id }})"
@@ -58,7 +58,11 @@
                         </x-button>
                     </td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="6" class="text-center">هیچ ترجمه ای یافت نشد!</td>
+                </tr>
+            @endforelse
         </x-table>
         {{ $translations->links() }}
     @else
