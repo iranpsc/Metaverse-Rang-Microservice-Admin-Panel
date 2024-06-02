@@ -18,7 +18,7 @@ class ColorOptions extends Component
     public $asset, $amount, $image, $code, $search;
 
     protected $rules = [
-        'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp,gif|max:2048',
         'amount' => 'required|integer|min:1',
         'asset' => 'required|in:red,blue,yellow,psc,irr',
         'code' => 'required|string|unique:options,code',

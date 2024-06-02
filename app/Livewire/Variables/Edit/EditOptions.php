@@ -29,7 +29,7 @@ class EditOptions extends Component
         'amount' => 'required|numeric|min:1',
         'code' => 'required|string',
         'note' => 'required',
-        'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp',
+        'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp,gif|max:2048',
         'code' => 'required|string',
         'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
         'access_password' => 'required|is_valid_access_password'
