@@ -26,6 +26,9 @@
         <div class="form-group">
             <label for="note">یادداشت</label>
             <textarea wire:model="note" cols="30" rows="10" class="form-control rounded"></textarea>
+            @error('note')
+                <span class="form-text text-danger">{{ $message }}</span>
+            @enderror
         </div>
 
         @production

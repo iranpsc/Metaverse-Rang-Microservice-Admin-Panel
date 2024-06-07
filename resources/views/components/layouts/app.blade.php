@@ -437,7 +437,7 @@
                                     <li>
                                         <a href="{{ route('store.packages') }}" class="">
                                             <i class="fa fa-shopping-cart"></i>
-                                            <span>فروشگاه</span>
+                                            <span>بسته ها</span>
                                         </a>
                                     </li>
                                 @endcan
