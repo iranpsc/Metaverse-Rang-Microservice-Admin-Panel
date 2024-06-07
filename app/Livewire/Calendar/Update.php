@@ -31,7 +31,7 @@ class Update extends Component
             'phone_verification' => [
                 'nullable',
                 Rule::requiredIf(app()->environment('production')),
-                'is_valid_phone_verification'
+                'is_valid_verify_code'
             ],
             'access_password' => [
                 'nullable',
