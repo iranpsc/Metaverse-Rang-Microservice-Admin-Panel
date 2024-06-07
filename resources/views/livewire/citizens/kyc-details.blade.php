@@ -265,6 +265,11 @@
                 </tr>
             </tbody>
         </table>
+
+        @production
+            <x-form.verification />
+        @endproduction
+
         <x-slot name='footer'>
             @if ($kyc->status == 0)
                 <button class="w-50 btn btn-primary round"

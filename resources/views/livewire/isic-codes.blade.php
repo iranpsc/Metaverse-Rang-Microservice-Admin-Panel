@@ -21,7 +21,9 @@
         <p>درون ریزی کد ISIC:</p>
         <x-form.input type="file" name="import" label="فایل" />
 
-        <x-form.verification />
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot name="footer">
             <x-button wire:click="import">ثبت</x-button>
@@ -35,7 +37,9 @@
 
         <x-form.input name="code" label="کد" />
 
-        <x-form.verification />
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot name="footer">
             <x-button wire:click="save">ثبت</x-button>

@@ -7,6 +7,7 @@ use App\Traits\SendsVerificationSms;
 use Livewire\Attributes\Title;
 use Livewire\WithPagination;
 use Livewire\Component;
+use Illuminate\Validation\Rule;
 
 class Versions extends Component
 {
@@ -14,14 +15,25 @@ class Versions extends Component
 
     public $title, $content, $versionTitle, $startsAt;
 
-    protected $rules = [
-        'title' => 'required|string|max:255',
-        'content' => 'required|string|max:20000',
-        'versionTitle' => 'required|string|max:255',
-        'startsAt' => 'required|date',
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    protected function rules()
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'content' => 'required|string|max:20000',
+            'versionTitle' => 'required|string|max:255',
+            'startsAt' => 'required|date',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
 
     public function mount()
     {

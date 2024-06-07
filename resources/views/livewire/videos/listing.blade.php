@@ -72,7 +72,9 @@
 
         <x-form.input name="creator_code" label="کد شهروندی بارگذار" placeholder="hm-" />
 
-        <x-form.verification />
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot:footer>
             <x-button id="save-btn">ثبت</x-button>

@@ -5,6 +5,7 @@ namespace App\Livewire\Videos;
 use App\Models\Video;
 use Livewire\Component;
 use App\Traits\SendsVerificationSms;
+use Illuminate\Validation\Rule;
 use Livewire\WithFileUploads;
 
 class EditVideo extends Component
@@ -15,14 +16,25 @@ class EditVideo extends Component
 
     public $title, $description, $image, $video;
 
-    protected $rules = [
-        'title' => 'required|string|max:255',
-        'description' => 'required|string|max:20000',
-        'image' => 'nullable|image|max:1024',
-        'video' => 'nullable|string',
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    public function rules()
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:20000',
+            'image' => 'nullable|image|max:1024',
+            'video' => 'nullable|string',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
 
     public function mount()
     {

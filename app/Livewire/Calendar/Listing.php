@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Illuminate\Validation\Rule;
 
 class Listing extends Component
 {
@@ -17,18 +18,31 @@ class Listing extends Component
     public $title, $content, $image, $start_date, $end_date, $color;
     public $btn_name, $btn_link, $start_time, $end_time;
 
-    protected $rules = [
-        'title' => 'required|string|min:2|max:255',
-        'content' => 'required|string|min:2|max:5000',
-        'image' => 'required|image|mimes:jpg,jpeg,png|max:2024',
-        'start_date' => 'required|date',
-        'end_date' => 'required|date',
-        'start_time' => 'required|string|min:2|max:255',
-        'end_time' => 'required|string|min:2|max:255',
-        'color' => 'nullable|string',
-        'btn_name' => 'nullable|string|min:2|max:255',
-        'btn_link' => 'nullable|string|min:2|max:255',
-    ];
+    public function rules()
+    {
+        return [
+            'title' => 'required|string|min:2|max:255',
+            'content' => 'required|string|min:2|max:5000',
+            'image' => 'required|image|mimes:jpg,jpeg,png|max:2024',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'start_time' => 'required|string|min:2|max:255',
+            'end_time' => 'required|string|min:2|max:255',
+            'color' => 'nullable|string',
+            'btn_name' => 'nullable|string|min:2|max:255',
+            'btn_link' => 'nullable|string|min:2|max:255',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
 
     public function mount()
     {

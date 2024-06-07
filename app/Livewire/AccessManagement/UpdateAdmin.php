@@ -5,16 +5,28 @@ namespace App\Livewire\AccessManagement;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Illuminate\Validation\Rule;
 
 class UpdateAdmin extends Component
 {
     public $addedRoles = [], $admin;
     public $addedDirectPermissions = [];
 
-    protected $rules = [
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    public function rules()
+    {
+        return [
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
 
     public function save()
     {

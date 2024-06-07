@@ -6,6 +6,7 @@ use App\Livewire\Citizens\Kyc as CitizensKyc;
 use App\Models\Kyc;
 use App\Notifications\KycDeniedNotification;
 use Livewire\Component;
+use Illuminate\Validation\Rule;
 
 class KycDetails extends Component
 {
@@ -27,6 +28,8 @@ class KycDetails extends Component
 
     public $kyc_errors = [];
 
+    public $phone_verification, $access_password;
+
     public function save_errors($input)
     {
         $this->kyc_errors[] = [
@@ -35,9 +38,27 @@ class KycDetails extends Component
         ];
     }
 
+    protected function rules()
+    {
+        return [
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
+
 
     public function save()
     {
+        $this->validate();
+
         if (!empty($this->kyc_errors)) {
 
             $this->kyc->update([

@@ -41,7 +41,9 @@
             <x-alert type="warning" :message="'مسئولیتی تعریف نشده است'" />
         @endforelse
 
-        <x-form.verification />
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot name="footer">
             <x-button color="success" wire:loading.attr="disabled" wire:click="save">ثبت</x-button>

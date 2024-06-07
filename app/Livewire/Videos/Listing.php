@@ -11,6 +11,7 @@ use App\Models\VideoSubCategory;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Title;
+use Illuminate\Validation\Rule;
 
 class Listing extends Component
 {
@@ -30,17 +31,28 @@ class Listing extends Component
         $this->videoSubCategories = VideoSubCategory::whereIn('video_category_id', [$this->category])->get();
     }
 
-    protected $rules = [
-        'title' => 'required|string|max:255',
-        'description' => 'required|string|max:20000',
-        'category' => 'required|integer|exists:video_categories,id',
-        'sub_category' => 'required|integer|exists:video_sub_categories,id',
-        'image' => 'required|image|max:1024',
-        'video' => 'required|string',
-        'creator_code' => 'required|string|exists:users,code',
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    protected function rules()
+    {
+        return [
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|max:20000',
+            'category' => 'required|integer|exists:video_categories,id',
+            'sub_category' => 'required|integer|exists:video_sub_categories,id',
+            'image' => 'required|image|max:1024',
+            'video' => 'required|string',
+            'creator_code' => 'required|string|exists:users,code',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
 
     public function save()
     {

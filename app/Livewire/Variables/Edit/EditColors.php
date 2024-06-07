@@ -5,6 +5,7 @@ namespace App\Livewire\Variables\Edit;
 use Livewire\Component;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class EditColors extends Component
 {
@@ -19,11 +20,22 @@ class EditColors extends Component
         $this->admin = Auth::guard('admin')->user();
     }
 
-    protected $rules = [
-        'price' => 'required|numeric|min:1',
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    protected function rules()
+    {
+        return [
+            'price' => 'required|numeric|min:1',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
 
     public function update()
     {

@@ -7,6 +7,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Hash;
 use App\Traits\SendsVerificationSms;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
 
 class Profile extends Component
@@ -16,15 +17,26 @@ class Profile extends Component
     public $name, $email, $image, $new_access_password,
         $new_access_password_confirmation, $password, $password_confirmation;
 
-    protected $rules = [
-        'name' => 'required|string|max:255',
-        'email' => 'required|email',
-        'image' => 'nullable|image|max:1024',
-        'password' => 'nullable|confirmed',
-        'new_access_password' => 'nullable|confirmed',
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    protected function rules()
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'image' => 'nullable|image|max:1024',
+            'password' => 'nullable|confirmed',
+            'new_access_password' => 'nullable|confirmed',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
 
     public function mount()
     {

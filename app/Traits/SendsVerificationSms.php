@@ -3,14 +3,11 @@
 namespace App\Traits;
 
 use App\Notifications\SendVerificationCode;
-use Livewire\Attributes\Rule;
 
 trait SendsVerificationSms
 {
-    #[Rule('required|is_valid_verify_code')]
     public $phone_verification;
 
-    #[Rule('required|is_valid_access_password')]
     public $access_password;
 
     public $admin;

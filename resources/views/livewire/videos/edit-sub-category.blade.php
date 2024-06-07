@@ -17,7 +17,9 @@
 
         <x-form.input type="file" name="icon" label="آیکون" />
 
-        <x-form.verification />
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot name="footer">
             <x-button id="save-btn-{{ $subCategory->id }}">ثبت</x-button>

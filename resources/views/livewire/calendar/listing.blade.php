@@ -30,13 +30,15 @@
 
         <x-form.input name="btn_link" label="لینک دکمه ورود به واقعه" />
 
-        <x-form.verification />
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot name="footer">
             <x-button id="save-btn">ثبت</x-button>
             <x-button color="danger" data-bs-dismiss="modal">بازگشت</x-button>
         </x-slot>
-    </x-modals.modal>
+    </x-modal>
 
     @if ($events->count() > 0)
         <x-table>

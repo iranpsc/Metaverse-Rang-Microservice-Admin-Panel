@@ -12,6 +12,7 @@ use Livewire\Component;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Title;
+use Illuminate\Validation\Rule;
 
 class EmployeeRolePermission extends Component
 {
@@ -19,13 +20,24 @@ class EmployeeRolePermission extends Component
 
     public $employee, $roles = [];
 
-    protected $rules = [
-        'employee' => 'required|exists:employees,id',
-        'roles' => 'required|array|min:1',
-        'roles.*' => 'required|integer|exists:roles,id',
-        'phone_verification' => 'required|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    public function rules()
+    {
+        return [
+            'employee' => 'required|exists:employees,id',
+            'roles' => 'required|array|min:1',
+            'roles.*' => 'required|integer|exists:roles,id',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ]
+        ];
+    }
 
     public function mount()
     {

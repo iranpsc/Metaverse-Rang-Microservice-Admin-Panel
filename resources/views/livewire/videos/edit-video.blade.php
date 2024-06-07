@@ -40,7 +40,9 @@
             </div>
         </div>
 
-        <x-form.verification />
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot:footer>
             <x-button id="save-btn-{{ $videoDb->id }}">ثبت</x-button>

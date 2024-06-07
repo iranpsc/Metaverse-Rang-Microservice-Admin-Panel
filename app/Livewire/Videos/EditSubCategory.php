@@ -5,6 +5,7 @@ namespace App\Livewire\Videos;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Traits\SendsVerificationSms;
+use Illuminate\Validation\Rule;
 
 class EditSubCategory extends Component
 {
@@ -19,14 +20,26 @@ class EditSubCategory extends Component
         $this->admin = auth()->guard('admin')->user();
     }
 
-    protected $rules = [
-        'name' => 'required|string|max:255',
-        'description' => 'required|string|max:20000',
-        'image' => 'nullable|image|max:5024',
-        'icon' => 'nullable|file|mimes:svg|max:1024',
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    public function rules()
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'description' => 'required|string|max:20000',
+            'image' => 'nullable|image|max:5024',
+            'icon' => 'nullable|file|mimes:svg|max:1024',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
 
     public function save()
     {

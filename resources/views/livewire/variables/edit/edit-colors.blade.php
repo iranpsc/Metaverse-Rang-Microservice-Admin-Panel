@@ -5,7 +5,9 @@
 
         <x-form.input name="note" label="علت بروزرسانی" />
 
-        <x-form.verification/>
+        @production
+            <x-form.verification/>
+        @endproduction
 
         <x-slot:footer>
             <x-button wire:loading.attr="disabled" wire:click="update">بروزرسانی</x-button>

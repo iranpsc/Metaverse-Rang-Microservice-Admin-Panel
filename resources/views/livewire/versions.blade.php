@@ -22,7 +22,9 @@
 
         <x-form.input type="date" name="startsAt" label="تاریخ شروع" />
 
-        <x-form.verification />
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot name="footer">
             <x-button id="save-btn">ثبت</x-button>

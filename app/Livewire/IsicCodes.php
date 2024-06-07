@@ -10,6 +10,7 @@ use App\Traits\SendsVerificationSms;
 use Maatwebsite\Excel\Facades\Excel;
 use Livewire\Component;
 use Livewire\Attributes\Title;
+use Illuminate\Validation\Rule;
 
 class IsicCodes extends Component
 {
@@ -33,8 +34,16 @@ class IsicCodes extends Component
         $this->validate([
             'code' => 'required|numeric',
             'name' => 'required|string|max:255',
-            'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-            'access_password' => 'required|is_valid_access_password'
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
         ]);
 
         IsicCode::create([
@@ -51,8 +60,16 @@ class IsicCodes extends Component
     {
         $this->validate([
             'import' => 'required|file|mimes:xlsx,xls',
-            'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-            'access_password' => 'required|is_valid_access_password'
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
         ]);
 
         $this->import->store('isic_codes', 'public');
@@ -86,6 +103,7 @@ class IsicCodes extends Component
     #[Title('کدهای ISIC')]
     public function render()
     {
-        return view('livewire.isic-codes')->with('isic_codes', $this->isic_codes ?? IsicCode::orderBy('verified')->paginate(10));
+        return view('livewire.isic-codes')->with('isic_codes', $this->isic_codes
+            ?? IsicCode::orderBy('verified')->paginate(10));
     }
 }

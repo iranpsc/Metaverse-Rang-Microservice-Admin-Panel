@@ -7,6 +7,7 @@ use Livewire\Component;
 use App\Models\Variable;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
@@ -17,14 +18,24 @@ class ColorOptions extends Component
 
     public $asset, $amount, $image, $code, $search;
 
-    protected $rules = [
-        'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp,gif|max:2048',
-        'amount' => 'required|integer|min:1',
-        'asset' => 'required|in:red,blue,yellow,psc,irr',
-        'code' => 'required|string|unique:options,code',
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    protected  function rules() {
+        return [
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp,gif|max:2048',
+            'amount' => 'required|integer|min:1',
+            'asset' => 'required|in:red,blue,yellow,psc,irr',
+            'code' => 'required|string|unique:options,code',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
 
     public function mount()
     {

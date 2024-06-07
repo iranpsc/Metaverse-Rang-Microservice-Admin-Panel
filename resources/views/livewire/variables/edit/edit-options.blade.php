@@ -3,7 +3,7 @@
         <div class="form-group row">
             <label for="asset" class="col-sm-4 col-form-label">ارز</label>
             <div class="col-sm-8">
-                <select class="form-control" id="asset" wire:model="asset">
+                <select class="form-control rounded" id="asset" wire:model="asset">
                     <option selected>ارز را انتخاب کنید</option>
                     @forelse ($variables as $variable)
                         <option value="{{ $variable->asset }}">{{ $variable->getAssetTitle() }}</option>
@@ -23,7 +23,14 @@
 
         <x-form.input type="file" label="تصویر" name="image" />
 
-        <x-form.verification/>
+        <div class="form-group">
+            <label for="note">یادداشت</label>
+            <textarea wire:model="note" cols="30" rows="10" class="form-control rounded"></textarea>
+        </div>
+
+        @production
+            <x-form.verification/>
+        @endproduction
 
         <x-slot:footer>
             <x-button wire:loading.attr="disabled" wire:click="update">ثبت</x-button>

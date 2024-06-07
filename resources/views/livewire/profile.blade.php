@@ -16,7 +16,9 @@
 
                 <x-form.input type="file" name="image" label="تصویر" />
 
-                <x-form.verification />
+                @production
+                    <x-form.verification />
+                @endproduction
 
                 <x-button type="submit" size="block" color="success">ثبت</x-button>
             </form>

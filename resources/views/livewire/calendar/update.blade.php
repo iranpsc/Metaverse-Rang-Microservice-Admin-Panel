@@ -29,7 +29,9 @@
 
         <x-form.input name="btn_link" label="لینک دکمه ورود به واقعه" />
 
-        <x-form.verification />
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot name="footer">
             <x-button id="save-btn-{{ $event->id }}">ثبت</x-button>

@@ -8,6 +8,7 @@ use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Livewire\WithFileUploads;
 use App\Models\Variable;
+use Illuminate\Validation\Rule;
 
 class EditOptions extends Component
 {
@@ -25,15 +26,25 @@ class EditOptions extends Component
         $this->admin = Auth::guard('admin')->user();
     }
 
-    protected $rules = [
-        'amount' => 'required|numeric|min:1',
-        'code' => 'required|string',
-        'note' => 'required',
-        'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp,gif|max:2048',
-        'code' => 'required|string',
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    protected function rules()
+    {
+        return [
+            'amount' => 'required|numeric|min:1',
+            'code' => 'required|string',
+            'note' => 'required',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp,gif|max:2048',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_phone_verification'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
 
     public function update()
     {
@@ -54,7 +65,7 @@ class EditOptions extends Component
         ]);
 
         if ($this->image) {
-            $url = url('uploads/'.$this->image->store('packages', 'public'));
+            $url = url('uploads/' . $this->image->store('packages', 'public'));
 
             if ($this->option->image) {
                 $this->option->image->update([

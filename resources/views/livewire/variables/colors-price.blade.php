@@ -10,7 +10,9 @@
         <x-form.input name="price" label="قیمت واحد" placeholder="قیمت واحد را به تومان وارد کنید"
             class="only-number" />
 
-        <x-form.verification />
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot:footer>
             <x-button wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
