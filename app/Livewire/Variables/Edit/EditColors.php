@@ -6,12 +6,13 @@ use Livewire\Component;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Livewire\WithFileUploads;
 
 class EditColors extends Component
 {
-    use SendsVerificationSms;
+    use SendsVerificationSms, WithFileUploads;
 
-    public $price, $note, $asset;
+    public $price, $note, $asset, $image;
 
     public function mount($asset)
     {
@@ -24,6 +25,7 @@ class EditColors extends Component
     {
         return [
             'price' => 'required|numeric|min:1',
+            'image' => 'nullable|image|max:1024',
             'phone_verification' => [
                 'nullable',
                 Rule::requiredIf(app()->environment('production')),
@@ -52,6 +54,13 @@ class EditColors extends Component
             'price' => $this->price,
             'note' => $this->note
         ]);
+
+        if ($this->image) {
+            $this->asset->image()->delete();
+            $this->asset->image()->create([
+                'url' => url('uploads/' . $this->image->store('variables', 'public'))
+            ]);
+        }
 
         $this->dispatch('notify', message: 'ارز با موفقیت بروزرسانی شد');
     }

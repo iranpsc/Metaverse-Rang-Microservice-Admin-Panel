@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Variable extends Model
 {
     use HasFactory;
+
     protected $table = "variables";
 
     protected $fillable = [
@@ -44,5 +45,15 @@ class Variable extends Model
             'psc' => 'psc',
             'irr' => 'ریال',
         };
+    }
+
+    /**
+     * Get the image associated with the variable.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
+     */
+    public function image()
+    {
+        return $this->morphOne(Image::class, 'imageable');
     }
 }

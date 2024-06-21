@@ -8,12 +8,13 @@ use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
+use Livewire\WithFileUploads;
 
 class ColorsPrice extends Component
 {
-    use SendsVerificationSms;
+    use SendsVerificationSms, WithFileUploads;
 
-    public $price, $asset, $search;
+    public $price, $asset, $search, $image;
 
     public function mount()
     {
@@ -25,6 +26,7 @@ class ColorsPrice extends Component
         return [
             'price' => 'required|numeric|min:1',
             'asset' => 'required|in:red,blue,yellow,irr,psc,satisfaction|unique:variables',
+            'image' => 'required|image|max:1024',
             'phone_verification' => [
                 'nullable',
                 Rule::requiredIf(app()->environment('production')),
@@ -42,9 +44,13 @@ class ColorsPrice extends Component
     {
         $this->validate();
 
-        Variable::create([
+        $variable = Variable::create([
             'asset' => $this->asset,
             'price' => $this->price,
+        ]);
+
+        $variable->image()->create([
+            'url' => url('uploads/' . $this->image->store('variables', 'public'))
         ]);
 
         $this->dispatch('notify', message: 'قیمت رنگ با موفقیت وارد شد');
@@ -54,6 +60,7 @@ class ColorsPrice extends Component
     public function delete(Variable $variable)
     {
         $variable->priceChangeLogs()->delete();
+        $variable->image()->delete();
         $variable->delete();
     }
 
@@ -61,7 +68,7 @@ class ColorsPrice extends Component
     public function render()
     {
         return view('livewire.variables.colors-price', [
-            'variables' => Variable::with('priceChangeLogs')->get()
+            'variables' => Variable::with('priceChangeLogs', 'image')->get()
         ]);
     }
 }
