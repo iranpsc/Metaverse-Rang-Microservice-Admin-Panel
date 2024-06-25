@@ -166,7 +166,7 @@
                                 @endcan
                                 @can('verify-kyc')
                                     <li>
-                                        <a href="{{ route('citizens.kyc') }}" class="">
+                                        <a href="{{ route('citizens.kycs') }}" class="">
                                             <i class="fa fa-check-circle"></i>
                                             <span>احراز هویت</span>
                                         </a>
