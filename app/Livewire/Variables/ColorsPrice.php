@@ -25,7 +25,7 @@ class ColorsPrice extends Component
     {
         return [
             'price' => 'required|numeric|min:1',
-            'asset' => 'required|in:red,blue,yellow,irr,psc,satisfaction|unique:variables',
+            'asset' => 'required|in:red,blue,yellow,irr,psc,satisfaction,effect|unique:variables',
             'image' => 'required|image|max:1024',
             'phone_verification' => [
                 'nullable',

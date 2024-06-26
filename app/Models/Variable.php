@@ -44,6 +44,8 @@ class Variable extends Model
             'yellow' => 'زرد',
             'psc' => 'psc',
             'irr' => 'ریال',
+            'satisfaction' => 'رضایت',
+            'effect' => 'حد تاثیر',
         };
     }
 
