@@ -19,12 +19,9 @@ class ImportChallengeQuestions implements ShouldQueue
      *
      * @return void
      */
-
-    private $data;
-
-    public function __construct(array $data)
-    {
-        $this->data = $data;
+    public function __construct(
+        private array $data
+    ) {
     }
 
     /**
@@ -34,8 +31,14 @@ class ImportChallengeQuestions implements ShouldQueue
      */
     public function handle()
     {
-        for($i=0; $i < count($this->data); $i++) {
-            if($i==0)continue;
+        for ($i = 0; $i < count($this->data); $i++) {
+            if ($i == 0) continue;
+
+            // Check if any field in the row is empty
+            if (in_array('', $this->data[$i])) {
+                continue;
+            }
+
             $question = Question::create([
                 'code' => trim($this->data[$i][0]),
                 'image' => trim($this->data[$i][1]),
@@ -69,7 +72,8 @@ class ImportChallengeQuestions implements ShouldQueue
         }
     }
 
-    protected function isCorrect(int $i,int $j) {
+    protected function isCorrect(int $i, int $j)
+    {
         return (int)explode('_', $this->data[0][$j])[1] == (int)$this->data[$i][11];
     }
 }

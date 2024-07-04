@@ -39,7 +39,7 @@ class QuestionsList extends Component
     public function render()
     {
         return view('livewire.challenge.questions-list', [
-            'questions' => Question::paginate(10),
+            'questions' => Question::with('answers')->paginate(10),
         ]);
     }
 }
