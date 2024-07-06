@@ -11,15 +11,33 @@ class Kyc extends Model
 
     protected $guarded = [];
 
-    protected $casts = [
-        'errors' => 'array',
-    ];
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @return array
+     */
+    protected function casts()
+    {
+        return [
+            'errors' => 'array',
+        ];
+    }
 
+    /**
+     * Get the user that owns the Kyc.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Get the status badge attribute.
+     *
+     * @return string
+     */
     public function getStatusBadgeAttribute()
     {
         return match ($this->status) {

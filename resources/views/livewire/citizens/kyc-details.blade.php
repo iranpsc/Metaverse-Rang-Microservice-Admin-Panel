@@ -135,8 +135,8 @@
                 <tr>
                     <td>فیلم احراز مستند</td>
                     <td>
-                        {{-- <a href="{{ $kyc->video }}" target="_blank">مشاهده</a> --}}
-                        <button type="button" class="btn btn-link" id="kyc-video-btn-{{ $kyc->id }}">مشاهده</button>
+                        <button type="button" class="btn btn-link"
+                            id="kyc-video-btn-{{ $kyc->id }}">مشاهده</button>
                     </td>
                     @if ($kyc->status == 0)
                         <td class="form-box">

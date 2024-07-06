@@ -7,7 +7,7 @@
     <!-- Modal -->
     <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
         aria-hidden="true" wire:ignore.self>
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg modal-scrollable" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="exampleModalLabel">ثبت متن احراز ویدیویی</h5>
@@ -20,6 +20,16 @@
                     @error('text')
                         <span class="form-text text-danger">{{ $message }}</span>
                     @enderror
+
+                    <hr>
+                    @forelse ($texts as $text)
+                        <div class="alert alert-info rounded">
+                            {{ $text->text }}
+                        </div>
+                        <button class="btn btn-danger rounded mb-2" wire:click="delete({{ $text->id }})">حذف</button>
+                    @empty
+                        <x-alert type="warning" message="اطلاعاتی تعریف نشده است" />
+                    @endforelse
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-danger rounded" data-bs-dismiss="modal">بستن</button>
