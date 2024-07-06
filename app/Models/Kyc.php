@@ -47,4 +47,14 @@ class Kyc extends Model
             default => '<span class="badge badge-warning">نامشخص</span>',
         };
     }
+
+    /**
+     * Get the verify text that owns the Kyc.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function verifyText()
+    {
+        return $this->hasOne(KycVerifyText::class, 'id', 'verify_text_id');
+    }
 }

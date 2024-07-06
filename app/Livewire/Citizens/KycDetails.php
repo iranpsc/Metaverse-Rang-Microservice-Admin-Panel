@@ -29,6 +29,8 @@ class KycDetails extends Component
     public function mount()
     {
         $this->admin = Auth::guard('admin')->user();
+
+        $this->kyc->load('verifyText');
     }
 
     public function save_errors($input)

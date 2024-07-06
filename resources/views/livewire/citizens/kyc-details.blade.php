@@ -212,7 +212,7 @@
                         <source src="{{ $kyc->video }}" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
-                    <p>{{ $kyc->verify_text }}</p>
+                    <p>{{ $kyc->verifyText->text ?? '' }}</p>
                 `,
                 showCloseButton: true,
                 showConfirmButton: false,
