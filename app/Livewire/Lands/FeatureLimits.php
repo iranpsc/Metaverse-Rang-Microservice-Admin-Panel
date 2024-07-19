@@ -7,50 +7,57 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\FeatureLimit;
 use App\Traits\SendsVerificationSms;
-use Livewire\Attributes\Rule;
+use Illuminate\Validation\Rule;
+use App\Models\FeatureProperties;
 
 class FeatureLimits extends Component
 {
     use WithPagination, SendsVerificationSms;
 
-    #[Rule('required|boolean')]
     public $verified_kyc_limit = false;
-
-    #[Rule('required|boolean')]
     public $verified_bank_account_limit = false;
-
-    #[Rule('required|boolean')]
     public $not_sellable = false;
-
-    #[Rule('required|boolean')]
     public $under_18_limit = false;
-
-    #[Rule('required|boolean')]
     public $more_than_18_limit = false;
-
-    #[Rule('required|boolean')]
     public $dynasty_owner_limit = false;
-
-    #[Rule('required|string|max:255')]
     public $title;
-
-    #[Rule('required|string|exists:feature_properties,id')]
     public $start_id;
-
-    #[Rule('required|string|exists:feature_properties,id')]
     public $end_id;
-
-    #[Rule('required|date')]
     public $start_date;
-
-    #[Rule('required|date|after:start_date')]
     public $end_date;
-
-    #[Rule('required|numeric|min:0')]
+    public $price_limit = false;
     public $price = 0;
+    public $individual_buy_limit = false;
+    public $individual_buy_count = 0;
 
-    #[Rule('required|numeric|min:0')]
-    public $individual_buy_limit = 0;
+    protected function rules()
+    {
+        return [
+            'verified_kyc_limit' => 'required|boolean',
+            'verified_bank_account_limit' => 'required|boolean',
+            'not_sellable' => 'required|boolean',
+            'under_18_limit' => 'required|boolean',
+            'more_than_18_limit' => 'required|boolean',
+            'dynasty_owner_limit' => 'required|boolean',
+            'title' => 'required|string|max:255',
+            'start_id' => 'required|string|exists:feature_properties,id',
+            'end_id' => 'required|string|exists:feature_properties,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
+            'price_limit' => 'required|boolean',
+            'price' => 'required|numeric|min:0',
+            'individual_buy_limit' => 'required|boolean',
+            'individual_buy_count' => 'required|numeric|min:0',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(fn () => app()->environment() === 'production'),
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(fn () => app()->environment() === 'production'),
+            ]
+        ];
+    }
 
     public function mount()
     {
@@ -79,9 +86,47 @@ class FeatureLimits extends Component
             'individual_buy_limit' => $this->individual_buy_limit,
         ]);
 
+        // $this->limitFeatures();
+
         $this->resetExcept('admin');
 
         $this->dispatch('notify', message: 'محدودیت املاک با موفقیت ایجاد شد');
+    }
+
+    private function limitFeatures()
+    {
+        FeatureProperties::whereBetween('id', [$this->start_id, $this->end_id])
+            ->where('owner', 'rgb')
+            ->chunkById(100, function ($features) {
+                foreach ($features as $feature) {
+                    if ($this->price_limit) {
+                        $feature->update([
+                            'stability' => $this->price,
+                            'rgb' => $this->getLimitedFeatureRGB($feature),
+                        ]);
+                    }
+                }
+            });
+    }
+
+    private function getLimitedFeatureRGB(FeatureProperties $feature)
+    {
+        return match ($feature->rgb) {
+            'm' => 'g',
+            't' => 'n',
+            'a' => 'uu',
+            default => 'rgb',
+        };
+    }
+
+    private function getSellLimitedFeatureRGB(FeatureProperties $feature)
+    {
+        return match ($feature->karbari) {
+            'm' => 'f',
+            't' => 'm',
+            'a' => 'tt',
+            default => 'rgb',
+        };
     }
 
     public function delete(FeatureLimit $feature_limit)

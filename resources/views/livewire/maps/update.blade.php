@@ -9,7 +9,9 @@
 
         <x-form.input type="color" name="color" label="رنگ محدوده" />
 
-        <x-form.verification/>
+        @production
+            <x-form.verification/>
+        @endproduction
 
         <x-slot name="footer">
             <x-button wire:loading.attr="disabled" wire:click="save">بارگذاری</x-button>

@@ -69,12 +69,34 @@
             </div>
         </div>
 
-        <div class="row">
+        <div class="row mb-2">
             <div class="col-md-6">
-                <x-form.input name="individual_buy_limit" label="محدودیت تعداد خرید" />
+                <div class="row border">
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="individual_buy_limit"
+                                name="individual_buy_limit" wire:model="individual_buy_limit">
+                            <label class="form-check-label" for="individual_buy_limit">محدودیت تعداد خرید</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <x-form.input name="individual_buy_count" label="تعداد خرید" />
+                    </div>
+                </div>
             </div>
             <div class="col-md-6">
-                <x-form.input name="price" label="محدودیت قیمت ثابت" />
+                <div class="row border">
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="price_limit" name="price_limit"
+                                wire:model="price_limit">
+                            <label class="form-check-label" for="price">محدودیت قیمت ثابت</label>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <x-form.input name="price" label="قیمت ثابت" />
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -87,7 +109,9 @@
             </div>
         </div>
 
-        <x-form.verification />
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot name="footer">
             <x-button wire:click="save">ثبت</x-button>

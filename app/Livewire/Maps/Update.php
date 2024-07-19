@@ -6,6 +6,7 @@ use App\Models\Map;
 use App\Traits\SendsVerificationSms;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Illuminate\Validation\Rule;
 
 class Update extends Component
 {
@@ -15,14 +16,23 @@ class Update extends Component
 
     public $name, $color, $pointFile, $borderFile;
 
-    protected $rules = [
-        'name' => 'required|string|min:2',
-        'pointFile' => 'required|file|max:10240',
-        'borderFile' => 'required|file|max:10240',
-        'color' => 'required|string|max:255',
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    protected function rules()
+    {
+        return [
+            'name' => 'required|string|min:2',
+            'pointFile' => 'required|file|max:10240',
+            'borderFile' => 'required|file|max:10240',
+            'color' => 'required|string|max:255',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(fn () => app()->environment() === 'production'),
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(fn () => app()->environment() === 'production'),
+            ]
+        ];
+    }
 
     public function mount()
     {

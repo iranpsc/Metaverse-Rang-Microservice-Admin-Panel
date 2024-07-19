@@ -7,17 +7,27 @@ use App\Models\Map;
 use App\Traits\SendsVerificationSms;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class InsertIntoDatabase extends Component
 {
     use SendsVerificationSms;
 
-    public $map;
+    public Map $map;
 
-    protected $rules = [
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    protected function rules()
+    {
+        return [
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(fn () => app()->environment() === 'production'),
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(fn () => app()->environment() === 'production'),
+            ]
+        ];
+    }
 
     public function mount()
     {
