@@ -48,6 +48,7 @@
                 <th>رنگ</th>
                 <th>زمان شروع</th>
                 <th>زمان پایان</th>
+                <th>تاریخ ثبت</th>
                 <th>تصویر</th>
                 <th>تعداد بازدید</th>
                 <th>لایک</th>
@@ -64,6 +65,7 @@
                     <td>{{ $event->color }}</td>
                     <td>{{ jdate($event->starts_at)->format('Y/m/d H:i:s') }}</td>
                     <td>{{ $event->ends_at ? jdate($event->ends_at)->format('Y/m/d H:i:s') : '' }}</td>
+                    <td>{{ jdate($event->created_at)->format('Y/m/d') }}</td>
                     <td>
                         <a target="_blank" href="{{ $event->image }}">مشاهده</a>
                     </td>
