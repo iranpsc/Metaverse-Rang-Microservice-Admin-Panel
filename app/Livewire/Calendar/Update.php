@@ -70,7 +70,7 @@ class Update extends Component
             'color' => $this->color ?? ' ',
             'btn_name' => $this->btn_name,
             'btn_link' => $this->btn_link,
-            'image' => $this->image ? $this->image->store('events', 'public') : $this->event->image,
+            'image' => $this->image ? url('uploads/' . $this->image->store('calendars', 'public')) : $this->event->image,
         ]);
 
         $this->dispatch('notify', message: 'وقعه ویرایش شد');
