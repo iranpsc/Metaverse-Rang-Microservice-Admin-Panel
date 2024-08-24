@@ -5,8 +5,10 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
+use Kavenegar\Laravel\Notification\KavenegarBaseNotification;
+use Kavenegar\Laravel\Message\KavenegarMessage;
 
-class AccountCreatedNotification extends Notification implements ShouldQueue
+class AccountCreatedNotification extends KavenegarBaseNotification implements ShouldQueue
 {
     use Queueable;
 
@@ -19,8 +21,7 @@ class AccountCreatedNotification extends Notification implements ShouldQueue
         private string $email,
         private string $password,
         private int $access_password
-    )
-    {
+    ) {
         //
     }
 
@@ -32,23 +33,22 @@ class AccountCreatedNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['sms'];
+        return ['kavenegar'];
     }
 
     /**
-     * Get the sms representation of the notification.
+     * Get the Kavenegar / SMS representation of the notification.
      *
      * @param  mixed  $notifiable
-     * @return array
+     * @return KavenegarMessage
      */
-    public function toSms($notifiable)
+    public function toKavenegar($notifiable)
     {
-        return [
-            'phone' => $notifiable->phone,
-            'token' => $this->email,
-            'token2' => $this->password,
-            'token3' => $this->access_password,
-            'template' => 'account-created'
-        ];
+        return (new KavenegarMessage())
+            ->verifyLookup('account-created', [
+                $this->email,
+                $this->password,
+                $this->access_password
+            ]);
     }
 }

@@ -54,6 +54,8 @@ class ImportMaps implements ShouldQueue
                 $stability = $feature['properties']['density'] * $feature['properties']['area'];
                 \App\Models\FeatureProperties::create([
                     'id' => $feature['properties']['id'],
+                    'id_prefix' => explode('-', $feature['properties']['id'])[0],
+                    'id_postfix' => explode('-', $feature['properties']['id'])[1],
                     'feature_id' => $feature_db->id,
                     'address' => $feature['properties']['address'] ?? '',
                     'density' => $feature['properties']['density'],

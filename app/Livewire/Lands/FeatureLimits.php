@@ -40,21 +40,37 @@ class FeatureLimits extends Component
             'more_than_18_limit' => 'required|boolean',
             'dynasty_owner_limit' => 'required|boolean',
             'title' => 'required|string|max:255',
+            'start_date' => [
+                'required',
+                'date',
+                function ($attribute, $value, $fail) {
+                    if (FeatureLimit::where('start_date', '<=', $value)->where('end_date', '>=', $value)->exists()) {
+                        $fail('تاریخ شروع تداخل دارد');
+                    }
+                }
+            ],
+            'end_date' => [
+                'required',
+                'date',
+                function ($attribute, $value, $fail) {
+                    if (FeatureLimit::where('start_date', '<=', $value)->where('end_date', '>=', $value)->exists()) {
+                        $fail('تاریخ پایان تداخل دارد');
+                    }
+                }
+            ],
             'start_id' => 'required|string|exists:feature_properties,id',
             'end_id' => 'required|string|exists:feature_properties,id',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
             'price_limit' => 'required|boolean',
             'price' => 'required|numeric|min:0',
             'individual_buy_limit' => 'required|boolean',
             'individual_buy_count' => 'required|numeric|min:0',
             'phone_verification' => [
                 'nullable',
-                Rule::requiredIf(fn () => app()->environment() === 'production'),
+                Rule::requiredIf(fn() => app()->environment() === 'production'),
             ],
             'access_password' => [
                 'nullable',
-                Rule::requiredIf(fn () => app()->environment() === 'production'),
+                Rule::requiredIf(fn() => app()->environment() === 'production'),
             ]
         ];
     }
@@ -82,11 +98,13 @@ class FeatureLimits extends Component
             'end_id' => $this->end_id,
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
-            'price' => $this->price,
+            'price_limit' => $this->price_limit,
+            'price' => $this->price_limit ? $this->price : 0,
             'individual_buy_limit' => $this->individual_buy_limit,
+            'individual_buy_count' => $this->individual_buy_limit ? $this->individual_buy_count : 0,
         ]);
 
-        // $this->limitFeatures();
+        $this->limitFeatures();
 
         $this->resetExcept('admin');
 
@@ -95,13 +113,60 @@ class FeatureLimits extends Component
 
     private function limitFeatures()
     {
-        FeatureProperties::whereBetween('id', [$this->start_id, $this->end_id])
-            ->where('owner', 'rgb')
-            ->chunkById(100, function ($features) {
+        $startId = explode('-', trim($this->start_id));
+        $endId = explode('-', trim($this->end_id));
+
+        FeatureProperties::where('id_prefix', $startId[0])
+            ->whereBetween('id_postfix', [$startId[1], $endId[1]])
+            ->whereHas('feature', function ($query) {
+                $query->where('owner_id', 1);
+            })->chunk(100, function ($features) {
                 foreach ($features as $feature) {
+                    if ($this->not_sellable) {
+                        $feature->update([
+                            'rgb' => $this->getSellLimitedFeatureRGB($feature),
+                        ]);
+                    }
+
+                    if ($this->dynasty_owner_limit) {
+                        $feature->update([
+                            'rgb' => $this->getLimitedFeatureRGB($feature),
+                        ]);
+                    }
+
+                    if ($this->verified_kyc_limit) {
+                        $feature->update([
+                            'rgb' => $this->getLimitedFeatureRGB($feature),
+                        ]);
+                    }
+
+                    if ($this->verified_bank_account_limit) {
+                        $feature->update([
+                            'rgb' => $this->getLimitedFeatureRGB($feature),
+                        ]);
+                    }
+
+                    if ($this->under_18_limit) {
+                        $feature->update([
+                            'rgb' => $this->getLimitedFeatureRGB($feature),
+                        ]);
+                    }
+
+                    if ($this->more_than_18_limit) {
+                        $feature->update([
+                            'rgb' => $this->getLimitedFeatureRGB($feature),
+                        ]);
+                    }
+
                     if ($this->price_limit) {
                         $feature->update([
                             'stability' => $this->price,
+                            'rgb' => $this->getLimitedFeatureRGB($feature),
+                        ]);
+                    }
+
+                    if ($this->individual_buy_limit) {
+                        $feature->update([
                             'rgb' => $this->getLimitedFeatureRGB($feature),
                         ]);
                     }
@@ -111,7 +176,7 @@ class FeatureLimits extends Component
 
     private function getLimitedFeatureRGB(FeatureProperties $feature)
     {
-        return match ($feature->rgb) {
+        return match ($feature->karbari) {
             'm' => 'g',
             't' => 'n',
             'a' => 'uu',
@@ -131,9 +196,40 @@ class FeatureLimits extends Component
 
     public function delete(FeatureLimit $feature_limit)
     {
+        $this->removeLimits($feature_limit);
+
         $feature_limit->delete();
 
         $this->dispatch('notify', message: 'محدودیت املاک با موفقیت حذف شد');
+    }
+
+    private function removeLimits(FeatureLimit $feature_limit)
+    {
+        $startId = explode('-', trim($feature_limit->start_id));
+        $endId = explode('-', trim($feature_limit->end_id));
+
+        FeatureProperties::where('id_prefix', $startId[0])
+            ->whereBetween('id_postfix', [$startId[1], $endId[1]])
+            ->whereHas('feature', function ($query) {
+                $query->where('owner_id', 1);
+            })->chunk(100, function ($features) {
+                foreach ($features as $feature) {
+                    $feature->update([
+                        'stability' => $feature->density * $feature->area,
+                        'rgb' => $this->getFeatureRGB($feature),
+                    ]);
+                }
+            });
+    }
+
+    private function getFeatureRGB(FeatureProperties $feature)
+    {
+        return match ($feature->karbari) {
+            'm' => 'd',
+            't' => 'k',
+            'a' => 'r',
+            default => 'rgb',
+        };
     }
 
     #[Title('محدودیت املاک')]

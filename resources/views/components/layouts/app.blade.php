@@ -26,6 +26,9 @@
 
     @stack('css')
 
+    {{-- @vite('resources/css/app.css')
+    @vite('resources/js/app.js') --}}
+
 </head>
 
 <body class="active-ripple theme-blue fix-header sidebar-extra dark">

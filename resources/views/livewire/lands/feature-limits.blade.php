@@ -5,6 +5,16 @@
     </x-button>
 
     <x-modal size="modal-xl" id="modal" title="تعریف محدودیت">
+        <div class="alert alert-danger">
+            <p>
+                <strong>توجه:</strong>
+                تاریخ شروع و پایان نباید با دیگر محدودیت ها تداخل داشته باشد.
+            </p>
+            <p>
+                <strong>توجه:</strong>
+                پیشوند شناسه های شروع و پایان باید با یکدیگر یکسان باشند.
+            </p>
+        </div>
         <x-form.input name="title" label="عنوان" />
 
         <div class="row">
@@ -90,7 +100,7 @@
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="price_limit" name="price_limit"
                                 wire:model="price_limit">
-                            <label class="form-check-label" for="price">محدودیت قیمت ثابت</label>
+                            <label class="form-check-label" for="price_limit">محدودیت قیمت ثابت</label>
                         </div>
                     </div>
                     <div class="col-12">
@@ -165,22 +175,3 @@
         <x-alert type="warning" message="محدودیتی یافت نشد!" />
     @endif
 </div>
-
-@script
-    <script>
-        let content = CKEDITOR.replace('content');
-        let saveBtn = document.getElementById('save-btn');
-
-        CKEDITOR.editorConfig = function(config) {
-            config.language = 'fa';
-            config.uiColor = '#F7B42C';
-            config.height = 300;
-            config.toolbarCanCollapse = true;
-        };
-
-        saveBtn.addEventListener('click', function() {
-            $wire.set('content', content.getData());
-            $wire.call('save');
-        });
-    </script>
-@endscript
