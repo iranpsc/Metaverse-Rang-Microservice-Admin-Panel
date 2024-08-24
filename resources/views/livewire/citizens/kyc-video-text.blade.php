@@ -21,6 +21,16 @@
                         <span class="form-text text-danger">{{ $message }}</span>
                     @enderror
 
+                    @production
+                        <div class="alert alert-warning rounded mt-3">
+                            <strong>توجه!</strong>
+                            <p>
+                                در صورتی که متن احراز ویدیویی تعریف شده باشد، امکان تغییر آن وجود ندارد.
+                            </p>
+                        </div>
+                        <x-form.verification />
+                    @endproduction
+
                     <hr>
                     @forelse ($texts as $text)
                         <div class="alert alert-info rounded">
