@@ -45,7 +45,7 @@ class KycVideoText extends Component
         ]);
 
         $this->dispatch('notify', message: 'متن احراز ویدیویی با موفقیت ثبت شد.', type: 'success');
-        $this->reset('text');
+        $this->reset('text', 'phone_verification', 'access_password');
     }
 
     public function delete($id)
