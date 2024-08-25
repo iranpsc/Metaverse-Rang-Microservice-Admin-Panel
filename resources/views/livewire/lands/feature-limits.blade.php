@@ -138,6 +138,7 @@
                 <th>شناسه شروع</th>
                 <th>شناسه پایانی</th>
                 <th>محدودیت ها</th>
+                <th>وضعیت</th>
                 <th>اقدامات</th>
             </x-slot>
 
@@ -158,6 +159,13 @@
                             <li>{{ $limit->more_than_18_limit ? 'محدودیت بالای ۱۸ سال' : '' }}</li>
                             <li>{{ $limit->dynasty_owner_limit ? 'محدودیت دارنده سلسله' : '' }}</li>
                         </ul>
+                    </td>
+                    <td>
+                        @if($limit->expired)
+                            <span class="badge bg-danger">منقضی شده</span>
+                        @else
+                            <span class="badge bg-success">فعال</span>
+                        @endif
                     </td>
                     <td>
                         <x-button color="danger" wire:confirm="آیا می خواهید حذف کنید؟"
