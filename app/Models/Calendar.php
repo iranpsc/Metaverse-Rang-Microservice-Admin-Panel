@@ -11,8 +11,6 @@ class Calendar extends Model
 
     protected $guarded = [];
 
-    public $timestamps = false;
-
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
