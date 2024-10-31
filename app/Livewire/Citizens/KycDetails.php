@@ -30,7 +30,7 @@ class KycDetails extends Component
     {
         $this->admin = Auth::guard('admin')->user();
 
-        $this->kyc->load('verifyText');
+        $this->kyc->load('verifyText', 'user');
     }
 
     public function save_errors($input)
