@@ -8,8 +8,10 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Kavenegar\Laravel\Notification\KavenegarBaseNotification;
+use Kavenegar\Laravel\Message\KavenegarMessage;
 
-class SendVerificationCode extends Notification implements ShouldQueue
+class SendVerificationCode extends KavenegarBaseNotification implements ShouldQueue
 {
     use Queueable;
 
@@ -24,6 +26,7 @@ class SendVerificationCode extends Notification implements ShouldQueue
     public function __construct()
     {
         $this->code = random_int(100000, 999999);
+
         Cache::put(
             'verify.code.' . Auth::guard('admin')->id(),
             Hash::make($this->code),
@@ -39,21 +42,18 @@ class SendVerificationCode extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        return ['sms'];
+        return ['kavenegar'];
     }
 
     /**
-     * Get the sms representation of the notification.
+     * Get the Kavenegar / SMS representation of the notification.
      *
      * @param  mixed  $notifiable
-     * @return array
+     * @return KavenegarMessage
      */
-    public function toSms($notifiable)
+    public function toKavenegar($notifiable)
     {
-        return [
-            'phone' => $notifiable->phone,
-            'token' => $this->code,
-            'template' => 'verify'
-        ];
+        return (new KavenegarMessage())
+            ->verifyLookup('verify', $this->code);
     }
 }

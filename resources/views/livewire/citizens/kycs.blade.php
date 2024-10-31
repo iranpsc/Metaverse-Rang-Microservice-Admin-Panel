@@ -1,6 +1,12 @@
 <div>
-
-    <x-form.search-box wire:model.live="searchTerm" placeholder="کد ملی را وارد کنید" />
+    <div class="row">
+        <div class="col-sm-6">
+            <input type="text" class="form-control rounded w-50 my-3" wire:model.live="search" placeholder="کد ملی را وارد کنید" />
+        </div>
+        <div class="col-sm-6 d-flex justify-content-end">
+            <livewire:citizens.kyc-video-text :key="'kyc-video-text'" />
+        </div>
+    </div>
 
     @if ($kycs->count() > 0)
         <x-table>
@@ -8,9 +14,6 @@
                 <th>نام</th>
                 <th>نام خانوادگی</th>
                 <th>کد ملی</th>
-                <th>نام پدر</th>
-                <th>شماره موبایل</th>
-                <th>ایمیل</th>
                 <th>مشاهده جزئیات</th>
                 <th>وضعیت</th>
             </x-slot:headers>
@@ -20,22 +23,11 @@
                     <td>{{ $kyc->fname }}</td>
                     <td>{{ $kyc->lname }}</td>
                     <td>{{ $kyc->melli_code }}</td>
-                    <td>{{ $kyc->father_name }}</td>
-                    <td>{{ $kyc->user->phone }}</td>
-                    <td>{{ $kyc->user->email }}</td>
                     <td>
                         <x-button data-bs-toggle="modal" data-bs-target="#modal-kyc-{{ $kyc->id }}">مشاهده</x-button>
-                        <livewire:citizens.kyc-details :$kyc :key="$kyc->id" />
+                        <livewire:citizens.kyc-details :$kyc :key="'kyc-' . $kyc->id" />
                     </td>
-                    <td>
-                        @if ($kyc->status == 0)
-                            <x-badge type="warning">در انتظار بررسی</x-badge>
-                        @elseif($kyc->status == 1)
-                            <x-badge type="success">تایید شده</x-badge>
-                        @else
-                            <x-badge type="danger">رد شده</x-badge>
-                        @endif
-                    </td>
+                    <td>{!! $kyc->status_badge !!}</td>
                 </tr>
             @endforeach
         </x-table>

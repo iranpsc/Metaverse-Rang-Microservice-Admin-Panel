@@ -6,6 +6,7 @@ use App\Models\SystemVariable;
 use Livewire\Component;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class Update extends Component
 {
@@ -15,13 +16,24 @@ class Update extends Component
 
     public $slug, $name, $value, $note;
 
-    protected $rules = [
-        'slug' => 'required|string',
-        'name' => 'required|string|min:2',
-        'value' => 'required|numeric|min:0',
-        'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-        'access_password' => 'required|is_valid_access_password'
-    ];
+    protected function rules()
+    {
+        return [
+            'slug' => 'required|string',
+            'name' => 'required|string',
+            'value' => 'required|numeric',
+            'phone_verification' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_verify_code'
+            ],
+            'access_password' => [
+                'nullable',
+                Rule::requiredIf(app()->environment('production')),
+                'is_valid_access_password'
+            ],
+        ];
+    }
 
     public function mount()
     {

@@ -48,4 +48,9 @@ class Admin extends Authenticatable
 
         return $this->roles->pluck('title');
     }
+
+    public function routeNotificationForKavenegar($driver, $notification = null)
+    {
+        return $this->phone;
+    }
 }

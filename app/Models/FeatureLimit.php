@@ -23,7 +23,9 @@ class FeatureLimit extends Model
             'start_date' => 'date',
             'end_date' => 'date',
             'price' => 'float',
-            'individual_buy_limit' => 'integer',
+            'individual_buy_count' => 'integer',
+            'price_limit' => 'boolean',
+            'individual_buy_limit' => 'boolean',
         ];
     }
 }

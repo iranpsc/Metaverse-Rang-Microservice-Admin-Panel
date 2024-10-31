@@ -9,26 +9,15 @@ class FeatureProperties extends Model
     public $incrementing = false;
 
     protected $casts = [
-        'feature_id' => 'int'
+        'feature_id' => 'int',
+        'id' => 'string',
+        'density' => 'int',
+        'price' => 'float',
+        'id_postfix' => 'int',
+        'id_prefix' => 'string',
     ];
 
-    protected $fillable = [
-        'id',
-        'feature_id',
-        'name',
-        'owner',
-        'address',
-        'density',
-        'date',
-        'stability',
-        'label',
-        'price',
-        'region',
-        'area',
-        'karbari',
-        'status',
-        'rgb'
-    ];
+    protected $guarded = [];
 
     public function feature()
     {

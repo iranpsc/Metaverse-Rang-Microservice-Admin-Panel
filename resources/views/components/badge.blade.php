@@ -1,5 +1,5 @@
-@props(['type' => 'gray'])
+@props(['color' => 'gray'])
 
-<span {{ $attributes->merge(['class' => "badge bg-$type"]) }}>
+<span {{ $attributes->merge(['class' => "badge bg-$color"]) }}>
     {{ $slot }}
 </span>

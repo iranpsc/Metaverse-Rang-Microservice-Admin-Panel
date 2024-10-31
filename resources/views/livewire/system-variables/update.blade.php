@@ -16,7 +16,9 @@
             </div>
         </div>
 
-        <x-form.verification/>
+        @production
+            <x-form.verification/>
+        @endproduction
 
         <x-slot name="footer">
             <x-button wire:loading.attr="disabled" wire:click="update">ثبت</x-button>

@@ -2,33 +2,36 @@
 
 namespace App\Livewire\Citizens;
 
-use App\Livewire\Citizens\Kyc as CitizensKyc;
+use App\Livewire\Citizens\Kycs;
 use App\Models\Kyc;
 use App\Notifications\KycDeniedNotification;
+use App\Traits\SendsVerificationSms;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Illuminate\Validation\Rule;
 
 class KycDetails extends Component
 {
+    use SendsVerificationSms;
 
     public Kyc $kyc;
 
     public $fname_err;
     public $lname_err;
-    public $father_name_err;
     public $melli_code_err;
+    public $birthdate_err;
     public $province_err;
-    public $city_err;
-    public $number_err;
-    public $postal_code_err;
-    public $address_err;
     public $melli_card_err;
-    public $prove_picture_err;
-    public $resume_err;
+    public $video_err;
 
     public $kyc_errors = [];
 
-    public $phone_verification, $access_password;
+    public function mount()
+    {
+        $this->admin = Auth::guard('admin')->user();
+
+        $this->kyc->load('verifyText', 'user');
+    }
 
     public function save_errors($input)
     {
@@ -80,12 +83,11 @@ class KycDetails extends Component
         }
 
         $this->dispatch('notify', message: 'اطلاعات با موفقیت ثبت شد');
-        $this->dispatch('kycReviewed')->to(CitizensKyc::class);
+        $this->dispatch('kycReviewed')->to(Kycs::class);
     }
 
     public function render()
     {
         return view('livewire.citizens.kyc-details');
     }
-
 }

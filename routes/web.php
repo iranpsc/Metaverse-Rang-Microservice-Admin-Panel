@@ -37,7 +37,7 @@ use App\Livewire\Challenge\QuestionsList;
 use App\Livewire\Citizens\Assets;
 use App\Livewire\Citizens\Bankaccounts;
 use App\Livewire\Citizens\Deposits;
-use App\Livewire\Citizens\Kyc;
+use App\Livewire\Citizens\Kycs;
 use App\Livewire\Citizens\Profiledetails;
 use App\Livewire\Citizens\RegistrationInfo;
 use App\Livewire\Citizens\Withdraws;
@@ -81,7 +81,7 @@ Route::middleware('auth:admin')->group(function () {
 
     Route::prefix('citizens')->as('citizens.')->group(function () {
         Route::get('registration-info', RegistrationInfo::class)->can('view-registration-info')->name('registration-info');
-        Route::get('kyc', Kyc::class)->can('verify-kyc')->name('kyc');
+        Route::get('kycs', Kycs::class)->can('verify-kyc')->name('kycs');
         Route::get('bank-accounts', Bankaccounts::class)->can('verify-bank-accounts')->name('bank-accounts');
         Route::get('deposits', Deposits::class)->can('view-deposits')->name('deposits');
         Route::get('withdraws', Withdraws::class)->can('view-withdraws')->name('withdraws');

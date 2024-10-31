@@ -10,13 +10,15 @@
 
         <x-form.input name="value" id="value" label="مقدار" />
 
-        <x-form.verification/>
+        @production
+            <x-form.verification />
+        @endproduction
 
         <x-slot name="footer">
             <x-button wire:loading.attr="disabled" wire:click="save">ثبت</x-button>
             <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot>
-    </x-modals.modal>
+    </x-modal>
 
     @if ($variables->count() > 0)
         <x-table>
@@ -37,14 +39,14 @@
                     <td>
                         <x-button data-bs-toggle="modal"
                             data-bs-target="#edit-system-variable-{{ $variable->id }}">ویرایش</x-button>
-                        <x-button color="danger" wire:confirm="آیا می خواهید حذف کنید؟" wire:click="delete({{ $variable->id }})">حذف
-                        </x-button>
+                        <livewire:system-variables.update :$variable :key="$variable->id" />
+
+                        <x-button color="danger" wire:confirm="آیا می خواهید حذف کنید؟"
+                            wire:click="delete({{ $variable->id }})">حذف</x-button>
                         @if ($variable->changeLogs->count() > 0)
                             <x-button color="info" data-bs-toggle="modal"
-                                data-bs-target="#variable-history-{{ $variable->id }}">تاریخچه تغییرات
-                            </x-button>
-                            <x-modal size="modal-xl" id="variable-history-{{ $variable->id }}"
-                                title="تاریخچه تغییرات">
+                                data-bs-target="#variable-history-{{ $variable->id }}">تاریخچه تغییرات</x-button>
+                            <x-modal size="modal-xl" id="variable-history-{{ $variable->id }}" title="تاریخچه تغییرات">
                                 <x-table>
                                     <x-slot name="headers">
                                         <th>نام متغییر</th>
@@ -55,35 +57,32 @@
                                         <th>وضعیت حال</th>
                                         <th>توضیحات</th>
                                     </x-slot>
-                                        <tbody>
-                                            @foreach ($variable->changeLogs as $changeLog)
-                                                <tr>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td>{{ $changeLog->changeable->name }}</td>
-                                                    <td>{{ jdate($changeLog->created_at)->format('Y/m/d') }}
-                                                    </td>
-                                                    <td>{{ jdate($changeLog->created_at)->format('H:m:s') }}
-                                                    </td>
-                                                    <td>{{ $changeLog->changer_name }}</td>
-                                                    <td>{{ $changeLog->previous_value }}</td>
-                                                    <td>{{ $changeLog->current_value }}</td>
-                                                    <td>{{ $changeLog->note }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
+                                    @foreach ($variable->changeLogs as $log)
+                                        <tr>
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td>{{ $log->changeable->name }}</td>
+                                            <td>{{ jdate($log->created_at)->format('Y/m/d') }}
+                                            </td>
+                                            <td>{{ jdate($log->created_at)->format('H:m:s') }}
+                                            </td>
+                                            <td>{{ $log->changer_name }}</td>
+                                            <td>{{ $log->previous_value }}</td>
+                                            <td>{{ $log->current_value }}</td>
+                                            <td>{{ $log->note }}</td>
+                                        </tr>
+                                    @endforeach
                                 </x-table>
-                                <x-slot:footer>
+                                <x-slot name="footer">
                                     <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
-                                </x-slot:footer>
-                            </x-modals.modal>
+                                </x-slot>
+                            </x-modal>
                         @endif
-                        <livewire:system-variables.update :$variable :key="$variable->id">
                     </td>
                 </tr>
             @endforeach
         </x-table>
         {{ $variables->links() }}
     @else
-        <x-alert type="warning" :message="'متغیری ثبت نشده است!'"/>
+        <x-alert type="warning" :message="'متغیری ثبت نشده است!'" />
     @endif
 </div>

@@ -26,6 +26,9 @@
 
     @stack('css')
 
+    {{-- @vite('resources/css/app.css')
+    @vite('resources/js/app.js') --}}
+
 </head>
 
 <body class="active-ripple theme-blue fix-header sidebar-extra dark">
@@ -166,7 +169,7 @@
                                 @endcan
                                 @can('verify-kyc')
                                     <li>
-                                        <a href="{{ route('citizens.kyc') }}" class="">
+                                        <a href="{{ route('citizens.kycs') }}" class="">
                                             <i class="fa fa-check-circle"></i>
                                             <span>احراز هویت</span>
                                         </a>
