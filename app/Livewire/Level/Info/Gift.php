@@ -31,7 +31,7 @@ class Gift extends Component
 
     protected $rules = [
         'name' => 'required|string|max:255',
-        'description' => 'required|string|max:5000',
+        'description' => 'required|string|max:6000',
         'monthly_capacity_count' => 'required|integer|min:0',
         'store_capacity' => 'required|boolean',
         'sell_capacity' => 'required|boolean',
@@ -44,9 +44,9 @@ class Gift extends Component
         'three_d_model_points' => 'required|integer|min:0',
         'three_d_model_lines' => 'required|integer|min:0',
         'has_animation' => 'required|boolean',
-        'png_file' => 'nullable|image|mimes:png|max:5000',
-        'fbx_file' => 'nullable|file|max:300000',
-        'gif_file' => 'nullable|file|mimes:gif|max:5000',
+        'png_file' => 'nullable|image|mimes:png|max:20000',
+        'fbx_file' => 'nullable|file|max:500000',
+        'gif_file' => 'nullable|file|mimes:gif|max:20000',
         'rent' => 'required|boolean',
         'vod_count' => 'required|integer|min:0',
         'start_vod_id' => 'nullable|string',

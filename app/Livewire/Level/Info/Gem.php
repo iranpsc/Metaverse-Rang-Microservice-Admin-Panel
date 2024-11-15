@@ -36,7 +36,7 @@ class Gem extends Component
 
     protected $rules = [
         'name' => 'required|string',
-        'description' => 'required|string|max:5000',
+        'description' => 'required|string|max:6000',
         'thread' => 'required|string|max:255',
         'points' => 'required|integer|min:0',
         'volume' => 'required|decimal:0,3|min:0',
