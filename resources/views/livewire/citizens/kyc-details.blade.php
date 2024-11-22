@@ -156,6 +156,27 @@
                         </td>
                     @endif
                 </tr>
+                <tr>
+                    <td>جنسیت</td>
+                    <td>{{ $kyc->gender }}</td>
+                    @if ($kyc->status == 0)
+                        <td class="form-box">
+                            <button class="btn btn-danger btn-sm round reject">وارد کردن دلیل اشکال</button>
+                            <div class="textarea">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <textarea wire:model="gender_err" class="form-control rounded" cols="20" rows="2"></textarea>
+                                    </div>
+                                    <div class="card-footer">
+                                        <button class="btn btn-primary round btn-sm save"
+                                            wire:click="save_errors('gender_err')">ثبت</button>
+                                        <button class="btn btn-danger round btn-sm close-btn">بستن</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    @endif
+                </tr>
             </tbody>
         </table>
 

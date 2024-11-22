@@ -23,23 +23,9 @@ class KycDetails extends Component
     public $province_err;
     public $melli_card_err;
     public $video_err;
+    public $gender_err;
 
     public $kyc_errors = [];
-
-    public function mount()
-    {
-        $this->admin = Auth::guard('admin')->user();
-
-        $this->kyc->load('verifyText', 'user');
-    }
-
-    public function save_errors($input)
-    {
-        $this->kyc_errors[] = [
-            'name' => $input,
-            'message' => $this->{$input}
-        ];
-    }
 
     protected function rules()
     {
@@ -54,6 +40,21 @@ class KycDetails extends Component
                 Rule::requiredIf(app()->environment('production')),
                 'is_valid_access_password'
             ],
+        ];
+    }
+
+    public function mount()
+    {
+        $this->admin = Auth::guard('admin')->user();
+
+        $this->kyc->load('verifyText', 'user');
+    }
+
+    public function save_errors($input)
+    {
+        $this->kyc_errors[] = [
+            'name' => $input,
+            'message' => $this->{$input}
         ];
     }
 
