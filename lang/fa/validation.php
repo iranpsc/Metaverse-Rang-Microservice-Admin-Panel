@@ -192,5 +192,7 @@ return [
         'access_password' => 'رمز دسترسی',
         'phone_verification' => 'کد تایید شماره تلفن',
         'code' => 'کد',
+        'value' => 'مقدار',
+        'unique_id' => 'شناسه یکتا',
     ],
 ];

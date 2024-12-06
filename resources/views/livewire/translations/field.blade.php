@@ -14,6 +14,8 @@
     <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#create-field">ایجاد عبارت جدید</x-button>
 
     <x-modal id="create-field" title="ایجاد عبارت جدید">
+        <x-form.input name="unique_id" label="شناسه یکتا" />
+
         <x-form.input name="name" label="نام عبارت" />
 
         <x-form.input name="value" label="ترجمه" />
@@ -27,6 +29,7 @@
     @if ($fields->count() > 0)
         <x-table>
             <x-slot:headers>
+                <th>شناسه یکتا</th>
                 <th>عبارت</th>
                 <th>ترجمه</th>
                 <th>اقدام</th>
@@ -34,6 +37,7 @@
             @forelse ($fields as $field)
                 <tr wire:key="{{ $field->id }}">
                     <td>{{ $loop->iteration }}</td>
+                    <td>{{ $field->unique_id }}</td>
                     <td>{{ $field->name }}</td>
                     <td>{{ $field->translation }}</td>
                     <td>

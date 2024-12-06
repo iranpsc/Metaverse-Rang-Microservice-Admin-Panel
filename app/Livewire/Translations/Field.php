@@ -7,6 +7,7 @@ use App\Models\Translations\Tab;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Title;
+use Illuminate\Support\Str;
 
 class Field extends Component
 {
@@ -14,12 +15,16 @@ class Field extends Component
 
     public Tab $tab;
 
-    public $name, $value;
+    public $name, $value, $unique_id;
 
-    protected $rules = [
-        'name' => 'required|string|max:2000',
-        'value' => 'required|string|max:2000',
-    ];
+    protected function rules()
+    {
+        return [
+            'unique_id' => 'required|alpha_dash:ascii|min:40|max:255|unique:sqlite.fields,unique_id,NULL,id,name,' . $this->name,
+            'name' => 'required|string|max:2000',
+            'value' => 'required|string|max:2000',
+        ];
+    }
 
     public function mount()
     {
@@ -31,6 +36,7 @@ class Field extends Component
         $this->validate();
 
         $this->tab->fields()->create([
+            'unique_id' => Str::slug(trim($this->unique_id)),
             'name' => $this->name,
             'translation' => $this->value,
         ]);
