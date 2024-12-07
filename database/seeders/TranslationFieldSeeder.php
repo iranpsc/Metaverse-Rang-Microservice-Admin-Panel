@@ -28,9 +28,11 @@ class TranslationFieldSeeder extends Seeder
             $fields = TranslationField::where('name', $field->name)->get();
 
             foreach ($fields as $field) {
-                $field->unique_id = $uniqueId++;
+                $field->unique_id = $uniqueId;
                 $field->save();
             }
+
+            $uniqueId++;
         }
     }
 }
