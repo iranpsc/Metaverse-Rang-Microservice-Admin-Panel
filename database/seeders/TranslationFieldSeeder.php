@@ -22,13 +22,13 @@ class TranslationFieldSeeder extends Seeder
         });
 
         $fieldsWithDistinctNames = TranslationField::select('name')->distinct()->get();
+        $uniqueId = 1;
 
         foreach ($fieldsWithDistinctNames as $field) {
             $fields = TranslationField::where('name', $field->name)->get();
-            $uniqueId = Str::random(40);
 
             foreach ($fields as $field) {
-                $field->unique_id = $uniqueId;
+                $field->unique_id = $uniqueId++;
                 $field->save();
             }
         }

@@ -14,8 +14,6 @@
     <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#create-field">ایجاد عبارت جدید</x-button>
 
     <x-modal id="create-field" title="ایجاد عبارت جدید">
-        <x-form.input name="unique_id" label="شناسه یکتا" />
-
         <x-form.input name="name" label="نام عبارت" />
 
         <x-form.input name="value" label="ترجمه" />

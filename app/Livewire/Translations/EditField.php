@@ -10,13 +10,12 @@ class EditField extends Component
 {
     public Field $field;
 
-    public $name, $translation, $unique_id;
+    public $name, $translation;
 
     public function mount()
     {
         $this->name = $this->field->name;
         $this->translation = $this->field->translation;
-        $this->unique_id = $this->field->unique_id;
     }
 
     public function save()
@@ -29,13 +28,6 @@ class EditField extends Component
                 Rule::unique('sqlite.fields')->ignore($this->field, 'name'),
             ],
             'translation' => 'required|string|max:2000',
-            'unique_id' => [
-                'required',
-                'string',
-                'min:40',
-                'max:255',
-                Rule::unique('sqlite.fields')->ignore($this->field, 'unique_id'),
-            ],
         ]);
 
         $fields = Field::where('name', $this->field->name)->get();
@@ -45,7 +37,6 @@ class EditField extends Component
                 $this->field->update([
                     'name' => trim($this->name),
                     'translation' => $this->translation,
-                    'unique_id' => $this->unique_id,
                 ]);
             } else {
                 $field->update([

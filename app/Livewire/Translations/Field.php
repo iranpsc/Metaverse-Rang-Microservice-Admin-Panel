@@ -7,7 +7,6 @@ use App\Models\Translations\Tab;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Title;
-use Illuminate\Support\Str;
 
 class Field extends Component
 {
@@ -15,12 +14,11 @@ class Field extends Component
 
     public Tab $tab;
 
-    public $name, $value, $unique_id;
+    public $name, $value;
 
     protected function rules()
     {
         return [
-            'unique_id' => 'required|alpha_dash:ascii|min:40|max:255|unique:sqlite.fields,unique_id,NULL,id,name,' . $this->name,
             'name' => 'required|string|max:2000',
             'value' => 'required|string|max:2000',
         ];
@@ -35,8 +33,12 @@ class Field extends Component
     {
         $this->validate();
 
+        // Get the latest unique_id and increment it by 1
+        $latestUniqueId = TranslationField::max('unique_id');
+        $newUniqueId = $latestUniqueId ? $latestUniqueId + 1 : 1;
+
         $this->tab->fields()->create([
-            'unique_id' => Str::slug(trim($this->unique_id)),
+            'unique_id' => $newUniqueId,
             'name' => $this->name,
             'translation' => $this->value,
         ]);
