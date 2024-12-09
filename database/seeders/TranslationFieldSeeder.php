@@ -23,12 +23,17 @@ class TranslationFieldSeeder extends Seeder
         //     }
         // });
 
-        // TranslationModal::chunkById(100, function ($modals) {
-        //     foreach ($modals as $modal) {
-        //         $modal->name = str_replace('-', ' ', Str::lower($modal->name));
-        //         $modal->save();
-        //     }
-        // });
+        TranslationModal::chunkById(100, function ($modals) {
+            foreach ($modals as $modal) {
+                // $modal->name = str_replace('-', ' ', Str::lower($modal->name));
+                // $modal->save();
+
+                if($modal->name == 'central page') {
+                    $modal->name = 'central-page';
+                    $modal->save();
+                }
+            }
+        });
 
         TranslationTab::chunkById(100, function ($tabs) {
             foreach ($tabs as $tab) {
