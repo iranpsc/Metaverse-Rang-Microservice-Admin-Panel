@@ -16,47 +16,18 @@ class TranslationFieldSeeder extends Seeder
      */
     public function run(): void
     {
-        // TranslationField::chunkById(100, function ($fields) {
-        //     foreach ($fields as $field) {
-        //         $field->name = str_replace('-', ' ', Str::lower($field->name));
-        //         $field->save();
-        //     }
-        // });
-
         TranslationModal::chunkById(100, function ($modals) {
             foreach ($modals as $modal) {
-                // $modal->name = str_replace('-', ' ', Str::lower($modal->name));
-                // $modal->save();
-
-                if($modal->name == 'hour meter profit') {
-                    $modal->name = 'hour-meter-profit';
-                    $modal->save();
-                }
+                $modal->name = str_replace(' ', '-', Str::lower($modal->name));
+                $modal->save();
             }
         });
 
-        // TranslationTab::chunkById(100, function ($tabs) {
-        //     foreach ($tabs as $tab) {
-        //         // $tab->name = str_replace('-', ' ', Str::lower($tab->name));
-        //         if($tab->name == 'central page') {
-        //             $tab->name = 'central-page';
-        //             $tab->save();
-        //         }
-        //     }
-        // });
-
-        // $fieldsWithDistinctNames = TranslationField::select('name')->distinct()->get();
-        // $uniqueId = 1;
-
-        // foreach ($fieldsWithDistinctNames as $field) {
-        //     $fields = TranslationField::where('name', $field->name)->get();
-
-        //     foreach ($fields as $field) {
-        //         $field->unique_id = $uniqueId;
-        //         $field->save();
-        //     }
-
-        //     $uniqueId++;
-        // }
+        TranslationTab::chunkById(100, function ($tabs) {
+            foreach ($tabs as $tab) {
+                $tab->name = str_replace(' ', '-', Str::lower($tab->name));
+                $tab->save();
+            }
+        });
     }
 }
