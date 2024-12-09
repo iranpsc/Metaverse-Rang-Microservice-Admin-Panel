@@ -38,6 +38,9 @@
                             'modal' => $modal->id,
                         ]) }}"
                             class="btn btn-primary rounded"><span class="fa fa-edit"></span></a>
+                        <x-button color="info" data-bs-toggle="modal" data-bs-target="#edit-modal-{{ $modal->id }}">
+                            <span class="fa fa-edit"></span>
+                        </x-button>
                         <x-button color="danger" wire:confirm="آیا می خواهید حذف کنید؟"
                             wire:click="delete({{ $modal->id }})">
                             <span class="fa fa-trash"></span>
