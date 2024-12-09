@@ -28,22 +28,22 @@ class TranslationFieldSeeder extends Seeder
                 // $modal->name = str_replace('-', ' ', Str::lower($modal->name));
                 // $modal->save();
 
-                if($modal->name == 'central page') {
-                    $modal->name = 'central-page';
+                if($modal->name == 'hour meter profit') {
+                    $modal->name = 'hour-meter-profit';
                     $modal->save();
                 }
             }
         });
 
-        TranslationTab::chunkById(100, function ($tabs) {
-            foreach ($tabs as $tab) {
-                // $tab->name = str_replace('-', ' ', Str::lower($tab->name));
-                if($tab->name == 'central page') {
-                    $tab->name = 'central-page';
-                    $tab->save();
-                }
-            }
-        });
+        // TranslationTab::chunkById(100, function ($tabs) {
+        //     foreach ($tabs as $tab) {
+        //         // $tab->name = str_replace('-', ' ', Str::lower($tab->name));
+        //         if($tab->name == 'central page') {
+        //             $tab->name = 'central-page';
+        //             $tab->save();
+        //         }
+        //     }
+        // });
 
         // $fieldsWithDistinctNames = TranslationField::select('name')->distinct()->get();
         // $uniqueId = 1;
