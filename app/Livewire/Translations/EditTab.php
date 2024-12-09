@@ -4,10 +4,11 @@ namespace App\Livewire\Translations;
 
 use Livewire\Attributes\Rule;
 use Livewire\Component;
+use App\Models\Translations\Tab as TranslationTab;
 
 class EditTab extends Component
 {
-    public Tab $tab;
+    public TranslationTab $tab;
 
     #[Rule('required|string|max:2000|unique:sqlite.tabs,name')]
     public $name;
@@ -17,9 +18,9 @@ class EditTab extends Component
         $this->name = $this->tab->name;
     }
 
-    public function save()
+    public function update()
     {
-        $tabs = Tab::where('name', $this->tab->name)
+        $tabs = TranslationTab::where('name', $this->tab->name)
             ->whereHas('modal', function ($query) {
                 $query->where('name', $this->tab->modal->name);
             })

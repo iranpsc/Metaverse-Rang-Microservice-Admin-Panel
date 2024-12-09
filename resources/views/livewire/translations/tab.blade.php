@@ -53,12 +53,16 @@
                             'tab' => $tab->id,
                         ]) }}"
                             class="btn btn-primary rounded"><span class="fa fa-edit"></span></a>
+                        <x-button color="info" data-bs-toggle="modal" data-bs-target="#edit-tab-{{ $tab->id }}">
+                            <span class="fa fa-edit"></span>
+                        </x-button>
                         <x-button color="danger" wire:confirm="ایا می خواهید تب را حذف کنید؟"
                             wire:click="delete({{ $tab->id }})">
                             <span class="fa fa-trash"></span>
                         </x-button>
                     </td>
                 </tr>
+                <livewire:translations.edit-tab :$tab :key="$tab->id" />
             @endforeach
         </x-table>
         {{ $tabs->links() }}

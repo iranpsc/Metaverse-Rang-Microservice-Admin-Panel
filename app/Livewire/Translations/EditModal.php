@@ -4,10 +4,11 @@ namespace App\Livewire\Translations;
 
 use Livewire\Component;
 use Livewire\Attributes\Rule;
+use App\Models\Translations\Modal as TranslationModal;
 
 class EditModal extends Component
 {
-    public Modal $modal;
+    public TranslationModal $modal;
 
     #[Rule('required|string|max:2000|unique:sqlite.modals,name')]
     public $name;
@@ -17,9 +18,9 @@ class EditModal extends Component
         $this->name = $this->modal->name;
     }
 
-    public function save()
+    public function update()
     {
-        $modals = Modal::where('name', $this->modal->name)->get();
+        $modals = TranslationModal::where('name', $this->modal->name)->get();
 
         foreach ($modals as $modal) {
             if ($modal->is($this->modal)) {
