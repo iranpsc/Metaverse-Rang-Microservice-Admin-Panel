@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class ReferralOrderHistory extends Model
 {
-	protected $table = 'referal_order_histories';
-
 	protected $casts = [
 		'user_id' => 'int',
 		'referral_id' => 'int',
