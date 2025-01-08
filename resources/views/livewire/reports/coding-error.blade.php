@@ -20,6 +20,10 @@
                         <x-button data-bs-toggle="modal" data-bs-target="#view-report-{{ $report->id }}">مشاهده</x-button>
                         <x-modal id="view-report-{{ $report->id }}" title="توضیحات گزارش">
                             <p class="modal-text">{{ $report->content }}</p>
+                            <p>تصاویر ضمیمه: </p>
+                            @foreach ($report->images as $image)
+                                <img src="{{ asset('storage/' . $image->url) }}" alt="report attachment" class="img-fluid">
+                            @endforeach
                             <x-slot:footer>
                                 <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
                             </x-slot:footer>
