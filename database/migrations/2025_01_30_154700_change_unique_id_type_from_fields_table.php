@@ -19,7 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('tab_id');
             $table->string('name');
             $table->text('translation')->nullable();
-            $table->unsignedBigInteger('unique_id');
+            $table->unsignedBigInteger('unique_id')->nullable();
             $table->foreign('tab_id')->references('id')->on('tabs')->onDelete('cascade');
         });
 
