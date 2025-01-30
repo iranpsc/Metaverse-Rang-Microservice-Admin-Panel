@@ -80,50 +80,54 @@
             <x-button id="save-btn">ثبت</x-button>
             <x-button color="danger" data-bs-dismiss="modal">بستن</x-button>
         </x-slot:footer>
-    </x-modals.modal>
+        </x-modals.modal>
 
-    @if ($videos->count() > 0)
-        <x-table>
-            <x-slot:headers>
-                <th>عنوان</th>
-                <th>دسته</th>
-                <th>تصویر</th>
-                <th>فایل</th>
-                <th>ایجاد کننده</th>
-                <th>تاریخ ایجاد</th>
-                <th>تعداد بازدید</th>
-                <th>لایک ها</th>
-                <th>دیسلایک ها</th>
-                <th>ملاحضات</th>
-            </x-slot:headers>
-            @foreach ($videos as $video)
-                <tr wire:key="{{ $video->id }}">
-                    <td>{{ $loop->iteration }}</td>
-                    <td>{{ $video->title }}</td>
-                    <td>{{ $video->category->name }}</td>
-                    <td>
-                        <a target="_blank" href="{{ asset('uploads/' . $video->image) }}" class="btn btn-sm btn-primary round">مشاهده</a>
-                    </td>
-                    <td>
-                        <a target="_blank" href="{{ asset('uploads/' . $video->fileName) }}" class="btn btn-sm btn-primary round">مشاهده</a>
-                    </td>
-                    <td>{{ $video->creator_code }}</td>
-                    <td>{{ jdate($video->created_at)->format('Y/m/d') }}</td>
-                    <td>{{ $video->views->count() }}</td>
-                    <td>{{ $video->interactions->where('liked', 1)->count() }}</td>
-                    <td>{{ $video->interactions->where('liked', 0)->count() }}</td>
-                    <td>
-                        <x-button data-bs-target="#edit-video-modal-{{ $video->id }}" data-bs-toggle="modal">ویرایش</x-button>
-                        <x-button color="danger" wire:confirm="آیا از حذف این ویدئو مطمئن هستید؟" wire:click="delete({{ $video->id }})">حذف</x-button>
-                        <livewire:videos.edit-video :videoDb="$video" :key="$video->id" />
-                    </td>
-                </tr>
-            @endforeach
-        </x-table>
-        {{ $videos->links() }}
-    @else
-        <x-alert type="danger" :message="'ویدئویی ثبت نشده است!'" />
-    @endif
+        @if ($videos->count() > 0)
+            <x-table>
+                <x-slot:headers>
+                    <th>عنوان</th>
+                    <th>دسته</th>
+                    <th>تصویر</th>
+                    <th>فایل</th>
+                    <th>ایجاد کننده</th>
+                    <th>تاریخ ایجاد</th>
+                    <th>تعداد بازدید</th>
+                    <th>لایک ها</th>
+                    <th>دیسلایک ها</th>
+                    <th>ملاحضات</th>
+                </x-slot:headers>
+                @foreach ($videos as $video)
+                    <tr wire:key="{{ $video->id }}">
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $video->title }}</td>
+                        <td>{{ $video->category->name }}</td>
+                        <td>
+                            <a target="_blank" href="{{ asset('uploads/' . $video->image) }}"
+                                class="btn btn-sm btn-primary round">مشاهده</a>
+                        </td>
+                        <td>
+                            <a target="_blank" href="{{ asset('uploads/' . $video->fileName) }}"
+                                class="btn btn-sm btn-primary round">مشاهده</a>
+                        </td>
+                        <td>{{ $video->creator_code }}</td>
+                        <td>{{ jdate($video->created_at)->format('Y/m/d') }}</td>
+                        <td>{{ $video->views->count() }}</td>
+                        <td>{{ $video->interactions->where('liked', 1)->count() }}</td>
+                        <td>{{ $video->interactions->where('liked', 0)->count() }}</td>
+                        <td>
+                            <x-button data-bs-target="#edit-video-modal-{{ $video->id }}"
+                                data-bs-toggle="modal">ویرایش</x-button>
+                            <x-button color="danger" wire:confirm="آیا از حذف این ویدئو مطمئن هستید؟"
+                                wire:click="delete({{ $video->id }})">حذف</x-button>
+                            <livewire:videos.edit-video :videoDb="$video" :key="$video->id" />
+                        </td>
+                    </tr>
+                @endforeach
+            </x-table>
+            {{ $videos->links() }}
+        @else
+            <x-alert type="danger" :message="'ویدئویی ثبت نشده است!'" />
+        @endif
 
 </div>
 

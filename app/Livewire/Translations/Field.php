@@ -35,10 +35,11 @@ class Field extends Component
 
         // Get the latest unique_id and increment it by 1
         $latestUniqueId = TranslationField::max('unique_id');
-        $newUniqueId = $latestUniqueId ? $latestUniqueId + 1 : 1;
+
+        $latestUniqueId+=1;
 
         $this->tab->fields()->create([
-            'unique_id' => $newUniqueId,
+            'unique_id' => $latestUniqueId,
             'name' => $this->name,
             'translation' => $this->value,
         ]);
@@ -47,6 +48,7 @@ class Field extends Component
 
         foreach ($tabs as $tab) {
             $tab->fields()->create([
+                'unique_id' => $latestUniqueId,
                 'name' => $this->name,
             ]);
         }

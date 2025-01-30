@@ -15,6 +15,18 @@ class Field extends Model
 
     public $timestamps = false;
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected function casts()
+    {
+        return [
+            'unique_id' => 'integer',
+        ];
+    }
+
     protected $attributes = [
         'translation' => null,
     ];
