@@ -14,6 +14,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::dropIfExists('new_fields');
         Schema::create('new_fields', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('tab_id');
