@@ -14,8 +14,6 @@
     <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#create-field">ایجاد عبارت جدید</x-button>
 
     <x-modal id="create-field" title="ایجاد عبارت جدید">
-        <x-form.input name="name" label="نام عبارت" />
-
         <x-form.input name="value" label="ترجمه" />
 
         <x-slot name="footer">
@@ -28,7 +26,6 @@
         <x-table>
             <x-slot:headers>
                 <th>شناسه یکتا</th>
-                <th>عبارت</th>
                 <th>ترجمه</th>
                 <th>اقدام</th>
             </x-slot:headers>
@@ -36,7 +33,6 @@
                 <tr wire:key="{{ $field->id }}">
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $field->unique_id }}</td>
-                    <td>{{ $field->name }}</td>
                     <td>{{ $field->translation }}</td>
                     <td>
                         <x-button data-bs-toggle="modal" data-bs-target="#edit-field-{{ $field->id }}">

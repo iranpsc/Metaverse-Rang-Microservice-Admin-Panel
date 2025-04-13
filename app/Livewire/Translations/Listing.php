@@ -97,7 +97,15 @@ class Listing extends Component
         $translation->makeHidden(['id', 'created_at', 'updated_at']);
         $translation->modals->makeHidden(['id', 'translation_id']);
         $translation->modals->each->tabs->makeHidden(['id', 'modal_id']);
-        $translation->modals->each->tabs->each->fields->makeHidden(['id', 'tab_id']);
+
+        // Exclude id, tab_id, and name from fields
+        $translation->modals->each(function($modal) {
+            $modal->tabs->each(function($tab) {
+                $tab->fields->each(function($field) {
+                    $field->makeHidden(['id', 'tab_id', 'name']);
+                });
+            });
+        });
 
         $fileName = $translation->code . '.json';
         $filePath = public_path('lang/' . $fileName);

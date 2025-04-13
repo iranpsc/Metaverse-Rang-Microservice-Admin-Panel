@@ -1,7 +1,5 @@
 <div>
     <x-modal id="edit-field-{{ $field->id }}" title="ویرایش عبارت">
-        <x-form.input name="unique_id" label="شناسه یکتا" value="{{ $field->unique_id }}" />
-        <x-form.input name="name" label="نام عبارت" />
         <x-form.input name="translation" label="ترجمه" />
         <x-slot name="footer">
             <x-button wire:loading.attr="disabled" wire:click="save">ثبت</x-button>

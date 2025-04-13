@@ -14,12 +14,11 @@ class Field extends Component
 
     public Tab $tab;
 
-    public $name, $value;
+    public $value;
 
     protected function rules()
     {
         return [
-            'name' => 'required|string|max:2000',
             'value' => 'required|string|max:2000',
         ];
     }
@@ -35,12 +34,10 @@ class Field extends Component
 
         // Get the latest unique_id and increment it by 1
         $latestUniqueId = TranslationField::max('unique_id');
-
-        $latestUniqueId+=1;
+        $latestUniqueId = $latestUniqueId ? $latestUniqueId + 1 : 1;
 
         $this->tab->fields()->create([
             'unique_id' => $latestUniqueId,
-            'name' => $this->name,
             'translation' => $this->value,
         ]);
 
@@ -49,18 +46,19 @@ class Field extends Component
         foreach ($tabs as $tab) {
             $tab->fields()->create([
                 'unique_id' => $latestUniqueId,
-                'name' => $this->name,
             ]);
         }
 
-        $this->reset('name', 'value');
+        $this->reset('value');
 
         $this->dispatch('notify', message: 'فیلد اضافه شد');
     }
 
     public function delete(TranslationField $field)
     {
-        TranslationField::where('name', $field->name)->delete();
+        // Delete all fields with the same unique_id
+        TranslationField::where('unique_id', $field->unique_id)->delete();
+        $this->dispatch('notify', message: 'فیلد حذف شد');
     }
 
     #[Title('فیلدها')]
