@@ -2,6 +2,7 @@
 
 namespace App\Livewire\AccessManagement;
 
+use App\Traits\SendsVerificationSms;
 use Livewire\Component;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -9,6 +10,8 @@ use Illuminate\Validation\Rule;
 
 class UpdateAdmin extends Component
 {
+    use SendsVerificationSms;
+
     public $addedRoles = [], $admin;
     public $addedDirectPermissions = [];
 
