@@ -12,7 +12,7 @@ class UpdateAdmin extends Component
 {
     use SendsVerificationSms;
 
-    public $addedRoles = [], $admin;
+    public $addedRoles = [], $adminUser;
     public $addedDirectPermissions = [];
 
     public function rules()
@@ -34,12 +34,12 @@ class UpdateAdmin extends Component
     public function save()
     {
         if (count($this->addedDirectPermissions) > 0) {
-            $this->admin->givePermissionTo($this->addedDirectPermissions);
+            $this->adminUser->givePermissionTo($this->addedDirectPermissions);
         }
         if (count($this->addedRoles) > 0) {
             foreach ($this->addedRoles as $role) {
                 $adminRole = Role::where('id', $role)->first();
-                $this->admin->assignRole($adminRole);
+                $this->adminUser->assignRole($adminRole);
             }
         }
         $this->dispatch('notify', message: 'اطلاعات با موفقیت ثبت شد');
@@ -47,19 +47,19 @@ class UpdateAdmin extends Component
 
     public function deleteRole(Role $role)
     {
-        $this->admin->removeRole($role);
+        $this->adminUser->removeRole($role);
     }
 
     public function deletePermission(Permission $permission)
     {
-        $this->admin->revokePermissionTo($permission);
+        $this->adminUser->revokePermissionTo($permission);
     }
 
     public function render()
     {
         return view('livewire.access-management.update-admin', [
-            'permissions' => Permission::whereNotIn('name', $this->admin->getPermissionsViaRoles()->pluck('name'))->get(),
-            'roles' => Role::whereNotIn('name', $this->admin->roles->pluck('name'))->get(),
+            'permissions' => Permission::whereNotIn('name', $this->adminUser->getPermissionsViaRoles()->pluck('name'))->get(),
+            'roles' => Role::whereNotIn('name', $this->adminUser->roles->pluck('name'))->get(),
         ]);
     }
 }
