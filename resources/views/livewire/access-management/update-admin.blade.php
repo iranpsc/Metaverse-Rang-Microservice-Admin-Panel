@@ -1,9 +1,9 @@
 <div>
-    <x-modal id="update-admin-modal-{{ $admin->id }}" title="ویرایش دسترسی ها و مسئولیت های کارمند">
+    <x-modal id="update-admin-modal-{{ $adminUser->id }}" title="ویرایش دسترسی ها و مسئولیت های کارمند">
         <p>مسئولیت های اختصاص داده شده به این کارمند:</p>
-        @if ($admin->roles->count() > 0)
+        @if ($adminUser->roles->count() > 0)
             <ul class="list-group">
-                @foreach ($admin->roles as $role)
+                @foreach ($adminUser->roles as $role)
                     <li>
                         <span>{{ $role->title }}</span>
                         <x-button color="danger" wire:confirm="آیا می خواهید این مسیولیت را حذف کنید؟"
