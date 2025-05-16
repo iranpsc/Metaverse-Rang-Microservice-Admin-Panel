@@ -82,7 +82,7 @@
                             data-bs-toggle="modal">
                             ویرایش
                         </x-button>
-                        <livewire:access-management.update-admin :admin="$admin" :key="'update-admin-'.$admin->id">
+                        <livewire:access-management.update-admin :adminUser="$admin" :key="'update-admin-'.$admin->id">
                     </td>
                 </tr>
             @endforeach
