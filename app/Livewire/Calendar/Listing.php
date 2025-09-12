@@ -10,6 +10,7 @@ use Livewire\Attributes\Title;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Validation\Rule;
+use Morilog\Jalali\Jalalian;
 
 class Listing extends Component
 {
@@ -53,11 +54,15 @@ class Listing extends Component
     {
         $this->validate();
 
+        // Convert Jalali dates to Carbon before saving
+        $startsAt = Jalalian::fromFormat('Y/m/d', $this->start_date)->toCarbon()->setTimeFromTimeString($this->start_time);
+        $endsAt = Jalalian::fromFormat('Y/m/d', $this->end_date)->toCarbon()->setTimeFromTimeString($this->end_time);
+
         Calendar::create([
             'title' => $this->title,
             'content' => $this->content,
-            'starts_at' => $this->start_date . ' ' . $this->start_time,
-            'ends_at' => $this->end_date . ' ' . $this->end_time,
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
             'color' => $this->color ?? '#000000',
             'writer' => $this->admin->name,
             'btn_name' => $this->btn_name,

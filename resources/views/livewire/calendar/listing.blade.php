@@ -1,3 +1,7 @@
+@push('css')
+    <link href="{{ asset('assets/plugins/kamadatepicker/kamadatepicker.min.css') }}" rel="stylesheet">
+@endpush
+
 <div>
     <x-button class="mb-2" data-bs-toggle="modal" data-bs-target="#create-event-modal">ایجاد وقعه</x-button>
 
@@ -18,9 +22,27 @@
 
         <x-form.input type="file" name="image" label="تصویر" />
 
-        <x-form.input type="date" name="start_date" label="تاریخ شروع" />
+        <div class="form-group row" wire:ignore>
+            <label for="start_date" class="form-col-label col-sm-4">تاریخ شروع</label>
+            <div class="col-sm-8">
+                <input type="text" name="start_date" id="start_date" class="form-control rounded"
+                    placeholder="روز / ماه / سال">
+                @error('start_date')
+                    <span class="text-danger">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
 
-        <x-form.input type="date" name="end_date" label="تاریخ پایان" />
+        <div class="form-group row" wire:ignore>
+            <label for="end_date" class="form-col-label col-sm-4">تاریخ پایان</label>
+            <div class="col-sm-8">
+                <input type="text" name="end_date" id="end_date" class="form-control rounded"
+                    placeholder="روز / ماه / سال">
+                @error('end_date')
+                    <span class="text-danger">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
 
         <x-form.input type="time" name="start_time" label="ساعت شروع" />
 
@@ -92,6 +114,10 @@
 
 </div>
 
+@push('scripts')
+    <script src="{{ asset('assets/plugins/kamadatepicker/kamadatepicker.min.js') }}"></script>
+@endpush
+
 @script
     <script>
         let content = CKEDITOR.replace('content');
@@ -104,8 +130,36 @@
             config.toolbarCanCollapse = true;
         };
 
+        // Initialize Persian date pickers
+        var datePickerOptions = {
+            placeholder: "روز / ماه / سال",
+            twodigit: true,
+            closeAfterSelect: true,
+            nextButtonIcon: "fa fa-arrow-right",
+            previousButtonIcon: "fa fa-arrow-left",
+            buttonsColor: "gray",
+            markToday: true,
+            markHolidays: true,
+            highlightSelectedDay: true,
+            sync: true
+        };
+
+        // Initialize date pickers when modal is shown
+        document.getElementById('create-event-modal').addEventListener('shown.bs.modal', function() {
+            kamaDatepicker('start_date', datePickerOptions);
+            kamaDatepicker('end_date', datePickerOptions);
+        });
+
         saveBtn.addEventListener('click', function() {
+            // Get date values from Persian date pickers
+            const startDateValue = document.getElementById('start_date').value;
+            const endDateValue = document.getElementById('end_date').value;
+
+            // Set the values to Livewire properties
             $wire.set('content', content.getData());
+            $wire.set('start_date', startDateValue);
+            $wire.set('end_date', endDateValue);
+
             $wire.call('save');
         });
     </script>

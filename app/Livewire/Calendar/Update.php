@@ -7,6 +7,7 @@ use Livewire\WithFileUploads;
 use App\Traits\SendsVerificationSms;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Morilog\Jalali\Jalalian;
 
 class Update extends Component
 {
@@ -49,10 +50,12 @@ class Update extends Component
         $this->color = $event->color;
         $this->btn_name = $event->btn_name;
         $this->btn_link = $event->btn_link;
-        $this->start_date = $event->starts_at->format('Y-m-d');
-        $this->end_date = $event->is_version ? null : $event->ends_at->format('Y-m-d');
+
+        // Convert Carbon dates to Jalali for display in Persian date picker
+        $this->start_date = Jalalian::fromCarbon($event->starts_at)->format('Y/m/d');
+        $this->end_date = $event->is_version ? null : ($event->ends_at ? Jalalian::fromCarbon($event->ends_at)->format('Y/m/d') : null);
         $this->start_time = $event->is_version ? null : $event->starts_at->format('H:i');
-        $this->end_time = $event->is_version ? null : $event->ends_at->format('H:i');
+        $this->end_time = $event->is_version ? null : ($event->ends_at ? $event->ends_at->format('H:i') : null);
         $this->event = $event;
 
         $this->admin = Auth::guard('admin')->user();
@@ -62,11 +65,20 @@ class Update extends Component
     {
         $this->validate();
 
+        // Convert Jalali dates to Carbon before saving
+        $startsAt = $this->event->is_version
+            ? Jalalian::fromFormat('Y/m/d', $this->start_date)->toCarbon()
+            : Jalalian::fromFormat('Y/m/d', $this->start_date)->toCarbon()->setTimeFromTimeString($this->start_time);
+
+        $endsAt = $this->event->is_version
+            ? null
+            : ($this->end_date ? Jalalian::fromFormat('Y/m/d', $this->end_date)->toCarbon()->setTimeFromTimeString($this->end_time) : null);
+
         $this->event->update([
             'title' => $this->title,
             'content' => $this->content,
-            'starts_at' => $this->event->is_version ? $this->start_date : $this->start_date . ' ' . $this->start_time,
-            'ends_at' => $this->event->is_version ? null : $this->end_date . ' ' . $this->end_time,
+            'starts_at' => $startsAt,
+            'ends_at' => $endsAt,
             'color' => $this->color ?? ' ',
             'btn_name' => $this->btn_name,
             'btn_link' => $this->btn_link,
