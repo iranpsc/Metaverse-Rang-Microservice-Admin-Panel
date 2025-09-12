@@ -1,7 +1,7 @@
 <div>
     <x-button class="my-2" data-bs-toggle="modal" data-bs-target="#upload-video-modal">بارگذاری ویدیو</x-button>
 
-    <x-form.search-box wire:model="search" />
+    <x-form.search-box wire:model.live="search" />
 
     <x-modal size="modal-xl" id="upload-video-modal" title="بارگذاری فیلم آموزشی">
         <x-form.input name="title" label="عنوان آموزش" placeholder="عنوان آموزش را وارد کنید" />
