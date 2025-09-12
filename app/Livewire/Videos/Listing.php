@@ -18,14 +18,12 @@ class Listing extends Component
     use WithPagination, WithFileUploads, SendsVerificationSms;
 
     public $title, $description, $category, $sub_category, $image, $video, $creator_code, $search;
-    private $videos;
 
     public $videoSubCategories = [];
 
     public function mount()
     {
         $this->admin = auth()->guard('admin')->user();
-        $this->loadVideos();
     }
 
     public function updatedCategory()
@@ -36,19 +34,6 @@ class Listing extends Component
     public function updatedSearch()
     {
         $this->resetPage();
-        $this->loadVideos();
-    }
-
-    public function loadVideos()
-    {
-        $videosQuery = Video::with(['category', 'interactions', 'views']);
-
-        // Apply search filter if search term is provided
-        if (!empty($this->search)) {
-            $videosQuery->where('title', 'like', '%' . $this->search . '%');
-        }
-
-        $this->videos = $videosQuery->latest()->paginate(10);
     }
 
     protected function rules()
@@ -105,8 +90,7 @@ class Listing extends Component
             'image' => $imageUrl,
         ]);
 
-        $this->resetExcept(['videos', 'videoCategories', 'admin']);
-        $this->loadVideos();
+        $this->resetExcept(['videoCategories', 'admin']);
         $this->dispatch('notify', message: 'ویدیو بارگذاری شد');
     }
 
@@ -115,15 +99,21 @@ class Listing extends Component
         unlink(public_path('uploads/' . $video->fileName));
         unlink(public_path('uploads/' . $video->image));
         $video->delete();
-        $this->loadVideos();
     }
 
     #[Title('ویدیوها')]
     public function render()
     {
+        $videosQuery = Video::with(['category', 'interactions', 'views']);
+
+        // Apply search filter if search term is provided
+        if (!empty($this->search)) {
+            $videosQuery->where('title', 'like', '%' . $this->search . '%');
+        }
+
         return view('livewire.videos.listing', [
             'videoCategories' => VideoCategory::all(),
-            'videos' => $this->videos
+            'videos' => $videosQuery->latest()->paginate(10)
         ]);
     }
 }
