@@ -23,7 +23,7 @@ class Listing extends Component
     {
         return [
             'title' => 'required|string|min:2|max:255',
-            'content' => 'required|string|min:2|max:5000',
+            'content' => 'required|string|min:2|max:10000',
             'image' => 'required|image|mimes:jpg,jpeg,png|max:2024',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
