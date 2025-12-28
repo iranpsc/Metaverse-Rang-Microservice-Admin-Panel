@@ -109,7 +109,7 @@ class Listing extends Component
 
         $fileName = $translation->code . '.json';
         $filePath = public_path('lang/' . $fileName);
-        $content = json_encode($translation->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $content = json_encode($translation->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         file_put_contents($filePath, $content);
 
