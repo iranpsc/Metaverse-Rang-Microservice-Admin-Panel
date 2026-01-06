@@ -100,7 +100,7 @@
                     <tr wire:key="{{ $video->id }}">
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $video->title }}</td>
-                        <td>{{ $video->category->name }}</td>
+                        <td>{{ $video->category->name ?? 'دسته بندی تعریف نشده است.' }}</td>
                         <td>
                             <a target="_blank" href="{{ asset('uploads/' . $video->image) }}"
                                 class="btn btn-sm btn-primary round">مشاهده</a>
