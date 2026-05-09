@@ -906,17 +906,18 @@ onMounted(() => {
 </style>
 
 <style>
+/* Global overrides (unscoped): :deep() is only valid in scoped SFC styles. */
 /* Make the create limit modal wider - target modal content container */
-:deep(.relative.z-10.w-full.max-w-full) {
+.relative.z-10.w-full.max-w-full {
   max-width: 80rem !important; /* 7xl = 80rem = 1280px */
 }
 
 /* Mobile-friendly SweetAlert styles */
-:deep(.mobile-friendly-popup) {
+.mobile-friendly-popup {
   font-size: 14px;
 }
 
-:deep(.mobile-friendly-button) {
+.mobile-friendly-button {
   font-size: 14px;
   padding: 12px 24px;
   border-radius: 8px;
@@ -924,16 +925,16 @@ onMounted(() => {
 }
 
 @media (max-width: 640px) {
-  :deep(.swal2-popup) {
+  .swal2-popup {
     width: 90% !important;
     margin: 0 auto;
   }
 
-  :deep(.swal2-title) {
+  .swal2-title {
     font-size: 18px !important;
   }
 
-  :deep(.swal2-content) {
+  .swal2-content {
     font-size: 14px !important;
   }
 }

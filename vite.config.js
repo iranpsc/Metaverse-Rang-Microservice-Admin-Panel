@@ -7,7 +7,10 @@ export default defineConfig({
     build: {
         // @ckeditor/ckeditor5-build-classic is ~1.3 MiB minified; splitting it out still leaves a chunk over 500 KiB.
         chunkSizeWarningLimit: 1536,
-        rollupOptions: {
+        rolldownOptions: {
+            checks: {
+                pluginTimings: false,
+            },
             output: {
                 manualChunks(id) {
                     if (!id.includes('node_modules')) {
