@@ -285,6 +285,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     Route::post('/isic-codes/{isicCode}/deny', [IsicCodeController::class, 'deny']);
     Route::delete('/isic-codes/{isicCode}', [IsicCodeController::class, 'destroy']);
 
+    // Translations routes
     Route::get('/translations/languages', [TranslationController::class, 'languages']);
     Route::get('/translations', [TranslationController::class, 'index'])->withoutMiddleware('auth:sanctum');
     Route::get('/translations/{translation}', [TranslationController::class, 'show']);

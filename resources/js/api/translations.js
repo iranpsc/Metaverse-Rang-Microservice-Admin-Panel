@@ -1,6 +1,6 @@
 import apiClient from '../utils/api'
 
-const baseUrl = '/v1/translations'
+const baseUrl = '/translations'
 
 export const translationApi = {
   async getLanguages () {
