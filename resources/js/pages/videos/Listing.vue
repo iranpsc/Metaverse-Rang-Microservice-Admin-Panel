@@ -184,14 +184,26 @@
               </div>
               <span class="shrink-0 text-sm font-medium text-primary-300">انتخاب فایل</span>
             </div>
-            <div v-if="uploadStates.create.isUploading" class="h-2 w-full rounded-full bg-[var(--theme-border)]">
+            <div
+              v-if="uploadStates.create.isUploading"
+              class="h-2 w-full overflow-hidden rounded-full bg-[var(--theme-border)] transition-shadow duration-300"
+              :class="uploadStates.create.connectionLost ? 'shadow-[inset_0_0_0_1px_rgba(239,68,68,0.45)]' : ''"
+            >
               <div
-                class="h-2 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500"
+                class="h-2 rounded-full transition-all duration-300"
+                :class="
+                  uploadStates.create.connectionLost
+                    ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-[0_0_14px_rgba(239,68,68,0.35)]'
+                    : 'bg-gradient-to-r from-primary-500 to-secondary-500'
+                "
                 :style="{ width: `${uploadStates.create.progress}%` }"
               />
             </div>
-            <p v-if="offlineWarning.create" class="text-xs text-warning">
-              اتصال اینترنت قطع شده است. پس از برقراری مجدد، بارگذاری ادامه پیدا می‌کند.
+            <p
+              v-if="uploadStates.create.connectionLost && uploadStates.create.isUploading"
+              class="text-xs font-medium text-error"
+            >
+              قطع اتصال اینترنت — بارگذاری متوقف شد. پس از برقراری مجدد اتصال، به‌صورت خودکار از همان نقطه ادامه می‌یابد.
             </p>
             <p v-if="uploadStates.create.error" class="text-xs text-error">
               {{ uploadStates.create.error }}
@@ -279,14 +291,26 @@
               </div>
               <span class="shrink-0 text-sm font-medium text-primary-300">انتخاب فایل</span>
             </div>
-            <div v-if="uploadStates.edit.isUploading" class="h-2 w-full rounded-full bg-[var(--theme-border)]">
+            <div
+              v-if="uploadStates.edit.isUploading"
+              class="h-2 w-full overflow-hidden rounded-full bg-[var(--theme-border)] transition-shadow duration-300"
+              :class="uploadStates.edit.connectionLost ? 'shadow-[inset_0_0_0_1px_rgba(239,68,68,0.45)]' : ''"
+            >
               <div
-                class="h-2 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500"
+                class="h-2 rounded-full transition-all duration-300"
+                :class="
+                  uploadStates.edit.connectionLost
+                    ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-[0_0_14px_rgba(239,68,68,0.35)]'
+                    : 'bg-gradient-to-r from-primary-500 to-secondary-500'
+                "
                 :style="{ width: `${uploadStates.edit.progress}%` }"
               />
             </div>
-            <p v-if="offlineWarning.edit" class="text-xs text-warning">
-              اتصال اینترنت قطع شده است. پس از برقراری مجدد، بارگذاری ادامه پیدا می‌کند.
+            <p
+              v-if="uploadStates.edit.connectionLost && uploadStates.edit.isUploading"
+              class="text-xs font-medium text-error"
+            >
+              قطع اتصال اینترنت — بارگذاری متوقف شد. پس از برقراری مجدد اتصال، به‌صورت خودکار از همان نقطه ادامه می‌یابد.
             </p>
             <p v-if="uploadStates.edit.error" class="text-xs text-error">
               {{ uploadStates.edit.error }}
@@ -508,20 +532,17 @@ const uploadStates = reactive({
     isUploading: false,
     completed: false,
     error: null,
-    fileName: ''
+    fileName: '',
+    connectionLost: false
   },
   edit: {
     progress: 0,
     isUploading: false,
     completed: false,
     error: null,
-    fileName: ''
+    fileName: '',
+    connectionLost: false
   }
-})
-
-const offlineWarning = reactive({
-  create: false,
-  edit: false
 })
 
 const createVideoBrowseRef = ref(null)
@@ -596,7 +617,7 @@ const resetUploadState = (context) => {
   uploadStates[context].completed = false
   uploadStates[context].error = null
   uploadStates[context].fileName = ''
-  offlineWarning[context] = false
+  uploadStates[context].connectionLost = false
 }
 
 const destroyResumable = (context) => {
@@ -661,7 +682,9 @@ const setupResumable = (context) => {
     testChunks: false,
     throttleProgressCallbacks: 1,
     maxFiles: 1,
-    withCredentials: true
+    withCredentials: true,
+    maxChunkRetries: 8,
+    chunkRetryInterval: 2000
   })
 
   resumable.assignBrowse(browseElement)
@@ -679,6 +702,7 @@ const attachResumableEvents = (resumable, context) => {
     state.error = null
     state.completed = false
     state.fileName = ''
+    state.connectionLost = false
     form.video_file_name = ''
     try {
       await ensureCsrfCookie()
@@ -702,6 +726,7 @@ const attachResumableEvents = (resumable, context) => {
       state.error = message || 'پاسخ نامعتبر از سرور دریافت شد.'
       state.isUploading = false
       state.completed = false
+      state.connectionLost = false
       return
     }
 
@@ -710,9 +735,18 @@ const attachResumableEvents = (resumable, context) => {
     state.completed = true
     state.progress = 100
     state.fileName = fileName
+    state.connectionLost = false
   })
 
   resumable.on('fileError', (file, response) => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      state.connectionLost = true
+      resumable.pause()
+      state.isUploading = true
+      state.error = null
+      return
+    }
+
     state.isUploading = false
     state.completed = false
 
@@ -733,12 +767,22 @@ const attachResumableEvents = (resumable, context) => {
   })
 }
 
+const syncUploadConnectionState = () => {
+  if (typeof navigator === 'undefined') {
+    return
+  }
+  if (!navigator.onLine) {
+    handleOffline()
+  }
+}
+
 const handleOffline = () => {
   Object.keys(resumableInstances).forEach((context) => {
     const instance = resumableInstances[context]
-    if (instance && uploadStates[context].isUploading) {
+    const state = uploadStates[context]
+    if (instance && state.isUploading && !state.completed) {
       instance.pause()
-      offlineWarning[context] = true
+      state.connectionLost = true
     }
   })
 }
@@ -746,10 +790,12 @@ const handleOffline = () => {
 const handleOnline = () => {
   Object.keys(resumableInstances).forEach((context) => {
     const instance = resumableInstances[context]
-    if (instance && uploadStates[context].isUploading) {
-      instance.upload()
+    const state = uploadStates[context]
+    if (!instance || !state.isUploading || state.completed) {
+      return
     }
-    offlineWarning[context] = false
+    state.connectionLost = false
+    instance.upload()
   })
 }
 
@@ -1057,6 +1103,7 @@ watch(createModalOpen, (isOpen) => {
   if (isOpen) {
     nextTick(() => {
       setupResumable('create')
+      syncUploadConnectionState()
     })
   } else {
     destroyResumable('create')
@@ -1068,6 +1115,7 @@ watch(editModalOpen, (isOpen) => {
   if (isOpen) {
     nextTick(() => {
       setupResumable('edit')
+      syncUploadConnectionState()
     })
   } else {
     destroyResumable('edit')
@@ -1085,6 +1133,7 @@ watch(
 onMounted(async () => {
   window.addEventListener('offline', handleOffline)
   window.addEventListener('online', handleOnline)
+  syncUploadConnectionState()
 
   await fetchMeta()
   await fetchVideos()
