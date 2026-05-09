@@ -7,16 +7,33 @@ import Aura from '@primevue/themes/aura';
 import 'select2/dist/css/select2.min.css';
 import 'simple-line-icons/css/simple-line-icons.css';
 
-const app = createApp(Root);
-app.use(createPinia());
-app.use(router);
-app.use(PrimeVue, {
-    theme: {
-        preset: Aura,
-        options: {
-            darkModeSelector: '[data-theme="dark"]',
-            cssLayer: false
-        }
+function bootstrap() {
+    const mountTarget = document.querySelector('#app');
+
+    if (!mountTarget) {
+        console.error('Vue mount target "#app" was not found.');
+        return;
     }
-});
-app.mount('#app');
+
+    const app = createApp(Root);
+
+    app.use(createPinia());
+    app.use(router);
+    app.use(PrimeVue, {
+        theme: {
+            preset: Aura,
+            options: {
+                darkModeSelector: '[data-theme="dark"]',
+                cssLayer: false
+            }
+        }
+    });
+
+    app.mount(mountTarget);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap, { once: true });
+} else {
+    bootstrap();
+}

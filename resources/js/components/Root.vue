@@ -1,6 +1,8 @@
 <template>
-  <NavigationProgress />
-  <router-view />
+  <div class="app-root">
+    <NavigationProgress />
+    <router-view />
+  </div>
 </template>
 
 <script setup>
