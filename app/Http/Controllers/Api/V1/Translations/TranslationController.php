@@ -20,29 +20,21 @@ class TranslationController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $perPage = min(max((int) $request->input('per_page', 15), 1), 100);
-        $page = max((int) $request->input('page', 1), 1);
-
-        $paginator = Translation::query()
-            ->withCount('modals')
-            ->orderBy('code')
-            ->paginate($perPage, ['*'], 'page', $page);
-
+        $translations = Translation::active()->get();
         return response()->json([
-            'success' => true,
-            'data' => [
-                'translations' => TranslationResource::collection($paginator->items())->resolve(),
-                'pagination' => [
-                    'current_page' => $paginator->currentPage(),
-                    'last_page' => $paginator->lastPage(),
-                    'per_page' => $paginator->perPage(),
-                    'total' => $paginator->total(),
-                    'from' => $paginator->firstItem(),
-                    'to' => $paginator->lastItem(),
-                ],
-            ],
-            'message' => 'Translations fetched successfully.',
-        ]);
+            'data' => $translations->map(function($translation) {
+                return [
+                    'id' => $translation->id,
+                    'code' => $translation->code,
+                    'name' => $translation->name,
+                    'native_name' => $translation->native_name,
+                    'direction' => $translation->direction,
+                    'version' => $translation->version,
+                    'icon' => asset('assets/images/flags/' . strtoupper($translation->code) . '.svg'),
+                    'file_url' => $translation->file_url,
+                ];
+            }),
+        ], 200);
     }
 
     /**
