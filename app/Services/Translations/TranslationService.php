@@ -82,6 +82,7 @@ class TranslationService
                 'name' => $language['name'],
                 'native_name' => Arr::get($language, 'nativeName'),
                 'direction' => Arr::get($language, 'dir', 'ltr'),
+                'status' => true,
             ]);
 
             $this->replicateStructureForTranslation($translation);

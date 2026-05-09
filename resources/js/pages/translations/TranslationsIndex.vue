@@ -215,7 +215,7 @@ const fetchLanguages = async () => {
   }
 }
 
-/** Index payload omits `status`; list is only active rows, so missing means active. */
+/** API sends boolean `status`; missing status (legacy payloads) defaults to inactive-looking false only if numeric 0. */
 const translationStatus = (row) => {
   if (typeof row.status === 'boolean') return row.status
   if (row.status === 1 || row.status === '1') return true
@@ -291,9 +291,9 @@ const handleToggleStatus = async (translation) => {
   try {
     const response = await translationApi.toggleTranslationStatus(translation.id)
     const updated = response.data.translation
-    translations.value = translations.value
-      .map((item) => (item.id === updated.id ? normalizeTranslationRow(updated) : item))
-      .filter((item) => translationStatus(item))
+    translations.value = translations.value.map((item) =>
+      item.id === updated.id ? normalizeTranslationRow(updated) : item
+    )
     showToast(`ترجمه ${updated.status ? 'فعال' : 'غیرفعال'} شد.`, 'success')
   } catch (err) {
     showToast(err?.response?.data?.message || 'امکان تغییر وضعیت وجود ندارد.', 'error')

@@ -20,7 +20,10 @@ class TranslationController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $translations = Translation::active()->get();
+        $translations = Translation::query()
+            ->withCount('modals')
+            ->orderBy('name')
+            ->get();
 
         return response()->json([
             'data' => $translations->map(function ($translation) {
@@ -31,6 +34,8 @@ class TranslationController extends Controller
                     'native_name' => $translation->native_name,
                     'direction' => $translation->direction,
                     'version' => $translation->version,
+                    'status' => (bool) $translation->status,
+                    'modals_count' => $translation->modals_count,
                     'icon' => asset('assets/images/flags/' . strtoupper($translation->code) . '.svg'),
                     'file_url' => $translation->file_url,
                 ];
