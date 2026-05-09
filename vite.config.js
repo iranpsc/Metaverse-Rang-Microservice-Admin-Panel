@@ -5,43 +5,15 @@ import path from 'path';
 
 export default defineConfig({
     build: {
-        // @ckeditor/ckeditor5-build-classic is ~1.3 MiB minified; splitting it out still leaves a chunk over 500 KiB.
-        chunkSizeWarningLimit: 1536,
+        // Main bundle is large until Rolldown-safe code-splitting is tuned (see comment below).
+        chunkSizeWarningLimit: 3072,
+        // Avoid custom manualChunks with Rolldown: assigning a large `ckeditor` chunk caused
+        // Vue's runtime to be emitted inside that chunk while `vue-router` stayed separate.
+        // The app then mixed two Vue module graphs → CKEditor mount crashed with
+        // "Cannot read properties of null (reading 'nextSibling')" on production (e.g. login).
         rolldownOptions: {
             checks: {
                 pluginTimings: false,
-            },
-            output: {
-                manualChunks(id) {
-                    if (!id.includes('node_modules')) {
-                        return;
-                    }
-                    if (id.includes('ckeditor')) {
-                        return 'ckeditor';
-                    }
-                    if (id.includes('@primevue') || id.includes('/primevue/')) {
-                        return 'primevue';
-                    }
-                    if (id.includes('quill')) {
-                        return 'quill';
-                    }
-                    if (id.includes('jquery') || id.includes('select2')) {
-                        return 'jquery';
-                    }
-                    if (id.includes('sweetalert2')) {
-                        return 'sweetalert2';
-                    }
-                    if (
-                        id.includes('vue-router') ||
-                        /[/\\]node_modules[/\\]vue[/\\]/.test(id)
-                    ) {
-                        return 'vue-core';
-                    }
-                    if (id.includes('axios')) {
-                        return 'axios';
-                    }
-                    return 'vendor';
-                },
             },
         },
     },
@@ -63,6 +35,7 @@ export default defineConfig({
         }),
     ],
     resolve: {
+        dedupe: ['vue', 'vue-router'],
         alias: {
             '@': path.resolve(__dirname, 'resources/js'),
             dompurify: path.resolve(__dirname, 'resources/js/utils/dompurify-lite.js'),
