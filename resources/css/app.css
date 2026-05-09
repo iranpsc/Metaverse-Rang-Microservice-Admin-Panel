@@ -1,0 +1,142 @@
+@import "tailwindcss";
+@import 'quill/dist/quill.core.css';
+@import 'quill/dist/quill.snow.css';
+
+/* Tailwind CSS v4 Dark Mode Custom Variant */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Metaverse Admin Theme - Custom Colors */
+@theme {
+  /* Typography */
+  --font-family-sans: 'Vazirmatn', 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Primary Palette */
+  --color-primary-400: #A78BFA;
+  --color-primary-500: #7C3AED;
+  --color-primary-600: #6D28D9;
+  --color-primary-light: #A78BFA;
+  --color-primary-dark: #4C1D95;
+
+  /* Secondary Palette */
+  --color-secondary-400: #22D3EE;
+  --color-secondary-500: #06B6D4;
+  --color-secondary-600: #0891B2;
+  --color-secondary-light: #22D3EE;
+  --color-secondary-dark: #0E7490;
+
+  /* Backgrounds */
+  --color-bg-base: #0F172A;
+  --color-bg-elevated: #1E293B;
+  --color-bg-glass: rgba(255, 255, 255, 0.05);
+
+  /* Text */
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #64748B;
+  --color-text-inverse: #0F172A;
+
+  /* States */
+  --color-success: #22C55E;
+  --color-warning: #EAB308;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+
+  /* Borders & Shadows */
+  --color-border: rgba(255, 255, 255, 0.1);
+  --color-shadow: rgba(0, 0, 0, 0.4);
+}
+
+/* Theme Variables - Dark Theme (Default) */
+:root[data-theme="dark"],
+:root:not([data-theme]) {
+  --theme-bg-base: #0F172A;
+  --theme-bg-elevated: #1E293B;
+  --theme-bg-glass: rgba(255, 255, 255, 0.05);
+  --theme-text-primary: #F8FAFC;
+  --theme-text-secondary: #CBD5E1;
+  --theme-text-muted: #64748B;
+  --theme-border: rgba(255, 255, 255, 0.1);
+  --theme-shadow: rgba(0, 0, 0, 0.4);
+  --theme-success: #22C55E;
+  --theme-error: #EF4444;
+  --theme-warning: #EAB308;
+  --theme-info: #3B82F6;
+}
+
+/* Theme Variables - Light Theme */
+:root[data-theme="light"],
+body.light {
+  --theme-bg-base: #F8FAFC;
+  --theme-bg-elevated: #FFFFFF;
+  --theme-bg-glass: rgba(255, 255, 255, 0.7);
+  --theme-text-primary: #0F172A;
+  --theme-text-secondary: #334155;
+  --theme-text-muted: #64748B;
+  --theme-border: rgba(0, 0, 0, 0.08);
+  --theme-shadow: rgba(0, 0, 0, 0.1);
+  --theme-success: #22C55E;
+  --theme-error: #EF4444;
+  --theme-warning: #EAB308;
+  --theme-info: #3B82F6;
+}
+
+/* Set Vazirmatn as default font family */
+body {
+  font-family: 'Vazirmatn', 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* PrimeVue Editor Custom Styles */
+.p-editor-container {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.p-editor-container .p-editor-content {
+  background-color: var(--theme-bg-elevated);
+  color: var(--theme-text-primary);
+}
+
+.p-editor-container .ql-editor {
+  color: var(--theme-text-primary);
+  min-height: 300px;
+  direction: rtl !important;
+  text-align: right !important;
+}
+
+.p-editor-container .ql-container {
+  direction: rtl !important;
+}
+
+.p-editor-container .ql-toolbar {
+  background-color: var(--theme-bg-elevated);
+  border-color: var(--theme-border);
+  direction: rtl;
+}
+
+.p-editor-container .ql-toolbar .ql-formats {
+  direction: rtl;
+}
+
+.p-editor-container .ql-toolbar .ql-stroke {
+  stroke: var(--theme-text-secondary);
+}
+
+.p-editor-container .ql-toolbar .ql-fill {
+  fill: var(--theme-text-secondary);
+}
+
+.p-editor-container .ql-toolbar button:hover,
+.p-editor-container .ql-toolbar button.ql-active {
+  color: var(--color-primary-500);
+}
+
+.p-editor-container .ql-toolbar button:hover .ql-stroke,
+.p-editor-container .ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--color-primary-500);
+}
+
+.p-editor-container .ql-toolbar button:hover .ql-fill,
+.p-editor-container .ql-toolbar button.ql-active .ql-fill {
+  fill: var(--color-primary-500);
+}
+
