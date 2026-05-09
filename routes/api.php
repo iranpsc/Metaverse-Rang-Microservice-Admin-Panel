@@ -285,31 +285,28 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     Route::post('/isic-codes/{isicCode}/deny', [IsicCodeController::class, 'deny']);
     Route::delete('/isic-codes/{isicCode}', [IsicCodeController::class, 'destroy']);
 
-    Route::prefix('v1')->group(function () {
-        Route::get('/translations/languages', [TranslationController::class, 'languages']);
-        Route::get('/translations', [TranslationController::class, 'index'])->withoutMiddleware('auth:sanctum');
-        Route::get('/translations/{translation}', [TranslationController::class, 'show']);
-        Route::post('/translations', [TranslationController::class, 'store']);
-        Route::delete('/translations/{translation}', [TranslationController::class, 'destroy']);
-        Route::patch('/translations/{translation}/status', [TranslationController::class, 'toggleStatus']);
-        Route::post('/translations/{translation}/export', [TranslationController::class, 'export']);
+    Route::get('/translations/languages', [TranslationController::class, 'languages']);
+    Route::get('/translations', [TranslationController::class, 'index'])->withoutMiddleware('auth:sanctum');
+    Route::get('/translations/{translation}', [TranslationController::class, 'show']);
+    Route::post('/translations', [TranslationController::class, 'store']);
+    Route::delete('/translations/{translation}', [TranslationController::class, 'destroy']);
+    Route::patch('/translations/{translation}/status', [TranslationController::class, 'toggleStatus']);
+    Route::post('/translations/{translation}/export', [TranslationController::class, 'export']);
 
-        Route::get('/translations/{translation}/modals', [TranslationModalController::class, 'index']);
-        Route::get('/translations/{translation}/modals/{modal}', [TranslationModalController::class, 'show']);
-        Route::post('/translations/{translation}/modals', [TranslationModalController::class, 'store']);
-        Route::patch('/translations/{translation}/modals/{modal}', [TranslationModalController::class, 'update']);
-        Route::delete('/translations/{translation}/modals/{modal}', [TranslationModalController::class, 'destroy']);
+    Route::get('/translations/{translation}/modals', [TranslationModalController::class, 'index']);
+    Route::get('/translations/{translation}/modals/{modal}', [TranslationModalController::class, 'show']);
+    Route::post('/translations/{translation}/modals', [TranslationModalController::class, 'store']);
+    Route::patch('/translations/{translation}/modals/{modal}', [TranslationModalController::class, 'update']);
+    Route::delete('/translations/{translation}/modals/{modal}', [TranslationModalController::class, 'destroy']);
 
-        Route::get('/translations/{translation}/modals/{modal}/tabs', [TranslationTabController::class, 'index']);
-        Route::get('/translations/{translation}/modals/{modal}/tabs/{tab}', [TranslationTabController::class, 'show']);
-        Route::post('/translations/{translation}/modals/{modal}/tabs', [TranslationTabController::class, 'store']);
-        Route::patch('/translations/{translation}/modals/{modal}/tabs/{tab}', [TranslationTabController::class, 'update']);
-        Route::delete('/translations/{translation}/modals/{modal}/tabs/{tab}', [TranslationTabController::class, 'destroy']);
+    Route::get('/translations/{translation}/modals/{modal}/tabs', [TranslationTabController::class, 'index']);
+    Route::get('/translations/{translation}/modals/{modal}/tabs/{tab}', [TranslationTabController::class, 'show']);
+    Route::post('/translations/{translation}/modals/{modal}/tabs', [TranslationTabController::class, 'store']);
+    Route::patch('/translations/{translation}/modals/{modal}/tabs/{tab}', [TranslationTabController::class, 'update']);
+    Route::delete('/translations/{translation}/modals/{modal}/tabs/{tab}', [TranslationTabController::class, 'destroy']);
 
-        Route::get('/translations/{translation}/modals/{modal}/tabs/{tab}/fields', [TranslationFieldController::class, 'index']);
-        Route::post('/translations/{translation}/modals/{modal}/tabs/{tab}/fields', [TranslationFieldController::class, 'store']);
-        Route::patch('/translations/{translation}/modals/{modal}/tabs/{tab}/fields/{field}', [TranslationFieldController::class, 'update']);
-        Route::delete('/translations/{translation}/modals/{modal}/tabs/{tab}/fields/{field}', [TranslationFieldController::class, 'destroy']);
-    });
+    Route::get('/translations/{translation}/modals/{modal}/tabs/{tab}/fields', [TranslationFieldController::class, 'index']);
+    Route::post('/translations/{translation}/modals/{modal}/tabs/{tab}/fields', [TranslationFieldController::class, 'store']);
+    Route::patch('/translations/{translation}/modals/{modal}/tabs/{tab}/fields/{field}', [TranslationFieldController::class, 'update']);
+    Route::delete('/translations/{translation}/modals/{modal}/tabs/{tab}/fields/{field}', [TranslationFieldController::class, 'destroy']);
 });
-
