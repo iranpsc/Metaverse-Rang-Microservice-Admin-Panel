@@ -133,10 +133,10 @@ import {
   Pagination,
   Modal,
   Input,
-  RichTextEditor,
   LoadingState,
   ErrorState
 } from '../../components/ui'
+import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'

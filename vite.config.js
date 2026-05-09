@@ -5,15 +5,46 @@ import path from 'path';
 
 export default defineConfig({
     build: {
-        // Main bundle is large until Rolldown-safe code-splitting is tuned (see comment below).
-        chunkSizeWarningLimit: 3072,
-        // Avoid custom manualChunks with Rolldown: assigning a large `ckeditor` chunk caused
-        // Vue's runtime to be emitted inside that chunk while `vue-router` stayed separate.
-        // The app then mixed two Vue module graphs → CKEditor mount crashed with
-        // "Cannot read properties of null (reading 'nextSibling')" on production (e.g. login).
+        // @ckeditor/ckeditor5-build-classic is ~1.3 MiB minified; splitting it out still leaves a chunk over 500 KiB.
+        chunkSizeWarningLimit: 1536,
         rolldownOptions: {
             checks: {
                 pluginTimings: false,
+            },
+            output: {
+                manualChunks(id) {
+                    if (!id.includes('node_modules')) {
+                        return;
+                    }
+                    // Only split the prebuilt editor. Matching every path with "ckeditor" also
+                    // catches @ckeditor/ckeditor5-vue and merges it into this chunk, which makes
+                    // the app entry statically import from ckeditor-*.js and loads ~1.5MB on login.
+                    if (id.includes('@ckeditor/ckeditor5-build-classic')) {
+                        return 'ckeditor';
+                    }
+                    if (id.includes('@primevue') || id.includes('/primevue/')) {
+                        return 'primevue';
+                    }
+                    if (id.includes('quill')) {
+                        return 'quill';
+                    }
+                    if (id.includes('jquery') || id.includes('select2')) {
+                        return 'jquery';
+                    }
+                    if (id.includes('sweetalert2')) {
+                        return 'sweetalert2';
+                    }
+                    if (
+                        id.includes('vue-router') ||
+                        /[/\\]node_modules[/\\]vue[/\\]/.test(id)
+                    ) {
+                        return 'vue-core';
+                    }
+                    if (id.includes('axios')) {
+                        return 'axios';
+                    }
+                    return 'vendor';
+                },
             },
         },
     },
@@ -35,7 +66,6 @@ export default defineConfig({
         }),
     ],
     resolve: {
-        dedupe: ['vue', 'vue-router'],
         alias: {
             '@': path.resolve(__dirname, 'resources/js'),
             dompurify: path.resolve(__dirname, 'resources/js/utils/dompurify-lite.js'),

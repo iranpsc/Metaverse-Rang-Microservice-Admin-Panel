@@ -313,9 +313,9 @@ import {
   Modal,
   Input,
   FileInput,
-  RichTextEditor,
   Select
 } from '../../components/ui'
+import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import MediaCellButton from '../../components/ui/MediaCellButton.vue'
 import { confirm } from '../../utils/notifications'

@@ -375,9 +375,9 @@ import {
   Input,
   FileInput,
   Badge,
-  RichTextEditor,
   TimePicker
 } from '../../components/ui'
+import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { useToast } from '../../composables/useToast'

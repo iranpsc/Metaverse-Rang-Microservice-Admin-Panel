@@ -411,11 +411,11 @@ import {
   LoadingState,
   Modal,
   Pagination,
-  RichTextEditor,
   SearchBox,
   Select,
   Table
 } from '../../components/ui'
+import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
