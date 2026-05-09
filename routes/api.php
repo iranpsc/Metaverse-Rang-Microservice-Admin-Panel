@@ -287,7 +287,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
 
     Route::prefix('v1')->group(function () {
         Route::get('/translations/languages', [TranslationController::class, 'languages']);
-        Route::get('/translations', [TranslationController::class, 'index']);
+        Route::get('/translations', [TranslationController::class, 'index'])->withoutMiddleware('auth:sanctum');
         Route::get('/translations/{translation}', [TranslationController::class, 'show']);
         Route::post('/translations', [TranslationController::class, 'store']);
         Route::delete('/translations/{translation}', [TranslationController::class, 'destroy']);
