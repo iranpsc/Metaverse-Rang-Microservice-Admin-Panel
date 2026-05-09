@@ -60,7 +60,7 @@
         <template #cell-flag="{ row }">
           <div class="flex items-center gap-3">
             <img
-              :src="getFlagSrc(row)"
+              :src="row.icon || getFlagSrc(row)"
               :alt="row.code"
               class="h-8 w-8 rounded-full border border-white/20 shadow-[0_0_10px_rgba(124,58,237,0.35)]"
             />
@@ -76,15 +76,21 @@
         </template>
 
         <template #cell-status="{ row }">
-          <Badge :variant="row.status ? 'success' : 'warning'">
-            {{ row.status ? 'فعال' : 'غیرفعال' }}
+          <Badge :variant="translationStatus(row) ? 'success' : 'warning'">
+            {{ translationStatus(row) ? 'فعال' : 'غیرفعال' }}
           </Badge>
+        </template>
+
+        <template #cell-modals_count="{ row }">
+          <span class="text-[var(--theme-text-secondary)]">
+            {{ row.modals_count != null ? row.modals_count : '—' }}
+          </span>
         </template>
 
         <template #cell-actions="{ row }">
           <div class="flex flex-wrap items-center justify-end gap-2">
             <Checkbox
-              :model-value="row.status"
+              :model-value="translationStatus(row)"
               aria-label="تغییر وضعیت"
               class="rounded-full border-[var(--theme-border)] bg-[var(--theme-bg-glass)] px-3 py-2"
               @update:model-value="() => handleToggleStatus(row)"
@@ -209,6 +215,19 @@ const fetchLanguages = async () => {
   }
 }
 
+/** Index payload omits `status`; list is only active rows, so missing means active. */
+const translationStatus = (row) => {
+  if (typeof row.status === 'boolean') return row.status
+  if (row.status === 1 || row.status === '1') return true
+  if (row.status === 0 || row.status === '0') return false
+  return true
+}
+
+const normalizeTranslationRow = (row) => ({
+  ...row,
+  status: translationStatus(row)
+})
+
 const fetchTranslations = async (requestedPage = page.value) => {
   loading.value = true
   error.value = ''
@@ -217,12 +236,12 @@ const fetchTranslations = async (requestedPage = page.value) => {
     const payload = await translationApi.getTranslations({
       page: requestedPage
     })
-    // API returns { translations, pagination }; legacy shape was a bare array.
+    // Index: `{ data: [ ... ] }` → Axios `response.data.data` is an array (see translationApi).
     if (Array.isArray(payload)) {
-      translations.value = payload
+      translations.value = payload.map(normalizeTranslationRow)
       pagination.value = null
     } else {
-      translations.value = payload?.translations ?? []
+      translations.value = (payload?.translations ?? []).map(normalizeTranslationRow)
       pagination.value = payload?.pagination ?? null
     }
   } catch (err) {
@@ -272,9 +291,9 @@ const handleToggleStatus = async (translation) => {
   try {
     const response = await translationApi.toggleTranslationStatus(translation.id)
     const updated = response.data.translation
-    translations.value = translations.value.map((item) =>
-      item.id === updated.id ? updated : item
-    )
+    translations.value = translations.value
+      .map((item) => (item.id === updated.id ? normalizeTranslationRow(updated) : item))
+      .filter((item) => translationStatus(item))
     showToast(`ترجمه ${updated.status ? 'فعال' : 'غیرفعال'} شد.`, 'success')
   } catch (err) {
     showToast(err?.response?.data?.message || 'امکان تغییر وضعیت وجود ندارد.', 'error')

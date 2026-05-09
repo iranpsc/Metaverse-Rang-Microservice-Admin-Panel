@@ -133,16 +133,24 @@ const initSelect2 = async () => {
     width: '100%'
   })
 
-  $el.on('change.select2Component', () => {
-    const value = $el.val()
-    emit('update:modelValue', value)
-    emit('change', value)
-  })
+  const syncModelFromDom = () => {
+    const raw = $el.val()
+    const value = raw == null || raw === '' ? '' : String(raw)
+    if (value !== String(props.modelValue ?? '')) {
+      emit('update:modelValue', value)
+      emit('change', value)
+    }
+  }
+
+  // Select2: ensure v-model updates on user selection (change + explicit select handlers).
+  $el.on('change.select2Component', syncModelFromDom)
+  $el.on('select2:select.select2Component', syncModelFromDom)
+  $el.on('select2:clear.select2Component', syncModelFromDom)
 
   if (props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== '') {
-    $el.val(props.modelValue).trigger('change.select2Component')
+    $el.val(String(props.modelValue)).trigger('change')
   } else if (props.placeholder) {
-    $el.val('').trigger('change.select2Component')
+    $el.val('').trigger('change')
   }
 
   initialized = true
@@ -186,8 +194,11 @@ watch(
     if (!initialized || !selectRef.value) return
     const jQuery = await ensureSelect2()
     const $el = jQuery(selectRef.value)
-    if ($el.val() !== value) {
-      $el.val(value ?? '').trigger('change.select2Component')
+    const nextStr = value == null || value === '' ? '' : String(value)
+    const current = $el.val()
+    const currentStr = current == null || current === '' ? '' : String(current)
+    if (currentStr !== nextStr) {
+      $el.val(nextStr === '' ? '' : nextStr).trigger('change')
     }
   }
 )

@@ -21,8 +21,9 @@ class TranslationController extends Controller
     public function index(Request $request): JsonResponse
     {
         $translations = Translation::active()->get();
+
         return response()->json([
-            'data' => $translations->map(function($translation) {
+            'data' => $translations->map(function ($translation) {
                 return [
                     'id' => $translation->id,
                     'code' => $translation->code,
