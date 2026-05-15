@@ -92,6 +92,8 @@
       @close="closeUpdateModal"
       @updated="handleAdminUpdated"
     />
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -102,10 +104,12 @@ import { Table, LoadingState, ErrorState, Button, Badge } from '../../components
 import CreateAdminModal from '../../components/access-management/CreateAdminModal.vue'
 import UpdateAdminModal from '../../components/access-management/UpdateAdminModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const error = ref(null)
@@ -163,27 +167,30 @@ const handleAdminUpdated = () => {
 }
 
 const handleDelete = async (id) => {
-  const result = await confirm(
-    'آیا می خواهید این کاربر را حذف کنید؟',
-    'تایید حذف',
+  await phoneVerification.confirmThenVerify(
     {
+      message: 'آیا می خواهید این کاربر را حذف کنید؟',
+      title: 'تایید حذف',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        await apiClient.delete(`/admins/${id}`, { data: payload })
+        showToast('کاربر با موفقیت حذف شد', 'success')
+        phoneVerification.resetVerificationState()
+        fetchAdmins()
+      } catch (err) {
+        console.error('Delete admin error:', err)
+
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف کاربر', 'error')
+      }
     }
   )
-
-  if (!result.isConfirmed) {
-    return
-  }
-
-  try {
-    await apiClient.delete(`/admins/${id}`)
-    showToast('کاربر با موفقیت حذف شد', 'success')
-    fetchAdmins()
-  } catch (err) {
-    console.error('Delete admin error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف کاربر', 'error')
-  }
 }
 
 const fetchAdmins = async () => {

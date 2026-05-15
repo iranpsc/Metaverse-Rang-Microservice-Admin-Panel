@@ -1,7 +1,7 @@
 <template>
   <Modal
     :model-value="show"
-    @update:model-value="$emit('close')"
+    @update:model-value="onClose"
     title="ویرایش دسترسی ها و مسئولیت های کارمند"
     size="md"
   >
@@ -81,6 +81,15 @@
     <template #footer>
       <div class="flex gap-3 justify-end" dir="rtl">
         <Button
+          v-if="isProduction && !isVerified"
+          variant="primary"
+          :loading="sendingVerification"
+          @click="handleSendCode"
+        >
+          ارسال کد تایید
+        </Button>
+        <Button
+          v-if="!isProduction || isVerified"
           variant="primary"
           :loading="saving"
           @click="handleSave"
@@ -89,38 +98,24 @@
         </Button>
         <Button
           variant="danger"
-          @click="$emit('close')"
+          @click="onClose"
         >
           بستن
         </Button>
       </div>
     </template>
-
-    <!-- Verification Dialog -->
-    <Modal
-      :model-value="showVerificationDialog"
-      @update:model-value="handleCloseVerificationDialog"
-      @close="handleCloseVerificationDialog"
-      title="تایید نهایی"
-      size="md"
-    >
-      <div dir="rtl">
-        <VerificationForm
-          ref="verificationFormRef"
-          :auto-start="true"
-          @verified="handleAutoVerifyAndSubmit"
-        />
-      </div>
-    </Modal>
   </Modal>
+
+  <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
 </template>
 
 <script setup>
-import { ref, watch, computed, nextTick, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Button, Spinner, Alert } from '../ui'
-import VerificationForm from '../VerificationForm.vue'
-import { notifySuccess, notifyError, confirm } from '../../utils/notifications'
+import PhoneVerificationModal from '../PhoneVerificationModal.vue'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { notifySuccess, notifyError } from '../../utils/notifications'
 import TableActionIcon from '../icons/TableActionIcon.vue'
 
 const props = defineProps({
@@ -136,19 +131,24 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'updated'])
 
+const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
 const loading = ref(false)
 const saving = ref(false)
 const fetchError = ref(null)
 const admin = ref(null)
 const availableRoles = ref([])
 const selectedRoles = ref([])
-const verificationFormRef = ref(null)
-const showVerificationDialog = ref(false)
-
-const isProduction = computed(() => {
-  const metaEnv = document.querySelector('meta[name="app-env"]')?.getAttribute('content')
-  return metaEnv === 'production' || import.meta.env.MODE === 'production'
-})
 
 const fetchAdminDetails = async () => {
   if (!props.adminId) {
@@ -177,182 +177,99 @@ const fetchAdminDetails = async () => {
 }
 
 const handleRemoveRole = async (roleId) => {
-  const result = await confirm(
-    'آیا می خواهید این مسیولیت را حذف کنید؟',
-    'تایید حذف مسئولیت',
+  await confirmThenVerify(
     {
+      message: 'آیا می خواهید این مسیولیت را حذف کنید؟',
+      title: 'تایید حذف مسئولیت',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        await apiClient.delete(`/admins/${props.adminId}/roles/${roleId}`, { data: payload })
+        await notifySuccess('مسئولیت با موفقیت حذف شد')
+        fetchAdminDetails()
+      } catch (err) {
+        console.error('Remove role error:', err)
+        if (await handleApiVerificationError(err)) {
+          return
+        }
+        await notifyError(err.response?.data?.message || 'خطا در حذف مسئولیت')
+      }
     }
   )
-
-  if (!result.isConfirmed) {
-    return
-  }
-
-  try {
-    await apiClient.delete(`/admins/${props.adminId}/roles/${roleId}`)
-    await notifySuccess('مسئولیت با موفقیت حذف شد')
-    fetchAdminDetails()
-  } catch (err) {
-    console.error('Remove role error:', err)
-    await notifyError(err.response?.data?.message || 'خطا در حذف مسئولیت')
-  }
 }
 
-const sendVerificationCode = async () => {
-  try {
-    saving.value = true
-    const response = await apiClient.post('/send-verification-sms')
-
-    if (response.data.success) {
-      showVerificationDialog.value = true
-      // Don't set saving.value to false here - keep it true until verification completes
-      return true
-    } else {
-      await notifyError('خطا در ارسال کد تایید')
-      saving.value = false
-      return false
-    }
-  } catch (err) {
-    console.error('Verification SMS send error:', err)
-    await notifyError(err.response?.data?.message || 'خطا در ارسال کد تایید')
-    saving.value = false
-    return false
-  }
-}
-
-const submitAdminUpdate = async (verificationData = {}) => {
+const submitAdminUpdate = async (verificationPayload = {}) => {
   try {
     saving.value = true
     fetchError.value = null
 
     const response = await apiClient.put(`/admins/${props.adminId}`, {
       roles: selectedRoles.value,
-      ...verificationData
+      ...verificationPayload
     })
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
-      showVerificationDialog.value = false
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        verificationFormRef.value.setErrors({})
-      }
+      resetVerificationState()
       emit('updated')
     } else {
       fetchError.value = 'خطا در ثبت اطلاعات'
     }
   } catch (err) {
     console.error('Update admin error:', err)
-    fetchError.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
 
-    if (err.response?.data?.errors && verificationFormRef.value && verificationFormRef.value.setErrors) {
-      const validationErrors = {}
-      if (err.response.data.errors.phone_verification) {
-        validationErrors.phone_verification = Array.isArray(err.response.data.errors.phone_verification)
-          ? err.response.data.errors.phone_verification[0]
-          : err.response.data.errors.phone_verification
-      }
-      verificationFormRef.value.setErrors(validationErrors)
+    if (await handleApiVerificationError(err)) {
+      return
     }
+
+    fetchError.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
   } finally {
     saving.value = false
   }
 }
 
+const handleSendCode = async () => {
+  await beginVerifyForSubmit()
+}
+
 const handleSave = async () => {
   if (isProduction.value) {
-    const codeSent = await sendVerificationCode()
-    if (!codeSent) {
-      return
-    }
-    // saving.value is set to true in sendVerificationCode and kept true until verification completes
+    await submitAdminUpdate(getSubmitPayload())
   } else {
     await submitAdminUpdate()
   }
 }
 
-const handleAutoVerifyAndSubmit = async (verificationData) => {
-  // Prevent double submission - only proceed if we're in the verification flow (saving is true from sendVerificationCode)
-  if (!saving.value) {
-    console.warn('handleAutoVerifyAndSubmit called but saving is false - possible duplicate call')
-    return
-  }
-
-  if (!verificationFormRef.value && !verificationData) {
-    await notifyError('خطا در تایید')
-    saving.value = false
-    return
-  }
-
-  const data = verificationData || verificationFormRef.value?.getData()
-  await submitAdminUpdate(data)
+const onClose = () => {
+  resetVerificationState()
+  emit('close')
 }
 
-const handleCloseVerificationDialog = () => {
-  if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-    verificationFormRef.value.setErrors({})
-  }
-  showVerificationDialog.value = false
-  // Reset saving state if user closes dialog without completing verification
-  saving.value = false
-}
-
-// Watch for when modal opens and fetch data
 watch(() => props.show, (newVal) => {
   if (newVal && props.adminId) {
+    resetVerificationState()
     fetchAdminDetails()
   } else if (!newVal) {
-    // Reset data when modal closes
     admin.value = null
     availableRoles.value = []
     selectedRoles.value = []
     fetchError.value = null
+    resetVerificationState()
   }
 })
 
-// Watch for adminId changes (when switching between admins)
 watch(() => props.adminId, (newVal) => {
   if (newVal && props.show) {
+    resetVerificationState()
     fetchAdminDetails()
   }
 })
 
-// Fetch data when component is mounted (since parent uses v-if, component only exists when needed)
 onMounted(() => {
-  // Fetch immediately when component mounts if show is true
   if (props.show && props.adminId) {
     fetchAdminDetails()
   }
 })
-
-watch(() => showVerificationDialog, async (newVal) => {
-  if (newVal) {
-    await nextTick()
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.startTimer) {
-        verificationFormRef.value.startTimer()
-      }
-    }, 100)
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.focusFirstInput) {
-        verificationFormRef.value.focusFirstInput()
-      }
-    }, 400)
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.focusFirstInput) {
-        verificationFormRef.value.focusFirstInput()
-      }
-    }, 600)
-  } else {
-    if (verificationFormRef.value && verificationFormRef.value.reset) {
-      verificationFormRef.value.reset()
-    }
-  }
-})
 </script>
-
-<style scoped>
-/* Additional styles if needed */
-</style>
-

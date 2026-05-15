@@ -89,6 +89,8 @@
       @close="closeUpdateModal"
       @updated="handleRoleUpdated"
     />
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -98,11 +100,13 @@ import apiClient from '../../utils/api'
 import { Table, Pagination, LoadingState, ErrorState, Button } from '../../components/ui'
 import CreateRoleModal from '../../components/access-management/CreateRoleModal.vue'
 import UpdateRoleModal from '../../components/access-management/UpdateRoleModal.vue'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const error = ref(null)
@@ -169,37 +173,38 @@ const handleRoleUpdated = () => {
 }
 
 const handleDelete = async (id) => {
-  const result = await confirm(
-    'آیا می خواهید این مسئولیت را حذف کنید؟',
-    'حذف مسئولیت',
+  await phoneVerification.confirmThenVerify(
     {
+      message: 'آیا می خواهید این مسئولیت را حذف کنید؟',
+      title: 'حذف مسئولیت',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
-    }
-  )
+    },
+    async (payload) => {
+      try {
+        await apiClient.delete(`/roles/${id}`, { data: payload })
+        showToast('مسئولیت با موفقیت حذف شد', 'success')
 
-  if (!result.isConfirmed) {
-    return
-  }
+        if (pagination.value && pagination.value.current_page > 1) {
+          const itemsOnCurrentPage = roles.value.length
+          if (itemsOnCurrentPage === 1) {
+            currentPage.value = pagination.value.current_page - 1
+          }
+        }
 
-  try {
-    await apiClient.delete(`/roles/${id}`)
-    showToast('مسئولیت با موفقیت حذف شد', 'success')
+        phoneVerification.resetVerificationState()
+        fetchRoles()
+      } catch (err) {
+        console.error('Delete role error:', err)
 
-    // Handle pagination - if current page becomes empty, go to previous page
-    if (pagination.value && pagination.value.current_page > 1) {
-      const itemsOnCurrentPage = roles.value.length
-      if (itemsOnCurrentPage === 1) {
-        // Last item on current page, go to previous page
-        currentPage.value = pagination.value.current_page - 1
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف مسئولیت', 'error')
       }
     }
-
-    fetchRoles()
-  } catch (err) {
-    console.error('Delete role error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف مسئولیت', 'error')
-  }
+  )
 }
 
 const fetchRoles = async () => {

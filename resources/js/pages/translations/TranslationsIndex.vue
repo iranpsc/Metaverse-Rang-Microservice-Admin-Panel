@@ -139,6 +139,8 @@
         @page-change="goToPage"
       />
     </section>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -156,11 +158,13 @@ import Alert from '../../components/ui/Alert.vue'
 import LoadingState from '../../components/ui/LoadingState.vue'
 import ErrorState from '../../components/ui/ErrorState.vue'
 import Breadcrumb from '../../components/ui/Breadcrumb.vue'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const setTitle = (title) => {
   document.title = title ? `${title} - متارنگ` : 'متارنگ'
@@ -272,19 +276,27 @@ const handleCreateTranslation = async () => {
 }
 
 const handleDelete = async (translation) => {
-  const result = await confirm(`آیا از حذف ترجمه ${translation.name} مطمئن هستید؟`, 'حذف ترجمه', {
-    confirmText: 'بله، حذف شود',
-    cancelText: 'انصراف'
-  })
-  if (!result.isConfirmed) return
-
-  try {
-    await translationApi.deleteTranslation(translation.id)
-    showToast('ترجمه انتخابی حذف شد.', 'success')
-    await fetchTranslations(page.value)
-  } catch (err) {
-    showToast(err?.response?.data?.message || 'حذف ترجمه امکان‌پذیر نبود.', 'error')
-  }
+  await phoneVerification.confirmThenVerify(
+    {
+      message: `آیا از حذف ترجمه ${translation.name} مطمئن هستید؟`,
+      title: 'حذف ترجمه',
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        await translationApi.deleteTranslation(translation.id, payload)
+        showToast('ترجمه انتخابی حذف شد.', 'success')
+        phoneVerification.resetVerificationState()
+        await fetchTranslations(page.value)
+      } catch (err) {
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+        showToast(err?.response?.data?.message || 'حذف ترجمه امکان‌پذیر نبود.', 'error')
+      }
+    }
+  )
 }
 
 const handleToggleStatus = async (translation) => {

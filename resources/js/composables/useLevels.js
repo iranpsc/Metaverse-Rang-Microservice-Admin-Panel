@@ -9,7 +9,7 @@ export function useLevels() {
   const updateLevel = (levelId, formData) => apiClient.post(`/levels/${levelId}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
-  const deleteLevel = (levelId) => apiClient.delete(`/levels/${levelId}`)
+  const deleteLevel = (levelId, payload = {}) => apiClient.delete(`/levels/${levelId}`, { data: payload })
 
   return {
     fetchLevels,

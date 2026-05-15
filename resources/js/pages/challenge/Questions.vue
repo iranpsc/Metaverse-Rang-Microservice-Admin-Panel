@@ -176,6 +176,8 @@
         </div>
       </template>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -183,11 +185,13 @@
 import { computed, onMounted, ref } from 'vue'
 import apiClient from '../../utils/api'
 import { Button, ErrorState, FileInput, LoadingState, Modal, Pagination, SearchBox, Table } from '../../components/ui'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const error = ref(null)
@@ -380,45 +384,48 @@ const submitImport = async () => {
 }
 
 const handleDelete = async (question) => {
-  try {
-    const result = await confirm('آیا از حذف این سوال اطمینان دارید؟', 'حذف سوال', {
+  await phoneVerification.confirmThenVerify(
+    {
+      message: 'آیا از حذف این سوال اطمینان دارید؟',
+      title: 'حذف سوال',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
-    })
+    },
+    async (payload) => {
+      try {
+        deletingId.value = question.id
 
-    if (!result.isConfirmed) {
-      return
-    }
+        const response = await apiClient.delete(`/challenge/questions/${question.id}`, { data: payload })
 
-    deletingId.value = question.id
+        if (response.data?.success) {
+          showToast(response.data.message || 'سوال با موفقیت حذف شد.', 'success')
+          phoneVerification.resetVerificationState()
 
-    const response = await apiClient.delete(`/challenge/questions/${question.id}`)
+          const isLastItem = questions.value.length === 1
+          const isNotFirstPage = currentPage.value > 1
 
-    if (response.data?.success) {
-      showToast(response.data.message || 'سوال با موفقیت حذف شد.', 'success')
+          if (isLastItem && isNotFirstPage) {
+            currentPage.value -= 1
+          }
 
-      const isLastItem = questions.value.length === 1
-      const isNotFirstPage = currentPage.value > 1
+          await fetchQuestions()
+        } else {
+          throw new Error(response.data?.message || 'خطا در حذف سوال')
+        }
+      } catch (err) {
+        console.error('Challenge question delete error:', err)
 
-      if (isLastItem && isNotFirstPage) {
-        currentPage.value -= 1
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        const message = err.response?.data?.message || err.message || 'خطا در حذف سوال'
+        showToast(message, 'error')
+      } finally {
+        deletingId.value = null
       }
-
-      await fetchQuestions()
-    } else {
-      throw new Error(response.data?.message || 'خطا در حذف سوال')
     }
-  } catch (err) {
-    if (err?.isDismissed) {
-      return
-    }
-
-    console.error('Challenge question delete error:', err)
-    const message = err.response?.data?.message || err.message || 'خطا در حذف سوال'
-    showToast(message, 'error')
-  } finally {
-    deletingId.value = null
-  }
+  )
 }
 
 const formatDate = (value) => {

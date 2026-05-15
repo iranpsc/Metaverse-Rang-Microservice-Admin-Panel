@@ -11,15 +11,13 @@ export function useMaps() {
   const insertMapIntoDatabase = (mapId, formData) => apiClient.post(`/maps/${mapId}/insert-into-database`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
-  const sendVerificationSms = () => apiClient.post('/send-verification-sms')
-  const deleteMap = (mapId) => apiClient.delete(`/maps/${mapId}`)
+  const deleteMap = (mapId, payload = {}) => apiClient.delete(`/maps/${mapId}`, { data: payload })
 
   return {
     fetchMaps,
     createMap,
     updateMap,
     insertMapIntoDatabase,
-    sendVerificationSms,
     deleteMap
   }
 }

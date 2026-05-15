@@ -7,7 +7,6 @@
     @update:model-value="handleClose"
   >
     <div class="space-y-6 max-h-96 overflow-y-auto">
-      <!-- Coordinates List -->
       <div
         v-for="(coordinate, index) in formData.coordinates"
         :key="index"
@@ -44,31 +43,32 @@
           />
         </div>
       </div>
-
-      <!-- Verification Form (Production only) -->
-      <VerificationForm
-        v-if="isProduction"
-        ref="verificationFormRef"
-      />
     </div>
 
     <template #footer>
-      <Button variant="primary" :loading="saving" @click="handleSave">
-        ثبت
+      <Button
+        variant="primary"
+        :loading="saving || phoneVerification.sendingVerification.value"
+        @click="handleSave"
+      >
+        {{ submitButtonLabel }}
       </Button>
       <Button variant="ghost" @click="handleClose">
         بستن
       </Button>
     </template>
   </Modal>
+
+  <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
 </template>
 
 <script setup>
 import { ref, watch, computed } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Input, Button } from '../ui'
-import VerificationForm from '../VerificationForm.vue'
+import PhoneVerificationModal from '../PhoneVerificationModal.vue'
 import { notifySuccess, notifyError } from '../../utils/notifications'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const props = defineProps({
   modelValue: {
@@ -83,23 +83,23 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'saved'])
 
+const phoneVerification = usePhoneVerification()
 const saving = ref(false)
 const errors = ref({})
-const verificationFormRef = ref(null)
-
-// Check if production environment
-const isProduction = computed(() => {
-  const metaEnv = document.querySelector('meta[name="app-env"]')?.getAttribute('content')
-  return metaEnv === 'production' || import.meta.env.MODE === 'production'
-})
 
 const formData = ref({
   coordinates: []
 })
 
-// Watch for feature changes and populate form
+const submitButtonLabel = computed(() => {
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    return 'ارسال کد تایید'
+  }
+  return 'ثبت'
+})
+
 watch(() => props.feature, (newFeature) => {
-  if (newFeature && newFeature.geometry && newFeature.geometry.coordinates) {
+  if (newFeature?.geometry?.coordinates) {
     formData.value.coordinates = newFeature.geometry.coordinates.map((coord, index) => ({
       id: coord.id || index,
       x: coord.x || 0,
@@ -111,64 +111,63 @@ watch(() => props.feature, (newFeature) => {
 const handleClose = () => {
   emit('update:modelValue', false)
   errors.value = {}
-  if (verificationFormRef.value) {
-    verificationFormRef.value.reset()
-  }
+  phoneVerification.resetVerificationState()
 }
 
-const handleSave = async () => {
+const validateCoordinates = () => {
   errors.value = {}
 
-  // Validate verification in production
-  if (isProduction.value && verificationFormRef.value) {
-    const isValid = await verificationFormRef.value.validate()
-    if (!isValid) {
-      return
+  for (let i = 0; i < formData.value.coordinates.length; i++) {
+    const coord = formData.value.coordinates[i]
+    if (coord.x === null || coord.x === undefined || Number.isNaN(coord.x)) {
+      errors.value[`coordinates.${i}.x`] = 'مقدار X الزامی است'
+      return false
+    }
+    if (coord.y === null || coord.y === undefined || Number.isNaN(coord.y)) {
+      errors.value[`coordinates.${i}.y`] = 'مقدار Y الزامی است'
+      return false
     }
   }
 
-  // Validate coordinates
-  for (let i = 0; i < formData.value.coordinates.length; i++) {
-    const coord = formData.value.coordinates[i]
-    if (coord.x === null || coord.x === undefined || isNaN(coord.x)) {
-      errors.value[`coordinates.${i}.x`] = 'مقدار X الزامی است'
-      return
-    }
-    if (coord.y === null || coord.y === undefined || isNaN(coord.y)) {
-      errors.value[`coordinates.${i}.y`] = 'مقدار Y الزامی است'
-      return
-    }
+  return true
+}
+
+const persistCoordinates = async () => {
+  const featureId = props.feature?.id
+
+  if (!featureId) {
+    await notifyError('شناسه ملک معتبر نیست')
+    return
   }
 
   try {
     saving.value = true
 
-    const payload = {
-      coordinates: formData.value.coordinates.map(coord => ({
-        x: parseFloat(coord.x),
-        y: parseFloat(coord.y)
-      })),
-      phone_verification: isProduction.value && verificationFormRef.value
-        ? verificationFormRef.value.getData().phone_verification
-        : null
-    }
-
-    const featureId = props.feature?.id
-
-    if (!featureId) {
-      await notifyError('شناسه ملک معتبر نیست')
-      return
-    }
+    const payload = applyVerificationPayload(
+      {
+        coordinates: formData.value.coordinates.map((coord) => ({
+          x: parseFloat(coord.x),
+          y: parseFloat(coord.y)
+        }))
+      },
+      phoneVerification.getSubmitPayload()
+    )
 
     const response = await apiClient.put(`/lands/features/${featureId}/coordinates`, payload)
 
     if (response.data.success) {
-      notifySuccess('اطلاعات با موفقیت ثبت شد')
+      await notifySuccess('اطلاعات با موفقیت ثبت شد')
+      phoneVerification.resetVerificationState()
       emit('saved')
       handleClose()
     }
   } catch (err) {
     console.error('Save feature coordinates error:', err)
+
+    if (await phoneVerification.handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
     } else {
@@ -178,9 +177,17 @@ const handleSave = async () => {
     saving.value = false
   }
 }
+
+const handleSave = async () => {
+  if (!validateCoordinates()) {
+    return
+  }
+
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    await phoneVerification.beginVerifyForSubmit()
+    return
+  }
+
+  await persistCoordinates()
+}
 </script>
-
-<style scoped>
-/* Additional styles if needed */
-</style>
-

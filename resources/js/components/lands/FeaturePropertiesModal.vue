@@ -6,14 +6,12 @@
     @update:model-value="handleClose"
   >
     <div class="space-y-6">
-      <!-- Properties ID (readonly) -->
       <Input
         v-model="formData.properties_id"
         label="کد زمین"
         readonly
       />
 
-      <!-- Density -->
       <Input
         v-model="formData.density"
         label="تراکم"
@@ -22,7 +20,6 @@
         :error="errors.density"
       />
 
-      <!-- Karbari -->
       <Input
         v-model="formData.karbari"
         label="نوع کاربری"
@@ -30,7 +27,6 @@
         :error="errors.karbari"
       />
 
-      <!-- Address -->
       <Input
         v-model="formData.address"
         label="آدرس"
@@ -38,38 +34,38 @@
         :error="errors.address"
       />
 
-      <!-- RGB -->
       <Input
         v-model="formData.rgb"
         label="قیمت گذاری"
         required
         :error="errors.rgb"
       />
-
-      <!-- Verification Form (Production only) -->
-      <VerificationForm
-        v-if="isProduction"
-        ref="verificationFormRef"
-      />
     </div>
 
     <template #footer>
-      <Button variant="primary" :loading="saving" @click="handleSave">
-        ثبت
+      <Button
+        variant="primary"
+        :loading="saving || phoneVerification.sendingVerification.value"
+        @click="handleSave"
+      >
+        {{ submitButtonLabel }}
       </Button>
       <Button variant="ghost" @click="handleClose">
         بستن
       </Button>
     </template>
   </Modal>
+
+  <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
 </template>
 
 <script setup>
 import { ref, watch, computed } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Input, Button } from '../ui'
-import VerificationForm from '../VerificationForm.vue'
+import PhoneVerificationModal from '../PhoneVerificationModal.vue'
 import { notifySuccess, notifyError } from '../../utils/notifications'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const props = defineProps({
   modelValue: {
@@ -84,15 +80,9 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'saved'])
 
+const phoneVerification = usePhoneVerification()
 const saving = ref(false)
 const errors = ref({})
-const verificationFormRef = ref(null)
-
-// Check if production environment
-const isProduction = computed(() => {
-  const metaEnv = document.querySelector('meta[name="app-env"]')?.getAttribute('content')
-  return metaEnv === 'production' || import.meta.env.MODE === 'production'
-})
 
 const formData = ref({
   properties_id: '',
@@ -103,9 +93,15 @@ const formData = ref({
   rgb: ''
 })
 
-// Watch for feature changes and populate form
+const submitButtonLabel = computed(() => {
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    return 'ارسال کد تایید'
+  }
+  return 'ثبت'
+})
+
 watch(() => props.feature, (newFeature) => {
-  if (newFeature && newFeature.properties) {
+  if (newFeature?.properties) {
     formData.value = {
       properties_id: newFeature.properties.id || '',
       area: newFeature.properties.area || '',
@@ -120,52 +116,46 @@ watch(() => props.feature, (newFeature) => {
 const handleClose = () => {
   emit('update:modelValue', false)
   errors.value = {}
-  if (verificationFormRef.value) {
-    verificationFormRef.value.reset()
-  }
+  phoneVerification.resetVerificationState()
 }
 
-const handleSave = async () => {
-  errors.value = {}
+const persistProperties = async () => {
+  const featureId = props.feature?.id
 
-  // Validate verification in production
-  if (isProduction.value && verificationFormRef.value) {
-    const isValid = await verificationFormRef.value.validate()
-    if (!isValid) {
-      return
-    }
+  if (!featureId) {
+    await notifyError('شناسه ملک معتبر نیست')
+    return
   }
 
   try {
     saving.value = true
 
-    const payload = {
-      area: parseFloat(formData.value.area),
-      density: parseFloat(formData.value.density),
-      karbari: formData.value.karbari,
-      address: formData.value.address,
-      rgb: formData.value.rgb,
-      phone_verification: isProduction.value && verificationFormRef.value
-        ? verificationFormRef.value.getData().phone_verification
-        : null
-    }
-
-    const featureId = props.feature?.id
-
-    if (!featureId) {
-      await notifyError('شناسه ملک معتبر نیست')
-      return
-    }
+    const payload = applyVerificationPayload(
+      {
+        area: parseFloat(formData.value.area),
+        density: parseFloat(formData.value.density),
+        karbari: formData.value.karbari,
+        address: formData.value.address,
+        rgb: formData.value.rgb
+      },
+      phoneVerification.getSubmitPayload()
+    )
 
     const response = await apiClient.put(`/lands/features/${featureId}/properties`, payload)
 
     if (response.data.success) {
-      notifySuccess('اطلاعات با موفقیت ثبت شد')
+      await notifySuccess('اطلاعات با موفقیت ثبت شد')
+      phoneVerification.resetVerificationState()
       emit('saved')
       handleClose()
     }
   } catch (err) {
     console.error('Save feature properties error:', err)
+
+    if (await phoneVerification.handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
     } else {
@@ -175,9 +165,15 @@ const handleSave = async () => {
     saving.value = false
   }
 }
+
+const handleSave = async () => {
+  errors.value = {}
+
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    await phoneVerification.beginVerifyForSubmit()
+    return
+  }
+
+  await persistProperties()
+}
 </script>
-
-<style scoped>
-/* Additional styles if needed */
-</style>
-

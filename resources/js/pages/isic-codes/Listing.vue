@@ -194,6 +194,8 @@
         </div>
       </template>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -201,11 +203,13 @@
 import { onMounted, reactive, ref } from 'vue'
 import apiClient from '../../utils/api'
 import { Badge, Button, ErrorState, FileInput, Input, LoadingState, Modal, Pagination, SearchBox, Table } from '../../components/ui'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const error = ref(null)
@@ -476,44 +480,47 @@ const handleDeny = async (row) => {
 }
 
 const handleDelete = async (row) => {
-  try {
-    const result = await confirm('آیا از حذف این کد ISIC اطمینان دارید؟', 'حذف کد ISIC', {
+  await phoneVerification.confirmThenVerify(
+    {
+      message: 'آیا از حذف این کد ISIC اطمینان دارید؟',
+      title: 'حذف کد ISIC',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
-    })
+    },
+    async (payload) => {
+      try {
+        actionLoading.delete = row.id
+        const { data } = await apiClient.delete(`/isic-codes/${row.id}`, { data: payload })
 
-    if (!result.isConfirmed) {
-      return
-    }
+        if (data?.success) {
+          showToast(data.message || 'کد ISIC با موفقیت حذف شد.', 'success')
+          phoneVerification.resetVerificationState()
 
-    actionLoading.delete = row.id
-    const { data } = await apiClient.delete(`/isic-codes/${row.id}`)
+          const isLastItem = isicCodes.value.length === 1
+          const isNotFirstPage = currentPage.value > 1
 
-    if (data?.success) {
-      showToast(data.message || 'کد ISIC با موفقیت حذف شد.', 'success')
+          if (isLastItem && isNotFirstPage) {
+            currentPage.value -= 1
+          }
 
-      const isLastItem = isicCodes.value.length === 1
-      const isNotFirstPage = currentPage.value > 1
+          await fetchIsicCodes()
+        } else {
+          throw new Error(data?.message || 'خطا در حذف کد ISIC')
+        }
+      } catch (err) {
+        console.error('ISIC code delete error:', err)
 
-      if (isLastItem && isNotFirstPage) {
-        currentPage.value -= 1
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        const message = err.response?.data?.message || err.message || 'خطا در حذف کد ISIC'
+        showToast(message, 'error')
+      } finally {
+        actionLoading.delete = null
       }
-
-      await fetchIsicCodes()
-    } else {
-      throw new Error(data?.message || 'خطا در حذف کد ISIC')
     }
-  } catch (err) {
-    if (err?.isDismissed) {
-      return
-    }
-
-    console.error('ISIC code delete error:', err)
-    const message = err.response?.data?.message || err.message || 'خطا در حذف کد ISIC'
-    showToast(message, 'error')
-  } finally {
-    actionLoading.delete = null
-  }
+  )
 }
 
 const goToPage = (page) => {

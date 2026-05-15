@@ -183,14 +183,18 @@
       </div>
     </template>
   </Modal>
+
+  <PhoneVerificationModal :phone-verification="phoneVerification" />
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Button, Spinner, Alert } from '../ui'
+import PhoneVerificationModal from '../PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { notifyError, confirm } from '../../utils/notifications'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { notifyError } from '../../utils/notifications'
 import TableActionIcon from '../icons/TableActionIcon.vue'
 
 const props = defineProps({
@@ -221,6 +225,17 @@ const editText = ref('')
 
 const { showToast } = useToast()
 
+const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
 const truncateText = (text, maxLength = 100) => {
   if (!text || text.length <= maxLength) return text
   return text.substring(0, maxLength) + '...'
@@ -246,25 +261,19 @@ const cancelEditing = () => {
   editErrors.value = {}
 }
 
-const handleUpdate = async () => {
+const submitUpdate = async (verificationPayload = {}) => {
   try {
-    editErrors.value = {}
-
-    if (!editText.value || !editText.value.trim()) {
-      editErrors.value.text = 'متن را وارد کنید'
-      return
-    }
-
     updating.value = true
 
     const response = await apiClient.put(`/kyc-video-texts/${selectedText.value.id}`, {
-      text: editText.value
+      text: editText.value,
+      ...verificationPayload
     })
 
     if (response.data.success) {
       showToast('متن احراز ویدیویی با موفقیت به‌روزرسانی شد.', 'success')
+      resetVerificationState()
 
-      // Update the item in the local array
       const index = texts.value.findIndex(item => item.id === selectedText.value.id)
       if (index !== -1) {
         texts.value[index] = response.data.data
@@ -277,6 +286,11 @@ const handleUpdate = async () => {
     }
   } catch (err) {
     console.error('KYC video text update error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.data?.errors) {
       editErrors.value = err.response.data.errors
     } else {
@@ -285,6 +299,22 @@ const handleUpdate = async () => {
   } finally {
     updating.value = false
   }
+}
+
+const handleUpdate = async () => {
+  editErrors.value = {}
+
+  if (!editText.value || !editText.value.trim()) {
+    editErrors.value.text = 'متن را وارد کنید'
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitUpdate(getSubmitPayload())
 }
 
 const handleDeleteFromDialog = async () => {
@@ -297,23 +327,18 @@ const handleDeleteFromDialog = async () => {
   selectedText.value = null
 }
 
-const handleSave = async () => {
+const submitCreate = async (verificationPayload = {}) => {
   try {
-    errors.value = {}
-
-    if (!text.value || !text.value.trim()) {
-      errors.value.text = 'متن را وارد کنید'
-      return
-    }
-
     saving.value = true
 
     const response = await apiClient.post('/kyc-video-texts', {
-      text: text.value
+      text: text.value,
+      ...verificationPayload
     })
 
     if (response.data.success) {
       showToast('متن احراز ویدیویی با موفقیت ثبت شد.', 'success')
+      resetVerificationState()
 
       text.value = ''
       currentPage.value = 1
@@ -324,6 +349,11 @@ const handleSave = async () => {
     }
   } catch (err) {
     console.error('KYC video text save error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
     } else {
@@ -334,38 +364,58 @@ const handleSave = async () => {
   }
 }
 
+const handleSave = async () => {
+  errors.value = {}
+
+  if (!text.value || !text.value.trim()) {
+    errors.value.text = 'متن را وارد کنید'
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitCreate(getSubmitPayload())
+}
+
 const handleDelete = async (id) => {
-  try {
-    const result = await confirm(
-      'آیا از حذف این متن اطمینان دارید؟',
-      'آیا مطمئن هستید؟',
-      {
-        confirmText: 'بله، حذف شود',
-        cancelText: 'انصراف'
-      }
-    )
+  await confirmThenVerify(
+    {
+      message: 'آیا از حذف این متن اطمینان دارید؟',
+      title: 'آیا مطمئن هستید؟',
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        deletingId.value = id
 
-    if (!result.isConfirmed) return
+        const response = await apiClient.delete(`/kyc-video-texts/${id}`, { data: payload })
 
-    deletingId.value = id
+        if (response.data.success) {
+          showToast('متن احراز ویدیویی با موفقیت حذف شد.', 'success')
+          resetVerificationState()
+          texts.value = texts.value.filter(item => item.id !== id)
 
-    const response = await apiClient.delete(`/kyc-video-texts/${id}`)
+          if (texts.value.length < perPage.value && hasMorePages.value) {
+            await fetchTexts(currentPage.value + 1, true)
+          }
+        }
+      } catch (err) {
+        console.error('KYC video text delete error:', err)
 
-    if (response.data.success) {
-      showToast('متن احراز ویدیویی با موفقیت حذف شد.', 'success')
-      // Remove deleted item from local array instead of refetching all
-      texts.value = texts.value.filter(item => item.id !== id)
-      // Check if we need to load more items to fill the gap
-      if (texts.value.length < perPage.value && hasMorePages.value) {
-        await fetchTexts(currentPage.value + 1, true)
+        if (await handleApiVerificationError(err)) {
+          return
+        }
+
+        await notifyError(err.response?.data?.message || 'خطا در حذف متن')
+      } finally {
+        deletingId.value = null
       }
     }
-  } catch (err) {
-    console.error('KYC video text delete error:', err)
-    await notifyError(err.response?.data?.message || 'خطا در حذف متن')
-  } finally {
-    deletingId.value = null
-  }
+  )
 }
 
 const fetchTexts = async (page = 1, append = false) => {

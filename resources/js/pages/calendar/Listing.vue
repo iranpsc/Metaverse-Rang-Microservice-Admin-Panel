@@ -358,6 +358,8 @@
         </div>
       </template>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -380,10 +382,12 @@ import {
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -763,38 +767,40 @@ const handleEditSubmit = async () => {
 }
 
 const handleDelete = async (event) => {
-  const result = await confirm(
-    `آیا از حذف وقعه «${event.title}» مطمئن هستید؟`,
-    'حذف وقعه',
+  await phoneVerification.confirmThenVerify(
     {
+      message: `آیا از حذف وقعه «${event.title}» مطمئن هستید؟`,
+      title: 'حذف وقعه',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        const response = await apiClient.delete(`/calendars/${event.id}`, { data: payload })
+
+        if (response.data.success) {
+          showToast(response.data.message || 'وقعه با موفقیت حذف شد', 'success')
+          phoneVerification.resetVerificationState()
+
+          if (events.value.length === 1 && currentPage.value > 1) {
+            currentPage.value -= 1
+          }
+
+          fetchEvents()
+        } else {
+          showToast(response.data.message || 'خطا در حذف وقعه', 'error')
+        }
+      } catch (err) {
+        console.error('Calendar delete error:', err)
+
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف وقعه', 'error')
+      }
     }
   )
-
-  if (!result.isConfirmed) {
-    return
-  }
-
-  try {
-    const response = await apiClient.delete(`/calendars/${event.id}`)
-
-    if (response.data.success) {
-      showToast(response.data.message || 'وقعه با موفقیت حذف شد', 'success')
-
-      // If current page becomes empty after deletion, go to previous page
-      if (events.value.length === 1 && currentPage.value > 1) {
-        currentPage.value -= 1
-      }
-
-      fetchEvents()
-    } else {
-      showToast(response.data.message || 'خطا در حذف وقعه', 'error')
-    }
-  } catch (err) {
-    console.error('Calendar delete error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف وقعه', 'error')
-  }
 }
 
 watch(

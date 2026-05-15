@@ -110,13 +110,17 @@
       </div>
     </template>
   </Modal>
+
+  <PhoneVerificationModal :phone-verification="phoneVerification" />
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Input, Button, Spinner, Alert } from '../ui'
-import { notifySuccess, notifyError, confirm } from '../../utils/notifications'
+import PhoneVerificationModal from '../PhoneVerificationModal.vue'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { notifySuccess, notifyError } from '../../utils/notifications'
 import TableActionIcon from '../icons/TableActionIcon.vue'
 import { useModalForm } from '../../composables/useModalForm'
 
@@ -132,6 +136,17 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'updated'])
+
+const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
 
 const {
   loading,
@@ -178,66 +193,60 @@ const fetchRoleDetails = async () => {
 }
 
 const handleRemovePermission = async (permissionId) => {
-  const result = await confirm(
-    'آیا می خواهید این دسترسی را حذف کنید؟',
-    'حذف دسترسی',
+  await confirmThenVerify(
     {
+      message: 'آیا می خواهید این دسترسی را حذف کنید؟',
+      title: 'حذف دسترسی',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        await apiClient.delete(`/roles/${props.roleId}/permissions/${permissionId}`, { data: payload })
+        await notifySuccess('دسترسی با موفقیت حذف شد')
+        fetchRoleDetails()
+      } catch (err) {
+        console.error('Remove permission error:', err)
+
+        if (await handleApiVerificationError(err)) {
+          return
+        }
+
+        await notifyError(err.response?.data?.message || 'خطا در حذف دسترسی')
+      }
     }
   )
-
-  if (!result.isConfirmed) {
-    return
-  }
-
-  try {
-    await apiClient.delete(`/roles/${props.roleId}/permissions/${permissionId}`)
-    await notifySuccess('دسترسی با موفقیت حذف شد')
-    fetchRoleDetails()
-  } catch (err) {
-    console.error('Remove permission error:', err)
-    await notifyError(err.response?.data?.message || 'خطا در حذف دسترسی')
-  }
 }
 
-const handleSave = async () => {
-  errors.value = {}
-
-  // Validation
-  if (!formData.value.title || formData.value.title.trim() === '') {
-    errors.value.title = 'عنوان مسئولیت الزامی است'
-    return
-  }
-
-  if (!formData.value.name || formData.value.name.trim() === '') {
-    errors.value.name = 'نام مسئولیت الزامی است'
-    return
-  }
+const submitRoleUpdate = async (verificationPayload = {}) => {
+  const existingPermissionNames = role.value.permissions.map(p => p.name)
+  const newPermissionNames = selectedPermissions.value
+  const allPermissions = [...new Set([...existingPermissionNames, ...newPermissionNames])]
 
   try {
     saving.value = true
     fetchError.value = null
 
-    // Combine existing permissions (that weren't removed) with newly selected ones
-    const existingPermissionNames = role.value.permissions.map(p => p.name)
-    const newPermissionNames = selectedPermissions.value
-    const allPermissions = [...new Set([...existingPermissionNames, ...newPermissionNames])]
-
     const response = await apiClient.put(`/roles/${props.roleId}`, {
       title: formData.value.title.trim(),
       name: formData.value.name.trim(),
-      permissions: allPermissions
+      permissions: allPermissions,
+      ...verificationPayload
     })
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
+      resetVerificationState()
       emit('updated')
     } else {
       fetchError.value = 'خطا در ثبت اطلاعات'
     }
   } catch (err) {
     console.error('Update role error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -249,17 +258,38 @@ const handleSave = async () => {
   }
 }
 
+const handleSave = async () => {
+  errors.value = {}
+
+  if (!formData.value.title || formData.value.title.trim() === '') {
+    errors.value.title = 'عنوان مسئولیت الزامی است'
+    return
+  }
+
+  if (!formData.value.name || formData.value.name.trim() === '') {
+    errors.value.name = 'نام مسئولیت الزامی است'
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitRoleUpdate(getSubmitPayload())
+}
+
 watch(() => props.show, (newVal) => {
   if (newVal && props.roleId) {
     fetchRoleDetails()
   } else if (!newVal) {
-    // Reset when modal is closed
     role.value = null
     availablePermissions.value = []
     formData.value = { title: '', name: '' }
     selectedPermissions.value = []
     errors.value = {}
     fetchError.value = null
+    resetVerificationState()
   }
 })
 

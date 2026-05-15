@@ -307,6 +307,8 @@
         </Button>
       </template>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -314,11 +316,13 @@
 import { ref, onMounted, computed } from 'vue'
 import apiClient from '../../utils/api'
 import { Table, Modal, Button, Input, Select, LoadingState, ErrorState, Pagination } from '../../components/ui'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const error = ref(null)
@@ -593,32 +597,35 @@ const handleUpdate = async () => {
 }
 
 const handleDelete = async (prize) => {
-  const result = await confirm(
-    'آیا می‌خواهید این پاداش را حذف کنید؟',
-    'تایید حذف',
+  await phoneVerification.confirmThenVerify(
     {
+      message: 'آیا می‌خواهید این پاداش را حذف کنید؟',
+      title: 'تایید حذف',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        const response = await apiClient.delete(`/dynasty/prizes/${prize.id}`, { data: payload })
+
+        if (response.data.success) {
+          phoneVerification.resetVerificationState()
+          await fetchPrizes()
+          showToast('پاداش با موفقیت حذف شد', 'success')
+        } else {
+          showToast(response.data.message || 'خطا در حذف پاداش', 'error')
+        }
+      } catch (err) {
+        console.error('Delete prize error:', err)
+
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف پاداش', 'error')
+      }
     }
   )
-
-  if (!result.isConfirmed) {
-    return
-  }
-
-  try {
-    const response = await apiClient.delete(`/dynasty/prizes/${prize.id}`)
-
-    if (response.data.success) {
-      await fetchPrizes()
-      showToast('پاداش با موفقیت حذف شد', 'success')
-    } else {
-      showToast(response.data.message || 'خطا در حذف پاداش', 'error')
-    }
-  } catch (err) {
-    console.error('Delete prize error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف پاداش', 'error')
-  }
 }
 
 const goToPage = (page) => {

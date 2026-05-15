@@ -146,11 +146,11 @@
         <div class="flex gap-3 justify-end" dir="rtl">
           <Button
             variant="primary"
-            :loading="uploadSaving"
-            @click="handleUploadSubmit"
+            :loading="uploadSaving || phoneVerification.sendingVerification.value"
+            @click="handleUploadFooterAction"
             class="w-1/2"
           >
-            بارگذاری
+            {{ uploadSubmitLabel }}
           </Button>
           <Button
             variant="danger"
@@ -214,11 +214,11 @@
         <div class="flex gap-3 justify-end" dir="rtl">
           <Button
             variant="primary"
-            :loading="updateSaving"
-            @click="handleUpdateSubmit"
+            :loading="updateSaving || phoneVerification.sendingVerification.value"
+            @click="handleUpdateFooterAction"
             class="w-1/2"
           >
-            بارگذاری
+            {{ updateSubmitLabel }}
           </Button>
           <Button
             variant="danger"
@@ -252,11 +252,11 @@
         <div class="flex gap-3 justify-end" dir="rtl">
           <Button
             variant="primary"
-            :loading="insertSaving"
-            @click="handleInsertSubmit"
+            :loading="insertSaving || phoneVerification.sendingVerification.value"
+            @click="handleInsertFooterAction"
             class="w-1/2"
           >
-            ثبت نهایی
+            {{ insertSubmitLabel }}
           </Button>
           <Button
             variant="danger"
@@ -269,41 +269,26 @@
       </template>
     </Modal>
 
-    <!-- Verification Dialog (Shared) -->
-    <Modal
-      :model-value="showVerificationDialog"
-      @update:model-value="handleCloseVerificationDialog"
-      @close="handleCloseVerificationDialog"
-      title="تایید نهایی"
-      size="md"
-    >
-      <div dir="rtl">
-        <VerificationForm
-          ref="verificationFormRef"
-          :auto-start="true"
-          @verified="handleAutoVerifyAndSubmit"
-        />
-      </div>
-    </Modal>
+    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { Table, Pagination, Button, Badge, LoadingState, ErrorState, Modal, Input, FileInput } from '../../components/ui'
-import VerificationForm from '../../components/VerificationForm.vue'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
 import { useMaps } from '../../composables/useMaps'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 const {
   fetchMaps: fetchMapsApi,
   createMap,
   updateMap,
   insertMapIntoDatabase,
-  sendVerificationSms,
   deleteMap
 } = useMaps()
 
@@ -316,7 +301,6 @@ const currentPage = ref(1)
 const showUploadModal = ref(false)
 const showUpdateModal = ref(false)
 const showInsertIntoDatabaseModal = ref(false)
-const showVerificationDialog = ref(false)
 const selectedMap = ref(null)
 
 // Upload form state
@@ -343,14 +327,16 @@ const updateBorderFile = ref(null)
 // Insert form state
 const insertSaving = ref(false)
 
-// Verification
-const verificationFormRef = ref(null)
-const pendingAction = ref(null) // 'upload' | 'update' | 'insert'
-
-const isProduction = computed(() => {
-  const metaEnv = document.querySelector('meta[name="app-env"]')?.getAttribute('content')
-  return metaEnv === 'production' || import.meta.env.MODE === 'production'
+const verificationSubmitLabel = (defaultLabel) => computed(() => {
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    return 'ارسال کد تایید'
+  }
+  return defaultLabel
 })
+
+const uploadSubmitLabel = verificationSubmitLabel('بارگذاری')
+const updateSubmitLabel = verificationSubmitLabel('بارگذاری')
+const insertSubmitLabel = verificationSubmitLabel('ثبت نهایی')
 
 // Table columns configuration
 const tableColumns = [
@@ -494,7 +480,7 @@ const validateUploadForm = () => {
   return Object.keys(uploadErrors.value).length === 0
 }
 
-const submitUploadForm = async (verificationData = {}) => {
+const submitUploadForm = async () => {
   try {
     uploadSaving.value = true
     uploadErrors.value = {}
@@ -506,26 +492,20 @@ const submitUploadForm = async (verificationData = {}) => {
     formDataToSend.append('border_file', borderFile.value)
     formDataToSend.append('color', uploadFormData.value.color)
 
-    if (verificationData.phone_verification) {
-      formDataToSend.append('phone_verification', verificationData.phone_verification)
-    }
+    applyVerificationPayload(formDataToSend, phoneVerification.getSubmitPayload())
 
     const response = await createMap(formDataToSend)
 
     if (response.data.success) {
       showToast(response.data.message, 'success')
-      showVerificationDialog.value = false
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        verificationFormRef.value.setErrors({})
-      }
 
-      // Reset form
       uploadFormData.value = { name: '', color: '#000000' }
       mapFile.value = null
       pointFile.value = null
       borderFile.value = null
 
       showUploadModal.value = false
+      phoneVerification.resetVerificationState()
       fetchMaps()
     } else {
       showToast('خطا در بارگذاری فایل', 'error')
@@ -533,18 +513,12 @@ const submitUploadForm = async (verificationData = {}) => {
   } catch (err) {
     console.error('Upload error:', err)
 
+    if (await phoneVerification.handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.status === 422 && err.response?.data?.errors) {
       uploadErrors.value = err.response.data.errors
-
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        const validationErrors = {}
-        if (err.response.data.errors.phone_verification) {
-          validationErrors.phone_verification = Array.isArray(err.response.data.errors.phone_verification)
-            ? err.response.data.errors.phone_verification[0]
-            : err.response.data.errors.phone_verification
-        }
-        verificationFormRef.value.setErrors(validationErrors)
-      }
     } else {
       showToast(err.response?.data?.message || 'خطا در بارگذاری فایل', 'error')
     }
@@ -553,23 +527,17 @@ const submitUploadForm = async (verificationData = {}) => {
   }
 }
 
-const handleUploadSubmit = async () => {
+const handleUploadFooterAction = async () => {
   if (!validateUploadForm()) {
     return
   }
 
-  uploadSaving.value = true
-
-  if (isProduction.value) {
-    pendingAction.value = 'upload'
-    const codeSent = await sendVerificationCode()
-    if (!codeSent) {
-      uploadSaving.value = false
-      return
-    }
-  } else {
-    await submitUploadForm()
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    await phoneVerification.beginVerifyForSubmit()
+    return
   }
+
+  await submitUploadForm()
 }
 
 const validateUpdateForm = () => {
@@ -594,7 +562,7 @@ const validateUpdateForm = () => {
   return Object.keys(updateErrors.value).length === 0
 }
 
-const submitUpdateForm = async (verificationData = {}) => {
+const submitUpdateForm = async () => {
   try {
     updateSaving.value = true
     updateErrors.value = {}
@@ -606,20 +574,14 @@ const submitUpdateForm = async (verificationData = {}) => {
     formDataToSend.append('color', updateFormData.value.color)
     formDataToSend.append('_method', 'PUT')
 
-    if (verificationData.phone_verification) {
-      formDataToSend.append('phone_verification', verificationData.phone_verification)
-    }
+    applyVerificationPayload(formDataToSend, phoneVerification.getSubmitPayload())
 
     const response = await updateMap(selectedMap.value.id, formDataToSend)
 
     if (response.data.success) {
       showToast(response.data.message, 'success')
-      showVerificationDialog.value = false
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        verificationFormRef.value.setErrors({})
-      }
-
       closeUpdateModal()
+      phoneVerification.resetVerificationState()
       fetchMaps()
     } else {
       showToast('خطا در ویرایش اطلاعات', 'error')
@@ -627,18 +589,12 @@ const submitUpdateForm = async (verificationData = {}) => {
   } catch (err) {
     console.error('Update error:', err)
 
+    if (await phoneVerification.handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.status === 422 && err.response?.data?.errors) {
       updateErrors.value = err.response.data.errors
-
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        const validationErrors = {}
-        if (err.response.data.errors.phone_verification) {
-          validationErrors.phone_verification = Array.isArray(err.response.data.errors.phone_verification)
-            ? err.response.data.errors.phone_verification[0]
-            : err.response.data.errors.phone_verification
-        }
-        verificationFormRef.value.setErrors(validationErrors)
-      }
     } else {
       showToast(err.response?.data?.message || 'خطا در ویرایش اطلاعات', 'error')
     }
@@ -647,46 +603,32 @@ const submitUpdateForm = async (verificationData = {}) => {
   }
 }
 
-const handleUpdateSubmit = async () => {
+const handleUpdateFooterAction = async () => {
   if (!validateUpdateForm()) {
     return
   }
 
-  updateSaving.value = true
-
-  if (isProduction.value) {
-    pendingAction.value = 'update'
-    const codeSent = await sendVerificationCode()
-    if (!codeSent) {
-      updateSaving.value = false
-      return
-    }
-  } else {
-    await submitUpdateForm()
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    await phoneVerification.beginVerifyForSubmit()
+    return
   }
+
+  await submitUpdateForm()
 }
 
-// Insert handlers
-const submitInsertForm = async (verificationData = {}) => {
+const submitInsertForm = async () => {
   try {
     insertSaving.value = true
 
     const formDataToSend = new FormData()
-
-    if (verificationData.phone_verification) {
-      formDataToSend.append('phone_verification', verificationData.phone_verification)
-    }
+    applyVerificationPayload(formDataToSend, phoneVerification.getSubmitPayload())
 
     const response = await insertMapIntoDatabase(selectedMap.value.id, formDataToSend)
 
     if (response.data.success) {
       showToast(response.data.message, 'success')
-      showVerificationDialog.value = false
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        verificationFormRef.value.setErrors({})
-      }
-
       closeInsertIntoDatabaseModal()
+      phoneVerification.resetVerificationState()
       fetchMaps()
     } else {
       showToast('خطا در وارد کردن اطلاعات', 'error')
@@ -694,92 +636,27 @@ const submitInsertForm = async (verificationData = {}) => {
   } catch (err) {
     console.error('Insert error:', err)
 
-    if (err.response?.status === 422 && err.response?.data?.errors) {
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        const validationErrors = {}
-        if (err.response.data.errors.phone_verification) {
-          validationErrors.phone_verification = Array.isArray(err.response.data.errors.phone_verification)
-            ? err.response.data.errors.phone_verification[0]
-            : err.response.data.errors.phone_verification
-        }
-        verificationFormRef.value.setErrors(validationErrors)
-      }
-    } else {
-      showToast(err.response?.data?.message || 'خطا در وارد کردن اطلاعات', 'error')
+    if (await phoneVerification.handleApiVerificationError(err)) {
+      return
     }
+
+    showToast(err.response?.data?.message || 'خطا در وارد کردن اطلاعات', 'error')
   } finally {
     insertSaving.value = false
   }
 }
 
-const handleInsertSubmit = async () => {
-  insertSaving.value = true
-
-  if (isProduction.value) {
-    pendingAction.value = 'insert'
-    const codeSent = await sendVerificationCode()
-    if (!codeSent) {
-      insertSaving.value = false
-      return
-    }
-  } else {
-    await submitInsertForm()
-  }
-}
-
-// Verification handlers
-const sendVerificationCode = async () => {
-  try {
-    const response = await sendVerificationSms()
-
-    if (response.data.success) {
-      showVerificationDialog.value = true
-      return true
-    } else {
-      showToast('خطا در ارسال کد تایید', 'error')
-      return false
-    }
-  } catch (err) {
-    console.error('Verification SMS send error:', err)
-    showToast(err.response?.data?.message || 'خطا در ارسال کد تایید', 'error')
-    return false
-  } finally {
-    // Reset saving state based on action
-    if (pendingAction.value === 'upload') uploadSaving.value = false
-    else if (pendingAction.value === 'update') updateSaving.value = false
-    else if (pendingAction.value === 'insert') insertSaving.value = false
-  }
-}
-
-const handleAutoVerifyAndSubmit = async (verificationData) => {
-  if (!verificationFormRef.value) {
-    showToast('خطا در تایید', 'error')
+const handleInsertFooterAction = async () => {
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    await phoneVerification.beginVerifyForSubmit()
     return
   }
 
-  const data = verificationData || verificationFormRef.value.getData()
-
-  if (pendingAction.value === 'upload') {
-    await submitUploadForm(data)
-  } else if (pendingAction.value === 'update') {
-    await submitUpdateForm(data)
-  } else if (pendingAction.value === 'insert') {
-    await submitInsertForm(data)
-  }
-
-  pendingAction.value = null
+  await submitInsertForm()
 }
 
-const handleCloseVerificationDialog = () => {
-  if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-    verificationFormRef.value.setErrors({})
-  }
-  showVerificationDialog.value = false
-  pendingAction.value = null
-}
-
-// Modal handlers
 const openUpdateModal = (map) => {
+  phoneVerification.resetVerificationState()
   selectedMap.value = map
   updateFormData.value = {
     name: map.name || '',
@@ -798,9 +675,11 @@ const closeUpdateModal = () => {
   updatePointFile.value = null
   updateBorderFile.value = null
   updateErrors.value = {}
+  phoneVerification.resetVerificationState()
 }
 
 const openInsertIntoDatabaseModal = (map) => {
+  phoneVerification.resetVerificationState()
   selectedMap.value = map
   showInsertIntoDatabaseModal.value = true
 }
@@ -808,78 +687,50 @@ const openInsertIntoDatabaseModal = (map) => {
 const closeInsertIntoDatabaseModal = () => {
   showInsertIntoDatabaseModal.value = false
   selectedMap.value = null
+  phoneVerification.resetVerificationState()
 }
 
 const handleDelete = async (map) => {
-  try {
-    const result = await confirm(
-      `آیا از حذف نقشه «${map.name}» مطمئن هستید؟`,
-      'تایید حذف نقشه',
-      {
-        confirmText: 'بله، حذف شود',
-        cancelText: 'انصراف'
+  await phoneVerification.confirmThenVerify(
+    {
+      message: `آیا از حذف نقشه «${map.name}» مطمئن هستید؟`,
+      title: 'تایید حذف نقشه',
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        const response = await deleteMap(map.id, payload)
+
+        if (response.data.success) {
+          showToast('نقشه با موفقیت حذف شد', 'success')
+          fetchMaps()
+        } else {
+          showToast('خطا در حذف نقشه', 'error')
+        }
+      } catch (err) {
+        console.error('Delete map error:', err)
+
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف نقشه', 'error')
       }
-    )
-
-    if (!result.isConfirmed) {
-      return
     }
-
-    const response = await deleteMap(map.id)
-
-    if (response.data.success) {
-      showToast('نقشه با موفقیت حذف شد', 'success')
-      fetchMaps()
-    } else {
-      showToast('خطا در حذف نقشه', 'error')
-    }
-  } catch (err) {
-    // If error is not from API (user cancelled), just return
-    if (err === 'cancel' || err === 'dismiss') {
-      return
-    }
-
-    console.error('Delete map error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف نقشه', 'error')
-  }
+  )
 }
 
 watch(showUploadModal, (newVal) => {
-  if (!newVal) {
+  if (newVal) {
+    phoneVerification.resetVerificationState()
+  } else {
     uploadFormData.value = { name: '', color: '#000000' }
     mapFile.value = null
     pointFile.value = null
     borderFile.value = null
     uploadErrors.value = {}
-    showVerificationDialog.value = false
-  }
-})
-
-watch(showVerificationDialog, async (newVal) => {
-  if (newVal) {
-    await nextTick()
-
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.startTimer) {
-        verificationFormRef.value.startTimer()
-      }
-    }, 100)
-
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.focusFirstInput) {
-        verificationFormRef.value.focusFirstInput()
-      }
-    }, 400)
-
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.focusFirstInput) {
-        verificationFormRef.value.focusFirstInput()
-      }
-    }, 600)
-  } else {
-    if (verificationFormRef.value && verificationFormRef.value.reset) {
-      verificationFormRef.value.reset()
-    }
+    phoneVerification.resetVerificationState()
   }
 })
 

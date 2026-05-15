@@ -178,6 +178,8 @@
         </div>
       </template>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -193,11 +195,13 @@ import Textarea from '../../components/ui/Textarea.vue'
 import LoadingState from '../../components/ui/LoadingState.vue'
 import ErrorState from '../../components/ui/ErrorState.vue'
 import { translationApi } from '../../api/translations'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const route = useRoute()
 const router = useRouter()
@@ -344,23 +348,27 @@ const handleUpdate = async () => {
 }
 
 const handleDelete = async (field) => {
-  const result = await confirm(
-    'آیا از حذف این عبارت مطمئن هستید؟ با این کار عبارت از تمامی زبان‌ها حذف می‌شود.',
-    'حذف عبارت',
+  await phoneVerification.confirmThenVerify(
     {
+      message: 'آیا از حذف این عبارت مطمئن هستید؟ با این کار عبارت از تمامی زبان‌ها حذف می‌شود.',
+      title: 'حذف عبارت',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        await translationApi.deleteField(translationId, modalId, tabId, field.id, payload)
+        showToast('تمامی نسخه‌های این عبارت حذف گردید.', 'success')
+        phoneVerification.resetVerificationState()
+        await fetchFields(page.value)
+      } catch (err) {
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+        showToast(err?.response?.data?.message || 'حذف عبارت امکان‌پذیر نبود.', 'error')
+      }
     }
   )
-  if (!result.isConfirmed) return
-
-  try {
-    await translationApi.deleteField(translationId, modalId, tabId, field.id)
-    showToast('تمامی نسخه‌های این عبارت حذف گردید.', 'success')
-    await fetchFields(page.value)
-  } catch (err) {
-    showToast(err?.response?.data?.message || 'حذف عبارت امکان‌پذیر نبود.', 'error')
-  }
 }
 
 const navigateBack = () => {

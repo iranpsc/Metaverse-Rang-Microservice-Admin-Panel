@@ -111,7 +111,6 @@
       size="lg"
     >
       <div class="space-y-4" dir="rtl">
-        <!-- Asset Selection -->
         <Select
           v-model="formData.asset"
           label="ارز"
@@ -121,7 +120,6 @@
           :loading="loadingVariables"
         />
 
-        <!-- Amount Input -->
         <Input
           v-model="formData.amount"
           type="number"
@@ -130,7 +128,6 @@
           :error="errors.amount"
         />
 
-        <!-- Code Input -->
         <Input
           v-model="formData.code"
           label="کد بسته"
@@ -156,7 +153,6 @@
           />
         </div>
 
-        <!-- Note (Only for Edit) -->
         <div v-if="isEditMode" class="form-group">
           <label class="block text-sm font-medium text-[var(--theme-text-primary)] mb-2">یادداشت *</label>
           <textarea
@@ -174,10 +170,10 @@
         <div class="flex gap-3 justify-end" dir="rtl">
           <Button
             variant="primary"
-            :loading="saving"
-            @click="handleSubmit"
+            :loading="saving || sendingVerification"
+            @click="handleFormFooterAction"
           >
-            ثبت
+            {{ submitButtonLabel }}
           </Button>
           <Button
             variant="danger"
@@ -190,22 +186,7 @@
       </template>
     </Modal>
 
-    <!-- Verification Dialog -->
-    <Modal
-      :model-value="showVerificationDialog"
-      @update:model-value="handleCloseVerificationDialog"
-      @opened="handleVerificationOpened"
-      title="تایید نهایی"
-      size="md"
-    >
-      <div dir="rtl">
-        <VerificationForm
-          ref="verificationFormRef"
-          :auto-start="true"
-          @verified="handleAutoVerifyAndSubmit"
-        />
-      </div>
-    </Modal>
+    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
 
     <!-- Change History Modal -->
     <Modal
@@ -245,11 +226,23 @@ import { ref, computed, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Button, LoadingState, ErrorState, Table, Pagination, Modal, Input, Select, FileInput } from '../../components/ui'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
-import VerificationForm from '../../components/VerificationForm.vue'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
+
+const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
 
 const loading = ref(true)
 const error = ref(null)
@@ -258,13 +251,11 @@ const pagination = ref(null)
 const currentPage = ref(1)
 const showFormModal = ref(false)
 const showHistoryModal = ref(false)
-const showVerificationDialog = ref(false)
 const isEditMode = ref(false)
 const selectedOption = ref(null)
 const saving = ref(false)
 const loadingVariables = ref(false)
 const variableOptions = ref([])
-const verificationFormRef = ref(null)
 const imagePreview = ref(null)
 
 const formData = ref({
@@ -277,9 +268,11 @@ const formData = ref({
 
 const errors = ref({})
 
-const isProduction = computed(() => {
-  const metaEnv = document.querySelector('meta[name="app-env"]')?.getAttribute('content')
-  return metaEnv === 'production' || import.meta.env.MODE === 'production'
+const submitButtonLabel = computed(() => {
+  if (isProduction.value && !isVerified.value) {
+    return 'ارسال کد تایید'
+  }
+  return isEditMode.value ? 'بروزرسانی' : 'ثبت'
 })
 
 const existingImageUrl = computed(() => {
@@ -394,7 +387,6 @@ const fetchOptions = async () => {
   } catch (err) {
     console.error('Options fetch error:', err)
 
-    // If 401/403, don't set error message - axios interceptor will handle redirect
     if (err.response && (err.response.status === 401 || err.response.status === 403)) {
       options.value = []
       pagination.value = null
@@ -471,27 +463,7 @@ const validateForm = () => {
   return Object.keys(errors.value).length === 0
 }
 
-const sendVerificationCode = async () => {
-  try {
-    const response = await apiClient.post('/send-verification-sms')
-
-    if (response.data.success) {
-      showVerificationDialog.value = true
-      return true
-    } else {
-      showToast('خطا در ارسال کد تایید', 'error')
-      return false
-    }
-  } catch (err) {
-    console.error('Verification SMS send error:', err)
-    showToast(err.response?.data?.message || 'خطا در ارسال کد تایید', 'error')
-    return false
-  } finally {
-    saving.value = false
-  }
-}
-
-const submitForm = async (verificationData = {}) => {
+const submitForm = async (verificationPayload = {}) => {
   try {
     saving.value = true
     errors.value = {}
@@ -510,10 +482,7 @@ const submitForm = async (verificationData = {}) => {
       formDataToSend.append('note', formData.value.note)
     }
 
-    // Add verification data in production
-    if (verificationData.phone_verification) {
-      formDataToSend.append('phone_verification', verificationData.phone_verification)
-    }
+    applyVerificationPayload(formDataToSend, verificationPayload)
 
     const url = isEditMode.value ? `/options/${selectedOption.value.id}` : '/options'
 
@@ -531,13 +500,7 @@ const submitForm = async (verificationData = {}) => {
 
     if (response.data.success) {
       showToast(response.data.message, 'success')
-      showVerificationDialog.value = false
-
-      // Reset verification form errors on success
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        verificationFormRef.value.setErrors({})
-      }
-
+      resetVerificationState()
       closeFormModal()
       await fetchOptions()
     } else {
@@ -546,22 +509,12 @@ const submitForm = async (verificationData = {}) => {
   } catch (err) {
     console.error('Form submit error:', err)
 
-    // Handle validation errors
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.status === 422 && err.response?.data?.errors) {
       errors.value = err.response.data.errors
-
-      // Map Laravel validation errors to form fields
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        const validationErrors = {}
-
-        if (err.response.data.errors.phone_verification) {
-          validationErrors.phone_verification = Array.isArray(err.response.data.errors.phone_verification)
-            ? err.response.data.errors.phone_verification[0]
-            : err.response.data.errors.phone_verification
-        }
-
-        verificationFormRef.value.setErrors(validationErrors)
-      }
     } else {
       showToast(err.response?.data?.message || 'خطا در ثبت اطلاعات', 'error')
     }
@@ -570,48 +523,21 @@ const submitForm = async (verificationData = {}) => {
   }
 }
 
-const handleSubmit = async () => {
+const handleFormFooterAction = async () => {
   if (!validateForm()) {
     return
   }
 
-  saving.value = true
-
-  if (isProduction.value) {
-    const codeSent = await sendVerificationCode()
-    if (!codeSent) {
-      return
-    }
-  } else {
-    await submitForm()
-  }
-}
-
-const handleAutoVerifyAndSubmit = async (verificationData) => {
-  if (saving.value) {
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
     return
   }
 
-  if (!verificationFormRef.value) {
-    showToast('خطا در تایید', 'error')
-    return
-  }
-
-  const data = verificationData || verificationFormRef.value.getData()
-  await submitForm(data)
-}
-
-const handleCloseVerificationDialog = () => {
-  if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-    verificationFormRef.value.setErrors({})
-  }
-  if (verificationFormRef.value && verificationFormRef.value.reset) {
-    verificationFormRef.value.reset()
-  }
-  showVerificationDialog.value = false
+  await submitForm(getSubmitPayload())
 }
 
 const openCreateModal = () => {
+  resetVerificationState()
   isEditMode.value = false
   selectedOption.value = null
   formData.value = {
@@ -628,6 +554,7 @@ const openCreateModal = () => {
 }
 
 const openEditModal = (option) => {
+  resetVerificationState()
   isEditMode.value = true
   selectedOption.value = option
   formData.value = {
@@ -656,7 +583,7 @@ const closeFormModal = () => {
   }
   errors.value = {}
   imagePreview.value = null
-  showVerificationDialog.value = false
+  resetVerificationState()
 }
 
 const openHistoryModal = (option) => {
@@ -669,37 +596,33 @@ const closeHistoryModal = () => {
   selectedOption.value = null
 }
 
-const handleVerificationOpened = () => {
-  if (verificationFormRef.value?.startTimer) {
-    verificationFormRef.value.startTimer()
-  }
-  if (verificationFormRef.value?.focusFirstInput) {
-    verificationFormRef.value.focusFirstInput()
-  }
-}
-
 const handleDelete = async (option) => {
-  const result = await confirm(`آیا این پکیج (${option.code}) را حذف می کنید؟`, 'حذف پکیج', {
-    confirmText: 'بله، حذف شود',
-    cancelText: 'انصراف'
-  })
-  if (!result.isConfirmed) {
-    return
-  }
+  await confirmThenVerify(
+    {
+      message: `آیا این پکیج (${option.code}) را حذف می کنید؟`,
+      title: 'حذف پکیج'
+    },
+    async (payload) => {
+      try {
+        const response = await apiClient.delete(`/options/${option.id}`, { data: payload })
 
-  try {
-    const response = await apiClient.delete(`/options/${option.id}`)
+        if (response.data.success) {
+          showToast(response.data.message, 'success')
+          await fetchOptions()
+        } else {
+          showToast(response.data.message || 'خطا در حذف پکیج', 'error')
+        }
+      } catch (err) {
+        console.error('Delete error:', err)
 
-    if (response.data.success) {
-      showToast(response.data.message, 'success')
-      await fetchOptions()
-    } else {
-      showToast(response.data.message || 'خطا در حذف پکیج', 'error')
+        if (await handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف پکیج', 'error')
+      }
     }
-  } catch (err) {
-    console.error('Delete error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف پکیج', 'error')
-  }
+  )
 }
 
 onMounted(() => {

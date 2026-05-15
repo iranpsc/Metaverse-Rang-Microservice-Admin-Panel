@@ -253,6 +253,8 @@
         </div>
       </form>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -274,9 +276,11 @@ import {
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import MediaCellButton from '../../components/ui/MediaCellButton.vue'
-import { confirm } from '../../utils/notifications'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const creating = ref(false)
@@ -571,26 +575,33 @@ const confirmDelete = async (category) => {
     return
   }
 
-  const result = await confirm('آیا از حذف این دسته بندی اطمینان دارید؟', 'حذف دسته بندی', {
-    confirmText: 'بله، حذف شود',
-    cancelText: 'انصراف'
-  })
+  await phoneVerification.confirmThenVerify(
+    {
+      message: 'آیا از حذف این دسته بندی اطمینان دارید؟',
+      title: 'حذف دسته بندی',
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        deletingId.value = category.id
+        await apiClient.delete(`/video-categories/${category.id}`, { data: payload })
+        showToast('دسته بندی با موفقیت حذف شد.', 'success')
+        phoneVerification.resetVerificationState()
+        await fetchCategories()
+      } catch (err) {
+        console.error('Video category delete error:', err)
 
-  if (!result.isConfirmed) {
-    return
-  }
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
 
-  try {
-    deletingId.value = category.id
-    await apiClient.delete(`/video-categories/${category.id}`)
-    showToast('دسته بندی با موفقیت حذف شد.', 'success')
-    await fetchCategories()
-  } catch (err) {
-    console.error('Video category delete error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف دسته بندی', 'error')
-  } finally {
-    deletingId.value = null
-  }
+        showToast(err.response?.data?.message || 'خطا در حذف دسته بندی', 'error')
+      } finally {
+        deletingId.value = null
+      }
+    }
+  )
 }
 
 const openMedia = (url) => {

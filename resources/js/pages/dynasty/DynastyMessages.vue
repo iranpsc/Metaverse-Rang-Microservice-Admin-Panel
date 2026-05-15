@@ -203,6 +203,8 @@
         </Button>
       </template>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -211,12 +213,14 @@ import { ref, computed, onMounted } from 'vue'
 import Editor from 'primevue/editor'
 import apiClient from '../../utils/api'
 import { Table, Modal, Button, Select, Alert, LoadingState, ErrorState } from '../../components/ui'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { sanitizeHtml } from '../../utils/sanitize'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const error = ref(null)
@@ -442,38 +446,39 @@ const handleUpdate = async () => {
 }
 
 const handleDelete = async (message) => {
-  try {
-    const result = await confirm(
-      'آیا می‌خواهید این پیام را حذف کنید؟',
-      'حذف پیام',
-      {
-        confirmText: 'بله، حذف شود',
-        cancelText: 'انصراف'
+  await phoneVerification.confirmThenVerify(
+    {
+      message: 'آیا می‌خواهید این پیام را حذف کنید؟',
+      title: 'حذف پیام',
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        const response = await apiClient.delete(`/dynasty/messages/${message.id}`, { data: payload })
+
+        if (response.data.success) {
+          phoneVerification.resetVerificationState()
+          await fetchMessages()
+          showToast('پیام با موفقیت حذف شد', 'success')
+        } else {
+          const errorMsg = response.data.message || 'خطا در حذف پیام'
+          showToast(errorMsg, 'error')
+          error.value = errorMsg
+        }
+      } catch (err) {
+        console.error('Delete message error:', err)
+
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        const errorMsg = err.response?.data?.message || 'خطا در حذف پیام'
+        showToast(errorMsg, 'error')
+        error.value = errorMsg
       }
-    )
-
-    if (!result.isConfirmed) {
-      return
     }
-
-    const id = message.id
-
-    const response = await apiClient.delete(`/dynasty/messages/${id}`)
-
-    if (response.data.success) {
-      await fetchMessages()
-      showToast('پیام با موفقیت حذف شد', 'success')
-    } else {
-      const errorMsg = response.data.message || 'خطا در حذف پیام'
-      showToast(errorMsg, 'error')
-      error.value = errorMsg
-    }
-  } catch (err) {
-    console.error('Delete message error:', err)
-    const errorMsg = err.response?.data?.message || 'خطا در حذف پیام'
-    showToast(errorMsg, 'error')
-    error.value = errorMsg
-  }
+  )
 }
 
 const fetchMessages = async () => {

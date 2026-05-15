@@ -150,16 +150,10 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="saving"
-            :class="isEditMode ? '!p-2 !gap-0 min-w-[2.25rem]' : ''"
-            :title="isEditMode ? 'بروزرسانی' : 'ثبت'"
-            :aria-label="isEditMode ? 'بروزرسانی' : 'ثبت'"
-            @click="handleSubmit"
+            :loading="saving || sendingVerification"
+            @click="handleFormFooterAction"
           >
-            <template v-if="isEditMode" #icon-left>
-              <TableActionIcon name="edit" />
-            </template>
-            <span v-if="!isEditMode">ثبت</span>
+            {{ submitButtonLabel }}
           </Button>
           <Button
             variant="danger"
@@ -172,21 +166,7 @@
       </template>
     </Modal>
 
-    <!-- Verification Dialog -->
-    <Modal
-      :model-value="showVerificationDialog"
-      @update:model-value="handleCloseVerificationDialog"
-      title="تایید نهایی"
-      size="md"
-    >
-      <div dir="rtl">
-        <VerificationForm
-          ref="verificationFormRef"
-          :auto-start="true"
-          @verified="handleAutoVerifyAndSubmit"
-        />
-      </div>
-    </Modal>
+    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
 
     <!-- Change History Modal -->
     <Modal
@@ -222,26 +202,36 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Button, LoadingState, ErrorState, Table, Modal, Input, Select, FileInput } from '../../components/ui'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
-import VerificationForm from '../../components/VerificationForm.vue'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
+
+const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
 
 const loading = ref(true)
 const error = ref(null)
 const variables = ref([])
 const showFormModal = ref(false)
 const showHistoryModal = ref(false)
-const showVerificationDialog = ref(false)
 const isEditMode = ref(false)
 const selectedVariable = ref(null)
 const saving = ref(false)
-const verificationFormRef = ref(null)
 const imagePreview = ref(null)
 
 const formData = ref({
@@ -253,9 +243,11 @@ const formData = ref({
 
 const errors = ref({})
 
-const isProduction = computed(() => {
-  const metaEnv = document.querySelector('meta[name="app-env"]')?.getAttribute('content')
-  return metaEnv === 'production' || import.meta.env.MODE === 'production'
+const submitButtonLabel = computed(() => {
+  if (isProduction.value && !isVerified.value) {
+    return 'ارسال کد تایید'
+  }
+  return isEditMode.value ? 'بروزرسانی' : 'ثبت'
 })
 
 const existingImageUrl = computed(() => {
@@ -365,7 +357,6 @@ const fetchVariables = async () => {
   } catch (err) {
     console.error('Variables fetch error:', err)
 
-    // If 401/403, don't set error message - axios interceptor will handle redirect
     if (err.response && (err.response.status === 401 || err.response.status === 403)) {
       variables.value = []
       loading.value = false
@@ -410,27 +401,7 @@ const validateForm = () => {
   return Object.keys(errors.value).length === 0
 }
 
-const sendVerificationCode = async () => {
-  try {
-    const response = await apiClient.post('/send-verification-sms')
-
-    if (response.data.success) {
-      showVerificationDialog.value = true
-      return true
-    } else {
-      showToast('خطا در ارسال کد تایید', 'error')
-      return false
-    }
-  } catch (err) {
-    console.error('Verification SMS send error:', err)
-    showToast(err.response?.data?.message || 'خطا در ارسال کد تایید', 'error')
-    return false
-  } finally {
-    saving.value = false
-  }
-}
-
-const submitForm = async (verificationData = {}) => {
+const submitForm = async (verificationPayload = {}) => {
   try {
     saving.value = true
     errors.value = {}
@@ -451,10 +422,7 @@ const submitForm = async (verificationData = {}) => {
       formDataToSend.append('note', formData.value.note)
     }
 
-    // Add verification data in production
-    if (verificationData.phone_verification) {
-      formDataToSend.append('phone_verification', verificationData.phone_verification)
-    }
+    applyVerificationPayload(formDataToSend, verificationPayload)
 
     const url = isEditMode.value ? `/variables/${selectedVariable.value.id}` : '/variables'
 
@@ -472,35 +440,19 @@ const submitForm = async (verificationData = {}) => {
 
     if (response.data.success) {
       showToast(response.data.message, 'success')
-      showVerificationDialog.value = false
-
-      // Reset verification form errors on success
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        verificationFormRef.value.setErrors({})
-      }
-
+      resetVerificationState()
       closeFormModal()
       await fetchVariables()
     }
   } catch (err) {
     console.error('Form submit error:', err)
 
-    // Handle validation errors
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.status === 422 && err.response?.data?.errors) {
       errors.value = err.response.data.errors
-
-      // Map Laravel validation errors to form fields
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        const validationErrors = {}
-
-        if (err.response.data.errors.phone_verification) {
-          validationErrors.phone_verification = Array.isArray(err.response.data.errors.phone_verification)
-            ? err.response.data.errors.phone_verification[0]
-            : err.response.data.errors.phone_verification
-        }
-
-        verificationFormRef.value.setErrors(validationErrors)
-      }
     } else {
       showToast(err.response?.data?.message || 'خطا در ثبت اطلاعات', 'error')
     }
@@ -509,45 +461,21 @@ const submitForm = async (verificationData = {}) => {
   }
 }
 
-const handleSubmit = async () => {
+const handleFormFooterAction = async () => {
   if (!validateForm()) {
     return
   }
 
-  saving.value = true
-
-  if (isProduction.value) {
-    const codeSent = await sendVerificationCode()
-    if (!codeSent) {
-      return
-    }
-  } else {
-    await submitForm()
-  }
-}
-
-const handleAutoVerifyAndSubmit = async (verificationData) => {
-  if (saving.value) {
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
     return
   }
 
-  if (!verificationFormRef.value) {
-    showToast('خطا در تایید', 'error')
-    return
-  }
-
-  const data = verificationData || verificationFormRef.value.getData()
-  await submitForm(data)
-}
-
-const handleCloseVerificationDialog = () => {
-  if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-    verificationFormRef.value.setErrors({})
-  }
-  showVerificationDialog.value = false
+  await submitForm(getSubmitPayload())
 }
 
 const openCreateModal = () => {
+  resetVerificationState()
   isEditMode.value = false
   selectedVariable.value = null
   formData.value = {
@@ -562,6 +490,7 @@ const openCreateModal = () => {
 }
 
 const openEditModal = (variable) => {
+  resetVerificationState()
   isEditMode.value = true
   selectedVariable.value = variable
   formData.value = {
@@ -587,7 +516,7 @@ const closeFormModal = () => {
   }
   errors.value = {}
   imagePreview.value = null
-  showVerificationDialog.value = false
+  resetVerificationState()
 }
 
 const openHistoryModal = (variable) => {
@@ -600,48 +529,31 @@ const closeHistoryModal = () => {
   selectedVariable.value = null
 }
 
-watch(() => showVerificationDialog.value, async (newVal) => {
-  if (newVal) {
-    await nextTick()
-
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.startTimer) {
-        verificationFormRef.value.startTimer()
-      }
-    }, 100)
-
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.focusFirstInput) {
-        verificationFormRef.value.focusFirstInput()
-      }
-    }, 400)
-  } else {
-    if (verificationFormRef.value && verificationFormRef.value.reset) {
-      verificationFormRef.value.reset()
-    }
-  }
-})
-
 const handleDelete = async (variable) => {
-  const result = await confirm(`آیا این ارز (${variable.asset_title}) را حذف می کنید؟`, 'حذف ارز', {
-    confirmText: 'بله، حذف شود',
-    cancelText: 'انصراف'
-  })
-  if (!result.isConfirmed) {
-    return
-  }
+  await confirmThenVerify(
+    {
+      message: `آیا این ارز (${variable.asset_title}) را حذف می کنید؟`,
+      title: 'حذف ارز'
+    },
+    async (payload) => {
+      try {
+        const response = await apiClient.delete(`/variables/${variable.id}`, { data: payload })
 
-  try {
-    const response = await apiClient.delete(`/variables/${variable.id}`)
+        if (response.data.success) {
+          showToast(response.data.message, 'success')
+          await fetchVariables()
+        }
+      } catch (err) {
+        console.error('Delete error:', err)
 
-    if (response.data.success) {
-      showToast(response.data.message, 'success')
-      await fetchVariables()
+        if (await handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف ارز', 'error')
+      }
     }
-  } catch (err) {
-    console.error('Delete error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف ارز', 'error')
-  }
+  )
 }
 
 onMounted(() => {
@@ -652,4 +564,3 @@ onMounted(() => {
 <style scoped>
 /* Additional styles if needed */
 </style>
-

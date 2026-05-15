@@ -267,6 +267,8 @@
         </div>
       </template>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -274,11 +276,13 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import apiClient from '../../utils/api'
 import { Button, ErrorState, Input, LoadingState, Modal, Pagination, SearchBox, Table } from '../../components/ui'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const error = ref(null)
@@ -640,30 +644,37 @@ const submitEdit = async () => {
 }
 
 const handleDelete = async (variable) => {
-  const result = await confirm(`آیا از حذف متغیر «${variable.name}» مطمئن هستید؟`, 'حذف متغیر', {
-    confirmText: 'بله، حذف شود',
-    cancelText: 'انصراف'
-  })
+  await phoneVerification.confirmThenVerify(
+    {
+      message: `آیا از حذف متغیر «${variable.name}» مطمئن هستید؟`,
+      title: 'حذف متغیر',
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف'
+    },
+    async (payload) => {
+      deletingId.value = variable.id
 
-  if (!result.isConfirmed) {
-    return
-  }
+      try {
+        const response = await apiClient.delete(`/system-variables/${variable.id}`, { data: payload })
 
-  deletingId.value = variable.id
+        if (response.data.success) {
+          showToast(response.data.message || 'متغیر با موفقیت حذف شد', 'success')
+          phoneVerification.resetVerificationState()
+          fetchVariables()
+        }
+      } catch (err) {
+        console.error('Delete system variable error:', err)
 
-  try {
-    const response = await apiClient.delete(`/system-variables/${variable.id}`)
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
 
-    if (response.data.success) {
-      showToast(response.data.message || 'متغیر با موفقیت حذف شد', 'success')
-      fetchVariables()
+        showToast(err.response?.data?.message || 'خطا در حذف متغیر', 'error')
+      } finally {
+        deletingId.value = null
+      }
     }
-  } catch (err) {
-    console.error('Delete system variable error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف متغیر', 'error')
-  } finally {
-    deletingId.value = null
-  }
+  )
 }
 
 onMounted(() => {

@@ -417,6 +417,8 @@
       </div>
       <div v-else class="text-center text-sm text-[var(--theme-text-muted)]">ویدیو یافت نشد.</div>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -424,9 +426,10 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import Resumable from 'resumablejs'
 import { ensureCsrfCookie, getSanctumStatefulHeaders } from '../../utils/api'
-import { confirm } from '../../utils/notifications'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useVideos } from '../../composables/useVideos'
 import { useToast } from '../../composables/useToast'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import {
   Button,
   ErrorState,
@@ -443,6 +446,7 @@ import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 const {
   fetchVideoMeta,
   fetchVideos: fetchVideosApi,
@@ -1067,36 +1071,44 @@ const confirmDelete = async (video) => {
     return
   }
 
-  const result = await confirm('آیا از حذف این ویدیو مطمئن هستید؟ این عملیات قابل بازگشت نیست.', 'حذف ویدیو', {
-    confirmText: 'بله، حذف شود',
-    cancelText: 'انصراف',
-    reverseButtons: true,
-    customClass: {
-      popup: 'rounded-2xl bg-[var(--theme-bg-elevated)] text-[var(--theme-text-primary)] border border-[var(--theme-border)]',
-      title: 'text-[var(--theme-text-primary)] font-semibold',
-      htmlContainer: 'text-[var(--theme-text-secondary)] text-sm'
-    }
-  })
+  await phoneVerification.confirmThenVerify(
+    {
+      message: 'آیا از حذف این ویدیو مطمئن هستید؟ این عملیات قابل بازگشت نیست.',
+      title: 'حذف ویدیو',
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف',
+      reverseButtons: true,
+      customClass: {
+        popup: 'rounded-2xl bg-[var(--theme-bg-elevated)] text-[var(--theme-text-primary)] border border-[var(--theme-border)]',
+        title: 'text-[var(--theme-text-primary)] font-semibold',
+        htmlContainer: 'text-[var(--theme-text-secondary)] text-sm'
+      }
+    },
+    async (payload) => {
+      try {
+        deletingId.value = video.id
+        await deleteVideo(video.id, payload)
+        showToast('ویدیو با موفقیت حذف شد.', 'success')
+        phoneVerification.resetVerificationState()
+        await fetchVideos()
 
-  if (!result.isConfirmed) {
-    return
-  }
+        if ((!videos.value || videos.value.length === 0) && currentPage.value > 1) {
+          currentPage.value -= 1
+          await fetchVideos()
+        }
+      } catch (err) {
+        console.error('Video delete error:', err)
 
-  try {
-    deletingId.value = video.id
-    await deleteVideo(video.id)
-    showToast('ویدیو با موفقیت حذف شد.', 'success')
-    await fetchVideos()
-    if ((!videos.value || videos.value.length === 0) && currentPage.value > 1) {
-      currentPage.value -= 1
-      await fetchVideos()
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف ویدیو', 'error')
+      } finally {
+        deletingId.value = null
+      }
     }
-  } catch (err) {
-    console.error('Video delete error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف ویدیو', 'error')
-  } finally {
-    deletingId.value = null
-  }
+  )
 }
 
 watch(createModalOpen, (isOpen) => {

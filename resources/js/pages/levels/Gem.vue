@@ -26,10 +26,10 @@
         <Button
           variant="primary"
           rounded="full"
-          :loading="saving"
+          :loading="saving || phoneVerification.sendingVerification.value"
           @click="handleSubmit"
         >
-          ثبت اطلاعات
+          {{ submitButtonLabel }}
         </Button>
       </div>
     </div>
@@ -211,56 +211,23 @@
         </Card>
       </div>
     </template>
-
-    <Modal
-      :model-value="showVerificationDialog"
-      @update:model-value="handleModalToggle"
-      title="تایید نهایی"
-      size="md"
-    >
-      <div dir="rtl">
-        <VerificationForm
-          ref="verificationFormRef"
-          :auto-start="true"
-          @verified="handleAutoVerifyAndSubmit"
-        />
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-3" dir="rtl">
-          <Button
-            variant="primary"
-            rounded="full"
-            :loading="saving"
-            @click="handleVerificationSubmit"
-          >
-            ثبت نهایی
-          </Button>
-          <Button
-            variant="danger"
-            rounded="full"
-            :disabled="saving"
-            @click="handleCloseVerificationDialog"
-          >
-            انصراف
-          </Button>
-        </div>
-      </template>
-    </Modal>
+    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, computed, onMounted, nextTick, watch } from 'vue'
+import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import apiClient from '../../utils/api'
-import { Button, Card, Checkbox, Input, Modal, LoadingState, ErrorState, FileInput } from '../../components/ui'
+import { Button, Card, Checkbox, Input, LoadingState, ErrorState, FileInput } from '../../components/ui'
 import Editor from 'primevue/editor'
-import VerificationForm from '../../components/VerificationForm.vue'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import ExistingFileHint from '../../components/levels/ExistingFileHint.vue'
 import { useToast } from '../../composables/useToast'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const route = useRoute()
 const router = useRouter()
@@ -269,11 +236,7 @@ const loading = ref(true)
 const saving = ref(false)
 const error = ref(null)
 
-const showVerificationDialog = ref(false)
-const verificationFormRef = ref(null)
-
 const hasExistingGem = ref(false)
-const pendingPayload = ref(null)
 
 const defaultValues = Object.freeze({
   name: '',
@@ -321,9 +284,11 @@ const fieldKeys = Object.keys(defaultValues)
 const levelId = computed(() => route.params?.levelId || null)
 const levelLabel = computed(() => route.query?.name || route.query?.title || '')
 
-const isProduction = computed(() => {
-  const metaEnv = document.querySelector('meta[name="app-env"]')?.getAttribute('content')
-  return metaEnv === 'production' || import.meta.env.MODE === 'production'
+const submitButtonLabel = computed(() => {
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    return 'ارسال کد تایید'
+  }
+  return 'ثبت اطلاعات'
 })
 
 const editorOptions = Object.freeze({
@@ -555,10 +520,6 @@ const appendFormData = (payload, verificationData = {}) => {
     }
   })
 
-  if (verificationData?.phone_verification) {
-    formData.append('phone_verification', verificationData.phone_verification)
-  }
-
   if (hasExistingGem.value) {
     formData.append('_method', 'PUT')
   }
@@ -602,36 +563,16 @@ const fetchGem = async () => {
   }
 }
 
-const sendVerificationCode = async () => {
-  try {
-    const response = await apiClient.post('/send-verification-sms')
-
-    if (response.data.success) {
-      showVerificationDialog.value = true
-      await nextTick()
-      verificationFormRef.value?.reset?.()
-      verificationFormRef.value?.setErrors?.({})
-      verificationFormRef.value?.startTimer?.()
-      verificationFormRef.value?.focusFirstInput?.()
-      return true
-    }
-
-    showToast(response.data.message || 'خطا در ارسال کد تایید', 'error')
-    return false
-  } catch (err) {
-    console.error('Verification SMS送 error:', err)
-    showToast(err.response?.data?.message || 'خطا در ارسال کد تایید', 'error')
-    return false
-  }
-}
-
-const persistGem = async (payload, verificationData = {}) => {
+const persistGem = async () => {
   if (!levelId.value) {
     showToast('شناسه سطح نامعتبر است', 'error')
     return
   }
 
-  const formData = appendFormData(payload, verificationData)
+  const formData = applyVerificationPayload(
+    appendFormData(buildPayload(), {}),
+    phoneVerification.getSubmitPayload()
+  )
   const url = `/levels/${levelId.value}/gem`
 
   try {
@@ -643,8 +584,7 @@ const persistGem = async (payload, verificationData = {}) => {
 
     if (response.data.success) {
       showToast(response.data.message || 'اطلاعات با موفقیت ثبت شد', 'success')
-      showVerificationDialog.value = false
-      pendingPayload.value = null
+      phoneVerification.resetVerificationState()
       hasExistingGem.value = true
 
       const gem = response.data.data?.gem || null
@@ -655,23 +595,20 @@ const persistGem = async (payload, verificationData = {}) => {
   } catch (err) {
     console.error('Gem submit error:', err)
 
+    if (await phoneVerification.handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.status === 422 && err.response?.data?.errors) {
       const validationErrors = err.response.data.errors
-      const verificationErrors = {}
 
       Object.keys(validationErrors).forEach((field) => {
         const message = Array.isArray(validationErrors[field]) ? validationErrors[field][0] : validationErrors[field]
 
-        if (field === 'phone_verification') {
-          verificationErrors.phone_verification = message
-        } else if (errors[field] !== undefined) {
+        if (field !== 'phone_verification' && errors[field] !== undefined) {
           errors[field] = message
         }
       })
-
-      if (Object.keys(verificationErrors).length > 0) {
-        verificationFormRef.value?.setErrors?.(verificationErrors)
-      }
     } else {
       showToast(err.response?.data?.message || 'خطا در ثبت اطلاعات', 'error')
     }
@@ -693,76 +630,12 @@ const handleSubmit = async () => {
     return
   }
 
-  const payload = buildPayload()
-
-  if (!isProduction.value) {
-    await persistGem(payload)
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    await phoneVerification.beginVerifyForSubmit()
     return
   }
 
-  pendingPayload.value = payload
-
-  saving.value = true
-  const codeSent = await sendVerificationCode()
-  saving.value = false
-
-  if (!codeSent) {
-    pendingPayload.value = null
-  }
-}
-
-const handleAutoVerifyAndSubmit = async (verificationData) => {
-  if (saving.value) {
-    return
-  }
-
-  if (!pendingPayload.value) {
-    showToast('اطلاعاتی برای ثبت موجود نیست. لطفاً مجدداً تلاش کنید.', 'error')
-    handleCloseVerificationDialog()
-    return
-  }
-
-  await persistGem(pendingPayload.value, verificationData)
-}
-
-const handleVerificationSubmit = async () => {
-  if (saving.value || !verificationFormRef.value) {
-    return
-  }
-
-  const isValid = await verificationFormRef.value.validate()
-  if (!isValid) {
-    return
-  }
-
-  const verificationData = verificationFormRef.value.getData() || {}
-
-  if (!pendingPayload.value) {
-    showToast('اطلاعاتی برای ثبت موجود نیست. لطفاً مجدداً تلاش کنید.', 'error')
-    handleCloseVerificationDialog()
-    return
-  }
-
-  await persistGem(pendingPayload.value, verificationData)
-}
-
-const handleCloseVerificationDialog = () => {
-  if (saving.value) {
-    return
-  }
-
-  verificationFormRef.value?.setErrors?.({})
-  verificationFormRef.value?.reset?.()
-  showVerificationDialog.value = false
-  pendingPayload.value = null
-}
-
-const handleModalToggle = (value) => {
-  if (!value) {
-    handleCloseVerificationDialog()
-  } else {
-    showVerificationDialog.value = true
-  }
+  await persistGem()
 }
 
 const goBackToListing = () => {
@@ -789,25 +662,6 @@ watch(() => form.fbx_file, (file) => {
     errors.fbx_file = ''
   }
 })
-
-watch(
-  () => showVerificationDialog.value,
-  async (isOpen) => {
-    if (isOpen) {
-      await nextTick()
-      if (isProduction.value) {
-        setTimeout(() => {
-          verificationFormRef.value?.startTimer?.()
-        }, 100)
-      }
-      setTimeout(() => {
-        verificationFormRef.value?.focusFirstInput?.()
-      }, 400)
-    } else {
-      verificationFormRef.value?.reset?.()
-    }
-  }
-)
 
 onMounted(() => {
   fetchGem()

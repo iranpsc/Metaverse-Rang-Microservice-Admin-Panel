@@ -260,8 +260,12 @@
       </div>
 
       <template #footer>
-        <Button variant="primary" :loading="saving" @click="handleSave">
-          ثبت
+        <Button
+          variant="primary"
+          :loading="saving || phoneVerification.sendingVerification.value"
+          @click="handleSave"
+        >
+          {{ submitButtonLabel }}
         </Button>
         <Button variant="danger" class="w-full" @click="showCreateModal = false">
           انصراف
@@ -269,39 +273,7 @@
       </template>
     </Modal>
 
-    <!-- Verification Dialog -->
-    <Modal
-      :model-value="showVerificationDialog"
-      @update:model-value="handleCloseVerificationDialog"
-      @close="handleCloseVerificationDialog"
-      title="تایید نهایی"
-      size="md"
-    >
-      <div dir="rtl">
-        <VerificationForm
-          ref="verificationFormRef"
-          :auto-start="true"
-          @verified="handleAutoVerifyAndSubmit"
-        />
-      </div>
-    </Modal>
-
-    <!-- Delete Verification Dialog -->
-    <Modal
-      :model-value="showDeleteVerificationDialog"
-      @update:model-value="handleCloseDeleteVerificationDialog"
-      @close="handleCloseDeleteVerificationDialog"
-      title="تایید نهایی حذف"
-      size="md"
-    >
-      <div dir="rtl">
-        <VerificationForm
-          ref="deleteVerificationFormRef"
-          :auto-start="true"
-          @verified="handleAutoVerifyAndDelete"
-        />
-      </div>
-    </Modal>
+    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
   </div>
 </template>
 
@@ -309,16 +281,16 @@
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { Table, Pagination, Button, LoadingState, ErrorState, Alert, Modal, Input, Badge } from '../../components/ui'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
-import VerificationForm from '../../components/VerificationForm.vue'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
 import { useFeatureLimits } from '../../composables/useFeatureLimits'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import { gregorianToShamsiSync } from '../../utils/dateConverter'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 const {
-  sendVerificationSms,
   createFeatureLimit,
   deleteFeatureLimit,
   fetchFeatureLimits: fetchFeatureLimitsApi
@@ -331,19 +303,15 @@ const pagination = ref(null)
 const currentPage = ref(1)
 const showCreateModal = ref(false)
 const saving = ref(false)
-const verificationFormRef = ref(null)
-const showVerificationDialog = ref(false)
 const deletingLimitId = ref(null)
-const deleteVerificationFormRef = ref(null)
-const showDeleteVerificationDialog = ref(false)
 const deleting = ref(false)
 const modalOpenKey = ref(0)
 
-// Check if production environment
-const isProduction = computed(() => {
-  // Check Laravel's APP_ENV from meta tag, fallback to Vite mode
-  const metaEnv = document.querySelector('meta[name="app-env"]')?.getAttribute('content')
-  return metaEnv === 'production' || import.meta.env.MODE === 'production'
+const submitButtonLabel = computed(() => {
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    return 'ارسال کد تایید'
+  }
+  return 'ثبت'
 })
 
 const errors = ref({})
@@ -420,48 +388,21 @@ const goToPage = (page) => {
   }
 }
 
-const sendVerificationCode = async () => {
-  try {
-    // Send verification code when submit button is clicked
-    const response = await sendVerificationSms()
-
-    if (response.data.success) {
-      // Show dialog after code is sent
-      showVerificationDialog.value = true
-      return true
-    } else {
-      showToast('خطا در ارسال کد تایید', 'error')
-      return false
-    }
-  } catch (err) {
-    console.error('Verification SMS send error:', err)
-    showToast(err.response?.data?.message || 'خطا در ارسال کد تایید', 'error')
-    return false
-  } finally {
-    // Reset saving state after verification code is sent (success or failure)
-    // The actual submission will set it to true again when submitting
-    saving.value = false
-  }
-}
-
-const submitFeatureLimitCreate = async (verificationData = {}) => {
+const submitFeatureLimitCreate = async () => {
   try {
     saving.value = true
     error.value = null
     errors.value = {}
 
-    const response = await createFeatureLimit({
-      ...formData.value,
-      ...verificationData
-    })
+    const payload = applyVerificationPayload(
+      { ...formData.value },
+      phoneVerification.getSubmitPayload()
+    )
+
+    const response = await createFeatureLimit(payload)
 
     if (response.data.success) {
       showToast('محدودیت املاک با موفقیت ایجاد شد', 'success')
-      showVerificationDialog.value = false
-      // Reset verification form errors on success
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        verificationFormRef.value.setErrors({})
-      }
       showCreateModal.value = false
       resetForm()
       await fetchFeatureLimits()
@@ -470,24 +411,13 @@ const submitFeatureLimitCreate = async (verificationData = {}) => {
     }
   } catch (err) {
     console.error('Feature limit create error:', err)
-    error.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
 
-    // Extract validation errors and display them on the form fields
-    if (err.response?.data?.errors && verificationFormRef.value && verificationFormRef.value.setErrors) {
-      const validationErrors = {}
-
-      // Map Laravel validation errors to form fields
-      if (err.response.data.errors.phone_verification) {
-        validationErrors.phone_verification = Array.isArray(err.response.data.errors.phone_verification)
-          ? err.response.data.errors.phone_verification[0]
-          : err.response.data.errors.phone_verification
-      }
-
-      // Set errors on the verification form
-      verificationFormRef.value.setErrors(validationErrors)
+    if (await phoneVerification.handleApiVerificationError(err)) {
+      return
     }
 
-    // Handle validation errors for form fields
+    error.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
+
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
     }
@@ -497,173 +427,50 @@ const submitFeatureLimitCreate = async (verificationData = {}) => {
 }
 
 const handleSave = async () => {
-  // Set loading state immediately when button is clicked
-  saving.value = true
-
-  // In production: send verification code first, then show dialog
-  if (isProduction.value) {
-    // Send verification code and show dialog
-    const codeSent = await sendVerificationCode()
-    if (!codeSent) {
-      // Error already handled in sendVerificationCode, state reset in finally block
-      return
-    }
-    // Dialog will be shown, user enters code and password, then clicks submit
-    // Note: saving.value is reset to false in sendVerificationCode finally block
-    // It will be set to true again when submitFeatureLimitCreate is called
-  } else {
-    // In non-production: submit directly without verification
-    await submitFeatureLimitCreate()
-  }
-}
-
-const handleAutoVerifyAndSubmit = async (verificationData) => {
-  // Auto-submit when verification form emits verified event (all 6 digits entered)
-  // Prevent multiple submissions
-  if (saving.value) {
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    await phoneVerification.beginVerifyForSubmit()
     return
   }
 
-  if (!verificationFormRef.value) {
-    showToast('خطا در تایید', 'error')
-    return
-  }
-
-  // Get verification data and submit
-  const data = verificationData || verificationFormRef.value.getData()
-  await submitFeatureLimitCreate(data)
-}
-
-const handleCloseVerificationDialog = () => {
-  // Clear errors when closing the dialog
-  if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-    verificationFormRef.value.setErrors({})
-  }
-  showVerificationDialog.value = false
+  await submitFeatureLimitCreate()
 }
 
 const handleDelete = async (limit) => {
-  const result = await confirm(
-    `آیا از حذف محدودیت «${limit.title}» مطمئن هستید؟ این عمل غیرقابل بازگشت است و تمام محدودیت‌های اعمال شده بر روی املاک حذف خواهد شد.`,
-    'تایید حذف محدودیت',
+  await phoneVerification.confirmThenVerify(
     {
+      message: `آیا از حذف محدودیت «${limit.title}» مطمئن هستید؟ این عمل غیرقابل بازگشت است و تمام محدودیت‌های اعمال شده بر روی املاک حذف خواهد شد.`,
+      title: 'تایید حذف محدودیت',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        deleting.value = true
+        deletingLimitId.value = limit.id
+
+        const response = await deleteFeatureLimit(limit.id, payload)
+
+        if (response.data.success) {
+          showToast('محدودیت املاک با موفقیت حذف شد', 'success')
+          deletingLimitId.value = null
+          await fetchFeatureLimits()
+        }
+      } catch (err) {
+        console.error('Delete feature limit error:', err)
+
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف محدودیت', 'error')
+      } finally {
+        deleting.value = false
+        if (!phoneVerification.showVerificationDialog.value) {
+          deletingLimitId.value = null
+        }
+      }
     }
   )
-  if (!result.isConfirmed) return
-
-  deletingLimitId.value = limit.id
-
-  if (isProduction.value) {
-    deleting.value = true
-    const codeSent = await sendDeleteVerificationCode()
-    if (!codeSent) {
-      deleting.value = false
-      deletingLimitId.value = null
-      return
-    }
-  } else {
-    await performDelete()
-  }
-}
-
-const sendDeleteVerificationCode = async () => {
-  try {
-    const response = await sendVerificationSms()
-
-    if (response.data.success) {
-      // Show dialog after code is sent
-      showDeleteVerificationDialog.value = true
-      return true
-    } else {
-      showToast('خطا در ارسال کد تایید', 'error')
-      return false
-    }
-  } catch (err) {
-    console.error('Verification SMS send error:', err)
-    showToast(err.response?.data?.message || 'خطا در ارسال کد تایید', 'error')
-    return false
-  } finally {
-    // Reset deleting state after verification code is sent (success or failure)
-    // The actual deletion will set it to true again when deleting
-    deleting.value = false
-  }
-}
-
-const performDelete = async (verificationData = {}) => {
-  if (!deletingLimitId.value) {
-    return
-  }
-
-  try {
-    deleting.value = true
-
-    const response = await deleteFeatureLimit(deletingLimitId.value, verificationData)
-
-    if (response.data.success) {
-      showToast('محدودیت املاک با موفقیت حذف شد', 'success')
-      showDeleteVerificationDialog.value = false
-      // Reset verification form errors on success
-      if (deleteVerificationFormRef.value && deleteVerificationFormRef.value.setErrors) {
-        deleteVerificationFormRef.value.setErrors({})
-      }
-      deletingLimitId.value = null
-      await fetchFeatureLimits()
-    }
-  } catch (err) {
-    console.error('Delete feature limit error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف محدودیت', 'error')
-
-    // Extract validation errors and display them on the form fields
-    if (err.response?.data?.errors && deleteVerificationFormRef.value && deleteVerificationFormRef.value.setErrors) {
-      const validationErrors = {}
-
-      // Map Laravel validation errors to form fields
-      if (err.response.data.errors.phone_verification) {
-        validationErrors.phone_verification = Array.isArray(err.response.data.errors.phone_verification)
-          ? err.response.data.errors.phone_verification[0]
-          : err.response.data.errors.phone_verification
-      }
-
-      // Set errors on the verification form
-      deleteVerificationFormRef.value.setErrors(validationErrors)
-    }
-  } finally {
-    deleting.value = false
-  }
-}
-
-const handleAutoVerifyAndDelete = async (verificationData) => {
-  // Auto-submit when verification form emits verified event (all 6 digits entered)
-  // Prevent multiple submissions
-  if (deleting.value) {
-    return
-  }
-
-  if (!deleteVerificationFormRef.value) {
-    showToast('خطا در تایید', 'error')
-    return
-  }
-
-  // Get verification data and delete
-  const data = verificationData || deleteVerificationFormRef.value.getData()
-  await performDelete(data)
-}
-
-const handleCloseDeleteVerificationDialog = () => {
-  // Clear errors when closing the dialog
-  if (deleteVerificationFormRef.value && deleteVerificationFormRef.value.setErrors) {
-    deleteVerificationFormRef.value.setErrors({})
-  }
-  showDeleteVerificationDialog.value = false
-  // Only clear deletingLimitId if not currently deleting
-  if (!deleting.value) {
-    deletingLimitId.value = null
-    if (deleteVerificationFormRef.value) {
-      deleteVerificationFormRef.value.reset()
-    }
-  }
 }
 
 const fetchFeatureLimits = async () => {
@@ -727,87 +534,12 @@ const resetForm = () => {
     individual_buy_count: 0
   }
   errors.value = {}
-  showVerificationDialog.value = false
-  if (verificationFormRef.value) {
-    verificationFormRef.value.reset()
-  }
+  phoneVerification.resetVerificationState()
 }
 
-watch(() => showVerificationDialog, async (newVal) => {
-  if (newVal) {
-    // Wait for component to mount and ensure timer starts
-    await nextTick()
-
-    // Give it a delay to ensure component is fully ready
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.startTimer) {
-        verificationFormRef.value.startTimer()
-      }
-    }, 100)
-
-    // Focus the first input after modal is fully opened
-    // Modal transition is 300ms, so wait a bit longer to ensure it's complete
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.focusFirstInput) {
-        verificationFormRef.value.focusFirstInput()
-      }
-    }, 400)
-
-    // Retry focus after modal animation completes (additional safety)
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.focusFirstInput) {
-        verificationFormRef.value.focusFirstInput()
-      }
-    }, 600)
-  } else {
-    // Reset form when dialog closes
-    if (verificationFormRef.value && verificationFormRef.value.reset) {
-      verificationFormRef.value.reset()
-    }
-  }
-})
-
-watch(() => showDeleteVerificationDialog, async (newVal) => {
-  if (newVal) {
-    // Wait for component to mount and ensure timer starts
-    await nextTick()
-
-    // Give it a delay to ensure component is fully ready
-    setTimeout(() => {
-      if (deleteVerificationFormRef.value && deleteVerificationFormRef.value.startTimer) {
-        deleteVerificationFormRef.value.startTimer()
-      }
-    }, 100)
-
-    // Focus the first input after modal is fully opened
-    // Modal transition is 300ms, so wait a bit longer to ensure it's complete
-    setTimeout(() => {
-      if (deleteVerificationFormRef.value && deleteVerificationFormRef.value.focusFirstInput) {
-        deleteVerificationFormRef.value.focusFirstInput()
-      }
-    }, 400)
-
-    // Retry focus after modal animation completes (additional safety)
-    setTimeout(() => {
-      if (deleteVerificationFormRef.value && deleteVerificationFormRef.value.focusFirstInput) {
-        deleteVerificationFormRef.value.focusFirstInput()
-      }
-    }, 600)
-  } else {
-    // Reset form when dialog closes
-    if (deleteVerificationFormRef.value && deleteVerificationFormRef.value.reset) {
-      deleteVerificationFormRef.value.reset()
-    }
-  }
-})
-
 watch(() => showCreateModal, async (newVal) => {
-  // Close verification dialog when create modal closes
   if (!newVal) {
-    showVerificationDialog.value = false
-    if (verificationFormRef.value && verificationFormRef.value.reset) {
-      verificationFormRef.value.reset()
-    }
+    phoneVerification.resetVerificationState()
   } else {
     // Increment key to force re-mount of date pickers
     modalOpenKey.value++

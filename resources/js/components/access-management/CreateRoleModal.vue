@@ -62,6 +62,15 @@
     <template #footer>
       <div class="flex gap-3 justify-end" dir="rtl">
         <Button
+          v-if="isProduction && !isVerified"
+          variant="primary"
+          :loading="sendingVerification"
+          @click="handleSendCode"
+        >
+          ارسال کد تایید
+        </Button>
+        <Button
+          v-if="!isProduction || isVerified"
           variant="primary"
           :loading="saving"
           @click="handleSave"
@@ -70,19 +79,23 @@
         </Button>
         <Button
           variant="danger"
-          @click="$emit('close')"
+          @click="onMainModalClose"
         >
           بستن
         </Button>
       </div>
     </template>
   </Modal>
+
+  <PhoneVerificationModal :phone-verification="phoneVerification" />
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Input, Button, Spinner, Alert } from '../ui'
+import PhoneVerificationModal from '../PhoneVerificationModal.vue'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import { notifySuccess } from '../../utils/notifications'
 import { useModalForm } from '../../composables/useModalForm'
 
@@ -94,6 +107,17 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'created'])
+
+const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
 
 const {
   loading,
@@ -128,20 +152,23 @@ const fetchPermissions = async () => {
   }
 }
 
-const handleSave = async () => {
+const validateForm = () => {
   errors.value = {}
 
-  // Validation
   if (!formData.value.title || formData.value.title.trim() === '') {
     errors.value.title = 'عنوان مسئولیت الزامی است'
-    return
+    return false
   }
 
   if (!formData.value.name || formData.value.name.trim() === '') {
     errors.value.name = 'نام مسئولیت الزامی است'
-    return
+    return false
   }
 
+  return true
+}
+
+const submitRoleCreate = async (verificationPayload = {}) => {
   try {
     saving.value = true
     error.value = null
@@ -149,11 +176,13 @@ const handleSave = async () => {
     const response = await apiClient.post('/roles', {
       title: formData.value.title.trim(),
       name: formData.value.name.trim(),
-      permissions: selectedPermissions.value
+      permissions: selectedPermissions.value,
+      ...verificationPayload
     })
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
+      resetVerificationState()
       resetForm()
       emit('created')
     } else {
@@ -161,6 +190,10 @@ const handleSave = async () => {
     }
   } catch (err) {
     console.error('Create role error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -170,6 +203,31 @@ const handleSave = async () => {
   } finally {
     saving.value = false
   }
+}
+
+const handleSendCode = async () => {
+  if (!validateForm()) {
+    return
+  }
+
+  await beginVerifyForSubmit()
+}
+
+const handleSave = async () => {
+  if (!validateForm()) {
+    return
+  }
+
+  if (isProduction.value) {
+    await submitRoleCreate(getSubmitPayload())
+  } else {
+    await submitRoleCreate()
+  }
+}
+
+const onMainModalClose = () => {
+  resetVerificationState()
+  emit('close')
 }
 
 const resetForm = () => {
@@ -185,7 +243,10 @@ const resetForm = () => {
 watch(() => props.show, (newVal) => {
   if (newVal) {
     resetForm()
+    resetVerificationState()
     fetchPermissions()
+  } else {
+    resetVerificationState()
   }
 })
 </script>

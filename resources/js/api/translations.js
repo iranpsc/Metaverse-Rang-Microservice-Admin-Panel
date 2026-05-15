@@ -23,8 +23,8 @@ export const translationApi = {
     return response.data
   },
 
-  async deleteTranslation (translationId) {
-    const response = await apiClient.delete(`${baseUrl}/${translationId}`)
+  async deleteTranslation (translationId, payload = {}) {
+    const response = await apiClient.delete(`${baseUrl}/${translationId}`, { data: payload })
     return response.data
   },
 
@@ -102,8 +102,8 @@ export const translationApi = {
     return response.data
   },
 
-  async deleteModal (translationId, modalId) {
-    const response = await apiClient.delete(`${baseUrl}/${translationId}/modals/${modalId}`)
+  async deleteModal (translationId, modalId, payload = {}) {
+    const response = await apiClient.delete(`${baseUrl}/${translationId}/modals/${modalId}`, { data: payload })
     return response.data
   },
 
@@ -127,8 +127,8 @@ export const translationApi = {
     return response.data
   },
 
-  async deleteTab (translationId, modalId, tabId) {
-    const response = await apiClient.delete(`${baseUrl}/${translationId}/modals/${modalId}/tabs/${tabId}`)
+  async deleteTab (translationId, modalId, tabId, payload = {}) {
+    const response = await apiClient.delete(`${baseUrl}/${translationId}/modals/${modalId}/tabs/${tabId}`, { data: payload })
     return response.data
   },
 
@@ -147,8 +147,8 @@ export const translationApi = {
     return response.data
   },
 
-  async deleteField (translationId, modalId, tabId, fieldId) {
-    const response = await apiClient.delete(`${baseUrl}/${translationId}/modals/${modalId}/tabs/${tabId}/fields/${fieldId}`)
+  async deleteField (translationId, modalId, tabId, fieldId, payload = {}) {
+    const response = await apiClient.delete(`${baseUrl}/${translationId}/modals/${modalId}/tabs/${tabId}/fields/${fieldId}`, { data: payload })
     return response.data
   }
 }

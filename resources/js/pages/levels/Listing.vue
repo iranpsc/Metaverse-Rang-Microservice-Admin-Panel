@@ -179,10 +179,10 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="createSubmitting"
+            :loading="createSubmitting || createPhoneVerification.sendingVerification.value"
             @click="handleCreateSubmit"
           >
-            ثبت
+            {{ createSubmitButtonLabel }}
           </Button>
           <Button
             variant="danger"
@@ -281,104 +281,16 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="updateSubmitting"
+            :loading="updateSubmitting || updatePhoneVerification.sendingVerification.value"
             @click="handleUpdateSubmit"
           >
-            ثبت تغییرات
+            {{ updateSubmitButtonLabel }}
           </Button>
           <Button
             variant="danger"
             rounded="full"
             :disabled="updateSubmitting"
             @click="closeUpdateModal"
-          >
-            بستن
-          </Button>
-        </div>
-      </template>
-    </Modal>
-
-    <!-- Create Verification Dialog -->
-    <Modal
-      :model-value="showCreateVerificationDialog"
-      @update:model-value="handleCreateVerificationDialogToggle"
-      @close="handleCloseCreateVerificationDialog"
-      title="تایید نهایی"
-      size="md"
-    >
-      <div dir="rtl" class="space-y-6">
-        <VerificationForm
-          ref="createVerificationFormRef"
-          :auto-start="true"
-          @verified="handleCreateAutoVerifyAndSubmit"
-        />
-
-        <Alert
-          variant="info"
-      message="کد تایید پیامکی را وارد کنید تا عملیات ایجاد سطح نهایی شود."
-          :dismissible="false"
-        />
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-3" dir="rtl">
-          <Button
-            variant="primary"
-            rounded="full"
-            :loading="createSubmitting"
-            @click="handleCreateVerificationSubmit"
-          >
-            تایید و ثبت
-          </Button>
-          <Button
-            variant="danger"
-            rounded="full"
-            :disabled="createSubmitting"
-            @click="handleCloseCreateVerificationDialog"
-          >
-            بستن
-          </Button>
-        </div>
-      </template>
-    </Modal>
-
-    <!-- Update Verification Dialog -->
-    <Modal
-      :model-value="showUpdateVerificationDialog"
-      @update:model-value="handleUpdateVerificationDialogToggle"
-      @close="handleCloseUpdateVerificationDialog"
-      title="تایید نهایی"
-      size="md"
-    >
-      <div dir="rtl" class="space-y-6">
-        <VerificationForm
-          ref="updateVerificationFormRef"
-          :auto-start="true"
-          @verified="handleUpdateAutoVerifyAndSubmit"
-        />
-
-        <Alert
-          variant="info"
-      message="کد تایید پیامکی را وارد کنید تا تغییرات سطح ثبت شود."
-          :dismissible="false"
-        />
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-3" dir="rtl">
-          <Button
-            variant="primary"
-            rounded="full"
-            :loading="updateSubmitting"
-            @click="handleUpdateVerificationSubmit"
-          >
-            تایید و ثبت
-          </Button>
-          <Button
-            variant="danger"
-            rounded="full"
-            :disabled="updateSubmitting"
-            @click="handleCloseUpdateVerificationDialog"
           >
             بستن
           </Button>
@@ -500,23 +412,29 @@
         </div>
       </template>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="createPhoneVerification" title="تایید نهایی" />
+    <PhoneVerificationModal :phone-verification="updatePhoneVerification" title="تایید نهایی" />
+    <PhoneVerificationModal :phone-verification="deletePhoneVerification" title="تایید نهایی" />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Table, Pagination, Button, Modal, Input, Alert, LoadingState, ErrorState, FileInput } from '../../components/ui'
-import VerificationForm from '../../components/VerificationForm.vue'
+import { Table, Pagination, Button, Modal, Input, LoadingState, ErrorState, FileInput } from '../../components/ui'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
 import { useLevels } from '../../composables/useLevels'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const createPhoneVerification = usePhoneVerification()
+const updatePhoneVerification = usePhoneVerification()
+const deletePhoneVerification = usePhoneVerification()
 const {
   fetchLevels: fetchLevelsApi,
-  sendVerificationSms,
   createLevel,
   updateLevel,
   deleteLevel
@@ -561,22 +479,15 @@ const updateErrors = reactive({})
 const createSubmitting = ref(false)
 const updateSubmitting = ref(false)
 
-const createVerificationFormRef = ref(null)
-const updateVerificationFormRef = ref(null)
-
-const showCreateVerificationDialog = ref(false)
-const showUpdateVerificationDialog = ref(false)
-
-const createPendingData = ref(null)
-const updatePendingData = ref(null)
-
-const createModalClosingForVerification = ref(false)
-const updateModalClosingForVerification = ref(false)
-
-const isProduction = computed(() => {
-  const metaEnv = document.querySelector('meta[name="app-env"]')?.getAttribute('content')
-  return metaEnv === 'production' || import.meta.env.MODE === 'production'
+const verificationSubmitLabel = (defaultLabel, phoneVerification) => computed(() => {
+  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
+    return 'ارسال کد تایید'
+  }
+  return defaultLabel
 })
+
+const createSubmitButtonLabel = verificationSubmitLabel('ثبت', createPhoneVerification)
+const updateSubmitButtonLabel = verificationSubmitLabel('ثبت تغییرات', updatePhoneVerification)
 
 const tableColumns = [
   {
@@ -692,9 +603,7 @@ const resetCreateForm = () => {
   createForm.image = null
   createForm.backgroundImage = null
   Object.keys(createErrors).forEach((key) => delete createErrors[key])
-  createPendingData.value = null
-  showCreateVerificationDialog.value = false
-  if (createVerificationFormRef.value) createVerificationFormRef.value.reset()
+  createPhoneVerification.resetVerificationState()
 }
 
 const resetUpdateForm = () => {
@@ -707,9 +616,7 @@ const resetUpdateForm = () => {
   updateForm.existingImageUrl = selectedLevel.value.image || null
   updateForm.existingBackgroundUrl = selectedLevel.value.background_image || null
   Object.keys(updateErrors).forEach((key) => delete updateErrors[key])
-  updatePendingData.value = null
-  showUpdateVerificationDialog.value = false
-  if (updateVerificationFormRef.value) updateVerificationFormRef.value.reset()
+  updatePhoneVerification.resetVerificationState()
 }
 
 const validateCreateForm = () => {
@@ -804,52 +711,36 @@ const buildUpdatePayload = () => ({
   backgroundImage: updateForm.backgroundImage
 })
 
-const sendVerificationCode = async () => {
-  try {
-    const response = await sendVerificationSms()
+const buildLevelFormData = (payload, verificationPayload = {}) => {
+  const formData = new FormData()
+  formData.append('name', payload.name)
+  formData.append('slug', payload.slug)
+  formData.append('score', payload.score)
 
-    if (response.data.success) {
-      return true
-    }
-
-    showToast('خطا در ارسال کد تایید', 'error')
-    return false
-  } catch (err) {
-    console.error('Verification SMS send error:', err)
-    showToast(err.response?.data?.message || 'خطا در ارسال کد تایید', 'error')
-    return false
+  if (payload.image) {
+    formData.append('image', payload.image)
   }
+
+  if (payload.backgroundImage) {
+    formData.append('background_image', payload.backgroundImage)
+  }
+
+  return applyVerificationPayload(formData, verificationPayload)
 }
 
-const submitCreateLevel = async (verificationData = {}) => {
+const submitCreateLevel = async () => {
   try {
     createSubmitting.value = true
-
-    const payload = createPendingData.value || buildCreatePayload()
     Object.keys(createErrors).forEach((key) => delete createErrors[key])
-    const formData = new FormData()
-    formData.append('name', payload.name)
-    formData.append('slug', payload.slug)
-    formData.append('score', payload.score)
 
-    if (payload.image) {
-      formData.append('image', payload.image)
-    }
-
-    if (payload.backgroundImage) {
-      formData.append('background_image', payload.backgroundImage)
-    }
-
-    if (verificationData?.phone_verification) {
-      formData.append('phone_verification', verificationData.phone_verification)
-    }
+    const payload = buildCreatePayload()
+    const formData = buildLevelFormData(payload, createPhoneVerification.getSubmitPayload())
 
     const response = await createLevel(formData)
 
     if (response.data?.success) {
       showToast(response.data?.message || 'سطح با موفقیت ایجاد شد', 'success')
-      showCreateVerificationDialog.value = false
-      createPendingData.value = null
+      createPhoneVerification.resetVerificationState()
       closeCreateModal()
       fetchLevels()
     } else {
@@ -858,73 +749,46 @@ const submitCreateLevel = async (verificationData = {}) => {
   } catch (err) {
     console.error('Create level error:', err)
 
-    let shouldReopenForm = false
+    if (await createPhoneVerification.handleApiVerificationError(err)) {
+      return
+    }
 
     if (err.response?.status === 422 && err.response?.data?.errors) {
       const errorsBag = err.response.data.errors
-      const verificationErrorsBag = {}
 
       Object.keys(errorsBag).forEach((field) => {
-        const message = Array.isArray(errorsBag[field]) ? errorsBag[field][0] : errorsBag[field]
-
         if (field === 'phone_verification') {
-          verificationErrorsBag[field] = message
-        } else {
-          createErrors[field] = message
-          shouldReopenForm = true
+          return
         }
+        const message = Array.isArray(errorsBag[field]) ? errorsBag[field][0] : errorsBag[field]
+        createErrors[field] = message
       })
-
-      if (Object.keys(verificationErrorsBag).length > 0) {
-        createVerificationFormRef.value?.setErrors?.(verificationErrorsBag)
-      }
     } else {
       showToast(err.response?.data?.message || 'خطا در ثبت سطح', 'error')
-      shouldReopenForm = true
-    }
-
-    if (shouldReopenForm) {
-      createPendingData.value = null
-      showCreateVerificationDialog.value = false
-      createVerificationFormRef.value?.reset?.()
-      isCreateModalOpen.value = true
     }
   } finally {
     createSubmitting.value = false
   }
 }
 
-const submitUpdateLevel = async (verificationData = {}) => {
+const submitUpdateLevel = async () => {
+  if (!selectedLevel.value) {
+    return
+  }
+
   try {
     updateSubmitting.value = true
-
-    const payload = updatePendingData.value || buildUpdatePayload()
     Object.keys(updateErrors).forEach((key) => delete updateErrors[key])
-    const formData = new FormData()
-    formData.append('name', payload.name)
-    formData.append('slug', payload.slug)
-    formData.append('score', payload.score)
 
-    if (payload.image) {
-      formData.append('image', payload.image)
-    }
-
-    if (payload.backgroundImage) {
-      formData.append('background_image', payload.backgroundImage)
-    }
-
-    if (verificationData?.phone_verification) {
-      formData.append('phone_verification', verificationData.phone_verification)
-    }
-
+    const payload = buildUpdatePayload()
+    const formData = buildLevelFormData(payload, updatePhoneVerification.getSubmitPayload())
     formData.append('_method', 'PUT')
 
     const response = await updateLevel(selectedLevel.value.id, formData)
 
     if (response.data?.success) {
       showToast(response.data?.message || 'سطح با موفقیت بروزرسانی شد', 'success')
-      showUpdateVerificationDialog.value = false
-      updatePendingData.value = null
+      updatePhoneVerification.resetVerificationState()
       closeUpdateModal()
       fetchLevels()
     } else {
@@ -933,38 +797,22 @@ const submitUpdateLevel = async (verificationData = {}) => {
   } catch (err) {
     console.error('Update level error:', err)
 
-    let shouldReopenForm = false
+    if (await updatePhoneVerification.handleApiVerificationError(err)) {
+      return
+    }
 
     if (err.response?.status === 422 && err.response?.data?.errors) {
       const errorsBag = err.response.data.errors
-      const verificationErrorsBag = {}
 
       Object.keys(errorsBag).forEach((field) => {
-        const message = Array.isArray(errorsBag[field]) ? errorsBag[field][0] : errorsBag[field]
-
         if (field === 'phone_verification') {
-          verificationErrorsBag[field] = message
-        } else {
-          updateErrors[field] = message
-          shouldReopenForm = true
+          return
         }
+        const message = Array.isArray(errorsBag[field]) ? errorsBag[field][0] : errorsBag[field]
+        updateErrors[field] = message
       })
-
-      if (Object.keys(verificationErrorsBag).length > 0) {
-        updateVerificationFormRef.value?.setErrors?.(verificationErrorsBag)
-      }
     } else {
       showToast(err.response?.data?.message || 'خطا در بروزرسانی سطح', 'error')
-      shouldReopenForm = true
-    }
-
-    if (shouldReopenForm) {
-      updatePendingData.value = null
-      showUpdateVerificationDialog.value = false
-      updateVerificationFormRef.value?.reset?.()
-      if (selectedLevel.value) {
-        isUpdateModalOpen.value = true
-      }
     }
   } finally {
     updateSubmitting.value = false
@@ -978,27 +826,12 @@ const handleCreateSubmit = async () => {
     return
   }
 
-  createPendingData.value = buildCreatePayload()
-
-  if (!isProduction.value) {
-    await submitCreateLevel()
+  if (createPhoneVerification.isProduction.value && !createPhoneVerification.isVerified.value) {
+    await createPhoneVerification.beginVerifyForSubmit()
     return
   }
 
-  createModalClosingForVerification.value = true
-  isCreateModalOpen.value = false
-
-  createSubmitting.value = true
-  const codeSent = await sendVerificationCode()
-  createSubmitting.value = false
-
-  if (!codeSent) {
-    createPendingData.value = null
-    isCreateModalOpen.value = true
-    return
-  }
-
-  showCreateVerificationDialog.value = true
+  await submitCreateLevel()
 }
 
 const handleUpdateSubmit = async () => {
@@ -1008,150 +841,48 @@ const handleUpdateSubmit = async () => {
     return
   }
 
-  updatePendingData.value = buildUpdatePayload()
-
-  if (!isProduction.value) {
-    await submitUpdateLevel()
+  if (updatePhoneVerification.isProduction.value && !updatePhoneVerification.isVerified.value) {
+    await updatePhoneVerification.beginVerifyForSubmit()
     return
   }
 
-  updateModalClosingForVerification.value = true
-  isUpdateModalOpen.value = false
-
-  updateSubmitting.value = true
-  const codeSent = await sendVerificationCode()
-  updateSubmitting.value = false
-
-  if (!codeSent) {
-    updatePendingData.value = null
-    isUpdateModalOpen.value = true
-    return
-  }
-
-  showUpdateVerificationDialog.value = true
-}
-
-const handleCreateAutoVerifyAndSubmit = async (verificationData) => {
-  if (createSubmitting.value) {
-    return
-  }
-
-  if (!createVerificationFormRef.value) {
-    showToast('خطا در تایید', 'error')
-    return
-  }
-
-  await submitCreateLevel(verificationData)
-}
-
-const handleCreateVerificationSubmit = async () => {
-  if (createSubmitting.value) {
-    return
-  }
-
-  if (!createVerificationFormRef.value) {
-    showToast('خطا در تایید', 'error')
-    return
-  }
-
-  const isValid = await createVerificationFormRef.value.validate()
-  if (!isValid) {
-    return
-  }
-
-  const verificationData = createVerificationFormRef.value.getData()
-  await submitCreateLevel(verificationData)
-}
-
-const handleUpdateAutoVerifyAndSubmit = async (verificationData) => {
-  if (updateSubmitting.value) {
-    return
-  }
-
-  if (!updateVerificationFormRef.value) {
-    showToast('خطا در تایید', 'error')
-    return
-  }
-
-  await submitUpdateLevel(verificationData)
-}
-
-const handleUpdateVerificationSubmit = async () => {
-  if (updateSubmitting.value) {
-    return
-  }
-
-  if (!updateVerificationFormRef.value) {
-    showToast('خطا در تایید', 'error')
-    return
-  }
-
-  const isValid = await updateVerificationFormRef.value.validate()
-  if (!isValid) {
-    return
-  }
-
-  const verificationData = updateVerificationFormRef.value.getData()
-  await submitUpdateLevel(verificationData)
-}
-
-const handleCloseCreateVerificationDialog = () => {
-  if (createVerificationFormRef.value?.setErrors) {
-    createVerificationFormRef.value.setErrors({})
-  }
-  if (createVerificationFormRef.value?.reset) {
-    createVerificationFormRef.value.reset()
-  }
-  showCreateVerificationDialog.value = false
-  if (createPendingData.value) {
-    isCreateModalOpen.value = true
-  }
-  createPendingData.value = null
-}
-
-const handleCloseUpdateVerificationDialog = () => {
-  if (updateVerificationFormRef.value?.setErrors) {
-    updateVerificationFormRef.value.setErrors({})
-  }
-  if (updateVerificationFormRef.value?.reset) {
-    updateVerificationFormRef.value.reset()
-  }
-  showUpdateVerificationDialog.value = false
-  if (updatePendingData.value && selectedLevel.value) {
-    isUpdateModalOpen.value = true
-  }
-  updatePendingData.value = null
+  await submitUpdateLevel()
 }
 
 const handleDelete = async (level) => {
-  try {
-    const result = await confirm(
-      'آیا از حذف این سطح اطمینان دارید؟',
-      'حذف سطح',
-      {
-        confirmText: 'بله، حذف شود',
-        cancelText: 'انصراف'
+  await deletePhoneVerification.confirmThenVerify(
+    {
+      message: 'آیا از حذف این سطح اطمینان دارید؟',
+      title: 'حذف سطح',
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        const response = await deleteLevel(level.id, payload)
+
+        if (response.data?.success) {
+          showToast(response.data?.message || 'سطح با موفقیت حذف شد', 'success')
+          deletePhoneVerification.resetVerificationState()
+          fetchLevels()
+        } else {
+          showToast(response.data?.message || 'خطا در حذف سطح', 'error')
+        }
+      } catch (err) {
+        console.error('Delete level error:', err)
+
+        if (await deletePhoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف سطح', 'error')
       }
-    )
-
-    if (!result.isConfirmed) {
-      return
     }
-
-    const response = await deleteLevel(level.id)
-    if (response.data?.success) {
-      showToast(response.data?.message || 'سطح با موفقیت حذف شد', 'success')
-      fetchLevels()
-    } else {
-      showToast(response.data?.message || 'خطا در حذف سطح', 'error')
-    }
-  } catch (err) {
-    console.error('Delete level error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف سطح', 'error')
-  }
+  )
 }
 
 const openCreateModal = () => {
+  createPhoneVerification.resetVerificationState()
   resetCreateForm()
   isCreateModalOpen.value = true
 }
@@ -1170,6 +901,7 @@ const handleCreateModalToggle = (value) => {
 }
 
 const openUpdateModal = (level) => {
+  updatePhoneVerification.resetVerificationState()
   selectedLevel.value = level
   resetUpdateForm()
   isUpdateModalOpen.value = true
@@ -1177,9 +909,8 @@ const openUpdateModal = (level) => {
 
 const closeUpdateModal = () => {
   isUpdateModalOpen.value = false
-  if (updateVerificationFormRef.value) {
-    updateVerificationFormRef.value.reset()
-  }
+  selectedLevel.value = null
+  updatePhoneVerification.resetVerificationState()
 }
 
 const handleUpdateModalToggle = (value) => {
@@ -1253,84 +984,17 @@ const goToGemPage = () => {
   })
 }
 
-const handleCreateVerificationDialogToggle = (value) => {
-  if (!value) {
-    handleCloseCreateVerificationDialog()
-  } else {
-    showCreateVerificationDialog.value = true
-  }
-}
-
-const handleUpdateVerificationDialogToggle = (value) => {
-  if (!value) {
-    handleCloseUpdateVerificationDialog()
-  } else {
-    showUpdateVerificationDialog.value = true
-  }
-}
-
 watch(isCreateModalOpen, (isOpen) => {
   if (!isOpen) {
-    if (createModalClosingForVerification.value) {
-      createModalClosingForVerification.value = false
-      return
-    }
     resetCreateForm()
   }
 })
 
 watch(isUpdateModalOpen, (isOpen) => {
   if (!isOpen) {
-    if (updateModalClosingForVerification.value) {
-      updateModalClosingForVerification.value = false
-      return
-    }
-    updatePendingData.value = null
-    showUpdateVerificationDialog.value = false
-    if (updateVerificationFormRef.value) {
-      updateVerificationFormRef.value.reset()
-    }
     resetUpdateForm()
   }
 })
-
-watch(
-  () => showCreateVerificationDialog.value,
-  async (isOpen) => {
-    if (isOpen) {
-      await nextTick()
-      if (isProduction.value) {
-        setTimeout(() => {
-          createVerificationFormRef.value?.startTimer?.()
-        }, 100)
-      }
-      setTimeout(() => {
-        createVerificationFormRef.value?.focusFirstInput?.()
-      }, 400)
-    } else {
-      createVerificationFormRef.value?.reset?.()
-    }
-  }
-)
-
-watch(
-  () => showUpdateVerificationDialog.value,
-  async (isOpen) => {
-    if (isOpen) {
-      await nextTick()
-      if (isProduction.value) {
-        setTimeout(() => {
-          updateVerificationFormRef.value?.startTimer?.()
-        }, 100)
-      }
-      setTimeout(() => {
-        updateVerificationFormRef.value?.focusFirstInput?.()
-      }, 400)
-    } else {
-      updateVerificationFormRef.value?.reset?.()
-    }
-  }
-)
 
 onMounted(() => {
   fetchLevels()

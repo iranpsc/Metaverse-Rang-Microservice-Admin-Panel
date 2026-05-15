@@ -110,13 +110,17 @@
       </div>
     </template>
   </Modal>
+
+  <PhoneVerificationModal :phone-verification="phoneVerification" />
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Input, Button, Spinner, Alert } from '../ui'
-import { notifySuccess, notifyError, confirm } from '../../utils/notifications'
+import PhoneVerificationModal from '../PhoneVerificationModal.vue'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { notifySuccess, notifyError } from '../../utils/notifications'
 import TableActionIcon from '../icons/TableActionIcon.vue'
 import { useModalForm } from '../../composables/useModalForm'
 
@@ -132,6 +136,17 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'updated'])
+
+const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
 
 const {
   loading,
@@ -174,43 +189,32 @@ const fetchPermissionDetails = async () => {
 }
 
 const handleRemoveRole = async (roleId) => {
-  const result = await confirm(
-    'آیا می خواهید این مسئولیت را حذف کنید؟',
-    'تایید حذف مسئولیت',
+  await confirmThenVerify(
     {
+      message: 'آیا می خواهید این مسئولیت را حذف کنید؟',
+      title: 'تایید حذف مسئولیت',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        await apiClient.delete(`/permissions/${props.permissionId}/roles/${roleId}`, { data: payload })
+        await notifySuccess('مسئولیت با موفقیت حذف شد')
+        fetchPermissionDetails()
+      } catch (err) {
+        console.error('Remove role error:', err)
+
+        if (await handleApiVerificationError(err)) {
+          return
+        }
+
+        await notifyError(err.response?.data?.message || 'خطا در حذف مسئولیت')
+      }
     }
   )
-
-  if (!result.isConfirmed) {
-    return
-  }
-
-  try {
-    await apiClient.delete(`/permissions/${props.permissionId}/roles/${roleId}`)
-    await notifySuccess('مسئولیت با موفقیت حذف شد')
-    fetchPermissionDetails()
-  } catch (err) {
-    console.error('Remove role error:', err)
-    await notifyError(err.response?.data?.message || 'خطا در حذف مسئولیت')
-  }
 }
 
-const handleSave = async () => {
-  errors.value = {}
-
-  // Validation
-  if (!formData.value.title || formData.value.title.trim() === '') {
-    errors.value.title = 'عنوان دسترسی الزامی است'
-    return
-  }
-
-  if (!formData.value.name || formData.value.name.trim() === '') {
-    errors.value.name = 'نام دسترسی الزامی است'
-    return
-  }
-
+const submitPermissionUpdate = async (verificationPayload = {}) => {
   try {
     saving.value = true
     fetchError.value = null
@@ -218,17 +222,23 @@ const handleSave = async () => {
     const response = await apiClient.put(`/permissions/${props.permissionId}`, {
       title: formData.value.title.trim(),
       name: formData.value.name.trim(),
-      roles: selectedRoles.value
+      roles: selectedRoles.value,
+      ...verificationPayload
     })
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
+      resetVerificationState()
       emit('updated')
     } else {
       fetchError.value = 'خطا در ثبت اطلاعات'
     }
   } catch (err) {
     console.error('Update permission error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -240,17 +250,38 @@ const handleSave = async () => {
   }
 }
 
+const handleSave = async () => {
+  errors.value = {}
+
+  if (!formData.value.title || formData.value.title.trim() === '') {
+    errors.value.title = 'عنوان دسترسی الزامی است'
+    return
+  }
+
+  if (!formData.value.name || formData.value.name.trim() === '') {
+    errors.value.name = 'نام دسترسی الزامی است'
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitPermissionUpdate(getSubmitPayload())
+}
+
 watch(() => props.show, (newVal) => {
   if (newVal && props.permissionId) {
     fetchPermissionDetails()
   } else if (!newVal) {
-    // Reset state when modal closes
     permission.value = null
     availableRoles.value = []
     formData.value = { title: '', name: '' }
     selectedRoles.value = []
     errors.value = {}
     fetchError.value = null
+    resetVerificationState()
   }
 })
 

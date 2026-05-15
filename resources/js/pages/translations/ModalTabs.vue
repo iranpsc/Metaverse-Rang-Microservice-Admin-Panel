@@ -191,6 +191,8 @@
         </div>
       </template>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -206,11 +208,13 @@ import Input from '../../components/ui/Input.vue'
 import LoadingState from '../../components/ui/LoadingState.vue'
 import ErrorState from '../../components/ui/ErrorState.vue'
 import { translationApi } from '../../api/translations'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const route = useRoute()
 const router = useRouter()
@@ -356,19 +360,27 @@ const handleUpdate = async () => {
 }
 
 const handleDelete = async (tab) => {
-  const result = await confirm(`آیا از حذف تب ${tab.name} مطمئن هستید؟`, 'حذف تب', {
-    confirmText: 'بله، حذف شود',
-    cancelText: 'انصراف'
-  })
-  if (!result.isConfirmed) return
-
-  try {
-    await translationApi.deleteTab(translationId, modalId, tab.id)
-    showToast('تب و تمامی نگاشت‌های زبان حذف گردید.', 'success')
-    await fetchTabs(page.value)
-  } catch (err) {
-    showToast(err?.response?.data?.message || 'حذف تب امکان‌پذیر نبود.', 'error')
-  }
+  await phoneVerification.confirmThenVerify(
+    {
+      message: `آیا از حذف تب ${tab.name} مطمئن هستید؟`,
+      title: 'حذف تب',
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        await translationApi.deleteTab(translationId, modalId, tab.id, payload)
+        showToast('تب و تمامی نگاشت‌های زبان حذف گردید.', 'success')
+        phoneVerification.resetVerificationState()
+        await fetchTabs(page.value)
+      } catch (err) {
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+        showToast(err?.response?.data?.message || 'حذف تب امکان‌پذیر نبود.', 'error')
+      }
+    }
+  )
 }
 
 const navigateToFields = (tab) => {

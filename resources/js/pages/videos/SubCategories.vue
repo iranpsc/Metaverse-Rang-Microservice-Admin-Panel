@@ -296,6 +296,8 @@
         </div>
       </form>
     </Modal>
+
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -318,9 +320,11 @@ import {
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import MediaCellButton from '../../components/ui/MediaCellButton.vue'
-import { confirm } from '../../utils/notifications'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const creating = ref(false)
@@ -659,30 +663,38 @@ const confirmDelete = async (subCategory) => {
     return
   }
 
-  const result = await confirm('آیا از حذف این زیر دسته اطمینان دارید؟', 'حذف زیر دسته', {
-    confirmText: 'بله، حذف شود',
-    cancelText: 'انصراف'
-  })
+  await phoneVerification.confirmThenVerify(
+    {
+      message: 'آیا از حذف این زیر دسته اطمینان دارید؟',
+      title: 'حذف زیر دسته',
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف'
+    },
+    async (payload) => {
+      try {
+        deletingId.value = subCategory.id
+        const response = await apiClient.delete(`/video-sub-categories/${subCategory.id}`, { data: payload })
 
-  if (!result.isConfirmed) {
-    return
-  }
+        if (response.data.success) {
+          showToast('زیر دسته با موفقیت حذف شد.', 'success')
+          phoneVerification.resetVerificationState()
+          await fetchSubCategories()
+        } else {
+          showToast(response.data.message || 'خطا در حذف زیر دسته', 'error')
+        }
+      } catch (err) {
+        console.error('Video sub category delete error:', err)
 
-  try {
-    deletingId.value = subCategory.id
-    const response = await apiClient.delete(`/video-sub-categories/${subCategory.id}`)
-    if (response.data.success) {
-      showToast('زیر دسته با موفقیت حذف شد.', 'success')
-      await fetchSubCategories()
-    } else {
-      showToast(response.data.message || 'خطا در حذف زیر دسته', 'error')
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف زیر دسته', 'error')
+      } finally {
+        deletingId.value = null
+      }
     }
-  } catch (err) {
-    console.error('Video sub category delete error:', err)
-    showToast(err.response?.data?.message || 'خطا در حذف زیر دسته', 'error')
-  } finally {
-    deletingId.value = null
-  }
+  )
 }
 
 const openMedia = (url) => {

@@ -121,6 +121,7 @@
       </template>
     </Modal>
 
+    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -138,12 +139,14 @@ import {
 } from '../../components/ui'
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm } from '../../utils/notifications'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { formatPersianDate } from '../../utils/dateFormatter'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const error = ref(null)
@@ -316,36 +319,44 @@ const handleCreateSubmit = async () => {
 }
 
 const handleDelete = async (version) => {
-  try {
-    const result = await confirm('آیا می‌خواهید این ورژن را حذف کنید؟', 'حذف ورژن', {
+  await phoneVerification.confirmThenVerify(
+    {
+      message: 'آیا می‌خواهید این ورژن را حذف کنید؟',
+      title: 'حذف ورژن',
       confirmText: 'بله، حذف شود',
       cancelText: 'انصراف'
-    })
+    },
+    async (payload) => {
+      try {
+        const response = await apiClient.delete(`/versions/${version.id}`, { data: payload })
 
-    if (!result.isConfirmed) {
-      return
-    }
+        if (response.data.success) {
+          showToast(response.data.message || 'ورژن با موفقیت حذف شد', 'success')
+          phoneVerification.resetVerificationState()
 
-    const response = await apiClient.delete(`/versions/${version.id}`)
+          if (versions.value.length === 1 && currentPage.value > 1) {
+            currentPage.value -= 1
+          }
 
-    if (response.data.success) {
-      showToast(response.data.message || 'ورژن با موفقیت حذف شد', 'success')
-      if (versions.value.length === 1 && currentPage.value > 1) {
-        currentPage.value -= 1
+          await fetchVersions()
+        } else {
+          showToast(response.data.message || 'خطا در حذف ورژن', 'error')
+        }
+      } catch (err) {
+        console.error('Version delete error:', err)
+
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          return
+        }
+
+        if (await phoneVerification.handleApiVerificationError(err)) {
+          return
+        }
+
+        showToast(err.response?.data?.message || 'خطا در حذف ورژن', 'error')
       }
-      await fetchVersions()
-    } else {
-      showToast(response.data.message || 'خطا در حذف ورژن', 'error')
     }
-  } catch (err) {
-    console.error('Version delete error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      return
-    }
-
-    showToast(err.response?.data?.message || 'خطا در حذف ورژن', 'error')
-  }
+  )
 }
 
 const fetchVersions = async () => {

@@ -63,6 +63,16 @@
 
         <div class="flex justify-end">
           <Button
+            v-if="isProduction && !isVerified"
+            variant="primary"
+            :loading="sendingVerification"
+            @click="handleSendCode"
+            class="w-1/4"
+          >
+            ارسال کد تایید
+          </Button>
+          <Button
+            v-if="!isProduction || isVerified"
             variant="primary"
             :loading="saving"
             @click="handleSave"
@@ -74,41 +84,35 @@
       </div>
     </div>
 
-    <!-- Verification Dialog -->
-    <Modal
-      :model-value="showVerificationDialog"
-      @update:model-value="handleCloseVerificationDialog"
-      @close="handleCloseVerificationDialog"
-      title="تایید نهایی"
-      size="md"
-    >
-      <div dir="rtl">
-        <VerificationForm
-          ref="verificationFormRef"
-          :auto-start="true"
-          @verified="handleAutoVerifyAndSubmit"
-        />
-      </div>
-    </Modal>
+    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Modal, Input, Button, Alert, LoadingState, ErrorState, Table } from '../../components/ui'
-import VerificationForm from '../../components/VerificationForm.vue'
+import { Input, Button, Alert, LoadingState, ErrorState, Table } from '../../components/ui'
+import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
+import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import { useToast } from '../../composables/useToast'
 
 const { showToast } = useToast()
+const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
 
 const loading = ref(true)
 const error = ref(null)
 const priceLimits = ref(null)
 const saving = ref(false)
 const errors = ref({})
-const verificationFormRef = ref(null)
-const showVerificationDialog = ref(false)
 
 const priceLimitsColumns = [
   {
@@ -141,37 +145,24 @@ const formData = ref({
   under_eighteen_price_limit: 0
 })
 
-const isProduction = computed(() => {
-  // Check Laravel's APP_ENV from meta tag, fallback to Vite mode
-  const metaEnv = document.querySelector('meta[name="app-env"]')?.getAttribute('content')
-  return metaEnv === 'production' || import.meta.env.MODE === 'production'
-})
+const validateForm = () => {
+  errors.value = {}
+  error.value = null
 
-const sendVerificationCode = async () => {
-  try {
-    // Send verification code when submit button is clicked
-    const response = await apiClient.post('/send-verification-sms')
-
-    if (response.data.success) {
-      // Show dialog after code is sent
-      showVerificationDialog.value = true
-      return true
-    } else {
-      showToast('خطا در ارسال کد تایید', 'error')
-      return false
-    }
-  } catch (err) {
-    console.error('Verification SMS send error:', err)
-    showToast(err.response?.data?.message || 'خطا در ارسال کد تایید', 'error')
+  if (!formData.value.public_price_limit || formData.value.public_price_limit === '') {
+    errors.value.public_price_limit = 'محدودیت قیمت گذاری عموم الزامی است'
     return false
-  } finally {
-    // Reset saving state after verification code is sent (success or failure)
-    // The actual submission will set it to true again when submitting
-    saving.value = false
   }
+
+  if (!formData.value.under_eighteen_price_limit || formData.value.under_eighteen_price_limit === '') {
+    errors.value.under_eighteen_price_limit = 'محدودیت قیمت گذاری زیر ۱۸ سال الزامی است'
+    return false
+  }
+
+  return true
 }
 
-const submitPricingLimitsUpdate = async (verificationData = {}) => {
+const submitPricingLimitsUpdate = async (verificationPayload = {}) => {
   try {
     saving.value = true
     error.value = null
@@ -179,16 +170,12 @@ const submitPricingLimitsUpdate = async (verificationData = {}) => {
 
     const response = await apiClient.post('/lands/feature-pricing-limits', {
       ...formData.value,
-      ...verificationData
+      ...verificationPayload
     })
 
     if (response.data.success) {
       showToast('محدودیت‌های قیمت با موفقیت به‌روزرسانی شدند', 'success')
-      showVerificationDialog.value = false
-      // Reset verification form errors on success
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        verificationFormRef.value.setErrors({})
-      }
+      resetVerificationState()
       await fetchPriceLimits()
     } else {
       error.value = 'خطا در ثبت اطلاعات'
@@ -196,91 +183,37 @@ const submitPricingLimitsUpdate = async (verificationData = {}) => {
   } catch (err) {
     console.error('Pricing limits update error:', err)
 
-    // Handle validation errors
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
     }
 
     error.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
-
-    // Extract validation errors and display them on the form fields
-    if (err.response?.data?.errors && verificationFormRef.value && verificationFormRef.value.setErrors) {
-      const validationErrors = {}
-
-      // Map Laravel validation errors to form fields
-      if (err.response.data.errors.phone_verification) {
-        validationErrors.phone_verification = Array.isArray(err.response.data.errors.phone_verification)
-          ? err.response.data.errors.phone_verification[0]
-          : err.response.data.errors.phone_verification
-      }
-
-      // Set errors on the verification form
-      verificationFormRef.value.setErrors(validationErrors)
-    }
   } finally {
     saving.value = false
   }
 }
 
+const handleSendCode = async () => {
+  if (!validateForm()) {
+    return
+  }
+  await beginVerifyForSubmit()
+}
+
 const handleSave = async () => {
-  // Reset errors
-  errors.value = {}
-  error.value = null
-
-  // Basic validation
-  if (!formData.value.public_price_limit || formData.value.public_price_limit === '') {
-    errors.value.public_price_limit = 'محدودیت قیمت گذاری عموم الزامی است'
+  if (!validateForm()) {
     return
   }
 
-  if (!formData.value.under_eighteen_price_limit || formData.value.under_eighteen_price_limit === '') {
-    errors.value.under_eighteen_price_limit = 'محدودیت قیمت گذاری زیر ۱۸ سال الزامی است'
-    return
-  }
-
-  // Set loading state immediately when button is clicked
-  saving.value = true
-
-  // In production: send verification code first, then show dialog
   if (isProduction.value) {
-    // Send verification code and show dialog
-    const codeSent = await sendVerificationCode()
-    if (!codeSent) {
-      // Error already handled in sendVerificationCode, state reset in finally block
-      return
-    }
-    // Dialog will be shown, user enters code and password, then clicks submit
-    // Note: saving.value is reset to false in sendVerificationCode finally block
-    // It will be set to true again when submitPricingLimitsUpdate is called
+    await submitPricingLimitsUpdate(getSubmitPayload())
   } else {
-    // In non-production: submit directly without verification
     await submitPricingLimitsUpdate()
   }
-}
-
-const handleAutoVerifyAndSubmit = async (verificationData) => {
-  // Auto-submit when verification form emits verified event (all 6 digits entered)
-  // Prevent multiple submissions
-  if (saving.value) {
-    return
-  }
-
-  if (!verificationFormRef.value) {
-    showToast('خطا در تایید', 'error')
-    return
-  }
-
-  // Get verification data and submit
-  const data = verificationData || verificationFormRef.value.getData()
-  await submitPricingLimitsUpdate(data)
-}
-
-const handleCloseVerificationDialog = () => {
-  // Clear errors when closing the dialog
-  if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-    verificationFormRef.value.setErrors({})
-  }
-  showVerificationDialog.value = false
 }
 
 const fetchPriceLimits = async () => {
@@ -299,7 +232,6 @@ const fetchPriceLimits = async () => {
           under_eighteen_price_limit: priceLimits.value.under_eighteen_price_limit || 0
         }
 
-        // Format for history table (matching Blade view structure)
         priceLimits.value.updated_at_date = formatDate(priceLimits.value.updated_at)
         priceLimits.value.updated_at_time = formatTime(priceLimits.value.updated_at)
         priceLimits.value.changer_name = priceLimits.value.changer_name || '-'
@@ -341,46 +273,7 @@ const formatTime = (dateString) => {
   return `${hours}:${minutes}:${seconds}`
 }
 
-watch(() => showVerificationDialog, async (newVal) => {
-  if (newVal) {
-    // Wait for component to mount and ensure timer starts
-    await nextTick()
-
-    // Give it a delay to ensure component is fully ready
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.startTimer) {
-        verificationFormRef.value.startTimer()
-      }
-    }, 100)
-
-    // Focus the first input after modal is fully opened
-    // Modal transition is 300ms, so wait a bit longer to ensure it's complete
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.focusFirstInput) {
-        verificationFormRef.value.focusFirstInput()
-      }
-    }, 400)
-
-    // Retry focus after modal animation completes (additional safety)
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.focusFirstInput) {
-        verificationFormRef.value.focusFirstInput()
-      }
-    }, 600)
-  } else {
-    // Reset form when dialog closes
-    if (verificationFormRef.value && verificationFormRef.value.reset) {
-      verificationFormRef.value.reset()
-    }
-  }
-})
-
 onMounted(() => {
   fetchPriceLimits()
 })
 </script>
-
-<style scoped>
-/* Additional styles if needed */
-</style>
-

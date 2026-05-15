@@ -9,7 +9,7 @@ export function useVideos() {
   const updateVideo = (videoId, formData) => apiClient.post(`/videos/${videoId}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
-  const deleteVideo = (videoId) => apiClient.delete(`/videos/${videoId}`)
+  const deleteVideo = (videoId, payload = {}) => apiClient.delete(`/videos/${videoId}`, { data: payload })
 
   return {
     fetchVideoMeta,
