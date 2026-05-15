@@ -109,10 +109,10 @@
           <Button
             variant="primary"
             class="w-full"
-            :loading="saving"
+            :loading="isProduction && !isVerified ? sendingVerification : saving"
             @click="handleCreateSubmit"
           >
-            ثبت
+            {{ createSubmitLabel }}
           </Button>
           <Button variant="danger" class="w-full" @click="handleCreateModalClose">
             انصراف
@@ -126,7 +126,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, computed } from 'vue'
 import apiClient from '../../utils/api'
 import {
   Button,
@@ -141,12 +141,26 @@ import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { formatPersianDate } from '../../utils/dateFormatter'
 
 const { showToast } = useToast()
 const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
+const createSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
+)
 
 const loading = ref(true)
 const error = ref(null)
@@ -247,6 +261,7 @@ const assignValidationErrors = (target, errors) => {
 }
 
 const openCreateModal = () => {
+  resetVerificationState()
   resetCreateErrors()
   resetCreateForm()
   showCreateModal.value = true
@@ -256,6 +271,7 @@ const handleCreateModalClose = () => {
   showCreateModal.value = false
   resetCreateErrors()
   resetCreateForm()
+  resetVerificationState()
 }
 
 const validateCreateForm = () => {
@@ -280,25 +296,22 @@ const validateCreateForm = () => {
   return !createErrors.version_title && !createErrors.title && !createErrors.content && !createErrors.starts_at
 }
 
-const handleCreateSubmit = async () => {
-  if (!validateCreateForm()) {
-    return
-  }
-
+const submitCreate = async (verificationPayload = {}) => {
   try {
     saving.value = true
 
-    const payload = {
+    const payload = applyVerificationPayload({
       version_title: createForm.version_title.trim(),
       title: createForm.title.trim(),
       content: createForm.content,
       starts_at: createForm.starts_at
-    }
+    }, verificationPayload)
 
     const response = await apiClient.post('/versions', payload)
 
     if (response.data.success) {
       showToast(response.data.message || 'ورژن جدید با موفقیت ایجاد شد', 'success')
+      resetVerificationState()
       handleCreateModalClose()
       currentPage.value = 1
       await fetchVersions()
@@ -308,6 +321,10 @@ const handleCreateSubmit = async () => {
   } catch (err) {
     console.error('Version create error:', err)
 
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.status === 422 && err.response?.data?.errors) {
       assignValidationErrors(createErrors, err.response.data.errors)
     } else {
@@ -316,6 +333,19 @@ const handleCreateSubmit = async () => {
   } finally {
     saving.value = false
   }
+}
+
+const handleCreateSubmit = async () => {
+  if (!validateCreateForm()) {
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitCreate(getSubmitPayload())
 }
 
 const handleDelete = async (version) => {

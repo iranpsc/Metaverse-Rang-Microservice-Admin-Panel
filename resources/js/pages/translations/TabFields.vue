@@ -29,7 +29,7 @@
             شناسه یکتا به صورت خودکار تولید شده و در تمام زبان‌ها همگام می‌شود.
           </p>
         </div>
-        <Button variant="primary" rounded="full" @click="showCreateModal = true">
+        <Button variant="primary" rounded="full" @click="openCreateModal">
           ایجاد عبارت
         </Button>
       </div>
@@ -130,11 +130,11 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="creating"
+            :loading="isProduction && !isVerified ? sendingVerification : creating"
             :disabled="creating"
             @click="handleCreate"
           >
-            ذخیره
+            {{ createSubmitLabel }}
           </Button>
         </div>
       </template>
@@ -164,16 +164,11 @@
           <Button
             variant="primary"
             rounded="full"
-            class="!p-2 !gap-0 min-w-[2.25rem]"
-            title="بروزرسانی"
-            aria-label="بروزرسانی"
-            :loading="updating"
+            :loading="isProduction && !isVerified ? sendingVerification : updating"
             :disabled="updating"
             @click="handleUpdate"
           >
-            <template #icon-left>
-              <TableActionIcon name="edit" />
-            </template>
+            {{ editSubmitLabel }}
           </Button>
         </div>
       </template>
@@ -184,7 +179,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Table from '../../components/ui/Table.vue'
 import Button from '../../components/ui/Button.vue'
@@ -197,11 +192,27 @@ import ErrorState from '../../components/ui/ErrorState.vue'
 import { translationApi } from '../../api/translations'
 import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
 const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
+const createSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
+)
+const editSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'بروزرسانی'
+)
 
 const route = useRoute()
 const router = useRouter()
@@ -283,12 +294,44 @@ const goToPage = (nextPage) => {
 const resetCreateForm = () => {
   createForm.value = ''
   createErrors.value = ''
+  resetVerificationState()
 }
 
 const resetEditForm = () => {
   editForm.translation = ''
   editErrors.translation = ''
   activeFieldId.value = null
+  resetVerificationState()
+}
+
+const openCreateModal = () => {
+  resetVerificationState()
+  showCreateModal.value = true
+}
+
+const submitCreate = async (verificationPayload = {}) => {
+  creating.value = true
+  try {
+    await translationApi.createField(
+      translationId,
+      modalId,
+      tabId,
+      applyVerificationPayload({ value: createForm.value.trim() }, verificationPayload)
+    )
+    showToast('عبارت جدید به ساختار تمام زبان‌ها اضافه شد.', 'success')
+    resetVerificationState()
+    showCreateModal.value = false
+    resetCreateForm()
+    await fetchFields(page.value)
+  } catch (err) {
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+    const message = err?.response?.data?.errors?.value?.[0] || err?.response?.data?.message || 'ایجاد عبارت امکان‌پذیر نبود.'
+    createErrors.value = message
+  } finally {
+    creating.value = false
+  }
 }
 
 const handleCreate = async () => {
@@ -297,28 +340,50 @@ const handleCreate = async () => {
     return
   }
   createErrors.value = ''
-  creating.value = true
-  try {
-    await translationApi.createField(translationId, modalId, tabId, {
-      value: createForm.value.trim()
-    })
-    showToast('عبارت جدید به ساختار تمام زبان‌ها اضافه شد.', 'success')
-    showCreateModal.value = false
-    resetCreateForm()
-    await fetchFields(page.value)
-  } catch (err) {
-    const message = err?.response?.data?.errors?.value?.[0] || err?.response?.data?.message || 'ایجاد عبارت امکان‌پذیر نبود.'
-    createErrors.value = message
-  } finally {
-    creating.value = false
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
   }
+
+  await submitCreate(getSubmitPayload())
 }
 
 const openEditModal = (field) => {
+  resetVerificationState()
   activeFieldId.value = field.id
   editForm.translation = field.translation || ''
   editErrors.translation = ''
   showEditModal.value = true
+}
+
+const submitUpdate = async (verificationPayload = {}) => {
+  updating.value = true
+  try {
+    const response = await translationApi.updateField(
+      translationId,
+      modalId,
+      tabId,
+      activeFieldId.value,
+      applyVerificationPayload({ translation: editForm.translation.trim() }, verificationPayload)
+    )
+    const updatedField = response.data.field
+    fields.value = fields.value.map((item) =>
+      item.id === activeFieldId.value ? updatedField : item
+    )
+    showToast('عبارت مربوط به این زبان بروزرسانی گردید.', 'success')
+    resetVerificationState()
+    showEditModal.value = false
+    resetEditForm()
+  } catch (err) {
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+    const message = err?.response?.data?.errors?.translation?.[0] || err?.response?.data?.message || 'ویرایش عبارت امکان‌پذیر نبود.'
+    editErrors.translation = message
+  } finally {
+    updating.value = false
+  }
 }
 
 const handleUpdate = async () => {
@@ -327,24 +392,13 @@ const handleUpdate = async () => {
     return
   }
   editErrors.translation = ''
-  updating.value = true
-  try {
-    const response = await translationApi.updateField(translationId, modalId, tabId, activeFieldId.value, {
-      translation: editForm.translation.trim()
-    })
-    const updatedField = response.data.field
-    fields.value = fields.value.map((item) =>
-      item.id === activeFieldId.value ? updatedField : item
-    )
-    showToast('عبارت مربوط به این زبان بروزرسانی گردید.', 'success')
-    showEditModal.value = false
-    resetEditForm()
-  } catch (err) {
-    const message = err?.response?.data?.errors?.translation?.[0] || err?.response?.data?.message || 'ویرایش عبارت امکان‌پذیر نبود.'
-    editErrors.translation = message
-  } finally {
-    updating.value = false
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
   }
+
+  await submitUpdate(getSubmitPayload())
 }
 
 const handleDelete = async (field) => {

@@ -161,8 +161,12 @@
       </div>
 
       <template #footer>
-        <Button variant="primary" :loading="saving" @click="handleCreate">
-          ثبت
+        <Button
+          variant="primary"
+          :loading="isProduction && !isVerified ? sendingVerification : saving"
+          @click="handleCreate"
+        >
+          {{ createSubmitLabel }}
         </Button>
         <Button variant="danger" @click="closeCreateModal">
           بستن
@@ -299,8 +303,12 @@
       </div>
 
       <template #footer>
-        <Button variant="primary" :loading="updating" @click="handleUpdate">
-          ثبت
+        <Button
+          variant="primary"
+          :loading="isProduction && !isVerified ? sendingVerification : updating"
+          @click="handleUpdate"
+        >
+          {{ editSubmitLabel }}
         </Button>
         <Button variant="danger" @click="closeEditModal">
           بستن
@@ -318,11 +326,28 @@ import apiClient from '../../utils/api'
 import { Table, Modal, Button, Input, Select, LoadingState, ErrorState, Pagination } from '../../components/ui'
 import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
 const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
+const createSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
+)
+const editSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
+)
 
 const loading = ref(true)
 const error = ref(null)
@@ -400,12 +425,14 @@ const formatNumber = (value) => {
 }
 
 const openCreateModal = () => {
+  resetVerificationState()
   showCreateModal.value = true
 }
 
 const closeCreateModal = () => {
   showCreateModal.value = false
   resetCreateForm()
+  resetVerificationState()
 }
 
 const resetCreateForm = () => {
@@ -426,6 +453,7 @@ const openViewModal = (prize) => {
 }
 
 const openEditModal = (prize) => {
+  resetVerificationState()
   editingPrize.value = prize
   editForm.value = {
     satisfaction: prize.satisfaction || 0,
@@ -440,6 +468,7 @@ const openEditModal = (prize) => {
 const closeEditModal = () => {
   showEditModal.value = false
   resetEditForm()
+  resetVerificationState()
 }
 
 const resetEditForm = () => {
@@ -523,25 +552,35 @@ const validateEditForm = () => {
   return isValid
 }
 
-const handleCreate = async () => {
-  if (!validateForm()) {
-    return
-  }
+const buildCreatePayload = () => ({
+  member: form.value.member,
+  satisfaction: form.value.satisfaction,
+  introduction_profit_increase: form.value.introduction_profit_increase,
+  accumulated_capital_reserve: form.value.accumulated_capital_reserve,
+  data_storage: form.value.data_storage,
+  psc: form.value.psc
+})
 
+const buildUpdatePayload = () => ({
+  satisfaction: editForm.value.satisfaction,
+  introduction_profit_increase: editForm.value.introduction_profit_increase,
+  accumulated_capital_reserve: editForm.value.accumulated_capital_reserve,
+  data_storage: editForm.value.data_storage,
+  psc: editForm.value.psc
+})
+
+const submitCreate = async (verificationPayload = {}) => {
   try {
     saving.value = true
     errors.value = {}
 
-    const response = await apiClient.post('/dynasty/prizes', {
-      member: form.value.member,
-      satisfaction: form.value.satisfaction,
-      introduction_profit_increase: form.value.introduction_profit_increase,
-      accumulated_capital_reserve: form.value.accumulated_capital_reserve,
-      data_storage: form.value.data_storage,
-      psc: form.value.psc
-    })
+    const response = await apiClient.post(
+      '/dynasty/prizes',
+      applyVerificationPayload(buildCreatePayload(), verificationPayload)
+    )
 
     if (response.data.success) {
+      resetVerificationState()
       await fetchPrizes()
       closeCreateModal()
       showToast('اطلاعات با موفقیت ثبت شد', 'success')
@@ -550,6 +589,11 @@ const handleCreate = async () => {
     }
   } catch (err) {
     console.error('Create prize error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
     } else {
@@ -560,8 +604,21 @@ const handleCreate = async () => {
   }
 }
 
-const handleUpdate = async () => {
-  if (!editingPrize.value || !validateEditForm()) {
+const handleCreate = async () => {
+  if (!validateForm()) {
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitCreate(getSubmitPayload())
+}
+
+const submitUpdate = async (verificationPayload = {}) => {
+  if (!editingPrize.value) {
     return
   }
 
@@ -569,15 +626,13 @@ const handleUpdate = async () => {
     updating.value = true
     errors.value = {}
 
-    const response = await apiClient.put(`/dynasty/prizes/${editingPrize.value.id}`, {
-      satisfaction: editForm.value.satisfaction,
-      introduction_profit_increase: editForm.value.introduction_profit_increase,
-      accumulated_capital_reserve: editForm.value.accumulated_capital_reserve,
-      data_storage: editForm.value.data_storage,
-      psc: editForm.value.psc
-    })
+    const response = await apiClient.put(
+      `/dynasty/prizes/${editingPrize.value.id}`,
+      applyVerificationPayload(buildUpdatePayload(), verificationPayload)
+    )
 
     if (response.data.success) {
+      resetVerificationState()
       await fetchPrizes()
       closeEditModal()
       showToast('اطلاعات با موفقیت ثبت شد', 'success')
@@ -586,6 +641,11 @@ const handleUpdate = async () => {
     }
   } catch (err) {
     console.error('Update prize error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
     } else {
@@ -594,6 +654,19 @@ const handleUpdate = async () => {
   } finally {
     updating.value = false
   }
+}
+
+const handleUpdate = async () => {
+  if (!editingPrize.value || !validateEditForm()) {
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitUpdate(getSubmitPayload())
 }
 
 const handleDelete = async (prize) => {

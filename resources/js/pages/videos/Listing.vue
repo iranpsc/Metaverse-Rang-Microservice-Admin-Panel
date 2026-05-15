@@ -218,8 +218,13 @@
           <Button variant="ghost" rounded="full" @click.prevent="closeCreateModal">
             انصراف
           </Button>
-          <Button type="submit" variant="primary" rounded="full" :loading="creating">
-            ثبت ویدیو
+          <Button
+            type="submit"
+            variant="primary"
+            rounded="full"
+            :loading="isProduction && !isVerified ? sendingVerification : creating"
+          >
+            {{ createSubmitLabel }}
           </Button>
         </div>
       </form>
@@ -352,8 +357,13 @@
           <Button variant="ghost" rounded="full" @click.prevent="closeEditModal">
             انصراف
           </Button>
-          <Button type="submit" variant="primary" rounded="full" :loading="updating">
-            ذخیره تغییرات
+          <Button
+            type="submit"
+            variant="primary"
+            rounded="full"
+            :loading="isProduction && !isVerified ? sendingVerification : updating"
+          >
+            {{ editSubmitLabel }}
           </Button>
         </div>
       </form>
@@ -429,7 +439,7 @@ import { ensureCsrfCookie, getSanctumStatefulHeaders } from '../../utils/api'
 import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useVideos } from '../../composables/useVideos'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import {
   Button,
   ErrorState,
@@ -447,6 +457,23 @@ import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
 const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
+const createSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت ویدیو'
+)
+const editSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ذخیره تغییرات'
+)
+
 const {
   fetchVideoMeta,
   fetchVideos: fetchVideosApi,
@@ -905,9 +932,11 @@ const resetCreateForm = () => {
 
 const closeCreateModal = () => {
   createModalOpen.value = false
+  resetVerificationState()
 }
 
 const openCreateModal = async () => {
+  resetVerificationState()
   resetCreateForm()
   if (categoriesMeta.value.length === 0 && !metaLoading.value) {
     await fetchMeta()
@@ -928,6 +957,7 @@ const resetEditForm = () => {
 
 const closeEditModal = () => {
   editModalOpen.value = false
+  resetVerificationState()
 }
 
 const openEditModal = (video) => {
@@ -935,6 +965,7 @@ const openEditModal = (video) => {
     return
   }
 
+  resetVerificationState()
   selectedVideo.value = video
   editForm.title = video.title || ''
   editForm.description = video.description || ''
@@ -967,6 +998,73 @@ const ensureVideoUploaded = (form, errorsTarget) => {
   return true
 }
 
+const buildCreateFormData = () => {
+  const formData = new FormData()
+  formData.append('title', createForm.title || '')
+  formData.append('description', createForm.description || '')
+  formData.append('video_category_id', createForm.video_category_id || '')
+  formData.append('video_sub_category_id', createForm.video_sub_category_id || '')
+  formData.append('creator_code', createForm.creator_code || '')
+  formData.append('video_file_name', createForm.video_file_name || '')
+
+  if (createForm.image instanceof File) {
+    formData.append('image', createForm.image)
+  }
+
+  return formData
+}
+
+const buildEditFormData = () => {
+  const formData = new FormData()
+  formData.append('title', editForm.title || '')
+  formData.append('description', editForm.description || '')
+  formData.append('_method', 'PUT')
+
+  if (editForm.creator_code) {
+    formData.append('creator_code', editForm.creator_code)
+  }
+
+  if (editForm.image instanceof File) {
+    formData.append('image', editForm.image)
+  }
+
+  if (editForm.video_file_name) {
+    formData.append('video_file_name', editForm.video_file_name)
+  }
+
+  return formData
+}
+
+const performCreate = async (verificationPayload = {}) => {
+  try {
+    creating.value = true
+    const formData = applyVerificationPayload(buildCreateFormData(), verificationPayload)
+    const response = await createVideo(formData)
+
+    if (response.data.success) {
+      showToast('ویدیو با موفقیت ایجاد شد.', 'success')
+      resetVerificationState()
+      closeCreateModal()
+      currentPage.value = 1
+      await fetchVideos()
+    }
+  } catch (err) {
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
+    if (err.response?.status === 422) {
+      normalizeErrors(err.response.data.errors, createErrors)
+      showToast('لطفا خطاهای فرم را بررسی کنید.', 'warning')
+    } else {
+      console.error('Video create error:', err)
+      showToast(err.response?.data?.message || 'خطا در ایجاد ویدیو', 'error')
+    }
+  } finally {
+    creating.value = false
+  }
+}
+
 const submitCreate = async () => {
   resetErrors(createErrors)
 
@@ -980,38 +1078,44 @@ const submitCreate = async () => {
     return
   }
 
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await performCreate(getSubmitPayload())
+}
+
+const performEdit = async (verificationPayload = {}) => {
+  if (!selectedVideo.value) {
+    return
+  }
+
   try {
-    creating.value = true
-    const formData = new FormData()
-    formData.append('title', createForm.title || '')
-    formData.append('description', createForm.description || '')
-    formData.append('video_category_id', createForm.video_category_id || '')
-    formData.append('video_sub_category_id', createForm.video_sub_category_id || '')
-    formData.append('creator_code', createForm.creator_code || '')
-    formData.append('video_file_name', createForm.video_file_name || '')
-
-    if (createForm.image instanceof File) {
-      formData.append('image', createForm.image)
-    }
-
-    const response = await createVideo(formData)
+    updating.value = true
+    const formData = applyVerificationPayload(buildEditFormData(), verificationPayload)
+    const response = await updateVideo(selectedVideo.value.id, formData)
 
     if (response.data.success) {
-      showToast('ویدیو با موفقیت ایجاد شد.', 'success')
-      closeCreateModal()
-      currentPage.value = 1
+      showToast('ویدیو با موفقیت به روزرسانی شد.', 'success')
+      resetVerificationState()
+      closeEditModal()
       await fetchVideos()
     }
   } catch (err) {
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.status === 422) {
-      normalizeErrors(err.response.data.errors, createErrors)
+      normalizeErrors(err.response.data.errors, editErrors)
       showToast('لطفا خطاهای فرم را بررسی کنید.', 'warning')
     } else {
-      console.error('Video create error:', err)
-      showToast(err.response?.data?.message || 'خطا در ایجاد ویدیو', 'error')
+      console.error('Video update error:', err)
+      showToast(err.response?.data?.message || 'خطا در بروزرسانی ویدیو', 'error')
     }
   } finally {
-    creating.value = false
+    updating.value = false
   }
 }
 
@@ -1027,43 +1131,12 @@ const submitEdit = async () => {
     return
   }
 
-  try {
-    updating.value = true
-    const formData = new FormData()
-    formData.append('title', editForm.title || '')
-    formData.append('description', editForm.description || '')
-    formData.append('_method', 'PUT')
-
-    if (editForm.creator_code) {
-      formData.append('creator_code', editForm.creator_code)
-    }
-
-    if (editForm.image instanceof File) {
-      formData.append('image', editForm.image)
-    }
-
-    if (editForm.video_file_name) {
-      formData.append('video_file_name', editForm.video_file_name)
-    }
-
-    const response = await updateVideo(selectedVideo.value.id, formData)
-
-    if (response.data.success) {
-      showToast('ویدیو با موفقیت به روزرسانی شد.', 'success')
-      closeEditModal()
-      await fetchVideos()
-    }
-  } catch (err) {
-    if (err.response?.status === 422) {
-      normalizeErrors(err.response.data.errors, editErrors)
-      showToast('لطفا خطاهای فرم را بررسی کنید.', 'warning')
-    } else {
-      console.error('Video update error:', err)
-      showToast(err.response?.data?.message || 'خطا در بروزرسانی ویدیو', 'error')
-    }
-  } finally {
-    updating.value = false
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
   }
+
+  await performEdit(getSubmitPayload())
 }
 
 const confirmDelete = async (video) => {

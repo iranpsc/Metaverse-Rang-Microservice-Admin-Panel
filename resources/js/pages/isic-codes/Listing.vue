@@ -137,10 +137,10 @@
         <div class="flex justify-end gap-3">
           <Button
             variant="primary"
-            :loading="saving"
-            @click="submitCreate"
+            :loading="isProduction && !isVerified ? sendingVerification : saving"
+            @click="handleCreateSubmit"
           >
-            ثبت
+            {{ createSubmitLabel }}
           </Button>
           <Button
             variant="danger"
@@ -200,16 +200,30 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import apiClient from '../../utils/api'
 import { Badge, Button, ErrorState, FileInput, Input, LoadingState, Modal, Pagination, SearchBox, Table } from '../../components/ui'
 import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
 const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
+const createSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
+)
 
 const loading = ref(true)
 const error = ref(null)
@@ -304,17 +318,7 @@ const resetForm = () => {
   formErrors.code = ''
 }
 
-const openCreateModal = () => {
-  resetForm()
-  createModalOpen.value = true
-}
-
-const closeCreateModal = () => {
-  createModalOpen.value = false
-  resetForm()
-}
-
-const submitCreate = async () => {
+const validateCreateForm = () => {
   formErrors.name = ''
   formErrors.code = ''
 
@@ -328,22 +332,35 @@ const submitCreate = async () => {
     formErrors.code = 'کد باید فقط شامل اعداد و حداکثر ۲۰ رقم باشد.'
   }
 
-  if (formErrors.name || formErrors.code) {
-    return
-  }
+  return !formErrors.name && !formErrors.code
+}
 
+const openCreateModal = () => {
+  resetVerificationState()
+  resetForm()
+  createModalOpen.value = true
+}
+
+const closeCreateModal = () => {
+  createModalOpen.value = false
+  resetForm()
+  resetVerificationState()
+}
+
+const submitCreateRequest = async (verificationPayload = {}) => {
   try {
     saving.value = true
 
-    const payload = {
+    const payload = applyVerificationPayload({
       name: form.name.trim(),
       code: form.code.trim()
-    }
+    }, verificationPayload)
 
     const { data } = await apiClient.post('/isic-codes', payload)
 
     if (data?.success) {
       showToast(data.message || 'کد ISIC با موفقیت ایجاد شد.', 'success')
+      resetVerificationState()
       closeCreateModal()
       currentPage.value = 1
       await fetchIsicCodes()
@@ -352,6 +369,10 @@ const submitCreate = async () => {
     }
   } catch (err) {
     console.error('ISIC code create error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
 
     if (err.response?.status === 422) {
       const validationErrors = err.response?.data?.errors || {}
@@ -365,6 +386,19 @@ const submitCreate = async () => {
   } finally {
     saving.value = false
   }
+}
+
+const handleCreateSubmit = async () => {
+  if (!validateCreateForm()) {
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitCreateRequest(getSubmitPayload())
 }
 
 const openImportModal = () => {

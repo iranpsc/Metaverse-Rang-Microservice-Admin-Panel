@@ -225,10 +225,10 @@
           <Button
             variant="primary"
             class="w-full"
-            :loading="saving"
+            :loading="isProduction && !isVerified ? sendingVerification : saving"
             @click="handleCreateSubmit"
           >
-            ثبت
+            {{ createSubmitLabel }}
           </Button>
           <Button
             variant="danger"
@@ -343,10 +343,10 @@
           <Button
             variant="primary"
             class="w-full"
-            :loading="updating"
+            :loading="isProduction && !isVerified ? sendingVerification : updating"
             @click="handleEditSubmit"
           >
-            ثبت
+            {{ editSubmitLabel }}
           </Button>
           <Button
             variant="danger"
@@ -364,7 +364,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import apiClient from '../../utils/api'
 import {
   Table,
@@ -384,10 +384,27 @@ import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
 const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
+const createSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
+)
+const editSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
+)
 
 const loading = ref(true)
 const saving = ref(false)
@@ -567,6 +584,7 @@ const handleClear = () => {
 }
 
 const openCreateModal = () => {
+  resetVerificationState()
   resetCreateForm()
   showCreateModal.value = true
 }
@@ -574,6 +592,7 @@ const openCreateModal = () => {
 const handleCreateModalClose = () => {
   showCreateModal.value = false
   resetCreateForm()
+  resetVerificationState()
 }
 
 const resetCreateForm = () => {
@@ -615,11 +634,7 @@ const validateCreateForm = () => {
   return Object.keys(createErrors).length === 0
 }
 
-const handleCreateSubmit = async () => {
-  if (!validateCreateForm()) {
-    return
-  }
-
+const buildCreateFormData = () => {
   const formData = new FormData()
   formData.append('title', createForm.title)
   formData.append('content', createForm.content)
@@ -631,15 +646,21 @@ const handleCreateSubmit = async () => {
   formData.append('btn_name', createForm.btn_name || '')
   formData.append('btn_link', createForm.btn_link || '')
   formData.append('image', createForm.image)
+  return formData
+}
 
+const submitCreate = async (verificationPayload = {}) => {
   try {
     saving.value = true
+    const formData = applyVerificationPayload(buildCreateFormData(), verificationPayload)
+
     const response = await apiClient.post('/calendars', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
 
     if (response.data.success) {
       showToast(response.data.message || 'وقعه با موفقیت ثبت شد', 'success')
+      resetVerificationState()
       handleCreateModalClose()
       currentPage.value = 1
       fetchEvents()
@@ -648,6 +669,10 @@ const handleCreateSubmit = async () => {
     }
   } catch (err) {
     console.error('Calendar create error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
 
     if (err.response?.status === 422 && err.response?.data?.errors) {
       assignValidationErrors(createErrors, err.response.data.errors)
@@ -659,7 +684,21 @@ const handleCreateSubmit = async () => {
   }
 }
 
+const handleCreateSubmit = async () => {
+  if (!validateCreateForm()) {
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitCreate(getSubmitPayload())
+}
+
 const openEditModal = (event) => {
+  resetVerificationState()
   selectedEvent.value = event
   const startDate = event.start_date && /^\d{4}\/\d{2}\/\d{2}$/.test(event.start_date)
     ? event.start_date
@@ -688,6 +727,7 @@ const openEditModal = (event) => {
 const handleEditModalClose = () => {
   showEditModal.value = false
   resetEditForm()
+  resetVerificationState()
 }
 
 const resetEditForm = () => {
@@ -718,12 +758,7 @@ const validateEditForm = () => {
   return Object.keys(editErrors).length === 0
 }
 
-const handleEditSubmit = async () => {
-  if (!selectedEvent.value) return
-  if (!validateEditForm()) {
-    return
-  }
-
+const buildEditFormData = () => {
   const formData = new FormData()
   formData.append('title', editForm.title)
   formData.append('content', editForm.content)
@@ -740,14 +775,25 @@ const handleEditSubmit = async () => {
     formData.append('image', editForm.image)
   }
 
+  return formData
+}
+
+const submitEdit = async (verificationPayload = {}) => {
+  if (!selectedEvent.value) {
+    return
+  }
+
   try {
     updating.value = true
+    const formData = applyVerificationPayload(buildEditFormData(), verificationPayload)
+
     const response = await apiClient.post(`/calendars/${selectedEvent.value.id}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
 
     if (response.data.success) {
       showToast(response.data.message || 'وقعه با موفقیت بروزرسانی شد', 'success')
+      resetVerificationState()
       handleEditModalClose()
       fetchEvents()
     } else {
@@ -755,6 +801,10 @@ const handleEditSubmit = async () => {
     }
   } catch (err) {
     console.error('Calendar update error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
 
     if (err.response?.status === 422 && err.response?.data?.errors) {
       assignValidationErrors(editErrors, err.response.data.errors)
@@ -764,6 +814,23 @@ const handleEditSubmit = async () => {
   } finally {
     updating.value = false
   }
+}
+
+const handleEditSubmit = async () => {
+  if (!selectedEvent.value) {
+    return
+  }
+
+  if (!validateEditForm()) {
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitEdit(getSubmitPayload())
 }
 
 const handleDelete = async (event) => {

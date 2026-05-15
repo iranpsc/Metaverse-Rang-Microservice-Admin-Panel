@@ -144,10 +144,10 @@
         <div class="flex justify-end gap-3" dir="rtl">
           <Button
             variant="primary"
-            :loading="submittingCreate"
-            @click="submitCreate"
+            :loading="isProduction && !isVerified ? sendingVerification : submittingCreate"
+            @click="handleCreateSubmit"
           >
-            ثبت
+            {{ createSubmitLabel }}
           </Button>
           <Button
             variant="danger"
@@ -211,10 +211,10 @@
         <div class="flex justify-end gap-3" dir="rtl">
           <Button
             variant="primary"
-            :loading="submittingEdit"
-            @click="submitEdit"
+            :loading="isProduction && !isVerified ? sendingVerification : submittingEdit"
+            @click="handleEditSubmit"
           >
-            ثبت تغییرات
+            {{ editSubmitLabel }}
           </Button>
           <Button
             variant="danger"
@@ -278,11 +278,28 @@ import apiClient from '../../utils/api'
 import { Button, ErrorState, Input, LoadingState, Modal, Pagination, SearchBox, Table } from '../../components/ui'
 import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
 const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
+const createSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
+)
+const editSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت تغییرات'
+)
 
 const loading = ref(true)
 const error = ref(null)
@@ -524,6 +541,7 @@ const goToPage = (page) => {
 }
 
 const openCreateModal = () => {
+  resetVerificationState()
   resetCreateForm()
   showCreateModal.value = true
 }
@@ -531,9 +549,11 @@ const openCreateModal = () => {
 const closeCreateModal = () => {
   showCreateModal.value = false
   resetCreateForm()
+  resetVerificationState()
 }
 
 const openEditModal = (variable) => {
+  resetVerificationState()
   resetEditForm()
   editForm.id = variable.id
   editForm.name = variable.name
@@ -548,6 +568,7 @@ const closeEditModal = () => {
   showEditModal.value = false
   resetEditForm()
   selectedVariable.value = null
+  resetVerificationState()
 }
 
 const openHistoryModal = (variable) => {
@@ -574,26 +595,31 @@ const handleValidationErrors = (errors, target) => {
   })
 }
 
-const submitCreate = async () => {
+const submitCreateRequest = async (verificationPayload = {}) => {
   submittingCreate.value = true
   handleValidationErrors(null, createErrors)
 
   try {
-    const payload = {
+    const payload = applyVerificationPayload({
       name: createForm.name,
       slug: createForm.slug,
       value: createForm.value
-    }
+    }, verificationPayload)
 
     const response = await apiClient.post('/system-variables', payload)
 
     if (response.data.success) {
       showToast(response.data.message || 'متغیر با موفقیت ثبت شد', 'success')
+      resetVerificationState()
       closeCreateModal()
       fetchVariables()
     }
   } catch (err) {
     console.error('Create system variable error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
 
     if (err.response?.status === 422) {
       handleValidationErrors(err.response.data.errors, createErrors)
@@ -606,7 +632,16 @@ const submitCreate = async () => {
   }
 }
 
-const submitEdit = async () => {
+const handleCreateSubmit = async () => {
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitCreateRequest(getSubmitPayload())
+}
+
+const submitEditRequest = async (verificationPayload = {}) => {
   if (!editForm.id) {
     return
   }
@@ -615,22 +650,27 @@ const submitEdit = async () => {
   handleValidationErrors(null, editErrors)
 
   try {
-    const payload = {
+    const payload = applyVerificationPayload({
       name: editForm.name,
       slug: editForm.slug,
       value: editForm.value,
       note: editForm.note || null
-    }
+    }, verificationPayload)
 
     const response = await apiClient.put(`/system-variables/${editForm.id}`, payload)
 
     if (response.data.success) {
       showToast(response.data.message || 'متغیر با موفقیت بروزرسانی شد', 'success')
+      resetVerificationState()
       closeEditModal()
       fetchVariables()
     }
   } catch (err) {
     console.error('Update system variable error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
 
     if (err.response?.status === 422) {
       handleValidationErrors(err.response.data.errors, editErrors)
@@ -641,6 +681,19 @@ const submitEdit = async () => {
   } finally {
     submittingEdit.value = false
   }
+}
+
+const handleEditSubmit = async () => {
+  if (!editForm.id) {
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitEditRequest(getSubmitPayload())
 }
 
 const handleDelete = async (variable) => {

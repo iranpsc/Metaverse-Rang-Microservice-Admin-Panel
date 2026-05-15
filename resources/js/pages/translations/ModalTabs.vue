@@ -29,7 +29,7 @@
             تب‌ها بر اساس نام به تمام زبان‌ها تعمیم داده می‌شوند.
           </p>
         </div>
-        <Button variant="primary" rounded="full" @click="showCreateModal = true">
+        <Button variant="primary" rounded="full" @click="openCreateModal">
           ایجاد تب
         </Button>
       </div>
@@ -145,11 +145,11 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="creating"
+            :loading="isProduction && !isVerified ? sendingVerification : creating"
             :disabled="creating"
             @click="handleCreate"
           >
-            ذخیره
+            {{ createSubmitLabel }}
           </Button>
         </div>
       </template>
@@ -177,16 +177,11 @@
           <Button
             variant="primary"
             rounded="full"
-            class="!p-2 !gap-0 min-w-[2.25rem]"
-            title="بروزرسانی"
-            aria-label="بروزرسانی"
-            :loading="updating"
+            :loading="isProduction && !isVerified ? sendingVerification : updating"
             :disabled="updating"
             @click="handleUpdate"
           >
-            <template #icon-left>
-              <TableActionIcon name="edit" />
-            </template>
+            {{ editSubmitLabel }}
           </Button>
         </div>
       </template>
@@ -197,7 +192,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Table from '../../components/ui/Table.vue'
 import Button from '../../components/ui/Button.vue'
@@ -210,11 +205,27 @@ import ErrorState from '../../components/ui/ErrorState.vue'
 import { translationApi } from '../../api/translations'
 import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
 const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
+const createSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
+)
+const editSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'بروزرسانی'
+)
 
 const route = useRoute()
 const router = useRouter()
@@ -295,12 +306,43 @@ const goToPage = (nextPage) => {
 const resetCreateForm = () => {
   createForm.name = ''
   createErrors.name = ''
+  resetVerificationState()
 }
 
 const resetEditForm = () => {
   editForm.name = ''
   editErrors.name = ''
   activeTabId.value = null
+  resetVerificationState()
+}
+
+const openCreateModal = () => {
+  resetVerificationState()
+  showCreateModal.value = true
+}
+
+const submitCreate = async (verificationPayload = {}) => {
+  creating.value = true
+  try {
+    await translationApi.createTab(
+      translationId,
+      modalId,
+      applyVerificationPayload({ name: createForm.name.trim() }, verificationPayload)
+    )
+    showToast('تب جدید برای تمامی زبان‌ها ثبت شد.', 'success')
+    resetVerificationState()
+    showCreateModal.value = false
+    resetCreateForm()
+    await fetchTabs(page.value)
+  } catch (err) {
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+    const message = err?.response?.data?.errors?.name?.[0] || err?.response?.data?.message || 'امکان ایجاد تب وجود ندارد.'
+    createErrors.name = message
+  } finally {
+    creating.value = false
+  }
 }
 
 const handleCreate = async () => {
@@ -309,28 +351,49 @@ const handleCreate = async () => {
     return
   }
   createErrors.name = ''
-  creating.value = true
-  try {
-    await translationApi.createTab(translationId, modalId, {
-      name: createForm.name.trim()
-    })
-    showToast('تب جدید برای تمامی زبان‌ها ثبت شد.', 'success')
-    showCreateModal.value = false
-    resetCreateForm()
-    await fetchTabs(page.value)
-  } catch (err) {
-    const message = err?.response?.data?.errors?.name?.[0] || err?.response?.data?.message || 'امکان ایجاد تب وجود ندارد.'
-    createErrors.name = message
-  } finally {
-    creating.value = false
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
   }
+
+  await submitCreate(getSubmitPayload())
 }
 
 const openEditModal = (tab) => {
+  resetVerificationState()
   activeTabId.value = tab.id
   editForm.name = tab.name
   editErrors.name = ''
   showEditModal.value = true
+}
+
+const submitUpdate = async (verificationPayload = {}) => {
+  updating.value = true
+  try {
+    const response = await translationApi.updateTab(
+      translationId,
+      modalId,
+      activeTabId.value,
+      applyVerificationPayload({ name: editForm.name.trim() }, verificationPayload)
+    )
+    const updatedTab = response.data.tab
+    tabs.value = tabs.value.map((item) =>
+      item.id === activeTabId.value ? updatedTab : item
+    )
+    showToast('نام تب در تمامی زبان‌ها بروزرسانی گردید.', 'success')
+    resetVerificationState()
+    showEditModal.value = false
+    resetEditForm()
+  } catch (err) {
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+    const message = err?.response?.data?.errors?.name?.[0] || err?.response?.data?.message || 'ویرایش تب امکان‌پذیر نبود.'
+    editErrors.name = message
+  } finally {
+    updating.value = false
+  }
 }
 
 const handleUpdate = async () => {
@@ -339,24 +402,13 @@ const handleUpdate = async () => {
     return
   }
   editErrors.name = ''
-  updating.value = true
-  try {
-    const response = await translationApi.updateTab(translationId, modalId, activeTabId.value, {
-      name: editForm.name.trim()
-    })
-    const updatedTab = response.data.tab
-    tabs.value = tabs.value.map((item) =>
-      item.id === activeTabId.value ? updatedTab : item
-    )
-    showToast('نام تب در تمامی زبان‌ها بروزرسانی گردید.', 'success')
-    showEditModal.value = false
-    resetEditForm()
-  } catch (err) {
-    const message = err?.response?.data?.errors?.name?.[0] || err?.response?.data?.message || 'ویرایش تب امکان‌پذیر نبود.'
-    editErrors.name = message
-  } finally {
-    updating.value = false
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
   }
+
+  await submitUpdate(getSubmitPayload())
 }
 
 const handleDelete = async (tab) => {

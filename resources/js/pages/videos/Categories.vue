@@ -156,9 +156,9 @@
             type="submit"
             variant="primary"
             rounded="full"
-            :loading="creating"
+            :loading="isProduction && !isVerified ? sendingVerification : creating"
           >
-            ثبت دسته بندی
+            {{ createSubmitLabel }}
           </Button>
         </div>
       </form>
@@ -246,9 +246,9 @@
             type="submit"
             variant="primary"
             rounded="full"
-            :loading="updating"
+            :loading="isProduction && !isVerified ? sendingVerification : updating"
           >
-            ذخیره تغییرات
+            {{ editSubmitLabel }}
           </Button>
         </div>
       </form>
@@ -277,10 +277,27 @@ import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import MediaCellButton from '../../components/ui/MediaCellButton.vue'
 import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
 const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
+const createSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت دسته بندی'
+)
+const editSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ذخیره تغییرات'
+)
 
 const loading = ref(true)
 const creating = ref(false)
@@ -394,15 +411,18 @@ const resetEditForm = () => {
 }
 
 const openCreateModal = () => {
+  resetVerificationState()
   resetCreateForm()
   createModalOpen.value = true
 }
 
 const closeCreateModal = () => {
   createModalOpen.value = false
+  resetVerificationState()
 }
 
 const openEditModal = (category) => {
+  resetVerificationState()
   selectedCategory.value = category
   editForm.name = category.name
   editForm.description = category.description || ''
@@ -414,6 +434,7 @@ const openEditModal = (category) => {
 
 const closeEditModal = () => {
   editModalOpen.value = false
+  resetVerificationState()
 }
 
 const normalizeErrors = (errors, target) => {
@@ -499,12 +520,10 @@ const buildFormData = (form, includeSlug) => {
   return formData
 }
 
-const submitCreate = async () => {
-  resetErrors(createErrors)
-
+const performCreate = async (verificationPayload = {}) => {
   try {
     creating.value = true
-    const formData = buildFormData(createForm, true)
+    const formData = applyVerificationPayload(buildFormData(createForm, true), verificationPayload)
 
     const response = await apiClient.post('/video-categories', formData, {
       headers: {
@@ -514,12 +533,17 @@ const submitCreate = async () => {
 
     if (response.data.success) {
       showToast('دسته بندی با موفقیت ایجاد شد.', 'success')
+      resetVerificationState()
       closeCreateModal()
       await fetchCategories()
     } else {
       showToast(response.data.message || 'خطا در ایجاد دسته بندی', 'error')
     }
   } catch (err) {
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.status === 422) {
       normalizeErrors(err.response.data.errors, createErrors)
       showToast('لطفا خطاهای فرم را بررسی کنید.', 'warning')
@@ -532,16 +556,25 @@ const submitCreate = async () => {
   }
 }
 
-const submitEdit = async () => {
+const submitCreate = async () => {
+  resetErrors(createErrors)
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await performCreate(getSubmitPayload())
+}
+
+const performEdit = async (verificationPayload = {}) => {
   if (!selectedCategory.value) {
     return
   }
 
-  resetErrors(editErrors)
-
   try {
     updating.value = true
-    const formData = buildFormData(editForm, false)
+    const formData = applyVerificationPayload(buildFormData(editForm, false), verificationPayload)
     formData.append('_method', 'PUT')
 
     const response = await apiClient.post(`/video-categories/${selectedCategory.value.id}`, formData, {
@@ -552,12 +585,17 @@ const submitEdit = async () => {
 
     if (response.data.success) {
       showToast('دسته بندی با موفقیت به روزرسانی شد.', 'success')
+      resetVerificationState()
       closeEditModal()
       await fetchCategories()
     } else {
       showToast(response.data.message || 'خطا در به روزرسانی دسته بندی', 'error')
     }
   } catch (err) {
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.status === 422) {
       normalizeErrors(err.response.data.errors, editErrors)
       showToast('لطفا خطاهای فرم را بررسی کنید.', 'warning')
@@ -568,6 +606,21 @@ const submitEdit = async () => {
   } finally {
     updating.value = false
   }
+}
+
+const submitEdit = async () => {
+  if (!selectedCategory.value) {
+    return
+  }
+
+  resetErrors(editErrors)
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await performEdit(getSubmitPayload())
 }
 
 const confirmDelete = async (category) => {

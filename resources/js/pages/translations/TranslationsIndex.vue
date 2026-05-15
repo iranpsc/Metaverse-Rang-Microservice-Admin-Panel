@@ -25,11 +25,11 @@
           variant="primary"
           rounded="full"
           class="w-full lg:w-auto"
-          :loading="creating"
+          :loading="isProduction && !isVerified ? sendingVerification : creating"
           :disabled="!selectedLanguageCode || creating"
           @click="handleCreateTranslation"
         >
-          افزودن ترجمه جدید
+          {{ createSubmitLabel }}
         </Button>
       </div>
       <Alert
@@ -160,11 +160,26 @@ import ErrorState from '../../components/ui/ErrorState.vue'
 import Breadcrumb from '../../components/ui/Breadcrumb.vue'
 import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
 const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
+const createSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value
+    ? 'ارسال کد تایید'
+    : 'افزودن ترجمه جدید'
+)
 
 const setTitle = (title) => {
   document.title = title ? `${title} - متارنگ` : 'متارنگ'
@@ -259,20 +274,36 @@ const goToPage = (nextPage) => {
   fetchTranslations(nextPage)
 }
 
-const handleCreateTranslation = async () => {
-  if (!selectedLanguageCode.value) return
+const submitCreateTranslation = async (verificationPayload = {}) => {
   creating.value = true
   try {
-    await translationApi.createTranslation({ code: selectedLanguageCode.value })
+    await translationApi.createTranslation(
+      applyVerificationPayload({ code: selectedLanguageCode.value }, verificationPayload)
+    )
     showToast('ساختار ترجمه بر اساس زبان انتخابی ایجاد شد.', 'success')
+    resetVerificationState()
     selectedLanguageCode.value = ''
     await fetchTranslations(1)
   } catch (err) {
+    if (await handleApiVerificationError(err)) {
+      return
+    }
     const messages = err?.response?.data?.errors?.code
     showToast(Array.isArray(messages) ? messages[0] : (err?.response?.data?.message || 'امکان افزودن ترجمه وجود ندارد.'), 'error')
   } finally {
     creating.value = false
   }
+}
+
+const handleCreateTranslation = async () => {
+  if (!selectedLanguageCode.value) return
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitCreateTranslation(getSubmitPayload())
 }
 
 const handleDelete = async (translation) => {

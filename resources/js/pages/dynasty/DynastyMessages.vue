@@ -135,8 +135,12 @@
       </div>
 
       <template #footer>
-        <Button variant="primary" :loading="saving" @click="handleCreate">
-          ذخیره
+        <Button
+          variant="primary"
+          :loading="isProduction && !isVerified ? sendingVerification : saving"
+          @click="handleCreate"
+        >
+          {{ createSubmitLabel }}
         </Button>
         <Button variant="danger" @click="closeCreateModal">
           بستن
@@ -195,8 +199,12 @@
       </div>
 
       <template #footer>
-        <Button variant="primary" :loading="updating" @click="handleUpdate">
-          ذخیره
+        <Button
+          variant="primary"
+          :loading="isProduction && !isVerified ? sendingVerification : updating"
+          @click="handleUpdate"
+        >
+          {{ editSubmitLabel }}
         </Button>
         <Button variant="danger" @click="closeEditModal">
           بستن
@@ -215,12 +223,29 @@ import apiClient from '../../utils/api'
 import { Table, Modal, Button, Select, Alert, LoadingState, ErrorState } from '../../components/ui'
 import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { sanitizeHtml } from '../../utils/sanitize'
 
 const { showToast } = useToast()
 const phoneVerification = usePhoneVerification()
+const {
+  isProduction,
+  isVerified,
+  sendingVerification,
+  beginVerifyForSubmit,
+  getSubmitPayload,
+  confirmThenVerify,
+  handleApiVerificationError,
+  resetVerificationState
+} = phoneVerification
+
+const createSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ذخیره'
+)
+const editSubmitLabel = computed(() =>
+  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ذخیره'
+)
 
 const loading = ref(true)
 const error = ref(null)
@@ -300,12 +325,14 @@ const tableColumns = [
 ]
 
 const openCreateModal = () => {
+  resetVerificationState()
   showCreateModal.value = true
 }
 
 const closeCreateModal = () => {
   showCreateModal.value = false
   resetCreateForm()
+  resetVerificationState()
 }
 
 const resetCreateForm = () => {
@@ -322,6 +349,7 @@ const openViewModal = (message) => {
 }
 
 const openEditModal = (message) => {
+  resetVerificationState()
   editingMessage.value = message
   editForm.value.content = message.message || ''
   showEditModal.value = true
@@ -330,6 +358,7 @@ const openEditModal = (message) => {
 const closeEditModal = () => {
   showEditModal.value = false
   resetEditForm()
+  resetVerificationState()
 }
 
 const resetEditForm = () => {
@@ -355,21 +384,18 @@ const validateForm = () => {
   return isValid
 }
 
-const handleCreate = async () => {
-  if (!validateForm()) {
-    return
-  }
-
+const submitCreate = async (verificationPayload = {}) => {
   try {
     saving.value = true
     errors.value = {}
 
-    const response = await apiClient.post('/dynasty/messages', {
+    const response = await apiClient.post('/dynasty/messages', applyVerificationPayload({
       type: form.value.type,
       content: form.value.content
-    })
+    }, verificationPayload))
 
     if (response.data.success) {
+      resetVerificationState()
       await fetchMessages()
       closeCreateModal()
       showToast('اطلاعات با موفقیت ثبت شد', 'success')
@@ -380,15 +406,15 @@ const handleCreate = async () => {
     }
   } catch (err) {
     console.error('Create message error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
-      // Show first error message
       const firstError = Object.values(err.response.data.errors)[0]
-      if (Array.isArray(firstError)) {
-        showToast(firstError[0], 'error')
-      } else {
-        showToast(firstError, 'error')
-      }
+      showToast(Array.isArray(firstError) ? firstError[0] : firstError, 'error')
     } else {
       const errorMsg = err.response?.data?.message || 'خطا در ثبت اطلاعات'
       showToast(errorMsg, 'error')
@@ -399,11 +425,21 @@ const handleCreate = async () => {
   }
 }
 
-const handleUpdate = async () => {
-  if (!editingMessage.value) return
+const handleCreate = async () => {
+  if (!validateForm()) {
+    return
+  }
 
-  if (!editForm.value.content || editForm.value.content.trim() === '') {
-    errors.value.content = 'متن پیام الزامی است'
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitCreate(getSubmitPayload())
+}
+
+const submitUpdate = async (verificationPayload = {}) => {
+  if (!editingMessage.value) {
     return
   }
 
@@ -411,11 +447,13 @@ const handleUpdate = async () => {
     updating.value = true
     errors.value = {}
 
-    const response = await apiClient.put(`/dynasty/messages/${editingMessage.value.id}`, {
-      content: editForm.value.content
-    })
+    const response = await apiClient.put(
+      `/dynasty/messages/${editingMessage.value.id}`,
+      applyVerificationPayload({ content: editForm.value.content }, verificationPayload)
+    )
 
     if (response.data.success) {
+      resetVerificationState()
       await fetchMessages()
       closeEditModal()
       showToast('اطلاعات با موفقیت به‌روزرسانی شد', 'success')
@@ -426,15 +464,15 @@ const handleUpdate = async () => {
     }
   } catch (err) {
     console.error('Update message error:', err)
+
+    if (await handleApiVerificationError(err)) {
+      return
+    }
+
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
-      // Show first error message
       const firstError = Object.values(err.response.data.errors)[0]
-      if (Array.isArray(firstError)) {
-        showToast(firstError[0], 'error')
-      } else {
-        showToast(firstError, 'error')
-      }
+      showToast(Array.isArray(firstError) ? firstError[0] : firstError, 'error')
     } else {
       const errorMsg = err.response?.data?.message || 'خطا در به‌روزرسانی اطلاعات'
       showToast(errorMsg, 'error')
@@ -443,6 +481,24 @@ const handleUpdate = async () => {
   } finally {
     updating.value = false
   }
+}
+
+const handleUpdate = async () => {
+  if (!editingMessage.value) {
+    return
+  }
+
+  if (!editForm.value.content || editForm.value.content.trim() === '') {
+    errors.value.content = 'متن پیام الزامی است'
+    return
+  }
+
+  if (isProduction.value && !isVerified.value) {
+    await beginVerifyForSubmit()
+    return
+  }
+
+  await submitUpdate(getSubmitPayload())
 }
 
 const handleDelete = async (message) => {
