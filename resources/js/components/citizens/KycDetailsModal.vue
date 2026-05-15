@@ -167,10 +167,19 @@
     <template #footer>
       <div class="flex gap-3 justify-end" dir="rtl">
         <Button
-          v-if="kyc && kyc.status === 0"
+          v-if="kyc && kyc.status === 0 && isProduction && !isVerified"
+          variant="primary"
+          :loading="sendingVerification"
+          @click="handleSendVerificationCode"
+          class="w-1/2"
+        >
+          ارسال کد تایید
+        </Button>
+        <Button
+          v-if="kyc && kyc.status === 0 && (!isProduction || isVerified)"
           variant="primary"
           :loading="saving"
-          @click="handleSave"
+          @click="handleSubmit"
           class="w-1/2"
         >
           ثبت
@@ -247,7 +256,7 @@
       <VerificationForm
         ref="verificationFormRef"
         :auto-start="false"
-        @verified="handleAutoVerifyAndSubmit"
+        @verified="handleVerificationVerified"
       />
     </div>
   </Modal>
@@ -277,6 +286,7 @@ const emit = defineEmits(['close', 'updated'])
 
 const loading = ref(false)
 const saving = ref(false)
+const sendingVerification = ref(false)
 const error = ref(null)
 const kyc = ref(null)
 const kycErrors = ref([])
@@ -284,6 +294,8 @@ const showMelliCardModalRef = ref(false)
 const showVideoModalRef = ref(false)
 const verificationFormRef = ref(null)
 const showVerificationDialog = ref(false)
+const isVerified = ref(false)
+const pendingVerificationData = ref({})
 
 const isProduction = computed(() => {
   // Check Laravel's APP_ENV from meta tag, fallback to Vite mode
@@ -324,12 +336,40 @@ const handleSaveError = (fieldName, errorMessage) => {
   // If errorMessage is empty, the field is cleared and no error is added
 }
 
+const resetVerificationState = () => {
+  isVerified.value = false
+  pendingVerificationData.value = {}
+  showVerificationDialog.value = false
+  verificationFormRef.value?.setErrors?.({})
+  verificationFormRef.value?.reset?.()
+}
+
+const sendVerificationCode = async () => {
+  try {
+    sendingVerification.value = true
+    const response = await apiClient.post('/send-verification-sms')
+
+    if (response.data.success) {
+      showVerificationDialog.value = true
+      return true
+    }
+
+    await notifyError('خطا در ارسال کد تایید')
+    return false
+  } catch (err) {
+    console.error('Verification SMS send error:', err)
+    await notifyError(err.response?.data?.message || 'خطا در ارسال کد تایید')
+    return false
+  } finally {
+    sendingVerification.value = false
+  }
+}
+
 const submitKycUpdate = async (verificationData = {}) => {
   try {
     saving.value = true
     error.value = null
 
-    // Always send kyc_errors as array (empty if no errors)
     const response = await apiClient.put(`/kycs/${props.kycId}`, {
       kyc_errors: kycErrors.value,
       ...verificationData
@@ -337,8 +377,7 @@ const submitKycUpdate = async (verificationData = {}) => {
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
-      showVerificationDialog.value = false
-      verificationFormRef.value?.setErrors?.({})
+      resetVerificationState()
       emit('updated')
     } else {
       error.value = 'خطا در ثبت اطلاعات'
@@ -347,48 +386,55 @@ const submitKycUpdate = async (verificationData = {}) => {
     console.error('KYC update error:', err)
     error.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
 
-    if (err.response?.data?.errors?.phone_verification && verificationFormRef.value?.setErrors) {
-      const phoneError = err.response.data.errors.phone_verification
-      verificationFormRef.value.setErrors({
-        phone_verification: Array.isArray(phoneError) ? phoneError[0] : phoneError
-      })
+    if (err.response?.data?.errors?.phone_verification) {
+      isVerified.value = false
+      pendingVerificationData.value = {}
+      showVerificationDialog.value = true
+
+      if (verificationFormRef.value?.setErrors) {
+        const phoneError = err.response.data.errors.phone_verification
+        verificationFormRef.value.setErrors({
+          phone_verification: Array.isArray(phoneError) ? phoneError[0] : phoneError
+        })
+      }
     }
   } finally {
     saving.value = false
   }
 }
 
-const handleSave = async () => {
-  saving.value = true
-
-  if (isProduction.value) {
-    showVerificationDialog.value = true
-  } else {
-    await submitKycUpdate()
-  }
+const handleSendVerificationCode = async () => {
+  isVerified.value = false
+  pendingVerificationData.value = {}
+  await sendVerificationCode()
 }
 
-const handleAutoVerifyAndSubmit = async (verificationData) => {
-  if (!saving.value) {
+const handleSubmit = async () => {
+  if (isProduction.value) {
+    await submitKycUpdate(pendingVerificationData.value)
     return
   }
 
-  if (!verificationFormRef.value && !verificationData) {
-    await notifyError('خطا در تایید')
-    saving.value = false
-    return
-  }
+  await submitKycUpdate()
+}
 
+const handleVerificationVerified = async (verificationData) => {
   const data = verificationData || verificationFormRef.value?.getData()
-  await submitKycUpdate(data)
+
+  if (!data?.phone_verification) {
+    await notifyError('کد تایید را وارد کنید')
+    return
+  }
+
+  pendingVerificationData.value = data
+  isVerified.value = true
+  showVerificationDialog.value = false
+  verificationFormRef.value?.setErrors?.({})
 }
 
 const handleCloseVerificationDialog = () => {
-  if (verificationFormRef.value?.setErrors) {
-    verificationFormRef.value.setErrors({})
-  }
+  verificationFormRef.value?.setErrors?.({})
   showVerificationDialog.value = false
-  saving.value = false
 }
 
 
@@ -420,23 +466,13 @@ watch(showVerificationDialog, async (newVal) => {
   if (newVal) {
     await nextTick()
 
-    if (verificationFormRef.value?.sendSMS) {
-      await verificationFormRef.value.sendSMS()
-    }
-
-    if (!verificationFormRef.value?.codeSent) {
-      showVerificationDialog.value = false
-      saving.value = false
-      return
-    }
+    setTimeout(() => {
+      verificationFormRef.value?.startTimer?.()
+    }, 100)
 
     setTimeout(() => {
       verificationFormRef.value?.focusFirstInput?.()
     }, 400)
-
-    setTimeout(() => {
-      verificationFormRef.value?.focusFirstInput?.()
-    }, 600)
   } else {
     verificationFormRef.value?.reset?.()
   }
@@ -445,16 +481,19 @@ watch(showVerificationDialog, async (newVal) => {
 watch(() => props.show, (newVal) => {
   if (newVal && props.kycId) {
     kycErrors.value = []
+    resetVerificationState()
     fetchKycDetails()
   } else {
-    showVerificationDialog.value = false
+    resetVerificationState()
     saving.value = false
+    sendingVerification.value = false
   }
 })
 
 watch(() => props.kycId, (newVal) => {
   if (newVal && props.show) {
     kycErrors.value = []
+    resetVerificationState()
     fetchKycDetails()
   }
 })
