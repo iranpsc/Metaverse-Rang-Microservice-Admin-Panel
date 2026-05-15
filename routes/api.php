@@ -131,6 +131,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
 
     // Verification routes
     Route::post('/send-verification-sms', [VerificationController::class, 'sendSMS']);
+    Route::post('/verify-verification-sms', [VerificationController::class, 'verify']);
 
     // Wallets routes
     Route::get('/assets', [WalletController::class, 'index']);

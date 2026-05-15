@@ -253,12 +253,20 @@
     :close-on-escape="false"
     @close="handleUserCloseVerificationDialog"
   >
-    <div dir="rtl">
-      <VerificationForm
-        ref="verificationFormRef"
-        :auto-start="false"
-        @verified="handleVerificationVerified"
-      />
+    <div dir="rtl" class="relative">
+      <div
+        v-if="verifyingCode"
+        class="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-slate-900/60 backdrop-blur-sm"
+      >
+        <Spinner size="lg" />
+      </div>
+      <div :class="{ 'opacity-50 pointer-events-none': verifyingCode }">
+        <VerificationForm
+          ref="verificationFormRef"
+          :auto-start="false"
+          @verified="handleVerificationVerified"
+        />
+      </div>
     </div>
   </Modal>
 </template>
@@ -297,6 +305,7 @@ const verificationFormRef = ref(null)
 const showVerificationDialog = ref(false)
 const isVerified = ref(false)
 const pendingVerificationData = ref({})
+const verifyingCode = ref(false)
 
 const isProduction = computed(() => {
   // Check Laravel's APP_ENV from meta tag, fallback to Vite mode
@@ -337,13 +346,14 @@ const handleSaveError = (fieldName, errorMessage) => {
   // If errorMessage is empty, the field is cleared and no error is added
 }
 
-const resetVerificationCredentials = async ({ ensureModalOpen = false } = {}) => {
-  isVerified.value = false
-  pendingVerificationData.value = {}
-  verificationFormRef.value?.setErrors?.({})
-  verificationFormRef.value?.reset?.()
+const setPhoneVerificationError = (message) => {
+  verificationFormRef.value?.setErrors?.({
+    phone_verification: message
+  })
+}
 
-  if (ensureModalOpen && !showVerificationDialog.value) {
+const ensureVerificationModalOpen = async () => {
+  if (!showVerificationDialog.value) {
     showVerificationDialog.value = true
     await nextTick()
   }
@@ -400,14 +410,14 @@ const submitKycUpdate = async (verificationData = {}) => {
     error.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
 
     if (err.response?.data?.errors?.phone_verification) {
-      await resetVerificationCredentials({ ensureModalOpen: true })
+      isVerified.value = false
+      pendingVerificationData.value = {}
+      await ensureVerificationModalOpen()
 
-      if (verificationFormRef.value?.setErrors) {
-        const phoneError = err.response.data.errors.phone_verification
-        verificationFormRef.value.setErrors({
-          phone_verification: Array.isArray(phoneError) ? phoneError[0] : phoneError
-        })
-      }
+      const phoneError = err.response.data.errors.phone_verification
+      setPhoneVerificationError(
+        Array.isArray(phoneError) ? phoneError[0] : phoneError
+      )
     }
   } finally {
     saving.value = false
@@ -431,15 +441,48 @@ const handleSubmit = async () => {
 
 const handleVerificationVerified = async (verificationData) => {
   const data = verificationData || verificationFormRef.value?.getData()
+  const code = data?.phone_verification
 
-  if (!data?.phone_verification) {
-    await notifyError('کد تایید را وارد کنید')
+  if (!isProduction.value) {
+    pendingVerificationData.value = data || {}
+    isVerified.value = true
+    showVerificationDialog.value = false
     return
   }
 
-  pendingVerificationData.value = data
-  isVerified.value = true
-  verificationFormRef.value?.setErrors?.({})
+  if (!code) {
+    setPhoneVerificationError('کد تایید را وارد کنید')
+    return
+  }
+
+  verifyingCode.value = true
+
+  try {
+    const response = await apiClient.post('/verify-verification-sms', {
+      phone_verification: code
+    })
+
+    if (response.data.success) {
+      pendingVerificationData.value = data
+      isVerified.value = true
+      verificationFormRef.value?.setErrors?.({})
+      showVerificationDialog.value = false
+      return
+    }
+
+    setPhoneVerificationError(response.data.message || 'کد تایید صحیح نیست')
+  } catch (err) {
+    const phoneError = err.response?.data?.errors?.phone_verification
+    setPhoneVerificationError(
+      phoneError
+        ? (Array.isArray(phoneError) ? phoneError[0] : phoneError)
+        : (err.response?.data?.message || 'کد تایید صحیح نیست')
+    )
+    isVerified.value = false
+    pendingVerificationData.value = {}
+  } finally {
+    verifyingCode.value = false
+  }
 }
 
 const handleUserCloseVerificationDialog = () => {
