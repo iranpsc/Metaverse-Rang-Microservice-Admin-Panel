@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AuthenticatedUserResource;
+use App\Services\ActivityLoggerService;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Foundation\Auth\ThrottlesLogins;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
@@ -43,6 +45,14 @@ class LoginController extends Controller
      */
     protected function authenticated(Request $request, $user)
     {
+        Auth::guard('admin')->setUser($user);
+
+        ActivityLoggerService::logAuth('login', 'ورود موفق به سیستم', [
+            'email' => $user->email,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
         $token = $user->createToken('auth-token', ['*'], now()->addHours(3))->plainTextToken;
         $tokenExpiresAt = now()->addHours(3)->toIso8601String();
 
@@ -65,7 +75,15 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         $user = $request->user();
-        $user->tokens()->delete();
+
+        if ($user) {
+            Auth::guard('admin')->setUser($user);
+            ActivityLoggerService::logAuth('logout', 'خروج از سیستم', [
+                'email' => $user->email,
+                'ip' => $request->ip(),
+            ]);
+            $user->tokens()->delete();
+        }
         $this->guard()->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -118,5 +136,18 @@ class LoginController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except(['logout', 'me']);
+    }
+
+    protected function sendFailedLoginResponse(Request $request)
+    {
+        ActivityLoggerService::logAuth('login_failed', 'تلاش ناموفق برای ورود', [
+            'email' => $request->input($this->username()),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        throw ValidationException::withMessages([
+            $this->username() => [trans('auth.failed')],
+        ]);
     }
 }

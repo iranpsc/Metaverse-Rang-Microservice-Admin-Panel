@@ -24,7 +24,7 @@ class AuthenticatedUserResource extends JsonResource
             'token' => $this->whenHas('token', $this->token),
             'token_expires_at' => $this->whenHas('token_expires_at', $this->token_expires_at),
             'roles' => $this->roles->pluck('name'),
-            'permissions' => $this->permissions->pluck('name'),
+            'permissions' => $this->getAllPermissions()->pluck('name'),
         ];
     }
 }

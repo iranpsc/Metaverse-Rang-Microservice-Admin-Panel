@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AdminsController;
 use App\Http\Controllers\Api\BankAccountController;
 use App\Http\Controllers\Api\CalendarController;
@@ -88,6 +89,11 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     Route::get('/me', [LoginController::class, 'me']);
     Route::post('/logout', [LoginController::class, 'logout']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    // Activity logs
+    Route::get('/activity-logs/categories', [ActivityLogController::class, 'categories']);
+    Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+    Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
     Route::get('/registration-info', [RegistrationInfoController::class, 'index']);
     Route::get('/reports', [ReportController::class, 'index']);
 

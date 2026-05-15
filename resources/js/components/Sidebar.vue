@@ -360,6 +360,7 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount, toRefs } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useBreakpoint } from '../composables/useBreakpoint'
+import { useAuthStore } from '../store/authStore'
 import menuConfig from '../router/menuConfig'
 
 const props = defineProps({
@@ -492,15 +493,45 @@ const matchesSearch = (text, query) => {
   return normalizedText.includes(normalizedQuery)
 }
 
+const authStore = useAuthStore()
 const menuItems = ref(menuConfig)
+
+const canAccessMenuItem = (item) => {
+  const user = authStore.user
+  if (!user) return false
+  const roles = user.roles || []
+  const permissions = user.permissions || []
+  if (roles.includes('super-admin')) return true
+
+  const hasRole = !item.roles?.length || item.roles.some((role) => roles.includes(role))
+  const hasPermission = !item.permissions?.length || item.permissions.some((perm) => permissions.includes(perm))
+
+  if (item.roles?.length && item.permissions?.length) {
+    return hasRole || hasPermission
+  }
+  if (item.roles?.length) return hasRole
+  if (item.permissions?.length) return hasPermission
+  return true
+}
 
 // Filtered menu items based on search query
 const filteredMenuItems = computed(() => {
+  const accessibleMenus = menuItems.value
+    .map((menu) => {
+      if (menu.children?.length) {
+        const children = menu.children.filter((child) => canAccessMenuItem(child))
+        if (children.length === 0 && !canAccessMenuItem(menu)) return null
+        return { ...menu, children }
+      }
+      return canAccessMenuItem(menu) ? menu : null
+    })
+    .filter((menu) => menu !== null)
+
   if (!searchQuery.value || !searchQuery.value.trim()) {
-    return menuItems.value
+    return accessibleMenus
   }
 
-  return menuItems.value
+  return accessibleMenus
     .map(menu => {
       // Check if parent menu matches
       const parentMatches = matchesSearch(menu.label, searchQuery.value)

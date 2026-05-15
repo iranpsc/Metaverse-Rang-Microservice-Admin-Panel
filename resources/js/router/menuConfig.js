@@ -83,5 +83,6 @@ export default [
     ]
   },
   { id: 'translations', label: 'ترجمه', route: '/translations', icon: 'list', color: 'primary', roles: ['translations-management', 'super-admin'], permissions: [] },
-  { id: 'isic-codes', label: 'کدهای ISIC', route: '/isic-codes', icon: 'list', color: 'primary', roles: ['isic-codes-management', 'super-admin'], permissions: [] }
+  { id: 'isic-codes', label: 'کدهای ISIC', route: '/isic-codes', icon: 'list', color: 'primary', roles: ['isic-codes-management', 'super-admin'], permissions: [] },
+  { id: 'activity-logs', label: 'گزارش فعالیت‌ها', route: '/activity-logs', icon: 'list', color: 'blue', roles: [], permissions: ['view-activity-logs'] }
 ]

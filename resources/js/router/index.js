@@ -50,6 +50,7 @@ const TranslationModals = () => import('../pages/translations/TranslationModals.
 const ModalTabs = () => import('../pages/translations/ModalTabs.vue')
 const TabFields = () => import('../pages/translations/TabFields.vue')
 const IsicCodes = () => import('../pages/isic-codes/Listing.vue')
+const ActivityLogs = () => import('../pages/activity-logs/Listing.vue')
 const Profile = () => import('../pages/profile/Profile.vue')
 
 const routes = [
@@ -442,6 +443,15 @@ const routes = [
         }
       },
       {
+        path: 'activity-logs',
+        name: 'activity-logs',
+        component: ActivityLogs,
+        meta: {
+          title: 'گزارش فعالیت‌ها',
+          permission: 'view-activity-logs'
+        }
+      },
+      {
         path: 'translations/:translationId/modals',
         name: 'translations-modals',
         component: TranslationModals,
@@ -552,6 +562,23 @@ router.beforeEach(async (to, from, next) => {
       } catch (error) {
         // Unexpected error; proceed and let API calls handle auth
         console.warn('Auth check after login failed; proceeding:', error)
+      }
+    }
+
+    if (to.meta.permission) {
+      let userData = null
+      try {
+        userData = JSON.parse(localStorage.getItem('admin_user_data') || 'null')
+      } catch {
+        userData = null
+      }
+      const permissions = userData?.permissions || []
+      const roles = userData?.roles || []
+      const hasPermission = permissions.includes(to.meta.permission)
+      const isSuperAdmin = roles.includes('super-admin')
+      if (!hasPermission && !isSuperAdmin) {
+        next({ name: 'dashboard' })
+        return
       }
     }
 
