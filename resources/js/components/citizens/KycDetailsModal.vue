@@ -246,11 +246,12 @@
 
   <!-- Verification Dialog -->
   <Modal
-    :model-value="showVerificationDialog"
-    @update:model-value="handleCloseVerificationDialog"
-    @close="handleCloseVerificationDialog"
+    v-model="showVerificationDialog"
     title="تایید نهایی"
     size="md"
+    :close-on-backdrop="false"
+    :close-on-escape="false"
+    @close="handleUserCloseVerificationDialog"
   >
     <div dir="rtl">
       <VerificationForm
@@ -336,6 +337,18 @@ const handleSaveError = (fieldName, errorMessage) => {
   // If errorMessage is empty, the field is cleared and no error is added
 }
 
+const resetVerificationCredentials = async ({ ensureModalOpen = false } = {}) => {
+  isVerified.value = false
+  pendingVerificationData.value = {}
+  verificationFormRef.value?.setErrors?.({})
+  verificationFormRef.value?.reset?.()
+
+  if (ensureModalOpen && !showVerificationDialog.value) {
+    showVerificationDialog.value = true
+    await nextTick()
+  }
+}
+
 const resetVerificationState = () => {
   isVerified.value = false
   pendingVerificationData.value = {}
@@ -387,9 +400,7 @@ const submitKycUpdate = async (verificationData = {}) => {
     error.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
 
     if (err.response?.data?.errors?.phone_verification) {
-      isVerified.value = false
-      pendingVerificationData.value = {}
-      showVerificationDialog.value = true
+      await resetVerificationCredentials({ ensureModalOpen: true })
 
       if (verificationFormRef.value?.setErrors) {
         const phoneError = err.response.data.errors.phone_verification
@@ -428,13 +439,11 @@ const handleVerificationVerified = async (verificationData) => {
 
   pendingVerificationData.value = data
   isVerified.value = true
-  showVerificationDialog.value = false
   verificationFormRef.value?.setErrors?.({})
 }
 
-const handleCloseVerificationDialog = () => {
+const handleUserCloseVerificationDialog = () => {
   verificationFormRef.value?.setErrors?.({})
-  showVerificationDialog.value = false
 }
 
 
@@ -462,7 +471,7 @@ const fetchKycDetails = async () => {
   }
 }
 
-watch(showVerificationDialog, async (newVal) => {
+watch(showVerificationDialog, async (newVal, oldVal) => {
   if (newVal) {
     await nextTick()
 
@@ -473,7 +482,8 @@ watch(showVerificationDialog, async (newVal) => {
     setTimeout(() => {
       verificationFormRef.value?.focusFirstInput?.()
     }, 400)
-  } else {
+  } else if (oldVal) {
+    verificationFormRef.value?.setErrors?.({})
     verificationFormRef.value?.reset?.()
   }
 })
