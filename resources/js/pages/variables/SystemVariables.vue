@@ -642,7 +642,7 @@ const submitEdit = async () => {
 const handleDelete = async (variable) => {
   const result = await confirm(`آیا از حذف متغیر «${variable.name}» مطمئن هستید؟`, 'حذف متغیر', {
     confirmText: 'بله، حذف شود',
-    cancelText: 'لغو'
+    cancelText: 'انصراف'
   })
 
   if (!result.isConfirmed) {

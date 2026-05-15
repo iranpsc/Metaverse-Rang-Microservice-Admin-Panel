@@ -448,7 +448,7 @@ const handleDelete = async (message) => {
       'حذف پیام',
       {
         confirmText: 'بله، حذف شود',
-        cancelText: 'لغو'
+        cancelText: 'انصراف'
       }
     )
 

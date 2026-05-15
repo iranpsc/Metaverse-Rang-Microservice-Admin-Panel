@@ -294,7 +294,7 @@ import { Table, Pagination, Button, Badge, LoadingState, ErrorState, Modal, Inpu
 import VerificationForm from '../../components/VerificationForm.vue'
 import { useToast } from '../../composables/useToast'
 import { useMaps } from '../../composables/useMaps'
-import { confirm as confirmDialog } from '../../utils/notifications'
+import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
@@ -812,9 +812,13 @@ const closeInsertIntoDatabaseModal = () => {
 
 const handleDelete = async (map) => {
   try {
-    const result = await confirmDialog(
-      'می خواهید حذف کنید؟',
-      'تایید حذف نقشه'
+    const result = await confirm(
+      `آیا از حذف نقشه «${map.name}» مطمئن هستید؟`,
+      'تایید حذف نقشه',
+      {
+        confirmText: 'بله، حذف شود',
+        cancelText: 'انصراف'
+      }
     )
 
     if (!result.isConfirmed) {

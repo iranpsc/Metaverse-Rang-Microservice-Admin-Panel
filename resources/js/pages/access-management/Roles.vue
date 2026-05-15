@@ -99,7 +99,7 @@ import { Table, Pagination, LoadingState, ErrorState, Button } from '../../compo
 import CreateRoleModal from '../../components/access-management/CreateRoleModal.vue'
 import UpdateRoleModal from '../../components/access-management/UpdateRoleModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm as confirmDialog } from '../../utils/notifications'
+import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
@@ -169,14 +169,12 @@ const handleRoleUpdated = () => {
 }
 
 const handleDelete = async (id) => {
-  const result = await confirmDialog(
-    'آیا می خواهید این مسیولیت را حذف کنید؟',
+  const result = await confirm(
+    'آیا می خواهید این مسئولیت را حذف کنید؟',
     'حذف مسئولیت',
     {
       confirmText: 'بله، حذف شود',
-      cancelText: 'لغو',
-      icon: 'warning',
-      confirmButtonColor: '#ef4444'
+      cancelText: 'انصراف'
     }
   )
 

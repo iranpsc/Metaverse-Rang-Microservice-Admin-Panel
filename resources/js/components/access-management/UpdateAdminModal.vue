@@ -182,7 +182,7 @@ const handleRemoveRole = async (roleId) => {
     'تایید حذف مسئولیت',
     {
       confirmText: 'بله، حذف شود',
-      cancelText: 'لغو'
+      cancelText: 'انصراف'
     }
   )
 

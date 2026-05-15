@@ -479,7 +479,7 @@ const handleDelete = async (row) => {
   try {
     const result = await confirm('آیا از حذف این کد ISIC اطمینان دارید؟', 'حذف کد ISIC', {
       confirmText: 'بله، حذف شود',
-      cancelText: 'لغو'
+      cancelText: 'انصراف'
     })
 
     if (!result.isConfirmed) {

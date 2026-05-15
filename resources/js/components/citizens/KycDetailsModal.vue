@@ -246,7 +246,7 @@
     <div dir="rtl">
       <VerificationForm
         ref="verificationFormRef"
-        :auto-start="true"
+        :auto-start="false"
         @verified="handleAutoVerifyAndSubmit"
       />
     </div>
@@ -324,36 +324,6 @@ const handleSaveError = (fieldName, errorMessage) => {
   // If errorMessage is empty, the field is cleared and no error is added
 }
 
-const handleVerified = (verificationData) => {
-  // Verification form has validated and provided data
-  // This will be used when saving
-}
-
-
-const sendVerificationCode = async () => {
-  try {
-    // Send verification code when submit button is clicked
-    const response = await apiClient.post('/send-verification-sms')
-
-    if (response.data.success) {
-      // Show dialog after code is sent
-      showVerificationDialog.value = true
-      return true
-    } else {
-      await notifyError('خطا در ارسال کد تایید')
-      return false
-    }
-  } catch (err) {
-    console.error('Verification SMS send error:', err)
-    await notifyError(err.response?.data?.message || 'خطا در ارسال کد تایید')
-    return false
-  } finally {
-    // Reset saving state after verification code is sent (success or failure)
-    // The actual submission will set it to true again when submitting
-    saving.value = false
-  }
-}
-
 const submitKycUpdate = async (verificationData = {}) => {
   try {
     saving.value = true
@@ -368,10 +338,7 @@ const submitKycUpdate = async (verificationData = {}) => {
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
       showVerificationDialog.value = false
-      // Reset verification form errors on success
-      if (verificationFormRef.value && verificationFormRef.value.setErrors) {
-        verificationFormRef.value.setErrors({})
-      }
+      verificationFormRef.value?.setErrors?.({})
       emit('updated')
     } else {
       error.value = 'خطا در ثبت اطلاعات'
@@ -380,19 +347,11 @@ const submitKycUpdate = async (verificationData = {}) => {
     console.error('KYC update error:', err)
     error.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
 
-    // Extract validation errors and display them on the form fields
-    if (err.response?.data?.errors && verificationFormRef.value && verificationFormRef.value.setErrors) {
-      const validationErrors = {}
-
-      // Map Laravel validation errors to form fields
-      if (err.response.data.errors.phone_verification) {
-        validationErrors.phone_verification = Array.isArray(err.response.data.errors.phone_verification)
-          ? err.response.data.errors.phone_verification[0]
-          : err.response.data.errors.phone_verification
-      }
-
-      // Set errors on the verification form
-      verificationFormRef.value.setErrors(validationErrors)
+    if (err.response?.data?.errors?.phone_verification && verificationFormRef.value?.setErrors) {
+      const phoneError = err.response.data.errors.phone_verification
+      verificationFormRef.value.setErrors({
+        phone_verification: Array.isArray(phoneError) ? phoneError[0] : phoneError
+      })
     }
   } finally {
     saving.value = false
@@ -400,71 +359,36 @@ const submitKycUpdate = async (verificationData = {}) => {
 }
 
 const handleSave = async () => {
-  // Set loading state immediately when button is clicked
   saving.value = true
 
-  // In production: send verification code first, then show dialog
   if (isProduction.value) {
-    // Send verification code and show dialog
-    const codeSent = await sendVerificationCode()
-    if (!codeSent) {
-      // Error already handled in sendVerificationCode, state reset in finally block
-      return
-    }
-    // Dialog will be shown, user enters code and password, then clicks submit
-    // Note: saving.value is reset to false in sendVerificationCode finally block
-    // It will be set to true again when submitKycUpdate is called
+    showVerificationDialog.value = true
   } else {
-    // In non-production: submit directly without verification
     await submitKycUpdate()
   }
 }
 
 const handleAutoVerifyAndSubmit = async (verificationData) => {
-  // Auto-submit when verification form emits verified event (all 6 digits entered)
-  // Prevent multiple submissions
-  if (saving.value) {
+  if (!saving.value) {
     return
   }
 
-  if (!verificationFormRef.value) {
+  if (!verificationFormRef.value && !verificationData) {
     await notifyError('خطا در تایید')
+    saving.value = false
     return
   }
 
-  // Get verification data and submit
-  const data = verificationData || verificationFormRef.value.getData()
+  const data = verificationData || verificationFormRef.value?.getData()
   await submitKycUpdate(data)
 }
 
-const handleVerifyAndSubmit = async () => {
-  // Prevent multiple submissions
-  if (saving.value) {
-    return
-  }
-
-  if (!verificationFormRef.value) {
-    await notifyError('خطا در تایید')
-    return
-  }
-
-  // Validate verification form
-  const isValid = await verificationFormRef.value.validate()
-  if (!isValid) {
-    return
-  }
-
-  // Get verification data and submit
-  const verificationData = verificationFormRef.value.getData()
-  await submitKycUpdate(verificationData)
-}
-
 const handleCloseVerificationDialog = () => {
-  // Clear errors when closing the dialog
-  if (verificationFormRef.value && verificationFormRef.value.setErrors) {
+  if (verificationFormRef.value?.setErrors) {
     verificationFormRef.value.setErrors({})
   }
   showVerificationDialog.value = false
+  saving.value = false
 }
 
 
@@ -492,37 +416,29 @@ const fetchKycDetails = async () => {
   }
 }
 
-watch(() => showVerificationDialog, async (newVal) => {
+watch(showVerificationDialog, async (newVal) => {
   if (newVal) {
-    // Wait for component to mount and ensure timer starts
     await nextTick()
 
-    // Give it a delay to ensure component is fully ready
-    setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.startTimer) {
-        verificationFormRef.value.startTimer()
-      }
-    }, 100)
+    if (verificationFormRef.value?.sendSMS) {
+      await verificationFormRef.value.sendSMS()
+    }
 
-    // Focus the first input after modal is fully opened
-    // Modal transition is 300ms, so wait a bit longer to ensure it's complete
+    if (!verificationFormRef.value?.codeSent) {
+      showVerificationDialog.value = false
+      saving.value = false
+      return
+    }
+
     setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.focusFirstInput) {
-        verificationFormRef.value.focusFirstInput()
-      }
+      verificationFormRef.value?.focusFirstInput?.()
     }, 400)
 
-    // Retry focus after modal animation completes (additional safety)
     setTimeout(() => {
-      if (verificationFormRef.value && verificationFormRef.value.focusFirstInput) {
-        verificationFormRef.value.focusFirstInput()
-      }
+      verificationFormRef.value?.focusFirstInput?.()
     }, 600)
   } else {
-    // Reset form when dialog closes
-    if (verificationFormRef.value && verificationFormRef.value.reset) {
-      verificationFormRef.value.reset()
-    }
+    verificationFormRef.value?.reset?.()
   }
 })
 
@@ -531,8 +447,8 @@ watch(() => props.show, (newVal) => {
     kycErrors.value = []
     fetchKycDetails()
   } else {
-    // Reset verification dialog when modal closes
     showVerificationDialog.value = false
+    saving.value = false
   }
 })
 

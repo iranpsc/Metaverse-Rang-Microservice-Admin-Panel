@@ -340,8 +340,8 @@ const handleDelete = async (id) => {
       'آیا از حذف این متن اطمینان دارید؟',
       'آیا مطمئن هستید؟',
       {
-        confirmText: 'بله، حذف کن',
-        cancelText: 'لغو'
+        confirmText: 'بله، حذف شود',
+        cancelText: 'انصراف'
       }
     )
 

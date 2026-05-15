@@ -383,7 +383,7 @@ const handleDelete = async (question) => {
   try {
     const result = await confirm('آیا از حذف این سوال اطمینان دارید؟', 'حذف سوال', {
       confirmText: 'بله، حذف شود',
-      cancelText: 'لغو'
+      cancelText: 'انصراف'
     })
 
     if (!result.isConfirmed) {

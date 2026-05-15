@@ -598,7 +598,7 @@ const handleDelete = async (prize) => {
     'تایید حذف',
     {
       confirmText: 'بله، حذف شود',
-      cancelText: 'لغو'
+      cancelText: 'انصراف'
     }
   )
 

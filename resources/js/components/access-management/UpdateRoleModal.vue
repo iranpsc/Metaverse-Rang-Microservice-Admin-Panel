@@ -116,7 +116,7 @@
 import { ref, watch, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Input, Button, Spinner, Alert } from '../ui'
-import { notifySuccess, notifyError, confirm as confirmDialog } from '../../utils/notifications'
+import { notifySuccess, notifyError, confirm } from '../../utils/notifications'
 import TableActionIcon from '../icons/TableActionIcon.vue'
 import { useModalForm } from '../../composables/useModalForm'
 
@@ -178,14 +178,12 @@ const fetchRoleDetails = async () => {
 }
 
 const handleRemovePermission = async (permissionId) => {
-  const result = await confirmDialog(
+  const result = await confirm(
     'آیا می خواهید این دسترسی را حذف کنید؟',
     'حذف دسترسی',
     {
       confirmText: 'بله، حذف شود',
-      cancelText: 'لغو',
-      icon: 'warning',
-      confirmButtonColor: '#ef4444'
+      cancelText: 'انصراف'
     }
   )
 

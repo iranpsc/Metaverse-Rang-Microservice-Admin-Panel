@@ -99,7 +99,7 @@ import { Table, Pagination, LoadingState, ErrorState, Button } from '../../compo
 import CreatePermissionModal from '../../components/access-management/CreatePermissionModal.vue'
 import UpdatePermissionModal from '../../components/access-management/UpdatePermissionModal.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm as confirmDialog } from '../../utils/notifications'
+import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
@@ -170,15 +170,12 @@ const handlePermissionUpdated = () => {
 
 const handleDelete = async (id) => {
   try {
-    const result = await confirmDialog(
+    const result = await confirm(
       'آیا می خواهید این دسترسی را حذف کنید؟',
       'حذف دسترسی',
       {
         confirmText: 'بله، حذف شود',
-        cancelText: 'لغو',
-        icon: 'warning',
-        confirmButtonColor: '#ef4444',
-        cancelButtonColor: '#6b7280'
+        cancelText: 'انصراف'
       }
     )
 

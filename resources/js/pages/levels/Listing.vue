@@ -510,7 +510,7 @@ import { Table, Pagination, Button, Modal, Input, Alert, LoadingState, ErrorStat
 import VerificationForm from '../../components/VerificationForm.vue'
 import { useToast } from '../../composables/useToast'
 import { useLevels } from '../../composables/useLevels'
-import { confirm as confirmDialog } from '../../utils/notifications'
+import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
@@ -1125,14 +1125,12 @@ const handleCloseUpdateVerificationDialog = () => {
 
 const handleDelete = async (level) => {
   try {
-    const result = await confirmDialog(
+    const result = await confirm(
       'آیا از حذف این سطح اطمینان دارید؟',
       'حذف سطح',
       {
         confirmText: 'بله، حذف شود',
-        cancelText: 'لغو',
-        icon: 'warning',
-        confirmButtonColor: '#ef4444'
+        cancelText: 'انصراف'
       }
     )
 

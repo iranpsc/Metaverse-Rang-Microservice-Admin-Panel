@@ -286,44 +286,6 @@
       </div>
     </Modal>
 
-    <!-- Delete Confirmation Modal -->
-    <Modal
-      :model-value="showDeleteConfirmModal"
-      @update:model-value="handleCloseDeleteConfirmModal"
-      @close="handleCloseDeleteConfirmModal"
-      title="تایید حذف محدودیت"
-      size="md"
-    >
-      <div dir="rtl" class="space-y-4">
-        <Alert variant="warning" :dismissible="false">
-          <div class="space-y-2">
-            <p><strong>توجه:</strong> آیا مطمئن هستید که می‌خواهید این محدودیت را حذف کنید؟</p>
-            <p>این عمل غیرقابل بازگشت است و تمام محدودیت‌های اعمال شده بر روی املاک حذف خواهد شد.</p>
-          </div>
-        </Alert>
-        <div v-if="deletingLimitId" class="text-sm text-[var(--theme-text-secondary)]">
-          <p><strong>عنوان محدودیت:</strong> {{ getLimitTitle(deletingLimitId) }}</p>
-        </div>
-      </div>
-
-      <template #footer>
-        <Button
-          variant="danger"
-          :loading="deleting"
-          @click="handleConfirmDelete"
-        >
-          بله، حذف شود
-        </Button>
-        <Button
-          variant="ghost"
-          :disabled="deleting"
-          @click="handleCloseDeleteConfirmModal"
-        >
-          لغو
-        </Button>
-      </template>
-    </Modal>
-
     <!-- Delete Verification Dialog -->
     <Modal
       :model-value="showDeleteVerificationDialog"
@@ -349,6 +311,7 @@ import { Table, Pagination, Button, LoadingState, ErrorState, Alert, Modal, Inpu
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import VerificationForm from '../../components/VerificationForm.vue'
 import { useToast } from '../../composables/useToast'
+import { confirm } from '../../utils/notifications'
 import { useFeatureLimits } from '../../composables/useFeatureLimits'
 import { gregorianToShamsiSync } from '../../utils/dateConverter'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
@@ -373,7 +336,6 @@ const showVerificationDialog = ref(false)
 const deletingLimitId = ref(null)
 const deleteVerificationFormRef = ref(null)
 const showDeleteVerificationDialog = ref(false)
-const showDeleteConfirmModal = ref(false)
 const deleting = ref(false)
 const modalOpenKey = ref(0)
 
@@ -581,25 +543,18 @@ const handleCloseVerificationDialog = () => {
 }
 
 const handleDelete = async (limit) => {
-  // Store the limit ID and show confirmation modal
+  const result = await confirm(
+    `آیا از حذف محدودیت «${limit.title}» مطمئن هستید؟ این عمل غیرقابل بازگشت است و تمام محدودیت‌های اعمال شده بر روی املاک حذف خواهد شد.`,
+    'تایید حذف محدودیت',
+    {
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف'
+    }
+  )
+  if (!result.isConfirmed) return
+
   deletingLimitId.value = limit.id
-  showDeleteConfirmModal.value = true
-}
 
-const getLimitTitle = (limitId) => {
-  const limit = featureLimits.value.find(l => l.id === limitId)
-  return limit ? limit.title : ''
-}
-
-const handleConfirmDelete = async () => {
-  if (!deletingLimitId.value) {
-    return
-  }
-
-  // Close confirmation modal
-  showDeleteConfirmModal.value = false
-
-  // In production: send verification code first, then show dialog
   if (isProduction.value) {
     deleting.value = true
     const codeSent = await sendDeleteVerificationCode()
@@ -609,15 +564,7 @@ const handleConfirmDelete = async () => {
       return
     }
   } else {
-    // In non-production: delete directly without verification
     await performDelete()
-  }
-}
-
-const handleCloseDeleteConfirmModal = () => {
-  if (!deleting.value) {
-    deletingLimitId.value = null
-    showDeleteConfirmModal.value = false
   }
 }
 
@@ -910,33 +857,6 @@ onMounted(() => {
 /* Make the create limit modal wider - target modal content container */
 .relative.z-10.w-full.max-w-full {
   max-width: 80rem !important; /* 7xl = 80rem = 1280px */
-}
-
-/* Mobile-friendly SweetAlert styles */
-.mobile-friendly-popup {
-  font-size: 14px;
-}
-
-.mobile-friendly-button {
-  font-size: 14px;
-  padding: 12px 24px;
-  border-radius: 8px;
-  min-width: 100px;
-}
-
-@media (max-width: 640px) {
-  .swal2-popup {
-    width: 90% !important;
-    margin: 0 auto;
-  }
-
-  .swal2-title {
-    font-size: 18px !important;
-  }
-
-  .swal2-content {
-    font-size: 14px !important;
-  }
 }
 </style>
 

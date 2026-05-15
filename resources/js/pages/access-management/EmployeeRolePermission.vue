@@ -168,7 +168,7 @@ const handleDelete = async (id) => {
     'تایید حذف',
     {
       confirmText: 'بله، حذف شود',
-      cancelText: 'لغو'
+      cancelText: 'انصراف'
     }
   )
 

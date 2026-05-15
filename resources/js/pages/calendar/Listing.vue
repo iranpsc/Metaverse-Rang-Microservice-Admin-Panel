@@ -381,7 +381,7 @@ import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { useToast } from '../../composables/useToast'
-import { confirm as confirmDialog } from '../../utils/notifications'
+import { confirm } from '../../utils/notifications'
 
 const { showToast } = useToast()
 
@@ -763,7 +763,7 @@ const handleEditSubmit = async () => {
 }
 
 const handleDelete = async (event) => {
-  const result = await confirmDialog(
+  const result = await confirm(
     `آیا از حذف وقعه «${event.title}» مطمئن هستید؟`,
     'حذف وقعه',
     {

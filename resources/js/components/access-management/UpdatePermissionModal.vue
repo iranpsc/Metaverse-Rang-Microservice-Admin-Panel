@@ -116,7 +116,7 @@
 import { ref, watch, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Input, Button, Spinner, Alert } from '../ui'
-import { notifySuccess, notifyError } from '../../utils/notifications'
+import { notifySuccess, notifyError, confirm } from '../../utils/notifications'
 import TableActionIcon from '../icons/TableActionIcon.vue'
 import { useModalForm } from '../../composables/useModalForm'
 
@@ -174,7 +174,16 @@ const fetchPermissionDetails = async () => {
 }
 
 const handleRemoveRole = async (roleId) => {
-  if (!confirm('آیا می خواهید این مسیولیت را حذف کیند؟')) {
+  const result = await confirm(
+    'آیا می خواهید این مسئولیت را حذف کنید؟',
+    'تایید حذف مسئولیت',
+    {
+      confirmText: 'بله، حذف شود',
+      cancelText: 'انصراف'
+    }
+  )
+
+  if (!result.isConfirmed) {
     return
   }
 

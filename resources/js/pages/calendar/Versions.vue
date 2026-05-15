@@ -319,7 +319,7 @@ const handleDelete = async (version) => {
   try {
     const result = await confirm('آیا می‌خواهید این ورژن را حذف کنید؟', 'حذف ورژن', {
       confirmText: 'بله، حذف شود',
-      cancelText: 'لغو'
+      cancelText: 'انصراف'
     })
 
     if (!result.isConfirmed) {
