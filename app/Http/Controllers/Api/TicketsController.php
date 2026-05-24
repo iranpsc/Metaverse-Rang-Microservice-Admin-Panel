@@ -40,12 +40,14 @@ class TicketsController extends Controller
 
         $query->orderBy('created_at', 'desc');
 
-        $tickets = $query->paginate($perPage, ['*'], 'page', $page);
+        $tickets = $query
+        ->with('responses.responser')
+        ->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,
             'data' => [
-                'tickets' => TicketResource::collection($tickets->items()),
+                'tickets' => TicketResource::collection($tickets),
                 'pagination' => [
                     'total' => $tickets->total(),
                     'per_page' => $tickets->perPage(),
