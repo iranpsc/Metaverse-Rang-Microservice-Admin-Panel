@@ -39,7 +39,8 @@ class TicketsController extends Controller
         }
 
         $query->orderBy('status')
-            ->orderBy('importance', 'desc');
+            ->orderBy('importance', 'desc')
+            ->orderBy('created_at', 'desc');
 
         $tickets = $query->paginate($perPage, ['*'], 'page', $page);
 
@@ -56,6 +57,14 @@ class TicketsController extends Controller
                     'to' => $tickets->lastItem(),
                 ]
             ]
+        ]);
+    }
+
+    public function show(Ticket $ticket)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => new TicketResource($ticket->load('responses.responser'))
         ]);
     }
 

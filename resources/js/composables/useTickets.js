@@ -18,7 +18,7 @@ export function useTickets() {
   /**
    * Fetch tickets by department
    */
-  const fetchTickets = async (department, page = 1, perPage = 10) => {
+  const fetchTickets = async (department, search = '', page = 1, perPage = 10) => {
     loading.value = true
     error.value = null
 
@@ -27,7 +27,8 @@ export function useTickets() {
         params: {
           department,
           page,
-          per_page: perPage
+          per_page: perPage,
+          search
         }
       })
 
@@ -46,6 +47,25 @@ export function useTickets() {
   }
 
   /**
+   * Fetch a ticket by id
+   */
+  const fetchTicket = async (ticketId) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await apiClient.get(`/tickets/${ticketId}`)
+      if (response.data.success) {
+        ticket.value = response.data.data
+        return response.data
+      }
+    } catch (err) {
+      error.value = err.response?.data?.message || 'خطا در دریافت تیکت'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+  /**
    * Send response to a ticket
    */
   const sendResponse = async (ticketId, responseData) => {
@@ -55,7 +75,7 @@ export function useTickets() {
     try {
       const formData = new FormData()
       formData.append('response', responseData.response)
-      
+
       if (responseData.attachment) {
         formData.append('attachment', responseData.attachment)
       }

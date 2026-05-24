@@ -35,7 +35,7 @@ class ReportResource extends JsonResource
                     $url = $image->url;
 
                     if ($url && !Str::startsWith($url, ['http://', 'https://'])) {
-                        $url = url('storage/' . ltrim($url, '/'));
+                        $url = url('uploads/' . ltrim($url, '/'));
                     }
 
                     return [
