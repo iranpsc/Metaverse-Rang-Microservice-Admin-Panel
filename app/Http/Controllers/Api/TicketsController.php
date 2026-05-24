@@ -23,8 +23,8 @@ class TicketsController extends Controller
         $search = $request->query('search');
         $search = $search ? trim($search) : '';
 
-        $query = Ticket::with(['responses', 'sender'])
-            ->where('department', $department);
+        $query = Ticket::with(['responses.responser', 'sender'])
+            ->whereIn('department', (array) $department);
 
         // Apply search filter if provided
         if (!empty($search)) {
@@ -38,10 +38,8 @@ class TicketsController extends Controller
             });
         }
 
-        $query->orderBy('created_at', 'desc');
-
         $tickets = $query
-        ->with('responses.responser')
+        ->orderBy('created_at', 'desc')
         ->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
