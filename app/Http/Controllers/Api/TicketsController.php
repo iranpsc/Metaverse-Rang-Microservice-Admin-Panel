@@ -38,9 +38,7 @@ class TicketsController extends Controller
             });
         }
 
-        $query->orderBy('status')
-            ->orderBy('importance', 'desc')
-            ->orderBy('created_at', 'desc');
+        $query->orderBy('created_at', 'desc');
 
         $tickets = $query->paginate($perPage, ['*'], 'page', $page);
 
