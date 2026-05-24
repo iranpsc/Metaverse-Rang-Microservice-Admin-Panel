@@ -28,7 +28,7 @@ class DepositController extends Controller
             $query->search($searchTerm);
         }
 
-        $payments = $query->paginate($perPage, ['*'], 'page', $page);
+        $payments = $query->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
 
         $formattedPayments = $payments->map(function ($payment) {
             return [
