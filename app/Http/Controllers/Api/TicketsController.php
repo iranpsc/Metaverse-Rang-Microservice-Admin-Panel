@@ -98,7 +98,10 @@ class TicketsController extends Controller
             'responser_id' => Auth::id(),
         ]);
 
-        $ticket->update(['status' => 1]);
+        $ticket->update([
+            'status' => 1,
+            'responser_name' => Auth::user()->name
+        ]);
 
         $message = 'به تیکت شما به شماره ' . $ticket->code . ' پاسخ داده شد';
 
