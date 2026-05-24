@@ -20,8 +20,7 @@ class TicketResponseResource extends JsonResource
             'attachment' => $this->attachment,
             'responser_name' => $this->responser_name,
             'responser_id' => $this->responser_id,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at' => jdate($this->created_at)->format('Y/m/d H:i:s'),
         ];
     }
 }
