@@ -71,11 +71,6 @@
                         </Badge>
                     </template>
 
-                    <!-- Responser Cell -->
-                    <template #cell-responser="{ row }">
-                        <span class="text-[var(--theme-text-secondary)]">{{ row.responser_name || '-' }}</span>
-                    </template>
-
                     <!-- Actions Cell -->
                     <template #cell-actions="{ row }">
                         <div class="flex gap-2 flex-wrap">
@@ -393,13 +388,6 @@ const tableColumns = computed(() => [
         label: 'وضعیت',
         headerClass: 'min-w-[100px]',
         cellClass: 'min-w-[100px]'
-    },
-    {
-        key: 'responser',
-        label: 'پاسخ‌دهنده',
-        headerClass: 'hidden xl:table-cell min-w-[120px]',
-        cellClass: 'hidden xl:table-cell min-w-[120px]',
-        textSecondary: true
     },
     {
         key: 'actions',

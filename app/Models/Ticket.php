@@ -19,7 +19,6 @@ class Ticket extends Model
         'status',
         'department',
         'importance',
-        'responser_name'
     ];
 
     public function sender() {
