@@ -33,7 +33,7 @@ class TicketResource extends JsonResource
                 'email' => $this->sender->email,
                 'phone' => $this->sender->phone,
             ],
-            'responses' => TicketResponseResource::collection($this->whenLoaded('responses.responser')),
+            'responses' => TicketResponseResource::collection($this->whenLoaded('responses')),
         ];
     }
 
