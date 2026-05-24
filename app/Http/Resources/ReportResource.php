@@ -35,7 +35,7 @@ class ReportResource extends JsonResource
                     $url = $image->url;
 
                     if ($url && !Str::startsWith($url, ['http://', 'https://'])) {
-                        $url = url('uploads/' . ltrim($url, '/'));
+                        $url = env('API_URL', 'https://api.metarang.com') . '/uploads/' . ltrim($url, '/');
                     }
 
                     return [
