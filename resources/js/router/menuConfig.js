@@ -41,8 +41,8 @@ export default [
   {
     id: 'support', label: 'پشتیبانی', route: '#', icon: 'phone', color: 'rose', roles: ['support-management', 'super-admin'], permissions: [],
     children: [
-      { id: 'support-citizens-safety', label: 'امنیت شهروندان', route: '/support/citizens-safety', icon: 'phone', color: 'rose', permissions: ['respond-to-citziens-safety-tickets'] },
-      { id: 'support-technical-support', label: 'پشتیبانی فنی', route: '/support/technical-support', icon: 'phone', color: 'rose', permissions: ['respond-to-technical-support-tickets'] },
+      { id: 'support-citizens-safety', label: 'امنیت شهروندان', route: '/support/citizens_safety', icon: 'phone', color: 'rose', permissions: ['respond-to-citziens-safety-tickets'] },
+      { id: 'support-technical-support', label: 'پشتیبانی فنی', route: '/support/technical_support', icon: 'phone', color: 'rose', permissions: ['respond-to-technical-support-tickets'] },
       { id: 'support-investment', label: 'سرمایه گذاری', route: '/support/investment', icon: 'phone', color: 'rose', permissions: ['respond-to-investment-tickets'] },
       { id: 'support-inspection', label: 'بازرسی', route: '/support/inspection', icon: 'phone', color: 'rose', permissions: ['respond-to-inspection-tickets'] },
       { id: 'support-protection', label: 'حراست', route: '/support/protection', icon: 'phone', color: 'rose', permissions: ['respond-to-protection-tickets'] },
