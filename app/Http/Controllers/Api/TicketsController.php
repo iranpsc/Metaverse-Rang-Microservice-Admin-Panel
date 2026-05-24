@@ -24,7 +24,7 @@ class TicketsController extends Controller
         $search = $search ? trim($search) : '';
 
         $query = Ticket::with(['responses', 'sender'])
-            ->whereIn('department', (array) $department);
+            ->where('department', $department);
 
         // Apply search filter if provided
         if (!empty($search)) {
