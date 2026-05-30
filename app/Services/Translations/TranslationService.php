@@ -139,7 +139,7 @@ class TranslationService
         file_put_contents($filePath, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
         $translation->increment('version');
-        $absoluteUrl = sprintf('https://rgb.irpsc.com/lang/%s', $fileName);
+        $absoluteUrl = sprintf('https://metarang.com/lang/%s', $fileName);
         $translation->update(['file_url' => $absoluteUrl]);
 
         $payload['file_url'] = $absoluteUrl;
@@ -151,11 +151,11 @@ class TranslationService
 
         if (! Storage::disk('ftp')->put("lang/{$fileName}", json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
             throw ValidationException::withMessages([
-                'export' => __('translations.export_failed'),
+                'export' => __('Translation export failed.'),
             ]);
         }
 
-        return __('translations.export_success');
+        return __('Translation exported successfully.');
     }
 
     public function getModalsForTranslation(Translation $translation, int $perPage = 10)
