@@ -149,7 +149,7 @@ class TranslationService
             return response()->download($filePath, $fileName);
         }
 
-        if (! Storage::disk('ftp')->put("lang/{$fileName}", json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+        if (! Storage::disk('ftp')->put("{$fileName}", json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
             throw ValidationException::withMessages([
                 'export' => __('Translation export failed.'),
             ]);
