@@ -22,7 +22,8 @@ export function usePhoneVerification() {
 
   const isProduction = computed(() => {
     const metaEnv = document.querySelector('meta[name="app-env"]')?.getAttribute('content')
-    return metaEnv === 'production' || import.meta.env.MODE === 'production'
+    // return metaEnv === 'production' || import.meta.env.MODE === 'production'
+    return false;
   })
 
   const setPhoneVerificationError = (message) => {
