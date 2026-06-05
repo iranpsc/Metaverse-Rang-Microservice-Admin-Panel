@@ -31,8 +31,9 @@ class GenerateUniqueIdForTranslationFields extends Seeder
 
             $uniqueId = 1;
             foreach ($fields as $field) {
-                $field->unique_id = $uniqueId++;
+                $field->unique_id = $uniqueId;
                 $field->save();
+                $uniqueId++;
             }
         }
 
