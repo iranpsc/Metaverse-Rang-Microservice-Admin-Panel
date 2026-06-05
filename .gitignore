@@ -20,3 +20,4 @@ admin-worker.log
 public/uploads
 /.cursor
 .htaccess
+/public/lang/*
