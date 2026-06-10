@@ -89,7 +89,7 @@ class VerificationController extends Controller
     {
         if (! $this->phoneVerificationSession->isEnabled()) {
             $duration = $this->phoneVerificationSession->clampDuration(
-                (int) $request->input('duration_minutes', config('phone_verification.default_duration_minutes'))
+                (int) $request->input('duration_minutes', config('phone_verification.default_duration_minutes', 15))
             );
 
             $this->phoneVerificationSession->confirm($duration);

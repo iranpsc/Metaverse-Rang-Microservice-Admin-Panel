@@ -96,8 +96,12 @@ class PhoneVerificationSessionService
 
     public function clampDuration(int $durationMinutes): int
     {
-        $min = config('phone_verification.min_duration_minutes');
-        $max = config('phone_verification.max_duration_minutes');
+        $min = (int) config('phone_verification.min_duration_minutes', 5);
+        $max = (int) config('phone_verification.max_duration_minutes', 50);
+
+        if ($max < $min) {
+            $max = $min;
+        }
 
         return max($min, min($max, $durationMinutes));
     }
