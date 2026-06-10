@@ -62,17 +62,7 @@
         </div>
 
         <div class="flex justify-end">
-          <Button
-            v-if="isProduction && !isVerified"
-            variant="primary"
-            :loading="sendingVerification"
-            @click="handleSendCode"
-            class="w-1/4"
-          >
-            ارسال کد تایید
-          </Button>
-          <Button
-            v-if="!isProduction || isVerified"
+        <Button
             variant="primary"
             :loading="saving"
             @click="handleSave"
@@ -83,8 +73,6 @@
         </div>
       </div>
     </div>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
   </div>
 </template>
 
@@ -92,21 +80,9 @@
 import { ref, computed, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Input, Button, Alert, LoadingState, ErrorState, Table } from '../../components/ui'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import { useToast } from '../../composables/useToast'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
 const loading = ref(true)
 const error = ref(null)
@@ -162,30 +138,24 @@ const validateForm = () => {
   return true
 }
 
-const submitPricingLimitsUpdate = async (verificationPayload = {}) => {
+const submitPricingLimitsUpdate = async () => {
   try {
     saving.value = true
     error.value = null
     errors.value = {}
 
     const response = await apiClient.post('/lands/feature-pricing-limits', {
-      ...formData.value,
-      ...verificationPayload
+      ...formData.value
     })
 
     if (response.data.success) {
       showToast('محدودیت‌های قیمت با موفقیت به‌روزرسانی شدند', 'success')
-      resetVerificationState()
       await fetchPriceLimits()
     } else {
       error.value = 'خطا در ثبت اطلاعات'
     }
   } catch (err) {
     console.error('Pricing limits update error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -197,23 +167,12 @@ const submitPricingLimitsUpdate = async (verificationPayload = {}) => {
   }
 }
 
-const handleSendCode = async () => {
-  if (!validateForm()) {
-    return
-  }
-  await beginVerifyForSubmit()
-}
-
 const handleSave = async () => {
   if (!validateForm()) {
     return
   }
 
-  if (isProduction.value) {
-    await submitPricingLimitsUpdate(getSubmitPayload())
-  } else {
-    await submitPricingLimitsUpdate()
-  }
+  await submitPricingLimitsUpdate()
 }
 
 const fetchPriceLimits = async () => {

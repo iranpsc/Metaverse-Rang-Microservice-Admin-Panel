@@ -110,17 +110,13 @@
       </div>
     </template>
   </Modal>
-
-  <PhoneVerificationModal :phone-verification="phoneVerification" />
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Input, Button, Spinner, Alert } from '../ui'
-import PhoneVerificationModal from '../PhoneVerificationModal.vue'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
-import { notifySuccess, notifyError } from '../../utils/notifications'
+import { notifySuccess, notifyError, confirm } from '../../utils/notifications'
 import TableActionIcon from '../icons/TableActionIcon.vue'
 import { useModalForm } from '../../composables/useModalForm'
 
@@ -136,17 +132,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'updated'])
-
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  confirmThenVerify,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
 const {
   loading,
@@ -189,32 +174,24 @@ const fetchPermissionDetails = async () => {
 }
 
 const handleRemoveRole = async (roleId) => {
-  await confirmThenVerify(
-    {
-      message: 'آیا می خواهید این مسئولیت را حذف کنید؟',
-      title: 'تایید حذف مسئولیت',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        await apiClient.delete(`/permissions/${props.permissionId}/roles/${roleId}`, { data: payload })
-        await notifySuccess('مسئولیت با موفقیت حذف شد')
-        fetchPermissionDetails()
-      } catch (err) {
-        console.error('Remove role error:', err)
-
-        if (await handleApiVerificationError(err)) {
-          return
-        }
-
-        await notifyError(err.response?.data?.message || 'خطا در حذف مسئولیت')
-      }
-    }
+  const result = await confirm(
+    'آیا می خواهید این مسئولیت را حذف کنید؟',
+    'تایید حذف مسئولیت',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
   )
+  if (!result.isConfirmed) return
+
+  try {
+    await apiClient.delete(`/permissions/${props.permissionId}/roles/${roleId}`)
+    await notifySuccess('مسئولیت با موفقیت حذف شد')
+    fetchPermissionDetails()
+  } catch (err) {
+    console.error('Remove role error:', err)
+    await notifyError(err.response?.data?.message || 'خطا در حذف مسئولیت')
+  }
 }
 
-const submitPermissionUpdate = async (verificationPayload = {}) => {
+const submitPermissionUpdate = async () => {
   try {
     saving.value = true
     fetchError.value = null
@@ -222,23 +199,17 @@ const submitPermissionUpdate = async (verificationPayload = {}) => {
     const response = await apiClient.put(`/permissions/${props.permissionId}`, {
       title: formData.value.title.trim(),
       name: formData.value.name.trim(),
-      roles: selectedRoles.value,
-      ...verificationPayload
+      roles: selectedRoles.value
     })
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
-      resetVerificationState()
       emit('updated')
     } else {
       fetchError.value = 'خطا در ثبت اطلاعات'
     }
   } catch (err) {
     console.error('Update permission error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -263,12 +234,7 @@ const handleSave = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitPermissionUpdate(getSubmitPayload())
+  await submitPermissionUpdate()
 }
 
 watch(() => props.show, (newVal) => {
@@ -281,7 +247,6 @@ watch(() => props.show, (newVal) => {
     selectedRoles.value = []
     errors.value = {}
     fetchError.value = null
-    resetVerificationState()
   }
 })
 
@@ -291,7 +256,6 @@ watch(() => props.permissionId, (newVal) => {
   }
 })
 
-// Fetch data when component is mounted if modal is already open
 onMounted(() => {
   if (props.show && props.permissionId) {
     fetchPermissionDetails()
@@ -302,4 +266,3 @@ onMounted(() => {
 <style scoped>
 /* Additional styles if needed */
 </style>
-

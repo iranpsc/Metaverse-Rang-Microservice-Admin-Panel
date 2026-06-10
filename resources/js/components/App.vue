@@ -3,6 +3,8 @@
     <!-- Toast Container -->
     <ToastContainer />
 
+    <PhoneVerificationSessionModal />
+
     <!-- Header -->
     <Header
       :sidebar-collapsed="sidebarCollapsed"
@@ -32,12 +34,15 @@ import Header from './Header.vue'
 import Sidebar from './Sidebar.vue'
 import ContentArea from './ContentArea.vue'
 import ToastContainer from './ui/ToastContainer.vue'
+import PhoneVerificationSessionModal from './PhoneVerificationSessionModal.vue'
 import { useBreakpoint } from '../composables/useBreakpoint'
+import { usePhoneVerificationSession } from '../composables/usePhoneVerification'
 
 // Default to open (false) - this prevents CLS on desktop
 // The sidebar will be open by default, and CSS media queries ensure it's visible on desktop
 const sidebarCollapsed = ref(false)
 const { windowWidth, isDesktop, stopBreakpoint } = useBreakpoint()
+const { init: initPhoneVerification, destroy: destroyPhoneVerification } = usePhoneVerificationSession()
 const route = useRoute()
 
 const handleSidebarToggle = () => {
@@ -101,10 +106,12 @@ onMounted(() => {
   }
 
   previousWidth.value = windowWidth.value
+  initPhoneVerification()
 })
 
 onBeforeUnmount(() => {
   stopBreakpoint()
+  destroyPhoneVerification()
 })
 
 watch(windowWidth, handleResize)

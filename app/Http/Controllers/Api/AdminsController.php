@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Morilog\Jalali\Jalalian;
@@ -208,16 +207,6 @@ class AdminsController extends Controller
             'employee' => 'required|exists:employees,id',
             'roles' => 'required|array|min:1',
             'roles.*' => 'required|integer|exists:roles,id',
-            'phone_verification' => [
-                'nullable',
-                Rule::requiredIf(app()->environment('production')),
-                'is_valid_verify_code'
-            ],
-            'access_password' => [
-                'nullable',
-                Rule::requiredIf(app()->environment('production')),
-                'is_valid_access_password'
-            ],
         ]);
 
         if ($validator->fails()) {
@@ -247,7 +236,6 @@ class AdminsController extends Controller
             'email' => $employee->email,
             'phone' => $employee->phone,
             'password' => Hash::make($password),
-            'access_password' => Hash::make($access_password),
         ]);
 
         // Find roles with web or admin guard (matching the Admin model's guard)
@@ -302,16 +290,6 @@ class AdminsController extends Controller
             'roles.*' => 'required|integer|exists:roles,id',
             'permissions' => 'nullable|array',
             'permissions.*' => 'required|string|exists:permissions,name',
-            'phone_verification' => [
-                'nullable',
-                Rule::requiredIf(app()->environment('production')),
-                'is_valid_verify_code'
-            ],
-            'access_password' => [
-                'nullable',
-                Rule::requiredIf(app()->environment('production')),
-                'is_valid_access_password'
-            ],
         ]);
 
         if ($validator->fails()) {

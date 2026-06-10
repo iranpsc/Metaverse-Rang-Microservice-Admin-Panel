@@ -167,15 +167,6 @@
     <template #footer>
       <div class="flex gap-3 justify-end" dir="rtl">
         <Button
-          v-if="showSendCodeButton"
-          variant="primary"
-          :loading="phoneVerification.sendingVerification.value"
-          @click="handleSendVerificationCode"
-          class="w-1/2"
-        >
-          ارسال کد تایید
-        </Button>
-        <Button
           v-if="showSubmitButton"
           variant="primary"
           :loading="saving"
@@ -243,8 +234,6 @@
       </div>
     </div>
   </Modal>
-
-  <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
 </template>
 
 <script setup>
@@ -252,10 +241,8 @@ import { ref, computed, watch, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Button, Spinner, Alert } from '../ui'
 import ErrorInputField from './ErrorInputField.vue'
-import PhoneVerificationModal from '../PhoneVerificationModal.vue'
 import TableActionIcon from '../icons/TableActionIcon.vue'
 import { notifySuccess } from '../../utils/notifications'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const props = defineProps({
   kycId: {
@@ -270,7 +257,6 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'updated'])
 
-const phoneVerification = usePhoneVerification()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -280,16 +266,7 @@ const kycErrors = ref([])
 const showMelliCardModalRef = ref(false)
 const showVideoModalRef = ref(false)
 
-const showSendCodeButton = computed(() => {
-  return kyc.value?.status === 0
-    && phoneVerification.isProduction.value
-    && !phoneVerification.isVerified.value
-})
-
-const showSubmitButton = computed(() => {
-  return kyc.value?.status === 0
-    && (!phoneVerification.isProduction.value || phoneVerification.isVerified.value)
-})
+const showSubmitButton = computed(() => kyc.value?.status === 0)
 
 const getGenderLabel = (gender) => {
   if (!gender) return gender
@@ -329,16 +306,12 @@ const submitKycUpdate = async () => {
     saving.value = true
     error.value = null
 
-    const payload = applyVerificationPayload(
-      { kyc_errors: kycErrors.value },
-      phoneVerification.getSubmitPayload()
-    )
+    const payload = { kyc_errors: kycErrors.value }
 
     const response = await apiClient.put(`/kycs/${props.kycId}`, payload)
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
-      phoneVerification.resetVerificationState()
       emit('updated')
     } else {
       error.value = 'خطا در ثبت اطلاعات'
@@ -346,24 +319,12 @@ const submitKycUpdate = async () => {
   } catch (err) {
     console.error('KYC update error:', err)
     error.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
-
-    if (await phoneVerification.handleApiVerificationError(err)) {
-      return
-    }
   } finally {
     saving.value = false
   }
 }
 
-const handleSendVerificationCode = async () => {
-  await phoneVerification.beginVerifyForSubmit()
-}
-
 const handleSubmit = async () => {
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    await phoneVerification.beginVerifyForSubmit()
-    return
-  }
 
   await submitKycUpdate()
 }
@@ -395,10 +356,8 @@ const fetchKycDetails = async () => {
 watch(() => props.show, (newVal) => {
   if (newVal && props.kycId) {
     kycErrors.value = []
-    phoneVerification.resetVerificationState()
     fetchKycDetails()
   } else {
-    phoneVerification.resetVerificationState()
     saving.value = false
   }
 })
@@ -406,7 +365,6 @@ watch(() => props.show, (newVal) => {
 watch(() => props.kycId, (newVal) => {
   if (newVal && props.show) {
     kycErrors.value = []
-    phoneVerification.resetVerificationState()
     fetchKycDetails()
   }
 })

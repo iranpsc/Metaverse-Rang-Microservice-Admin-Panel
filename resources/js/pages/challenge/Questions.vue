@@ -176,8 +176,6 @@
         </div>
       </template>
     </Modal>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -185,13 +183,11 @@
 import { computed, onMounted, ref } from 'vue'
 import apiClient from '../../utils/api'
 import { Button, ErrorState, FileInput, LoadingState, Modal, Pagination, SearchBox, Table } from '../../components/ui'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const error = ref(null)
@@ -383,23 +379,21 @@ const submitImport = async () => {
   }
 }
 
-const handleDelete = async (question) => {
-  await phoneVerification.confirmThenVerify(
-    {
-      message: 'آیا از حذف این سوال اطمینان دارید؟',
-      title: 'حذف سوال',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        deletingId.value = question.id
+const handleDelete = async (row) => {
+  const result = await confirm(
+    'آیا از حذف این سوال اطمینان دارید؟',
+    'حذف سوال',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
 
-        const response = await apiClient.delete(`/challenge/questions/${question.id}`, { data: payload })
+  try {
+        deletingId.value = row.id
+
+        const response = await apiClient.delete(`/challenge/questions/${row.id}`)
 
         if (response.data?.success) {
           showToast(response.data.message || 'سوال با موفقیت حذف شد.', 'success')
-          phoneVerification.resetVerificationState()
 
           const isLastItem = questions.value.length === 1
           const isNotFirstPage = currentPage.value > 1
@@ -415,17 +409,11 @@ const handleDelete = async (question) => {
       } catch (err) {
         console.error('Challenge question delete error:', err)
 
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
-
         const message = err.response?.data?.message || err.message || 'خطا در حذف سوال'
         showToast(message, 'error')
       } finally {
         deletingId.value = null
       }
-    }
-  )
 }
 
 const formatDate = (value) => {

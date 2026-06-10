@@ -222,9 +222,9 @@
             type="submit"
             variant="primary"
             rounded="full"
-            :loading="isProduction && !isVerified ? sendingVerification : creating"
+            :loading="creating"
           >
-            {{ createSubmitLabel }}
+            ثبت ویدیو
           </Button>
         </div>
       </form>
@@ -361,9 +361,9 @@
             type="submit"
             variant="primary"
             rounded="full"
-            :loading="isProduction && !isVerified ? sendingVerification : updating"
+            :loading="updating"
           >
-            {{ editSubmitLabel }}
+            ذخیره تغییرات
           </Button>
         </div>
       </form>
@@ -427,8 +427,6 @@
       </div>
       <div v-else class="text-center text-sm text-[var(--theme-text-muted)]">ویدیو یافت نشد.</div>
     </Modal>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -436,10 +434,9 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import Resumable from 'resumablejs'
 import { ensureCsrfCookie, getSanctumStatefulHeaders } from '../../utils/api'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useVideos } from '../../composables/useVideos'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
+import { confirm } from '../../utils/notifications'
 import {
   Button,
   ErrorState,
@@ -456,23 +453,7 @@ import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
-const createSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت ویدیو'
-)
-const editSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ذخیره تغییرات'
-)
 
 const {
   fetchVideoMeta,
@@ -932,11 +913,9 @@ const resetCreateForm = () => {
 
 const closeCreateModal = () => {
   createModalOpen.value = false
-  resetVerificationState()
 }
 
 const openCreateModal = async () => {
-  resetVerificationState()
   resetCreateForm()
   if (categoriesMeta.value.length === 0 && !metaLoading.value) {
     await fetchMeta()
@@ -957,15 +936,12 @@ const resetEditForm = () => {
 
 const closeEditModal = () => {
   editModalOpen.value = false
-  resetVerificationState()
 }
 
 const openEditModal = (video) => {
   if (!video) {
     return
   }
-
-  resetVerificationState()
   selectedVideo.value = video
   editForm.title = video.title || ''
   editForm.description = video.description || ''
@@ -1035,23 +1011,19 @@ const buildEditFormData = () => {
   return formData
 }
 
-const performCreate = async (verificationPayload = {}) => {
+const performCreate = async () => {
   try {
     creating.value = true
-    const formData = applyVerificationPayload(buildCreateFormData(), verificationPayload)
+    const formData = buildCreateFormData()
     const response = await createVideo(formData)
 
     if (response.data.success) {
       showToast('ویدیو با موفقیت ایجاد شد.', 'success')
-      resetVerificationState()
       closeCreateModal()
       currentPage.value = 1
       await fetchVideos()
     }
   } catch (err) {
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.status === 422) {
       normalizeErrors(err.response.data.errors, createErrors)
@@ -1078,34 +1050,25 @@ const submitCreate = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await performCreate(getSubmitPayload())
+  await performCreate()
 }
 
-const performEdit = async (verificationPayload = {}) => {
+const performEdit = async () => {
   if (!selectedVideo.value) {
     return
   }
 
   try {
     updating.value = true
-    const formData = applyVerificationPayload(buildEditFormData(), verificationPayload)
+    const formData = buildEditFormData()
     const response = await updateVideo(selectedVideo.value.id, formData)
 
     if (response.data.success) {
       showToast('ویدیو با موفقیت به روزرسانی شد.', 'success')
-      resetVerificationState()
       closeEditModal()
       await fetchVideos()
     }
   } catch (err) {
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.status === 422) {
       normalizeErrors(err.response.data.errors, editErrors)
@@ -1131,12 +1094,7 @@ const submitEdit = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await performEdit(getSubmitPayload())
+  await performEdit()
 }
 
 const confirmDelete = async (video) => {
@@ -1144,25 +1102,17 @@ const confirmDelete = async (video) => {
     return
   }
 
-  await phoneVerification.confirmThenVerify(
-    {
-      message: 'آیا از حذف این ویدیو مطمئن هستید؟ این عملیات قابل بازگشت نیست.',
-      title: 'حذف ویدیو',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف',
-      reverseButtons: true,
-      customClass: {
-        popup: 'rounded-2xl bg-[var(--theme-bg-elevated)] text-[var(--theme-text-primary)] border border-[var(--theme-border)]',
-        title: 'text-[var(--theme-text-primary)] font-semibold',
-        htmlContainer: 'text-[var(--theme-text-secondary)] text-sm'
-      }
-    },
-    async (payload) => {
-      try {
+  const result = await confirm(
+    'آیا از حذف این ویدیو مطمئن هستید؟ این عملیات قابل بازگشت نیست.',
+    'حذف ویدیو',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
+
+  try {
         deletingId.value = video.id
-        await deleteVideo(video.id, payload)
+        await deleteVideo(video.id)
         showToast('ویدیو با موفقیت حذف شد.', 'success')
-        phoneVerification.resetVerificationState()
         await fetchVideos()
 
         if ((!videos.value || videos.value.length === 0) && currentPage.value > 1) {
@@ -1172,16 +1122,10 @@ const confirmDelete = async (video) => {
       } catch (err) {
         console.error('Video delete error:', err)
 
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
-
         showToast(err.response?.data?.message || 'خطا در حذف ویدیو', 'error')
       } finally {
         deletingId.value = null
       }
-    }
-  )
 }
 
 watch(createModalOpen, (isOpen) => {

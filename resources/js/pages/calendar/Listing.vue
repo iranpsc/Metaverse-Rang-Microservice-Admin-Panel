@@ -225,10 +225,10 @@
           <Button
             variant="primary"
             class="w-full"
-            :loading="isProduction && !isVerified ? sendingVerification : saving"
+            :loading="saving"
             @click="handleCreateSubmit"
           >
-            {{ createSubmitLabel }}
+            ثبت
           </Button>
           <Button
             variant="danger"
@@ -343,10 +343,10 @@
           <Button
             variant="primary"
             class="w-full"
-            :loading="isProduction && !isVerified ? sendingVerification : updating"
+            :loading="updating"
             @click="handleEditSubmit"
           >
-            {{ editSubmitLabel }}
+            ذخیره تغییرات
           </Button>
           <Button
             variant="danger"
@@ -358,8 +358,6 @@
         </div>
       </template>
     </Modal>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -382,29 +380,11 @@ import {
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
+import { confirm } from '../../utils/notifications'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  confirmThenVerify,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
-const createSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
-)
-const editSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
-)
 
 const loading = ref(true)
 const saving = ref(false)
@@ -584,7 +564,6 @@ const handleClear = () => {
 }
 
 const openCreateModal = () => {
-  resetVerificationState()
   resetCreateForm()
   showCreateModal.value = true
 }
@@ -592,7 +571,6 @@ const openCreateModal = () => {
 const handleCreateModalClose = () => {
   showCreateModal.value = false
   resetCreateForm()
-  resetVerificationState()
 }
 
 const resetCreateForm = () => {
@@ -649,10 +627,10 @@ const buildCreateFormData = () => {
   return formData
 }
 
-const submitCreate = async (verificationPayload = {}) => {
+const submitCreate = async () => {
   try {
     saving.value = true
-    const formData = applyVerificationPayload(buildCreateFormData(), verificationPayload)
+    const formData = buildCreateFormData()
 
     const response = await apiClient.post('/calendars', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -660,7 +638,6 @@ const submitCreate = async (verificationPayload = {}) => {
 
     if (response.data.success) {
       showToast(response.data.message || 'وقعه با موفقیت ثبت شد', 'success')
-      resetVerificationState()
       handleCreateModalClose()
       currentPage.value = 1
       fetchEvents()
@@ -669,10 +646,6 @@ const submitCreate = async (verificationPayload = {}) => {
     }
   } catch (err) {
     console.error('Calendar create error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.status === 422 && err.response?.data?.errors) {
       assignValidationErrors(createErrors, err.response.data.errors)
@@ -689,16 +662,10 @@ const handleCreateSubmit = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitCreate(getSubmitPayload())
+  await submitCreate()
 }
 
 const openEditModal = (event) => {
-  resetVerificationState()
   selectedEvent.value = event
   const startDate = event.start_date && /^\d{4}\/\d{2}\/\d{2}$/.test(event.start_date)
     ? event.start_date
@@ -727,7 +694,6 @@ const openEditModal = (event) => {
 const handleEditModalClose = () => {
   showEditModal.value = false
   resetEditForm()
-  resetVerificationState()
 }
 
 const resetEditForm = () => {
@@ -778,14 +744,14 @@ const buildEditFormData = () => {
   return formData
 }
 
-const submitEdit = async (verificationPayload = {}) => {
+const submitEdit = async () => {
   if (!selectedEvent.value) {
     return
   }
 
   try {
     updating.value = true
-    const formData = applyVerificationPayload(buildEditFormData(), verificationPayload)
+    const formData = buildEditFormData()
 
     const response = await apiClient.post(`/calendars/${selectedEvent.value.id}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
@@ -793,7 +759,6 @@ const submitEdit = async (verificationPayload = {}) => {
 
     if (response.data.success) {
       showToast(response.data.message || 'وقعه با موفقیت بروزرسانی شد', 'success')
-      resetVerificationState()
       handleEditModalClose()
       fetchEvents()
     } else {
@@ -801,10 +766,6 @@ const submitEdit = async (verificationPayload = {}) => {
     }
   } catch (err) {
     console.error('Calendar update error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.status === 422 && err.response?.data?.errors) {
       assignValidationErrors(editErrors, err.response.data.errors)
@@ -825,29 +786,22 @@ const handleEditSubmit = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitEdit(getSubmitPayload())
+  await submitEdit()
 }
 
-const handleDelete = async (event) => {
-  await phoneVerification.confirmThenVerify(
-    {
-      message: `آیا از حذف وقعه «${event.title}» مطمئن هستید؟`,
-      title: 'حذف وقعه',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        const response = await apiClient.delete(`/calendars/${event.id}`, { data: payload })
+const handleDelete = async (row) => {
+  const result = await confirm(
+    'آیا از حذف وقعه «${event.title}» مطمئن هستید؟',
+    'حذف وقعه',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
+
+  try {
+        const response = await apiClient.delete(`/calendars/${event.id}`)
 
         if (response.data.success) {
           showToast(response.data.message || 'وقعه با موفقیت حذف شد', 'success')
-          phoneVerification.resetVerificationState()
 
           if (events.value.length === 1 && currentPage.value > 1) {
             currentPage.value -= 1
@@ -860,14 +814,8 @@ const handleDelete = async (event) => {
       } catch (err) {
         console.error('Calendar delete error:', err)
 
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
-
         showToast(err.response?.data?.message || 'خطا در حذف وقعه', 'error')
       }
-    }
-  )
 }
 
 watch(

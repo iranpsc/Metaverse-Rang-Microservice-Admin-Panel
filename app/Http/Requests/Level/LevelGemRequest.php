@@ -26,12 +26,7 @@ class LevelGemRequest extends FormRequest
             'designer' => ['required', 'string', 'max:255'],
             'has_animation' => ['required', 'boolean'],
             'lines' => ['required', 'integer', 'min:0'],
-            'phone_verification' => ['nullable', 'integer', 'digits:6', 'is_valid_verify_code'],
         ];
-
-        if (app()->environment('production')) {
-            array_unshift($rules['phone_verification'], 'required');
-        }
 
         return $rules;
     }

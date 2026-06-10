@@ -45,7 +45,7 @@
     <template #footer>
       <Button
         variant="primary"
-        :loading="saving || phoneVerification.sendingVerification.value"
+        :loading="saving"
         @click="handleSave"
       >
         {{ submitButtonLabel }}
@@ -55,17 +55,13 @@
       </Button>
     </template>
   </Modal>
-
-  <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
 </template>
 
 <script setup>
 import { ref, watch, computed } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Input, Button } from '../ui'
-import PhoneVerificationModal from '../PhoneVerificationModal.vue'
 import { notifySuccess, notifyError } from '../../utils/notifications'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const props = defineProps({
   modelValue: {
@@ -80,7 +76,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'saved'])
 
-const phoneVerification = usePhoneVerification()
 const saving = ref(false)
 const errors = ref({})
 
@@ -94,9 +89,6 @@ const formData = ref({
 })
 
 const submitButtonLabel = computed(() => {
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    return 'ارسال کد تایید'
-  }
   return 'ثبت'
 })
 
@@ -116,7 +108,6 @@ watch(() => props.feature, (newFeature) => {
 const handleClose = () => {
   emit('update:modelValue', false)
   errors.value = {}
-  phoneVerification.resetVerificationState()
 }
 
 const persistProperties = async () => {
@@ -130,31 +121,23 @@ const persistProperties = async () => {
   try {
     saving.value = true
 
-    const payload = applyVerificationPayload(
-      {
+    const payload = {
         area: parseFloat(formData.value.area),
         density: parseFloat(formData.value.density),
         karbari: formData.value.karbari,
         address: formData.value.address,
         rgb: formData.value.rgb
-      },
-      phoneVerification.getSubmitPayload()
-    )
+      }
 
     const response = await apiClient.put(`/lands/features/${featureId}/properties`, payload)
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
-      phoneVerification.resetVerificationState()
       emit('saved')
       handleClose()
     }
   } catch (err) {
     console.error('Save feature properties error:', err)
-
-    if (await phoneVerification.handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -168,11 +151,6 @@ const persistProperties = async () => {
 
 const handleSave = async () => {
   errors.value = {}
-
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    await phoneVerification.beginVerifyForSubmit()
-    return
-  }
 
   await persistProperties()
 }

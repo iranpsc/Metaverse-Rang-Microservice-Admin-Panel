@@ -41,6 +41,8 @@
 
       <!-- Actions (Right side in RTL) -->
       <div class="flex items-center gap-4">
+        <PhoneVerificationCountdown />
+
         <!-- Theme Toggle (Metaverse Mode Switch) -->
         <ThemeToggleButton size="sm" variant="glass" />
 
@@ -167,6 +169,7 @@ import { useAuth } from '../composables/useAuth'
 import { useTheme } from '../composables/useTheme'
 import { useBreakpoint } from '../composables/useBreakpoint'
 import ThemeToggleButton from './ThemeToggleButton.vue'
+import PhoneVerificationCountdown from './PhoneVerificationCountdown.vue'
 
 const props = defineProps({
   sidebarCollapsed: {

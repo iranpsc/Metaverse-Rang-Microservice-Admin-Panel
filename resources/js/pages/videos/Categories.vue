@@ -156,9 +156,9 @@
             type="submit"
             variant="primary"
             rounded="full"
-            :loading="isProduction && !isVerified ? sendingVerification : creating"
+            :loading="creating"
           >
-            {{ createSubmitLabel }}
+            ثبت دسته
           </Button>
         </div>
       </form>
@@ -246,15 +246,13 @@
             type="submit"
             variant="primary"
             rounded="full"
-            :loading="isProduction && !isVerified ? sendingVerification : updating"
+            :loading="updating"
           >
-            {{ editSubmitLabel }}
+            ذخیره تغییرات
           </Button>
         </div>
       </form>
     </Modal>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -262,6 +260,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import apiClient from '../../utils/api'
 import { useToast } from '../../composables/useToast'
+import { confirm } from '../../utils/notifications'
 import {
   Table,
   Pagination,
@@ -276,28 +275,9 @@ import {
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import MediaCellButton from '../../components/ui/MediaCellButton.vue'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  confirmThenVerify,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
-const createSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت دسته بندی'
-)
-const editSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ذخیره تغییرات'
-)
 
 const loading = ref(true)
 const creating = ref(false)
@@ -411,18 +391,15 @@ const resetEditForm = () => {
 }
 
 const openCreateModal = () => {
-  resetVerificationState()
   resetCreateForm()
   createModalOpen.value = true
 }
 
 const closeCreateModal = () => {
   createModalOpen.value = false
-  resetVerificationState()
 }
 
 const openEditModal = (category) => {
-  resetVerificationState()
   selectedCategory.value = category
   editForm.name = category.name
   editForm.description = category.description || ''
@@ -434,7 +411,6 @@ const openEditModal = (category) => {
 
 const closeEditModal = () => {
   editModalOpen.value = false
-  resetVerificationState()
 }
 
 const normalizeErrors = (errors, target) => {
@@ -520,10 +496,10 @@ const buildFormData = (form, includeSlug) => {
   return formData
 }
 
-const performCreate = async (verificationPayload = {}) => {
+const performCreate = async () => {
   try {
     creating.value = true
-    const formData = applyVerificationPayload(buildFormData(createForm, true), verificationPayload)
+    const formData = buildFormData(createForm, true)
 
     const response = await apiClient.post('/video-categories', formData, {
       headers: {
@@ -533,16 +509,12 @@ const performCreate = async (verificationPayload = {}) => {
 
     if (response.data.success) {
       showToast('دسته بندی با موفقیت ایجاد شد.', 'success')
-      resetVerificationState()
       closeCreateModal()
       await fetchCategories()
     } else {
       showToast(response.data.message || 'خطا در ایجاد دسته بندی', 'error')
     }
   } catch (err) {
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.status === 422) {
       normalizeErrors(err.response.data.errors, createErrors)
@@ -559,22 +531,17 @@ const performCreate = async (verificationPayload = {}) => {
 const submitCreate = async () => {
   resetErrors(createErrors)
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await performCreate(getSubmitPayload())
+  await performCreate()
 }
 
-const performEdit = async (verificationPayload = {}) => {
+const performEdit = async () => {
   if (!selectedCategory.value) {
     return
   }
 
   try {
     updating.value = true
-    const formData = applyVerificationPayload(buildFormData(editForm, false), verificationPayload)
+    const formData = buildFormData(editForm, false)
     formData.append('_method', 'PUT')
 
     const response = await apiClient.post(`/video-categories/${selectedCategory.value.id}`, formData, {
@@ -585,16 +552,12 @@ const performEdit = async (verificationPayload = {}) => {
 
     if (response.data.success) {
       showToast('دسته بندی با موفقیت به روزرسانی شد.', 'success')
-      resetVerificationState()
       closeEditModal()
       await fetchCategories()
     } else {
       showToast(response.data.message || 'خطا در به روزرسانی دسته بندی', 'error')
     }
   } catch (err) {
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.status === 422) {
       normalizeErrors(err.response.data.errors, editErrors)
@@ -615,12 +578,7 @@ const submitEdit = async () => {
 
   resetErrors(editErrors)
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await performEdit(getSubmitPayload())
+  await performEdit()
 }
 
 const confirmDelete = async (category) => {
@@ -628,33 +586,25 @@ const confirmDelete = async (category) => {
     return
   }
 
-  await phoneVerification.confirmThenVerify(
-    {
-      message: 'آیا از حذف این دسته بندی اطمینان دارید؟',
-      title: 'حذف دسته بندی',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
+  const result = await confirm(
+    'آیا از حذف این دسته بندی اطمینان دارید؟',
+    'حذف دسته بندی',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
+
+  try {
         deletingId.value = category.id
-        await apiClient.delete(`/video-categories/${category.id}`, { data: payload })
+        await apiClient.delete(`/video-categories/${category.id}`)
         showToast('دسته بندی با موفقیت حذف شد.', 'success')
-        phoneVerification.resetVerificationState()
         await fetchCategories()
       } catch (err) {
         console.error('Video category delete error:', err)
-
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
 
         showToast(err.response?.data?.message || 'خطا در حذف دسته بندی', 'error')
       } finally {
         deletingId.value = null
       }
-    }
-  )
 }
 
 const openMedia = (url) => {

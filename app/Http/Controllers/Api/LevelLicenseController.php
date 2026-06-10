@@ -37,8 +37,6 @@ class LevelLicenseController extends Controller
         }
 
         $validated = $request->validated();
-        unset($validated['phone_verification']);
-
         try {
             $licenses = DB::transaction(function () use ($level, $validated) {
                 return $level->licenses()->create($validated);
@@ -73,8 +71,6 @@ class LevelLicenseController extends Controller
         }
 
         $validated = $request->validated();
-        unset($validated['phone_verification']);
-
         try {
             DB::transaction(function () use ($licenses, $validated) {
                 $licenses->update($validated);

@@ -27,7 +27,7 @@ class OptionsController extends Controller
             // Transform data for frontend
             $transformedOptions = $options->map(function ($option) {
                 $assetPrice = Variable::getRate($option->asset);
-                
+
                 return [
                     'id' => $option->id,
                     'code' => $option->code,
@@ -115,18 +115,6 @@ class OptionsController extends Controller
             'code' => 'required|string|unique:options,code',
         ];
 
-        // Add verification rules if in production
-        if (app()->environment('production')) {
-            $rules['phone_verification'] = [
-                'required',
-                'is_valid_verify_code'
-            ];
-            $rules['access_password'] = [
-                'required',
-                'is_valid_access_password'
-            ];
-        }
-
         $validated = $request->validate($rules);
 
         try {
@@ -200,18 +188,6 @@ class OptionsController extends Controller
             'note' => 'required|string',
             'image' => 'nullable|image|mimes:jpg,jpeg,png,bmp,gif|max:2048',
         ];
-
-        // Add verification rules if in production
-        if (app()->environment('production')) {
-            $rules['phone_verification'] = [
-                'required',
-                'is_valid_verify_code'
-            ];
-            $rules['access_password'] = [
-                'required',
-                'is_valid_access_password'
-            ];
-        }
 
         $validated = $request->validate($rules);
 

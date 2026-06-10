@@ -137,10 +137,10 @@
       <template #footer>
         <Button
           variant="primary"
-          :loading="isProduction && !isVerified ? sendingVerification : saving"
+          :loading="saving"
           @click="handleCreate"
         >
-          {{ createSubmitLabel }}
+          ثبت
         </Button>
         <Button variant="danger" @click="closeCreateModal">
           بستن
@@ -201,18 +201,16 @@
       <template #footer>
         <Button
           variant="primary"
-          :loading="isProduction && !isVerified ? sendingVerification : updating"
+          :loading="updating"
           @click="handleUpdate"
         >
-          {{ editSubmitLabel }}
+          ذخیره تغییرات
         </Button>
         <Button variant="danger" @click="closeEditModal">
           بستن
         </Button>
       </template>
     </Modal>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -221,31 +219,13 @@ import { ref, computed, onMounted } from 'vue'
 import Editor from 'primevue/editor'
 import apiClient from '../../utils/api'
 import { Table, Modal, Button, Select, Alert, LoadingState, ErrorState } from '../../components/ui'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
+import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { sanitizeHtml } from '../../utils/sanitize'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  confirmThenVerify,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
-const createSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ذخیره'
-)
-const editSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ذخیره'
-)
 
 const loading = ref(true)
 const error = ref(null)
@@ -325,14 +305,12 @@ const tableColumns = [
 ]
 
 const openCreateModal = () => {
-  resetVerificationState()
   showCreateModal.value = true
 }
 
 const closeCreateModal = () => {
   showCreateModal.value = false
   resetCreateForm()
-  resetVerificationState()
 }
 
 const resetCreateForm = () => {
@@ -349,7 +327,6 @@ const openViewModal = (message) => {
 }
 
 const openEditModal = (message) => {
-  resetVerificationState()
   editingMessage.value = message
   editForm.value.content = message.message || ''
   showEditModal.value = true
@@ -358,7 +335,6 @@ const openEditModal = (message) => {
 const closeEditModal = () => {
   showEditModal.value = false
   resetEditForm()
-  resetVerificationState()
 }
 
 const resetEditForm = () => {
@@ -384,18 +360,17 @@ const validateForm = () => {
   return isValid
 }
 
-const submitCreate = async (verificationPayload = {}) => {
+const submitCreate = async () => {
   try {
     saving.value = true
     errors.value = {}
 
-    const response = await apiClient.post('/dynasty/messages', applyVerificationPayload({
+    const response = await apiClient.post('/dynasty/messages', {
       type: form.value.type,
       content: form.value.content
-    }, verificationPayload))
+    })
 
     if (response.data.success) {
-      resetVerificationState()
       await fetchMessages()
       closeCreateModal()
       showToast('اطلاعات با موفقیت ثبت شد', 'success')
@@ -406,10 +381,6 @@ const submitCreate = async (verificationPayload = {}) => {
     }
   } catch (err) {
     console.error('Create message error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -430,15 +401,10 @@ const handleCreate = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitCreate(getSubmitPayload())
+  await submitCreate()
 }
 
-const submitUpdate = async (verificationPayload = {}) => {
+const submitUpdate = async () => {
   if (!editingMessage.value) {
     return
   }
@@ -449,11 +415,10 @@ const submitUpdate = async (verificationPayload = {}) => {
 
     const response = await apiClient.put(
       `/dynasty/messages/${editingMessage.value.id}`,
-      applyVerificationPayload({ content: editForm.value.content }, verificationPayload)
+      { content: editForm.value.content }
     )
 
     if (response.data.success) {
-      resetVerificationState()
       await fetchMessages()
       closeEditModal()
       showToast('اطلاعات با موفقیت به‌روزرسانی شد', 'success')
@@ -464,10 +429,6 @@ const submitUpdate = async (verificationPayload = {}) => {
     }
   } catch (err) {
     console.error('Update message error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -493,28 +454,21 @@ const handleUpdate = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitUpdate(getSubmitPayload())
+  await submitUpdate()
 }
 
 const handleDelete = async (message) => {
-  await phoneVerification.confirmThenVerify(
-    {
-      message: 'آیا می‌خواهید این پیام را حذف کنید؟',
-      title: 'حذف پیام',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        const response = await apiClient.delete(`/dynasty/messages/${message.id}`, { data: payload })
+  const result = await confirm(
+    'آیا می‌خواهید این پیام را حذف کنید؟',
+    'حذف پیام',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
+
+  try {
+        const response = await apiClient.delete(`/dynasty/messages/${message.id}`)
 
         if (response.data.success) {
-          phoneVerification.resetVerificationState()
           await fetchMessages()
           showToast('پیام با موفقیت حذف شد', 'success')
         } else {
@@ -525,16 +479,10 @@ const handleDelete = async (message) => {
       } catch (err) {
         console.error('Delete message error:', err)
 
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
-
         const errorMsg = err.response?.data?.message || 'خطا در حذف پیام'
         showToast(errorMsg, 'error')
         error.value = errorMsg
       }
-    }
-  )
 }
 
 const fetchMessages = async () => {

@@ -150,7 +150,7 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="saving || sendingVerification"
+            :loading="saving"
             @click="handleFormFooterAction"
           >
             {{ submitButtonLabel }}
@@ -165,8 +165,6 @@
         </div>
       </template>
     </Modal>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
 
     <!-- Change History Modal -->
     <Modal
@@ -206,23 +204,11 @@ import { ref, computed, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Button, LoadingState, ErrorState, Table, Modal, Input, Select, FileInput } from '../../components/ui'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
+import { confirm } from '../../utils/notifications'
 
 const { showToast } = useToast()
 
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  confirmThenVerify,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
 const loading = ref(true)
 const error = ref(null)
@@ -243,12 +229,7 @@ const formData = ref({
 
 const errors = ref({})
 
-const submitButtonLabel = computed(() => {
-  if (isProduction.value && !isVerified.value) {
-    return 'ارسال کد تایید'
-  }
-  return isEditMode.value ? 'بروزرسانی' : 'ثبت'
-})
+const submitButtonLabel = computed(() => isEditMode.value ? 'بروزرسانی' : 'ثبت')
 
 const existingImageUrl = computed(() => {
   return isEditMode.value && selectedVariable.value?.image_url ? selectedVariable.value.image_url : null
@@ -401,7 +382,7 @@ const validateForm = () => {
   return Object.keys(errors.value).length === 0
 }
 
-const submitForm = async (verificationPayload = {}) => {
+const submitForm = async () => {
   try {
     saving.value = true
     errors.value = {}
@@ -422,7 +403,7 @@ const submitForm = async (verificationPayload = {}) => {
       formDataToSend.append('note', formData.value.note)
     }
 
-    applyVerificationPayload(formDataToSend, verificationPayload)
+    formDataToSend
 
     const url = isEditMode.value ? `/variables/${selectedVariable.value.id}` : '/variables'
 
@@ -440,16 +421,11 @@ const submitForm = async (verificationPayload = {}) => {
 
     if (response.data.success) {
       showToast(response.data.message, 'success')
-      resetVerificationState()
       closeFormModal()
       await fetchVariables()
     }
   } catch (err) {
     console.error('Form submit error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.status === 422 && err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -466,16 +442,10 @@ const handleFormFooterAction = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitForm(getSubmitPayload())
+  await submitForm()
 }
 
 const openCreateModal = () => {
-  resetVerificationState()
   isEditMode.value = false
   selectedVariable.value = null
   formData.value = {
@@ -490,7 +460,6 @@ const openCreateModal = () => {
 }
 
 const openEditModal = (variable) => {
-  resetVerificationState()
   isEditMode.value = true
   selectedVariable.value = variable
   formData.value = {
@@ -516,7 +485,6 @@ const closeFormModal = () => {
   }
   errors.value = {}
   imagePreview.value = null
-  resetVerificationState()
 }
 
 const openHistoryModal = (variable) => {
@@ -529,15 +497,16 @@ const closeHistoryModal = () => {
   selectedVariable.value = null
 }
 
-const handleDelete = async (variable) => {
-  await confirmThenVerify(
-    {
-      message: `آیا این ارز (${variable.asset_title}) را حذف می کنید؟`,
-      title: 'حذف ارز'
-    },
-    async (payload) => {
-      try {
-        const response = await apiClient.delete(`/variables/${variable.id}`, { data: payload })
+const handleDelete = async (row) => {
+  const result = await confirm(
+    `آیا این ارز (${row.asset_title}) را حذف می کنید؟`,
+    'حذف ارز',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
+
+  try {
+        const response = await apiClient.delete(`/variables/${row.id}`)
 
         if (response.data.success) {
           showToast(response.data.message, 'success')
@@ -546,14 +515,8 @@ const handleDelete = async (variable) => {
       } catch (err) {
         console.error('Delete error:', err)
 
-        if (await handleApiVerificationError(err)) {
-          return
-        }
-
         showToast(err.response?.data?.message || 'خطا در حذف ارز', 'error')
       }
-    }
-  )
 }
 
 onMounted(() => {

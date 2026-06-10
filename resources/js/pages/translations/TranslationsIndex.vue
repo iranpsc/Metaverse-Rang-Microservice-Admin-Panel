@@ -25,11 +25,11 @@
           variant="primary"
           rounded="full"
           class="w-full lg:w-auto"
-          :loading="isProduction && !isVerified ? sendingVerification : creating"
+          :loading="creating"
           :disabled="!selectedLanguageCode || creating"
           @click="handleCreateTranslation"
         >
-          {{ createSubmitLabel }}
+          ثبت
         </Button>
       </div>
       <Alert
@@ -139,8 +139,6 @@
         @page-change="goToPage"
       />
     </section>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -158,28 +156,12 @@ import Alert from '../../components/ui/Alert.vue'
 import LoadingState from '../../components/ui/LoadingState.vue'
 import ErrorState from '../../components/ui/ErrorState.vue'
 import Breadcrumb from '../../components/ui/Breadcrumb.vue'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
+import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
-const createSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value
-    ? 'ارسال کد تایید'
-    : 'افزودن ترجمه جدید'
-)
 
 const setTitle = (title) => {
   document.title = title ? `${title} - متارنگ` : 'متارنگ'
@@ -274,20 +256,16 @@ const goToPage = (nextPage) => {
   fetchTranslations(nextPage)
 }
 
-const submitCreateTranslation = async (verificationPayload = {}) => {
+const submitCreateTranslation = async () => {
   creating.value = true
   try {
     await translationApi.createTranslation(
-      applyVerificationPayload({ code: selectedLanguageCode.value }, verificationPayload)
+      { code: selectedLanguageCode.value }
     )
     showToast('ساختار ترجمه بر اساس زبان انتخابی ایجاد شد.', 'success')
-    resetVerificationState()
     selectedLanguageCode.value = ''
     await fetchTranslations(1)
   } catch (err) {
-    if (await handleApiVerificationError(err)) {
-      return
-    }
     const messages = err?.response?.data?.errors?.code
     showToast(Array.isArray(messages) ? messages[0] : (err?.response?.data?.message || 'امکان افزودن ترجمه وجود ندارد.'), 'error')
   } finally {
@@ -298,39 +276,27 @@ const submitCreateTranslation = async (verificationPayload = {}) => {
 const handleCreateTranslation = async () => {
   if (!selectedLanguageCode.value) return
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitCreateTranslation(getSubmitPayload())
+  await submitCreateTranslation()
 }
 
-const handleDelete = async (translation) => {
-  await phoneVerification.confirmThenVerify(
-    {
-      message: `آیا از حذف ترجمه ${translation.name} مطمئن هستید؟`,
-      title: 'حذف ترجمه',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        await translationApi.deleteTranslation(translation.id, payload)
+const handleDelete = async (row) => {
+  const result = await confirm(
+    `آیا از حذف ترجمه ${row.name} مطمئن هستید؟`,
+    'حذف ترجمه',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
+
+  try {
+        await translationApi.deleteTranslation(row.id)
         showToast('ترجمه انتخابی حذف شد.', 'success')
-        phoneVerification.resetVerificationState()
         await fetchTranslations(page.value)
       } catch (err) {
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
         showToast(err?.response?.data?.message || 'حذف ترجمه امکان‌پذیر نبود.', 'error')
       }
-    }
-  )
 }
 
-const handleToggleStatus = async (translation) => {
+const handleToggleStatus = async () => {
   try {
     const response = await translationApi.toggleTranslationStatus(translation.id)
     const updated = response.data.translation
@@ -343,7 +309,7 @@ const handleToggleStatus = async (translation) => {
   }
 }
 
-const handleExport = async (translation) => {
+const handleExport = async () => {
   try {
     const result = await translationApi.exportTranslation(translation.id)
 

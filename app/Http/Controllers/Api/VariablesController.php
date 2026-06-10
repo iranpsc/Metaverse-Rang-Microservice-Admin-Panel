@@ -71,18 +71,6 @@ class VariablesController extends Controller
             'image' => 'required|image|max:1024',
         ];
 
-        // Add verification rules if in production
-        if (app()->environment('production')) {
-            $rules['phone_verification'] = [
-                'required',
-                'is_valid_verify_code'
-            ];
-            $rules['access_password'] = [
-                'required',
-                'is_valid_access_password'
-            ];
-        }
-
         $validated = $request->validate($rules);
 
         try {
@@ -149,18 +137,6 @@ class VariablesController extends Controller
             'image' => 'nullable|image|max:1024',
             'note' => 'nullable|string',
         ];
-
-        // Add verification rules if in production
-        if (app()->environment('production')) {
-            $rules['phone_verification'] = [
-                'required',
-                'is_valid_verify_code'
-            ];
-            $rules['access_password'] = [
-                'required',
-                'is_valid_access_password'
-            ];
-        }
 
         $validated = $request->validate($rules);
 

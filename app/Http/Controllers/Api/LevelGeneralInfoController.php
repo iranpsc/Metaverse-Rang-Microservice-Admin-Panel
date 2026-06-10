@@ -39,7 +39,6 @@ class LevelGeneralInfoController extends Controller
         }
 
         $validated = $this->preparePayload($request->validated());
-        unset($validated['phone_verification']);
 
         $storedFiles = [];
 
@@ -85,7 +84,6 @@ class LevelGeneralInfoController extends Controller
         }
 
         $validated = $this->preparePayload($request->validated());
-        unset($validated['phone_verification']);
 
         $storedFiles = [];
         $replacedFiles = [];

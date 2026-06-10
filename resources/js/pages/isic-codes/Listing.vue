@@ -137,10 +137,10 @@
         <div class="flex justify-end gap-3">
           <Button
             variant="primary"
-            :loading="isProduction && !isVerified ? sendingVerification : saving"
+            :loading="saving"
             @click="handleCreateSubmit"
           >
-            {{ createSubmitLabel }}
+            ثبت
           </Button>
           <Button
             variant="danger"
@@ -194,8 +194,6 @@
         </div>
       </template>
     </Modal>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -203,27 +201,12 @@
 import { onMounted, reactive, ref, computed } from 'vue'
 import apiClient from '../../utils/api'
 import { Badge, Button, ErrorState, FileInput, Input, LoadingState, Modal, Pagination, SearchBox, Table } from '../../components/ui'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
+import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  confirmThenVerify,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
-const createSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
-)
 
 const loading = ref(true)
 const error = ref(null)
@@ -336,7 +319,6 @@ const validateCreateForm = () => {
 }
 
 const openCreateModal = () => {
-  resetVerificationState()
   resetForm()
   createModalOpen.value = true
 }
@@ -344,23 +326,21 @@ const openCreateModal = () => {
 const closeCreateModal = () => {
   createModalOpen.value = false
   resetForm()
-  resetVerificationState()
 }
 
-const submitCreateRequest = async (verificationPayload = {}) => {
+const submitCreateRequest = async () => {
   try {
     saving.value = true
 
-    const payload = applyVerificationPayload({
+    const payload = {
       name: form.name.trim(),
       code: form.code.trim()
-    }, verificationPayload)
+    }
 
-    const { data } = await apiClient.post('/isic-codes', payload)
+    const { data } = await apiClient.post('/isic-codes')
 
     if (data?.success) {
       showToast(data.message || 'کد ISIC با موفقیت ایجاد شد.', 'success')
-      resetVerificationState()
       closeCreateModal()
       currentPage.value = 1
       await fetchIsicCodes()
@@ -369,10 +349,6 @@ const submitCreateRequest = async (verificationPayload = {}) => {
     }
   } catch (err) {
     console.error('ISIC code create error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.status === 422) {
       const validationErrors = err.response?.data?.errors || {}
@@ -393,12 +369,7 @@ const handleCreateSubmit = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitCreateRequest(getSubmitPayload())
+  await submitCreateRequest()
 }
 
 const openImportModal = () => {
@@ -463,7 +434,7 @@ const updateIsicCodeInList = (updated) => {
   }
 }
 
-const handleApprove = async (row) => {
+const handleApprove = async () => {
   try {
     actionLoading.approve = row.id
     const { data } = await apiClient.post(`/isic-codes/${row.id}/approve`)
@@ -488,7 +459,7 @@ const handleApprove = async (row) => {
   }
 }
 
-const handleDeny = async (row) => {
+const handleDeny = async () => {
   try {
     actionLoading.deny = row.id
     const { data } = await apiClient.post(`/isic-codes/${row.id}/deny`)
@@ -514,21 +485,19 @@ const handleDeny = async (row) => {
 }
 
 const handleDelete = async (row) => {
-  await phoneVerification.confirmThenVerify(
-    {
-      message: 'آیا از حذف این کد ISIC اطمینان دارید؟',
-      title: 'حذف کد ISIC',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
+  const result = await confirm(
+    'آیا از حذف این کد ISIC اطمینان دارید؟',
+    'حذف کد ISIC',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
+
+  try {
         actionLoading.delete = row.id
-        const { data } = await apiClient.delete(`/isic-codes/${row.id}`, { data: payload })
+        const { data } = await apiClient.delete(`/isic-codes/${row.id}`)
 
         if (data?.success) {
           showToast(data.message || 'کد ISIC با موفقیت حذف شد.', 'success')
-          phoneVerification.resetVerificationState()
 
           const isLastItem = isicCodes.value.length === 1
           const isNotFirstPage = currentPage.value > 1
@@ -544,17 +513,11 @@ const handleDelete = async (row) => {
       } catch (err) {
         console.error('ISIC code delete error:', err)
 
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
-
         const message = err.response?.data?.message || err.message || 'خطا در حذف کد ISIC'
         showToast(message, 'error')
       } finally {
         actionLoading.delete = null
       }
-    }
-  )
 }
 
 const goToPage = (page) => {

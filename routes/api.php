@@ -53,6 +53,7 @@ use App\Http\Controllers\Api\V1\Translations\ModalController as TranslationModal
 use App\Http\Controllers\Api\V1\Translations\TabController as TranslationTabController;
 use App\Http\Controllers\Api\V1\Translations\TranslationController;
 use App\Http\Middleware\EnsureAdminSanctumAuth;
+use App\Http\Middleware\RequirePhoneVerification;
 use App\Models\KycVerifyText;
 use Illuminate\Support\Facades\Route;
 
@@ -85,7 +86,7 @@ Route::middleware(['guest'])->group(function () {
 
 // Protected auth routes
 // Use sanctum for token-based authentication with admin guard support
-Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(function () {
+Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class, RequirePhoneVerification::class])->group(function () {
     Route::get('/me', [LoginController::class, 'me']);
     Route::post('/logout', [LoginController::class, 'logout']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -129,9 +130,13 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     Route::put('/kyc-video-texts/{id}', [KycVideoTextController::class, 'update']);
     Route::delete('/kyc-video-texts/{id}', [KycVideoTextController::class, 'destroy']);
 
-    // Verification routes
-    Route::post('/send-verification-sms', [VerificationController::class, 'sendSMS']);
-    Route::post('/verify-verification-sms', [VerificationController::class, 'verify']);
+    // Phone verification session routes (excluded from RequirePhoneVerification middleware)
+    Route::withoutMiddleware([RequirePhoneVerification::class])->group(function () {
+        Route::post('/send-verification-sms', [VerificationController::class, 'sendSMS']);
+        Route::post('/verify-verification-sms', [VerificationController::class, 'verify']);
+        Route::get('/phone-verification/status', [VerificationController::class, 'status']);
+        Route::post('/phone-verification/confirm', [VerificationController::class, 'confirm']);
+    });
 
     // Wallets routes
     Route::get('/assets', [WalletController::class, 'index']);

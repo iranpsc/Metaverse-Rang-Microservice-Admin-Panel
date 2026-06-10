@@ -138,11 +138,11 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="isProduction && !isVerified ? sendingVerification : creating"
+            :loading="creating"
             :disabled="creating"
             @click="handleCreate"
           >
-            {{ createSubmitLabel }}
+            ثبت
           </Button>
         </div>
       </template>
@@ -170,17 +170,15 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="isProduction && !isVerified ? sendingVerification : updating"
+            :loading="updating"
             :disabled="updating"
             @click="handleUpdate"
           >
-            {{ editSubmitLabel }}
+            ذخیره تغییرات
           </Button>
         </div>
       </template>
     </Modal>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -196,30 +194,12 @@ import Input from '../../components/ui/Input.vue'
 import LoadingState from '../../components/ui/LoadingState.vue'
 import ErrorState from '../../components/ui/ErrorState.vue'
 import { translationApi } from '../../api/translations'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
+import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  confirmThenVerify,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
-const createSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
-)
-const editSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'بروزرسانی'
-)
 
 const route = useRoute()
 const router = useRouter()
@@ -304,22 +284,18 @@ const resetEditForm = () => {
   activeModalId.value = null
 }
 
-const submitCreate = async (verificationPayload = {}) => {
+const submitCreate = async () => {
   creating.value = true
   try {
     await translationApi.createModal(
       translationId,
-      applyVerificationPayload({ name: createForm.name.trim() }, verificationPayload)
+      { name: createForm.name.trim() }
     )
     showToast('بخش جدید برای تمامی زبان‌ها ثبت شد.', 'success')
-    resetVerificationState()
     showCreateModal.value = false
     resetCreateForm()
     await fetchModals(page.value)
   } catch (err) {
-    if (await handleApiVerificationError(err)) {
-      return
-    }
     const message = err?.response?.data?.errors?.name?.[0] || err?.response?.data?.message || 'ایجاد بخش امکان‌پذیر نبود.'
     createErrors.name = message
   } finally {
@@ -334,42 +310,32 @@ const handleCreate = async () => {
   }
   createErrors.name = ''
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitCreate(getSubmitPayload())
+  await submitCreate()
 }
 
 const openEditModal = (modal) => {
-  resetVerificationState()
   activeModalId.value = modal.id
   editForm.name = modal.name
   editErrors.name = ''
   showEditModal.value = true
 }
 
-const submitUpdate = async (verificationPayload = {}) => {
+const submitUpdate = async () => {
   updating.value = true
   try {
     const response = await translationApi.updateModal(
       translationId,
       activeModalId.value,
-      applyVerificationPayload({ name: editForm.name.trim() }, verificationPayload)
+      { name: editForm.name.trim() }
     )
     const updatedModal = response.data.modal
     modals.value = modals.value.map((item) =>
       item.id === activeModalId.value ? updatedModal : item
     )
     showToast('نام بخش در تمامی زبان‌ها بروزرسانی گردید.', 'success')
-    resetVerificationState()
     showEditModal.value = false
     resetEditForm()
   } catch (err) {
-    if (await handleApiVerificationError(err)) {
-      return
-    }
     const message = err?.response?.data?.errors?.name?.[0] || err?.response?.data?.message || 'ویرایش بخش امکان‌پذیر نبود.'
     editErrors.name = message
   } finally {
@@ -384,36 +350,24 @@ const handleUpdate = async () => {
   }
   editErrors.name = ''
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitUpdate(getSubmitPayload())
+  await submitUpdate()
 }
 
 const handleDelete = async (modal) => {
-  await phoneVerification.confirmThenVerify(
-    {
-      message: `آیا از حذف بخش ${modal.name} مطمئن هستید؟`,
-      title: 'حذف بخش',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        await translationApi.deleteModal(translationId, modal.id, payload)
+  const result = await confirm(
+    `آیا از حذف بخش ${modal.name} مطمئن هستید؟`,
+    'حذف بخش',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
+
+  try {
+        await translationApi.deleteModal(translationId, modal.id)
         showToast('تمامی نسخه‌های این بخش حذف گردید.', 'success')
-        phoneVerification.resetVerificationState()
         await fetchModals(page.value)
       } catch (err) {
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
         showToast(err?.response?.data?.message || 'حذف بخش امکان‌پذیر نبود.', 'error')
       }
-    }
-  )
 }
 
 const navigateToTabs = (modal) => {

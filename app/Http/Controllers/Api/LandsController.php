@@ -9,7 +9,6 @@ use App\Models\Coordinate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class LandsController extends Controller
 {
@@ -74,13 +73,6 @@ class LandsController extends Controller
             'karbari' => 'required|string',
             'address' => 'required|string',
             'rgb' => 'required|string',
-            'phone_verification' => [
-                'nullable',
-                Rule::requiredIf(app()->environment('production')),
-                'integer',
-                'digits:6',
-                'is_valid_verify_code',
-            ],
         ]);
 
         DB::beginTransaction();
@@ -130,13 +122,6 @@ class LandsController extends Controller
             'coordinates' => 'required|array',
             'coordinates.*.x' => 'required|numeric',
             'coordinates.*.y' => 'required|numeric',
-            'phone_verification' => [
-                'nullable',
-                Rule::requiredIf(app()->environment('production')),
-                'integer',
-                'digits:6',
-                'is_valid_verify_code',
-            ],
         ]);
 
         // Validate coordinates count matches

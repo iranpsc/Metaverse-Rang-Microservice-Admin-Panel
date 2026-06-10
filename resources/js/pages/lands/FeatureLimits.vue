@@ -262,7 +262,7 @@
       <template #footer>
         <Button
           variant="primary"
-          :loading="saving || phoneVerification.sendingVerification.value"
+          :loading="saving"
           @click="handleSave"
         >
           {{ submitButtonLabel }}
@@ -272,8 +272,6 @@
         </Button>
       </template>
     </Modal>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
   </div>
 </template>
 
@@ -281,15 +279,13 @@
 import { ref, onMounted, computed, watch, nextTick } from 'vue'
 import { Table, Pagination, Button, LoadingState, ErrorState, Alert, Modal, Input, Badge } from '../../components/ui'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
+import { confirm } from '../../utils/notifications'
 import { useFeatureLimits } from '../../composables/useFeatureLimits'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import { gregorianToShamsiSync } from '../../utils/dateConverter'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
 const {
   createFeatureLimit,
   deleteFeatureLimit,
@@ -308,9 +304,6 @@ const deleting = ref(false)
 const modalOpenKey = ref(0)
 
 const submitButtonLabel = computed(() => {
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    return 'ارسال کد تایید'
-  }
   return 'ثبت'
 })
 
@@ -394,10 +387,7 @@ const submitFeatureLimitCreate = async () => {
     error.value = null
     errors.value = {}
 
-    const payload = applyVerificationPayload(
-      { ...formData.value },
-      phoneVerification.getSubmitPayload()
-    )
+    const payload = { ...formData.value }
 
     const response = await createFeatureLimit(payload)
 
@@ -412,10 +402,6 @@ const submitFeatureLimitCreate = async () => {
   } catch (err) {
     console.error('Feature limit create error:', err)
 
-    if (await phoneVerification.handleApiVerificationError(err)) {
-      return
-    }
-
     error.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
 
     if (err.response?.data?.errors) {
@@ -427,28 +413,23 @@ const submitFeatureLimitCreate = async () => {
 }
 
 const handleSave = async () => {
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    await phoneVerification.beginVerifyForSubmit()
-    return
-  }
 
   await submitFeatureLimitCreate()
 }
 
-const handleDelete = async (limit) => {
-  await phoneVerification.confirmThenVerify(
-    {
-      message: `آیا از حذف محدودیت «${limit.title}» مطمئن هستید؟ این عمل غیرقابل بازگشت است و تمام محدودیت‌های اعمال شده بر روی املاک حذف خواهد شد.`,
-      title: 'تایید حذف محدودیت',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        deleting.value = true
-        deletingLimitId.value = limit.id
+const handleDelete = async (row) => {
+  const result = await confirm(
+      `آیا از حذف محدودیت «${row.title}» مطمئن هستید؟ این عمل غیرقابل بازگشت است و تمام محدودیت‌های اعمال شده بر روی املاک حذف خواهد شد.`,
+    'تایید حذف محدودیت',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
 
-        const response = await deleteFeatureLimit(limit.id, payload)
+  try {
+        deleting.value = true
+        deletingLimitId.value = row.id
+
+        const response = await deleteFeatureLimit(row.id)
 
         if (response.data.success) {
           showToast('محدودیت املاک با موفقیت حذف شد', 'success')
@@ -458,19 +439,10 @@ const handleDelete = async (limit) => {
       } catch (err) {
         console.error('Delete feature limit error:', err)
 
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
-
         showToast(err.response?.data?.message || 'خطا در حذف محدودیت', 'error')
       } finally {
         deleting.value = false
-        if (!phoneVerification.showVerificationDialog.value) {
-          deletingLimitId.value = null
-        }
       }
-    }
-  )
 }
 
 const fetchFeatureLimits = async () => {
@@ -534,12 +506,10 @@ const resetForm = () => {
     individual_buy_count: 0
   }
   errors.value = {}
-  phoneVerification.resetVerificationState()
 }
 
-watch(() => showCreateModal, async (newVal) => {
+watch(() => showCreateModal, async () => {
   if (!newVal) {
-    phoneVerification.resetVerificationState()
   } else {
     // Increment key to force re-mount of date pickers
     modalOpenKey.value++

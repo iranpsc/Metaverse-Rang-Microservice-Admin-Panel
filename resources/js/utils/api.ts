@@ -1,4 +1,5 @@
 import axios, { type AxiosError, type AxiosRequestConfig } from 'axios'
+import { usePhoneVerificationStore } from '../store/phoneVerificationStore'
 
 export type ApiResponse<T> = {
   success: boolean
@@ -100,6 +101,18 @@ apiClient.interceptors.response.use(
             retryConfig.headers['X-XSRF-TOKEN'] = token
           }
           return apiClient.request(retryConfig)
+        })
+      }
+
+      const responseData = error.response.data as { requires_phone_verification?: boolean }
+      if (
+        error.response.status === 423 &&
+        responseData?.requires_phone_verification &&
+        retryConfig
+      ) {
+        const store = usePhoneVerificationStore()
+        return new Promise((resolve, reject) => {
+          store.enqueueRetry({ config: retryConfig, resolve, reject })
         })
       }
     }

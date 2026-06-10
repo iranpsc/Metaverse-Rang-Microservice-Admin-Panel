@@ -39,8 +39,6 @@ class LevelGemController extends Controller
         }
 
         $validated = $this->preparePayload($request->validated());
-        unset($validated['phone_verification']);
-
         $storedFiles = [];
 
         try {
@@ -85,8 +83,6 @@ class LevelGemController extends Controller
         }
 
         $validated = $this->preparePayload($request->validated());
-        unset($validated['phone_verification']);
-
         $storedFiles = [];
         $replacedFiles = [];
 

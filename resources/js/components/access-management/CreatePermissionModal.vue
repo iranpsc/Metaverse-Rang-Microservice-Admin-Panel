@@ -62,15 +62,6 @@
     <template #footer>
       <div class="flex gap-3 justify-end" dir="rtl">
         <Button
-          v-if="isProduction && !isVerified"
-          variant="primary"
-          :loading="sendingVerification"
-          @click="handleSendCode"
-        >
-          ارسال کد تایید
-        </Button>
-        <Button
-          v-if="!isProduction || isVerified"
           variant="primary"
           :loading="saving"
           @click="handleSave"
@@ -86,16 +77,12 @@
       </div>
     </template>
   </Modal>
-
-  <PhoneVerificationModal :phone-verification="phoneVerification" />
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Input, Button, Spinner, Alert } from '../ui'
-import PhoneVerificationModal from '../PhoneVerificationModal.vue'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import { notifySuccess } from '../../utils/notifications'
 import { useModalForm } from '../../composables/useModalForm'
 
@@ -107,17 +94,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'created'])
-
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
 const {
   loading,
@@ -168,7 +144,7 @@ const validateForm = () => {
   return true
 }
 
-const submitPermissionCreate = async (verificationPayload = {}) => {
+const submitPermissionCreate = async () => {
   try {
     saving.value = true
     error.value = null
@@ -176,13 +152,11 @@ const submitPermissionCreate = async (verificationPayload = {}) => {
     const response = await apiClient.post('/permissions', {
       title: formData.value.title.trim(),
       name: formData.value.name.trim(),
-      roles: selectedRoles.value,
-      ...verificationPayload
+      roles: selectedRoles.value
     })
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
-      resetVerificationState()
       resetForm()
       emit('created')
     } else {
@@ -190,10 +164,6 @@ const submitPermissionCreate = async (verificationPayload = {}) => {
     }
   } catch (err) {
     console.error('Create permission error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -205,28 +175,15 @@ const submitPermissionCreate = async (verificationPayload = {}) => {
   }
 }
 
-const handleSendCode = async () => {
-  if (!validateForm()) {
-    return
-  }
-
-  await beginVerifyForSubmit()
-}
-
 const handleSave = async () => {
   if (!validateForm()) {
     return
   }
 
-  if (isProduction.value) {
-    await submitPermissionCreate(getSubmitPayload())
-  } else {
-    await submitPermissionCreate()
-  }
+  await submitPermissionCreate()
 }
 
 const onMainModalClose = () => {
-  resetVerificationState()
   emit('close')
 }
 
@@ -243,10 +200,7 @@ const resetForm = () => {
 watch(() => props.show, (newVal) => {
   if (newVal) {
     resetForm()
-    resetVerificationState()
     fetchRoles()
-  } else {
-    resetVerificationState()
   }
 })
 </script>
@@ -254,4 +208,3 @@ watch(() => props.show, (newVal) => {
 <style scoped>
 /* Additional styles if needed */
 </style>
-

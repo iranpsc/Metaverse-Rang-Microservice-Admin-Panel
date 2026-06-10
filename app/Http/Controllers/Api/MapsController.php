@@ -9,7 +9,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 
 class MapsController extends Controller
 {
@@ -57,13 +56,6 @@ class MapsController extends Controller
             'point_file' => 'required|file|max:10240',
             'border_file' => 'required|file|max:10240',
             'color' => 'required|string|max:255',
-            'phone_verification' => [
-                'nullable',
-                Rule::requiredIf(fn () => app()->environment() === 'production'),
-                'integer',
-                'digits:6',
-                'is_valid_verify_code',
-            ],
         ]);
 
         try {
@@ -152,13 +144,6 @@ class MapsController extends Controller
             'point_file' => 'required|file|max:10240',
             'border_file' => 'required|file|max:10240',
             'color' => 'required|string|max:255',
-            'phone_verification' => [
-                'nullable',
-                Rule::requiredIf(fn () => app()->environment() === 'production'),
-                'integer',
-                'digits:6',
-                'is_valid_verify_code',
-            ],
         ]);
 
         try {
@@ -238,16 +223,6 @@ class MapsController extends Controller
     public function insertIntoDatabase(Request $request, int $id): JsonResponse
     {
         $map = Map::findOrFail($id);
-
-        $validated = $request->validate([
-            'phone_verification' => [
-                'nullable',
-                Rule::requiredIf(fn () => app()->environment() === 'production'),
-                'integer',
-                'digits:6',
-                'is_valid_verify_code',
-            ],
-        ]);
 
         if ($map->isPublished()) {
             return response()->json([

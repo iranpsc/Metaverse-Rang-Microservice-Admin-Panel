@@ -71,16 +71,7 @@
     <template #footer>
       <div class="flex gap-3 justify-end" dir="rtl">
         <Button
-          v-if="bankAccount && bankAccount.status === 0 && isProduction && !isVerified"
-          variant="primary"
-          :loading="sendingVerification"
-          @click="handleSendCode"
-          class="w-1/2"
-        >
-          ارسال کد تایید
-        </Button>
-        <Button
-          v-if="bankAccount && bankAccount.status === 0 && (!isProduction || isVerified)"
+          v-if="bankAccount && bankAccount.status === 0"
           variant="primary"
           :loading="saving"
           @click="handleSave"
@@ -98,8 +89,6 @@
       </div>
     </template>
   </Modal>
-
-  <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
 </template>
 
 <script setup>
@@ -107,8 +96,6 @@ import { ref, computed, watch, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Button, Spinner, Alert } from '../ui'
 import ErrorInputField from './ErrorInputField.vue'
-import PhoneVerificationModal from '../PhoneVerificationModal.vue'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import { notifySuccess } from '../../utils/notifications'
 
 const props = defineProps({
@@ -124,16 +111,6 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'updated'])
 
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
 const loading = ref(false)
 const saving = ref(false)
@@ -171,19 +148,17 @@ const handleSaveError = (fieldName, errorMessage) => {
   }
 }
 
-const submitBankAccountUpdate = async (verificationPayload = {}) => {
+const submitBankAccountUpdate = async () => {
   try {
     saving.value = true
     error.value = null
 
     const response = await apiClient.put(`/bank-accounts/${props.bankAccountId}`, {
       bank_account_errors: bankAccountErrors.value,
-      ...verificationPayload
-    })
+          })
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
-      resetVerificationState()
       emit('updated')
     } else {
       error.value = 'خطا در ثبت اطلاعات'
@@ -191,30 +166,18 @@ const submitBankAccountUpdate = async (verificationPayload = {}) => {
   } catch (err) {
     console.error('Bank Account update error:', err)
 
-    if (await handleApiVerificationError(err)) {
-      return
-    }
-
     error.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
   } finally {
     saving.value = false
   }
 }
 
-const handleSendCode = async () => {
-  await beginVerifyForSubmit()
-}
 
 const handleSave = async () => {
-  if (isProduction.value) {
-    await submitBankAccountUpdate(getSubmitPayload())
-  } else {
-    await submitBankAccountUpdate()
-  }
+  await submitBankAccountUpdate()
 }
 
 const onMainModalClose = () => {
-  resetVerificationState()
   emit('close')
 }
 
@@ -244,17 +207,14 @@ const fetchBankAccountDetails = async () => {
 watch(() => props.show, (newVal) => {
   if (newVal && props.bankAccountId) {
     bankAccountErrors.value = []
-    resetVerificationState()
     fetchBankAccountDetails()
   } else {
-    resetVerificationState()
   }
 })
 
 watch(() => props.bankAccountId, (newVal) => {
   if (newVal && props.show) {
     bankAccountErrors.value = []
-    resetVerificationState()
     fetchBankAccountDetails()
   }
 })

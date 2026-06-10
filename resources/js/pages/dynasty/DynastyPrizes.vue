@@ -163,10 +163,10 @@
       <template #footer>
         <Button
           variant="primary"
-          :loading="isProduction && !isVerified ? sendingVerification : saving"
+          :loading="saving"
           @click="handleCreate"
         >
-          {{ createSubmitLabel }}
+          ثبت
         </Button>
         <Button variant="danger" @click="closeCreateModal">
           بستن
@@ -305,18 +305,16 @@
       <template #footer>
         <Button
           variant="primary"
-          :loading="isProduction && !isVerified ? sendingVerification : updating"
+          :loading="updating"
           @click="handleUpdate"
         >
-          {{ editSubmitLabel }}
+          ذخیره تغییرات
         </Button>
         <Button variant="danger" @click="closeEditModal">
           بستن
         </Button>
       </template>
     </Modal>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -324,30 +322,12 @@
 import { ref, onMounted, computed } from 'vue'
 import apiClient from '../../utils/api'
 import { Table, Modal, Button, Input, Select, LoadingState, ErrorState, Pagination } from '../../components/ui'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
+import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  confirmThenVerify,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
-const createSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
-)
-const editSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
-)
 
 const loading = ref(true)
 const error = ref(null)
@@ -425,14 +405,12 @@ const formatNumber = (value) => {
 }
 
 const openCreateModal = () => {
-  resetVerificationState()
   showCreateModal.value = true
 }
 
 const closeCreateModal = () => {
   showCreateModal.value = false
   resetCreateForm()
-  resetVerificationState()
 }
 
 const resetCreateForm = () => {
@@ -453,7 +431,6 @@ const openViewModal = (prize) => {
 }
 
 const openEditModal = (prize) => {
-  resetVerificationState()
   editingPrize.value = prize
   editForm.value = {
     satisfaction: prize.satisfaction || 0,
@@ -468,7 +445,6 @@ const openEditModal = (prize) => {
 const closeEditModal = () => {
   showEditModal.value = false
   resetEditForm()
-  resetVerificationState()
 }
 
 const resetEditForm = () => {
@@ -569,18 +545,17 @@ const buildUpdatePayload = () => ({
   psc: editForm.value.psc
 })
 
-const submitCreate = async (verificationPayload = {}) => {
+const submitCreate = async () => {
   try {
     saving.value = true
     errors.value = {}
 
     const response = await apiClient.post(
       '/dynasty/prizes',
-      applyVerificationPayload(buildCreatePayload(), verificationPayload)
+      buildCreatePayload()
     )
 
     if (response.data.success) {
-      resetVerificationState()
       await fetchPrizes()
       closeCreateModal()
       showToast('اطلاعات با موفقیت ثبت شد', 'success')
@@ -589,10 +564,6 @@ const submitCreate = async (verificationPayload = {}) => {
     }
   } catch (err) {
     console.error('Create prize error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -609,15 +580,10 @@ const handleCreate = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitCreate(getSubmitPayload())
+  await submitCreate()
 }
 
-const submitUpdate = async (verificationPayload = {}) => {
+const submitUpdate = async () => {
   if (!editingPrize.value) {
     return
   }
@@ -628,11 +594,10 @@ const submitUpdate = async (verificationPayload = {}) => {
 
     const response = await apiClient.put(
       `/dynasty/prizes/${editingPrize.value.id}`,
-      applyVerificationPayload(buildUpdatePayload(), verificationPayload)
+      buildUpdatePayload()
     )
 
     if (response.data.success) {
-      resetVerificationState()
       await fetchPrizes()
       closeEditModal()
       showToast('اطلاعات با موفقیت ثبت شد', 'success')
@@ -641,10 +606,6 @@ const submitUpdate = async (verificationPayload = {}) => {
     }
   } catch (err) {
     console.error('Update prize error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -661,28 +622,21 @@ const handleUpdate = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitUpdate(getSubmitPayload())
+  await submitUpdate()
 }
 
-const handleDelete = async (prize) => {
-  await phoneVerification.confirmThenVerify(
-    {
-      message: 'آیا می‌خواهید این پاداش را حذف کنید؟',
-      title: 'تایید حذف',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        const response = await apiClient.delete(`/dynasty/prizes/${prize.id}`, { data: payload })
+const handleDelete = async (row) => {
+  const result = await confirm(
+    'آیا می‌خواهید این پاداش را حذف کنید؟',
+    'تایید حذف',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
+
+  try {
+        const response = await apiClient.delete(`/dynasty/prizes/${prize.id}`)
 
         if (response.data.success) {
-          phoneVerification.resetVerificationState()
           await fetchPrizes()
           showToast('پاداش با موفقیت حذف شد', 'success')
         } else {
@@ -691,14 +645,8 @@ const handleDelete = async (prize) => {
       } catch (err) {
         console.error('Delete prize error:', err)
 
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
-
         showToast(err.response?.data?.message || 'خطا در حذف پاداش', 'error')
       }
-    }
-  )
 }
 
 const goToPage = (page) => {

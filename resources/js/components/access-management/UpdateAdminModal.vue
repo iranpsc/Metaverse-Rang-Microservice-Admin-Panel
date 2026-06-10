@@ -81,15 +81,6 @@
     <template #footer>
       <div class="flex gap-3 justify-end" dir="rtl">
         <Button
-          v-if="isProduction && !isVerified"
-          variant="primary"
-          :loading="sendingVerification"
-          @click="handleSendCode"
-        >
-          ارسال کد تایید
-        </Button>
-        <Button
-          v-if="!isProduction || isVerified"
           variant="primary"
           :loading="saving"
           @click="handleSave"
@@ -105,17 +96,13 @@
       </div>
     </template>
   </Modal>
-
-  <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Button, Spinner, Alert } from '../ui'
-import PhoneVerificationModal from '../PhoneVerificationModal.vue'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
-import { notifySuccess, notifyError } from '../../utils/notifications'
+import { notifySuccess, notifyError, confirm } from '../../utils/notifications'
 import TableActionIcon from '../icons/TableActionIcon.vue'
 
 const props = defineProps({
@@ -130,18 +117,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'updated'])
-
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  confirmThenVerify,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
 const loading = ref(false)
 const saving = ref(false)
@@ -177,92 +152,67 @@ const fetchAdminDetails = async () => {
 }
 
 const handleRemoveRole = async (roleId) => {
-  await confirmThenVerify(
-    {
-      message: 'آیا می خواهید این مسیولیت را حذف کنید؟',
-      title: 'تایید حذف مسئولیت',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        await apiClient.delete(`/admins/${props.adminId}/roles/${roleId}`, { data: payload })
-        await notifySuccess('مسئولیت با موفقیت حذف شد')
-        fetchAdminDetails()
-      } catch (err) {
-        console.error('Remove role error:', err)
-        if (await handleApiVerificationError(err)) {
-          return
-        }
-        await notifyError(err.response?.data?.message || 'خطا در حذف مسئولیت')
-      }
-    }
+  const result = await confirm(
+    'آیا می خواهید این مسیولیت را حذف کنید؟',
+    'تایید حذف مسئولیت',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
   )
+  if (!result.isConfirmed) return
+
+  try {
+    await apiClient.delete(`/admins/${props.adminId}/roles/${roleId}`)
+    await notifySuccess('مسئولیت با موفقیت حذف شد')
+    fetchAdminDetails()
+  } catch (err) {
+    console.error('Remove role error:', err)
+    await notifyError(err.response?.data?.message || 'خطا در حذف مسئولیت')
+  }
 }
 
-const submitAdminUpdate = async (verificationPayload = {}) => {
+const submitAdminUpdate = async () => {
   try {
     saving.value = true
     fetchError.value = null
 
     const response = await apiClient.put(`/admins/${props.adminId}`, {
-      roles: selectedRoles.value,
-      ...verificationPayload
+      roles: selectedRoles.value
     })
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
-      resetVerificationState()
       emit('updated')
     } else {
       fetchError.value = 'خطا در ثبت اطلاعات'
     }
   } catch (err) {
     console.error('Update admin error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
-
     fetchError.value = err.response?.data?.message || 'خطا در ثبت اطلاعات'
   } finally {
     saving.value = false
   }
 }
 
-const handleSendCode = async () => {
-  await beginVerifyForSubmit()
-}
-
 const handleSave = async () => {
-  if (isProduction.value) {
-    await submitAdminUpdate(getSubmitPayload())
-  } else {
-    await submitAdminUpdate()
-  }
+  await submitAdminUpdate()
 }
 
 const onClose = () => {
-  resetVerificationState()
   emit('close')
 }
 
 watch(() => props.show, (newVal) => {
   if (newVal && props.adminId) {
-    resetVerificationState()
     fetchAdminDetails()
   } else if (!newVal) {
     admin.value = null
     availableRoles.value = []
     selectedRoles.value = []
     fetchError.value = null
-    resetVerificationState()
   }
 })
 
 watch(() => props.adminId, (newVal) => {
   if (newVal && props.show) {
-    resetVerificationState()
     fetchAdminDetails()
   }
 })

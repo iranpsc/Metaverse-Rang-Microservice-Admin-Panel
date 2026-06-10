@@ -130,11 +130,11 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="isProduction && !isVerified ? sendingVerification : creating"
+            :loading="creating"
             :disabled="creating"
             @click="handleCreate"
           >
-            {{ createSubmitLabel }}
+            ثبت
           </Button>
         </div>
       </template>
@@ -164,17 +164,15 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="isProduction && !isVerified ? sendingVerification : updating"
+            :loading="updating"
             :disabled="updating"
             @click="handleUpdate"
           >
-            {{ editSubmitLabel }}
+            ذخیره تغییرات
           </Button>
         </div>
       </template>
     </Modal>
-
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -190,29 +188,12 @@ import Textarea from '../../components/ui/Textarea.vue'
 import LoadingState from '../../components/ui/LoadingState.vue'
 import ErrorState from '../../components/ui/ErrorState.vue'
 import { translationApi } from '../../api/translations'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
+import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  sendingVerification,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
-const createSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'ثبت'
-)
-const editSubmitLabel = computed(() =>
-  isProduction.value && !isVerified.value ? 'ارسال کد تایید' : 'بروزرسانی'
-)
 
 const route = useRoute()
 const router = useRouter()
@@ -294,39 +275,32 @@ const goToPage = (nextPage) => {
 const resetCreateForm = () => {
   createForm.value = ''
   createErrors.value = ''
-  resetVerificationState()
 }
 
 const resetEditForm = () => {
   editForm.translation = ''
   editErrors.translation = ''
   activeFieldId.value = null
-  resetVerificationState()
 }
 
 const openCreateModal = () => {
-  resetVerificationState()
   showCreateModal.value = true
 }
 
-const submitCreate = async (verificationPayload = {}) => {
+const submitCreate = async () => {
   creating.value = true
   try {
     await translationApi.createField(
       translationId,
       modalId,
       tabId,
-      applyVerificationPayload({ value: createForm.value.trim() }, verificationPayload)
+      { value: createForm.value.trim() }
     )
     showToast('عبارت جدید به ساختار تمام زبان‌ها اضافه شد.', 'success')
-    resetVerificationState()
     showCreateModal.value = false
     resetCreateForm()
     await fetchFields(page.value)
   } catch (err) {
-    if (await handleApiVerificationError(err)) {
-      return
-    }
     const message = err?.response?.data?.errors?.value?.[0] || err?.response?.data?.message || 'ایجاد عبارت امکان‌پذیر نبود.'
     createErrors.value = message
   } finally {
@@ -341,23 +315,17 @@ const handleCreate = async () => {
   }
   createErrors.value = ''
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitCreate(getSubmitPayload())
+  await submitCreate()
 }
 
 const openEditModal = (field) => {
-  resetVerificationState()
   activeFieldId.value = field.id
   editForm.translation = field.translation || ''
   editErrors.translation = ''
   showEditModal.value = true
 }
 
-const submitUpdate = async (verificationPayload = {}) => {
+const submitUpdate = async () => {
   updating.value = true
   try {
     const response = await translationApi.updateField(
@@ -365,20 +333,16 @@ const submitUpdate = async (verificationPayload = {}) => {
       modalId,
       tabId,
       activeFieldId.value,
-      applyVerificationPayload({ translation: editForm.translation.trim() }, verificationPayload)
+      { translation: editForm.translation.trim() }
     )
     const updatedField = response.data.field
     fields.value = fields.value.map((item) =>
       item.id === activeFieldId.value ? updatedField : item
     )
     showToast('عبارت مربوط به این زبان بروزرسانی گردید.', 'success')
-    resetVerificationState()
     showEditModal.value = false
     resetEditForm()
   } catch (err) {
-    if (await handleApiVerificationError(err)) {
-      return
-    }
     const message = err?.response?.data?.errors?.translation?.[0] || err?.response?.data?.message || 'ویرایش عبارت امکان‌پذیر نبود.'
     editErrors.translation = message
   } finally {
@@ -393,36 +357,24 @@ const handleUpdate = async () => {
   }
   editErrors.translation = ''
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitUpdate(getSubmitPayload())
+  await submitUpdate()
 }
 
 const handleDelete = async (field) => {
-  await phoneVerification.confirmThenVerify(
-    {
-      message: 'آیا از حذف این عبارت مطمئن هستید؟ با این کار عبارت از تمامی زبان‌ها حذف می‌شود.',
-      title: 'حذف عبارت',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        await translationApi.deleteField(translationId, modalId, tabId, field.id, payload)
+  const result = await confirm(
+    'آیا از حذف این عبارت مطمئن هستید؟ با این کار عبارت از تمامی زبان‌ها حذف می‌شود.',
+    'حذف عبارت',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
+
+  try {
+        await translationApi.deleteField(translationId, modalId, tabId, field.id)
         showToast('تمامی نسخه‌های این عبارت حذف گردید.', 'success')
-        phoneVerification.resetVerificationState()
         await fetchFields(page.value)
       } catch (err) {
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
         showToast(err?.response?.data?.message || 'حذف عبارت امکان‌پذیر نبود.', 'error')
       }
-    }
-  )
 }
 
 const navigateBack = () => {

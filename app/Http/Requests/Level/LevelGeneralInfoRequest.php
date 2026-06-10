@@ -31,12 +31,7 @@ class LevelGeneralInfoRequest extends FormRequest
             'png_file' => ['nullable', 'image', 'mimes:png', 'max:5120'],
             'fbx_file' => ['nullable', 'file', 'max:302400'],
             'gif_file' => ['nullable', 'file', 'mimes:gif', 'max:5120'],
-            'phone_verification' => ['nullable', 'integer', 'digits:6', 'is_valid_verify_code'],
         ];
-
-        if (app()->environment('production')) {
-            array_unshift($rules['phone_verification'], 'required');
-        }
 
         return $rules;
     }

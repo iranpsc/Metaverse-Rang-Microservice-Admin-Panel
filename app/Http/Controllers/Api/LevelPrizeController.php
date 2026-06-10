@@ -37,8 +37,6 @@ class LevelPrizeController extends Controller
         }
 
         $validated = $request->validated();
-        unset($validated['phone_verification']);
-
         try {
             $prize = DB::transaction(function () use ($level, $validated) {
                 return $level->prize()->create($validated);
@@ -73,8 +71,6 @@ class LevelPrizeController extends Controller
         }
 
         $validated = $request->validated();
-        unset($validated['phone_verification']);
-
         try {
             DB::transaction(function () use ($prize, $validated) {
                 $prize->update($validated);

@@ -27,7 +27,7 @@
         <Button
           variant="primary"
           rounded="full"
-          :loading="saving || phoneVerification.sendingVerification.value"
+          :loading="saving"
           @click="handleSubmit"
         >
           {{ submitButtonLabel }}
@@ -101,7 +101,6 @@
         </Card>
       </div>
     </template>
-    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
   </div>
 </template>
 
@@ -110,12 +109,9 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import apiClient from '../../utils/api'
 import { Button, Card, Checkbox, LoadingState, ErrorState } from '../../components/ui'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
 
 const route = useRoute()
 const router = useRouter()
@@ -300,9 +296,6 @@ const levelId = computed(() => route.params?.levelId || null)
 const levelLabel = computed(() => route.query?.name || route.query?.title || '')
 
 const submitButtonLabel = computed(() => {
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    return 'ارسال کد تایید'
-  }
   return 'ثبت اطلاعات'
 })
 
@@ -410,7 +403,7 @@ const persistLicenses = async () => {
 
   const url = `/levels/${levelId.value}/licenses`
   const method = hasExistingLicenses.value ? 'put' : 'post'
-  const payload = applyVerificationPayload(buildPayload(), phoneVerification.getSubmitPayload())
+  const payload = buildPayload()
 
   try {
     saving.value = true
@@ -419,7 +412,6 @@ const persistLicenses = async () => {
 
     if (response.data.success) {
       showToast(response.data.message || 'اطلاعات با موفقیت ثبت شد', 'success')
-      phoneVerification.resetVerificationState()
       hasExistingLicenses.value = true
 
       const licenses = response.data.data?.licenses || payload
@@ -430,17 +422,13 @@ const persistLicenses = async () => {
   } catch (err) {
     console.error('Licenses submit error:', err)
 
-    if (await phoneVerification.handleApiVerificationError(err)) {
-      return
-    }
-
     if (err.response?.status === 422 && err.response?.data?.errors) {
       const validationErrors = err.response.data.errors
 
       Object.keys(validationErrors).forEach((field) => {
         const message = Array.isArray(validationErrors[field]) ? validationErrors[field][0] : validationErrors[field]
 
-        if (field !== 'phone_verification' && errors[field] !== undefined) {
+        if (errors[field] !== undefined) {
           errors[field] = message
         }
       })
@@ -462,11 +450,6 @@ const handleSubmit = async () => {
     } else {
       showToast('لطفاً خطاهای فرم را برطرف کرده و دوباره تلاش کنید.', 'warning')
     }
-    return
-  }
-
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    await phoneVerification.beginVerifyForSubmit()
     return
   }
 

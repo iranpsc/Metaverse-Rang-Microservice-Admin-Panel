@@ -38,12 +38,6 @@ class UpdateLevelRequest extends FormRequest
             'background_image' => ['nullable', 'image', 'max:1024'],
         ];
 
-        $rules['phone_verification'] = ['nullable', 'integer', 'digits:6', 'is_valid_verify_code'];
-
-        if (app()->environment('production')) {
-            array_unshift($rules['phone_verification'], 'required');
-        }
-
         return $rules;
     }
 }

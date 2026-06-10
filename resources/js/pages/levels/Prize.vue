@@ -26,7 +26,7 @@
         <Button
           variant="primary"
           rounded="full"
-          :loading="saving || phoneVerification.sendingVerification.value"
+          :loading="saving"
           @click="handleSubmit"
         >
           {{ submitButtonLabel }}
@@ -132,7 +132,6 @@
       </Card>
 
     </template>
-    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
 
   </div>
 </template>
@@ -142,12 +141,9 @@ import { reactive, ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import apiClient from '../../utils/api'
 import { Button, Card, Input, LoadingState, ErrorState } from '../../components/ui'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
 
 const route = useRoute()
 const router = useRouter()
@@ -191,9 +187,6 @@ const levelId = computed(() => route.params?.levelId || null)
 const levelLabel = computed(() => route.query?.name || route.query?.title || '')
 
 const submitButtonLabel = computed(() => {
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    return 'ارسال کد تایید'
-  }
   return 'ثبت اطلاعات'
 })
 
@@ -326,7 +319,7 @@ const persistPrize = async () => {
 
   const url = `/levels/${levelId.value}/prize`
   const method = hasExistingPrize.value ? 'put' : 'post'
-  const payload = applyVerificationPayload(buildPayload(), phoneVerification.getSubmitPayload())
+  const payload = buildPayload()
 
   try {
     saving.value = true
@@ -335,7 +328,6 @@ const persistPrize = async () => {
 
     if (response.data.success) {
       showToast(response.data.message || 'اطلاعات با موفقیت ثبت شد', 'success')
-      phoneVerification.resetVerificationState()
       hasExistingPrize.value = true
 
       const prize = response.data.data?.prize || payload
@@ -346,17 +338,13 @@ const persistPrize = async () => {
   } catch (err) {
     console.error('Prize submit error:', err)
 
-    if (await phoneVerification.handleApiVerificationError(err)) {
-      return
-    }
-
     if (err.response?.status === 422 && err.response?.data?.errors) {
       const validationErrors = err.response.data.errors
 
       Object.keys(validationErrors).forEach((field) => {
         const message = Array.isArray(validationErrors[field]) ? validationErrors[field][0] : validationErrors[field]
 
-        if (field !== 'phone_verification' && errors[field] !== undefined) {
+        if (errors[field] !== undefined) {
           errors[field] = message
         }
       })
@@ -374,11 +362,6 @@ const handleSubmit = async () => {
   const isValid = validateForm()
   if (!isValid) {
     showToast('لطفاً خطاهای فرم را برطرف کنید و دوباره تلاش نمایید.', 'warning')
-    return
-  }
-
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    await phoneVerification.beginVerifyForSubmit()
     return
   }
 

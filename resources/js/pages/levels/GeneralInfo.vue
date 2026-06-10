@@ -26,7 +26,7 @@
         <Button
           variant="primary"
           rounded="full"
-          :loading="saving || phoneVerification.sendingVerification.value"
+          :loading="saving"
           @click="handleSubmit"
         >
           {{ submitButtonLabel }}
@@ -280,7 +280,6 @@
         </Card>
       </div>
     </template>
-    <PhoneVerificationModal :phone-verification="phoneVerification" title="تایید نهایی" />
   </div>
 </template>
 
@@ -290,13 +289,10 @@ import { useRoute, useRouter } from 'vue-router'
 import apiClient from '../../utils/api'
 import { Button, Card, Checkbox, Input, LoadingState, ErrorState, FileInput } from '../../components/ui'
 import Editor from 'primevue/editor'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import ExistingFileHint from '../../components/levels/ExistingFileHint.vue'
 import { useToast } from '../../composables/useToast'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
 
 const route = useRoute()
 const router = useRouter()
@@ -365,9 +361,6 @@ const levelId = computed(() => route.params?.levelId || null)
 const levelLabel = computed(() => route.query?.name || route.query?.title || '')
 
 const submitButtonLabel = computed(() => {
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    return 'ارسال کد تایید'
-  }
   return 'ثبت اطلاعات'
 })
 
@@ -668,10 +661,7 @@ const persistGeneralInfo = async () => {
     return
   }
 
-  const formData = applyVerificationPayload(
-    appendFormData(buildPayload()),
-    phoneVerification.getSubmitPayload()
-  )
+  const formData = appendFormData(buildPayload())
   const url = `/levels/${levelId.value}/general-info`
 
   try {
@@ -683,7 +673,6 @@ const persistGeneralInfo = async () => {
 
     if (response.data.success) {
       showToast(response.data.message || 'اطلاعات با موفقیت ثبت شد', 'success')
-      phoneVerification.resetVerificationState()
       hasExistingGeneralInfo.value = true
 
       const info = response.data.data?.general_info || null
@@ -694,17 +683,13 @@ const persistGeneralInfo = async () => {
   } catch (err) {
     console.error('General info submit error:', err)
 
-    if (await phoneVerification.handleApiVerificationError(err)) {
-      return
-    }
-
     if (err.response?.status === 422 && err.response?.data?.errors) {
       const validationErrors = err.response.data.errors
 
       Object.keys(validationErrors).forEach((field) => {
         const message = Array.isArray(validationErrors[field]) ? validationErrors[field][0] : validationErrors[field]
 
-        if (field !== 'phone_verification' && errors[field] !== undefined) {
+        if (errors[field] !== undefined) {
           errors[field] = message
         }
       })
@@ -726,11 +711,6 @@ const handleSubmit = async () => {
     } else {
       showToast('لطفاً خطاهای فرم را برطرف کرده و دوباره تلاش کنید.', 'warning')
     }
-    return
-  }
-
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    await phoneVerification.beginVerifyForSubmit()
     return
   }
 

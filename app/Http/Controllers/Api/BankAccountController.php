@@ -8,7 +8,6 @@ use App\Models\BankAccount;
 use App\Notifications\KycDeniedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class BankAccountController extends Controller
 {
@@ -80,11 +79,6 @@ class BankAccountController extends Controller
     {
         $validated = $request->validate([
             'bank_account_errors' => 'nullable|array',
-            'phone_verification' => [
-                'nullable',
-                Rule::requiredIf(app()->environment('production')),
-                'is_valid_verify_code'
-            ],
         ]);
 
         $bankAccount = BankAccount::findOrFail($id);

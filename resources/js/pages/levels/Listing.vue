@@ -179,10 +179,10 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="createSubmitting || createPhoneVerification.sendingVerification.value"
+            :loading="createSubmitting"
             @click="handleCreateSubmit"
           >
-            {{ createSubmitButtonLabel }}
+            ثبت
           </Button>
           <Button
             variant="danger"
@@ -281,10 +281,10 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="updateSubmitting || updatePhoneVerification.sendingVerification.value"
+            :loading="updateSubmitting"
             @click="handleUpdateSubmit"
           >
-            {{ updateSubmitButtonLabel }}
+            ثبت تغییرات
           </Button>
           <Button
             variant="danger"
@@ -413,9 +413,7 @@
       </template>
     </Modal>
 
-    <PhoneVerificationModal :phone-verification="createPhoneVerification" title="تایید نهایی" />
-    <PhoneVerificationModal :phone-verification="updatePhoneVerification" title="تایید نهایی" />
-    <PhoneVerificationModal :phone-verification="deletePhoneVerification" title="تایید نهایی" />
+
   </div>
 </template>
 
@@ -423,16 +421,12 @@
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { Table, Pagination, Button, Modal, Input, LoadingState, ErrorState, FileInput } from '../../components/ui'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
+import { confirm } from '../../utils/notifications'
 import { useLevels } from '../../composables/useLevels'
-import { usePhoneVerification, applyVerificationPayload } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
-const createPhoneVerification = usePhoneVerification()
-const updatePhoneVerification = usePhoneVerification()
-const deletePhoneVerification = usePhoneVerification()
 const {
   fetchLevels: fetchLevelsApi,
   createLevel,
@@ -478,16 +472,6 @@ const updateErrors = reactive({})
 
 const createSubmitting = ref(false)
 const updateSubmitting = ref(false)
-
-const verificationSubmitLabel = (defaultLabel, phoneVerification) => computed(() => {
-  if (phoneVerification.isProduction.value && !phoneVerification.isVerified.value) {
-    return 'ارسال کد تایید'
-  }
-  return defaultLabel
-})
-
-const createSubmitButtonLabel = verificationSubmitLabel('ثبت', createPhoneVerification)
-const updateSubmitButtonLabel = verificationSubmitLabel('ثبت تغییرات', updatePhoneVerification)
 
 const tableColumns = [
   {
@@ -603,7 +587,6 @@ const resetCreateForm = () => {
   createForm.image = null
   createForm.backgroundImage = null
   Object.keys(createErrors).forEach((key) => delete createErrors[key])
-  createPhoneVerification.resetVerificationState()
 }
 
 const resetUpdateForm = () => {
@@ -616,7 +599,6 @@ const resetUpdateForm = () => {
   updateForm.existingImageUrl = selectedLevel.value.image || null
   updateForm.existingBackgroundUrl = selectedLevel.value.background_image || null
   Object.keys(updateErrors).forEach((key) => delete updateErrors[key])
-  updatePhoneVerification.resetVerificationState()
 }
 
 const validateCreateForm = () => {
@@ -711,7 +693,7 @@ const buildUpdatePayload = () => ({
   backgroundImage: updateForm.backgroundImage
 })
 
-const buildLevelFormData = (payload, verificationPayload = {}) => {
+const buildLevelFormData = (payload) => {
   const formData = new FormData()
   formData.append('name', payload.name)
   formData.append('slug', payload.slug)
@@ -725,7 +707,7 @@ const buildLevelFormData = (payload, verificationPayload = {}) => {
     formData.append('background_image', payload.backgroundImage)
   }
 
-  return applyVerificationPayload(formData, verificationPayload)
+  return formData
 }
 
 const submitCreateLevel = async () => {
@@ -734,13 +716,12 @@ const submitCreateLevel = async () => {
     Object.keys(createErrors).forEach((key) => delete createErrors[key])
 
     const payload = buildCreatePayload()
-    const formData = buildLevelFormData(payload, createPhoneVerification.getSubmitPayload())
+    const formData = buildLevelFormData(payload)
 
     const response = await createLevel(formData)
 
     if (response.data?.success) {
       showToast(response.data?.message || 'سطح با موفقیت ایجاد شد', 'success')
-      createPhoneVerification.resetVerificationState()
       closeCreateModal()
       fetchLevels()
     } else {
@@ -749,17 +730,10 @@ const submitCreateLevel = async () => {
   } catch (err) {
     console.error('Create level error:', err)
 
-    if (await createPhoneVerification.handleApiVerificationError(err)) {
-      return
-    }
-
     if (err.response?.status === 422 && err.response?.data?.errors) {
       const errorsBag = err.response.data.errors
 
       Object.keys(errorsBag).forEach((field) => {
-        if (field === 'phone_verification') {
-          return
-        }
         const message = Array.isArray(errorsBag[field]) ? errorsBag[field][0] : errorsBag[field]
         createErrors[field] = message
       })
@@ -781,14 +755,13 @@ const submitUpdateLevel = async () => {
     Object.keys(updateErrors).forEach((key) => delete updateErrors[key])
 
     const payload = buildUpdatePayload()
-    const formData = buildLevelFormData(payload, updatePhoneVerification.getSubmitPayload())
+    const formData = buildLevelFormData(payload)
     formData.append('_method', 'PUT')
 
     const response = await updateLevel(selectedLevel.value.id, formData)
 
     if (response.data?.success) {
       showToast(response.data?.message || 'سطح با موفقیت بروزرسانی شد', 'success')
-      updatePhoneVerification.resetVerificationState()
       closeUpdateModal()
       fetchLevels()
     } else {
@@ -797,17 +770,10 @@ const submitUpdateLevel = async () => {
   } catch (err) {
     console.error('Update level error:', err)
 
-    if (await updatePhoneVerification.handleApiVerificationError(err)) {
-      return
-    }
-
     if (err.response?.status === 422 && err.response?.data?.errors) {
       const errorsBag = err.response.data.errors
 
       Object.keys(errorsBag).forEach((field) => {
-        if (field === 'phone_verification') {
-          return
-        }
         const message = Array.isArray(errorsBag[field]) ? errorsBag[field][0] : errorsBag[field]
         updateErrors[field] = message
       })
@@ -826,11 +792,6 @@ const handleCreateSubmit = async () => {
     return
   }
 
-  if (createPhoneVerification.isProduction.value && !createPhoneVerification.isVerified.value) {
-    await createPhoneVerification.beginVerifyForSubmit()
-    return
-  }
-
   await submitCreateLevel()
 }
 
@@ -841,29 +802,22 @@ const handleUpdateSubmit = async () => {
     return
   }
 
-  if (updatePhoneVerification.isProduction.value && !updatePhoneVerification.isVerified.value) {
-    await updatePhoneVerification.beginVerifyForSubmit()
-    return
-  }
-
   await submitUpdateLevel()
 }
 
 const handleDelete = async (level) => {
-  await deletePhoneVerification.confirmThenVerify(
-    {
-      message: 'آیا از حذف این سطح اطمینان دارید؟',
-      title: 'حذف سطح',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        const response = await deleteLevel(level.id, payload)
+  const result = await confirm(
+    'آیا از حذف این سطح اطمینان دارید؟',
+    'حذف سطح',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
+
+  try {
+        const response = await deleteLevel(level.id)
 
         if (response.data?.success) {
           showToast(response.data?.message || 'سطح با موفقیت حذف شد', 'success')
-          deletePhoneVerification.resetVerificationState()
           fetchLevels()
         } else {
           showToast(response.data?.message || 'خطا در حذف سطح', 'error')
@@ -871,18 +825,11 @@ const handleDelete = async (level) => {
       } catch (err) {
         console.error('Delete level error:', err)
 
-        if (await deletePhoneVerification.handleApiVerificationError(err)) {
-          return
-        }
-
         showToast(err.response?.data?.message || 'خطا در حذف سطح', 'error')
       }
-    }
-  )
 }
 
 const openCreateModal = () => {
-  createPhoneVerification.resetVerificationState()
   resetCreateForm()
   isCreateModalOpen.value = true
 }
@@ -901,7 +848,6 @@ const handleCreateModalToggle = (value) => {
 }
 
 const openUpdateModal = (level) => {
-  updatePhoneVerification.resetVerificationState()
   selectedLevel.value = level
   resetUpdateForm()
   isUpdateModalOpen.value = true
@@ -910,7 +856,6 @@ const openUpdateModal = (level) => {
 const closeUpdateModal = () => {
   isUpdateModalOpen.value = false
   selectedLevel.value = null
-  updatePhoneVerification.resetVerificationState()
 }
 
 const handleUpdateModalToggle = (value) => {

@@ -8,7 +8,6 @@ use App\Models\FeatureProperties;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Morilog\Jalali\Jalalian;
 
 class FeatureLimitsController extends Controller
@@ -30,13 +29,13 @@ class FeatureLimitsController extends Controller
         // Add expired status and convert dates to Shamsi for display
         $featureLimits->getCollection()->transform(function ($limit) {
             // Parse dates - they might be strings from database or Carbon instances
-            $startDate = is_string($limit->start_date) 
-                ? \Carbon\Carbon::parse($limit->start_date) 
+            $startDate = is_string($limit->start_date)
+                ? \Carbon\Carbon::parse($limit->start_date)
                 : ($limit->start_date instanceof \Carbon\Carbon ? $limit->start_date : null);
-            $endDate = is_string($limit->end_date) 
-                ? \Carbon\Carbon::parse($limit->end_date) 
+            $endDate = is_string($limit->end_date)
+                ? \Carbon\Carbon::parse($limit->end_date)
                 : ($limit->end_date instanceof \Carbon\Carbon ? $limit->end_date : null);
-            
+
             $limit->expired = $endDate ? now()->isAfter($endDate) : false;
             // Convert Carbon dates to Shamsi for display
             $limit->start_date_shamsi = $startDate ? Jalalian::fromCarbon($startDate)->format('Y/m/d') : null;
@@ -117,13 +116,6 @@ class FeatureLimitsController extends Controller
             'price' => 'required|numeric|min:0',
             'individual_buy_limit' => 'required|boolean',
             'individual_buy_count' => 'required|numeric|min:0',
-            'phone_verification' => [
-                'nullable',
-                Rule::requiredIf(app()->environment('production')),
-                'integer',
-                'digits:6',
-                'is_valid_verify_code',
-            ],
         ]);
 
         // Validate that start_id and end_id have the same prefix
@@ -187,17 +179,6 @@ class FeatureLimitsController extends Controller
      */
     public function destroy(Request $request, int $id): JsonResponse
     {
-        // Validate verification code in production
-        $validated = $request->validate([
-            'phone_verification' => [
-                'nullable',
-                Rule::requiredIf(app()->environment('production')),
-                'integer',
-                'digits:6',
-                'is_valid_verify_code',
-            ],
-        ]);
-
         $featureLimit = FeatureLimit::findOrFail($id);
 
         DB::beginTransaction();

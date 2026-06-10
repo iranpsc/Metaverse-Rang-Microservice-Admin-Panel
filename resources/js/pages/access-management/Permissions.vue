@@ -90,7 +90,6 @@
       @updated="handlePermissionUpdated"
     />
 
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -101,12 +100,10 @@ import { Table, Pagination, LoadingState, ErrorState, Button } from '../../compo
 import CreatePermissionModal from '../../components/access-management/CreatePermissionModal.vue'
 import UpdatePermissionModal from '../../components/access-management/UpdatePermissionModal.vue'
 import { useToast } from '../../composables/useToast'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import { confirm } from '../../utils/notifications'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const error = ref(null)
@@ -173,30 +170,21 @@ const handlePermissionUpdated = () => {
 }
 
 const handleDelete = async (id) => {
-  await phoneVerification.confirmThenVerify(
-    {
-      message: 'آیا می خواهید این دسترسی را حذف کنید؟',
-      title: 'حذف دسترسی',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        await apiClient.delete(`/permissions/${id}`, { data: payload })
-        showToast('دسترسی با موفقیت حذف شد', 'success')
-        phoneVerification.resetVerificationState()
-        fetchPermissions()
-      } catch (err) {
-        console.error('Delete permission error:', err)
-
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
-
-        showToast(err.response?.data?.message || 'خطا در حذف دسترسی', 'error')
-      }
-    }
+  const result = await confirm(
+    'آیا می خواهید این دسترسی را حذف کنید؟',
+    'حذف دسترسی',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
   )
+  if (!result.isConfirmed) return
+
+  try {
+    await apiClient.delete(`/permissions/${id}`)
+    showToast('دسترسی با موفقیت حذف شد', 'success')
+    fetchPermissions()
+  } catch (err) {
+    console.error('Delete permission error:', err)
+    showToast(err.response?.data?.message || 'خطا در حذف دسترسی', 'error')
+  }
 }
 
 const fetchPermissions = async () => {

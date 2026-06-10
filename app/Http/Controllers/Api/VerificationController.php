@@ -4,22 +4,27 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Notifications\SendVerificationCode;
+use App\Services\PhoneVerificationSessionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class VerificationController extends Controller
 {
+    public function __construct(
+        private readonly PhoneVerificationSessionService $phoneVerificationSession
+    ) {
+    }
+
     /**
-     * Send SMS verification code to authenticated admin
-     *
-     * @return JsonResponse
+     * Send SMS verification code to authenticated admin.
      */
     public function sendSMS(): JsonResponse
     {
         $admin = Auth::guard('admin')->user();
 
-        if (!$admin) {
+        if (! $admin) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized',
@@ -42,11 +47,11 @@ class VerificationController extends Controller
     }
 
     /**
-     * Validate SMS verification code without consuming it.
+     * @deprecated Use confirm() to extend the phone verification session.
      */
     public function verify(Request $request): JsonResponse
     {
-        if (!app()->environment('production')) {
+        if (! app()->environment('production')) {
             return response()->json([
                 'success' => true,
                 'message' => 'کد تایید با موفقیت تایید شد',
@@ -65,5 +70,57 @@ class VerificationController extends Controller
             ],
         ]);
     }
-}
 
+    /**
+     * Get the current phone verification session status.
+     */
+    public function status(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $this->phoneVerificationSession->getStatus(),
+        ]);
+    }
+
+    /**
+     * Confirm SMS code and extend the phone verification session.
+     */
+    public function confirm(Request $request): JsonResponse
+    {
+        if (! app()->environment('production')) {
+            $duration = $this->phoneVerificationSession->clampDuration(
+                (int) $request->input('duration_minutes', config('phone_verification.default_duration_minutes'))
+            );
+
+            $this->phoneVerificationSession->confirm($duration);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'جلسه تایید شماره موبایل با موفقیت تمدید شد.',
+                'data' => $this->phoneVerificationSession->getStatus(),
+            ]);
+        }
+
+        $validated = $request->validate([
+            'phone_verification' => ['required', 'integer', 'digits:6', 'is_valid_verify_code'],
+            'duration_minutes' => [
+                'required',
+                'integer',
+                'min:'.config('phone_verification.min_duration_minutes'),
+                'max:'.config('phone_verification.max_duration_minutes'),
+            ],
+        ]);
+
+        $adminId = Auth::guard('admin')->id();
+        Cache::forget('verify.code.'.$adminId);
+
+        $duration = $this->phoneVerificationSession->clampDuration((int) $validated['duration_minutes']);
+        $this->phoneVerificationSession->confirm($duration);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'جلسه تایید شماره موبایل با موفقیت تمدید شد.',
+            'data' => $this->phoneVerificationSession->getStatus(),
+        ]);
+    }
+}

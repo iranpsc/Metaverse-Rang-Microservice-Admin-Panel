@@ -110,17 +110,13 @@
       </div>
     </template>
   </Modal>
-
-  <PhoneVerificationModal :phone-verification="phoneVerification" />
 </template>
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Modal, Input, Button, Spinner, Alert } from '../ui'
-import PhoneVerificationModal from '../PhoneVerificationModal.vue'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
-import { notifySuccess, notifyError } from '../../utils/notifications'
+import { notifySuccess, notifyError, confirm } from '../../utils/notifications'
 import TableActionIcon from '../icons/TableActionIcon.vue'
 import { useModalForm } from '../../composables/useModalForm'
 
@@ -136,17 +132,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'updated'])
-
-const phoneVerification = usePhoneVerification()
-const {
-  isProduction,
-  isVerified,
-  beginVerifyForSubmit,
-  getSubmitPayload,
-  confirmThenVerify,
-  handleApiVerificationError,
-  resetVerificationState
-} = phoneVerification
 
 const {
   loading,
@@ -193,32 +178,24 @@ const fetchRoleDetails = async () => {
 }
 
 const handleRemovePermission = async (permissionId) => {
-  await confirmThenVerify(
-    {
-      message: 'آیا می خواهید این دسترسی را حذف کنید؟',
-      title: 'حذف دسترسی',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        await apiClient.delete(`/roles/${props.roleId}/permissions/${permissionId}`, { data: payload })
-        await notifySuccess('دسترسی با موفقیت حذف شد')
-        fetchRoleDetails()
-      } catch (err) {
-        console.error('Remove permission error:', err)
-
-        if (await handleApiVerificationError(err)) {
-          return
-        }
-
-        await notifyError(err.response?.data?.message || 'خطا در حذف دسترسی')
-      }
-    }
+  const result = await confirm(
+    'آیا می خواهید این دسترسی را حذف کنید؟',
+    'حذف دسترسی',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
   )
+  if (!result.isConfirmed) return
+
+  try {
+    await apiClient.delete(`/roles/${props.roleId}/permissions/${permissionId}`)
+    await notifySuccess('دسترسی با موفقیت حذف شد')
+    fetchRoleDetails()
+  } catch (err) {
+    console.error('Remove permission error:', err)
+    await notifyError(err.response?.data?.message || 'خطا در حذف دسترسی')
+  }
 }
 
-const submitRoleUpdate = async (verificationPayload = {}) => {
+const submitRoleUpdate = async () => {
   const existingPermissionNames = role.value.permissions.map(p => p.name)
   const newPermissionNames = selectedPermissions.value
   const allPermissions = [...new Set([...existingPermissionNames, ...newPermissionNames])]
@@ -230,23 +207,17 @@ const submitRoleUpdate = async (verificationPayload = {}) => {
     const response = await apiClient.put(`/roles/${props.roleId}`, {
       title: formData.value.title.trim(),
       name: formData.value.name.trim(),
-      permissions: allPermissions,
-      ...verificationPayload
+      permissions: allPermissions
     })
 
     if (response.data.success) {
       await notifySuccess('اطلاعات با موفقیت ثبت شد')
-      resetVerificationState()
       emit('updated')
     } else {
       fetchError.value = 'خطا در ثبت اطلاعات'
     }
   } catch (err) {
     console.error('Update role error:', err)
-
-    if (await handleApiVerificationError(err)) {
-      return
-    }
 
     if (err.response?.data?.errors) {
       errors.value = err.response.data.errors
@@ -271,12 +242,7 @@ const handleSave = async () => {
     return
   }
 
-  if (isProduction.value && !isVerified.value) {
-    await beginVerifyForSubmit()
-    return
-  }
-
-  await submitRoleUpdate(getSubmitPayload())
+  await submitRoleUpdate()
 }
 
 watch(() => props.show, (newVal) => {
@@ -289,7 +255,6 @@ watch(() => props.show, (newVal) => {
     selectedPermissions.value = []
     errors.value = {}
     fetchError.value = null
-    resetVerificationState()
   }
 })
 
@@ -299,7 +264,6 @@ watch(() => props.roleId, (newVal) => {
   }
 })
 
-// Fetch role details when component is mounted and modal is already shown
 onMounted(() => {
   if (props.show && props.roleId) {
     fetchRoleDetails()
@@ -310,4 +274,3 @@ onMounted(() => {
 <style scoped>
 /* Additional styles if needed */
 </style>
-

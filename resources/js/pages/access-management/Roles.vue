@@ -90,7 +90,6 @@
       @updated="handleRoleUpdated"
     />
 
-    <PhoneVerificationModal :phone-verification="phoneVerification" />
   </div>
 </template>
 
@@ -100,13 +99,11 @@ import apiClient from '../../utils/api'
 import { Table, Pagination, LoadingState, ErrorState, Button } from '../../components/ui'
 import CreateRoleModal from '../../components/access-management/CreateRoleModal.vue'
 import UpdateRoleModal from '../../components/access-management/UpdateRoleModal.vue'
-import PhoneVerificationModal from '../../components/PhoneVerificationModal.vue'
 import { useToast } from '../../composables/useToast'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
-import { usePhoneVerification } from '../../composables/usePhoneVerification'
+import { confirm } from '../../utils/notifications'
 
 const { showToast } = useToast()
-const phoneVerification = usePhoneVerification()
 
 const loading = ref(true)
 const error = ref(null)
@@ -173,38 +170,29 @@ const handleRoleUpdated = () => {
 }
 
 const handleDelete = async (id) => {
-  await phoneVerification.confirmThenVerify(
-    {
-      message: 'آیا می خواهید این مسئولیت را حذف کنید؟',
-      title: 'حذف مسئولیت',
-      confirmText: 'بله، حذف شود',
-      cancelText: 'انصراف'
-    },
-    async (payload) => {
-      try {
-        await apiClient.delete(`/roles/${id}`, { data: payload })
-        showToast('مسئولیت با موفقیت حذف شد', 'success')
+  const result = await confirm(
+    'آیا می خواهید این مسئولیت را حذف کنید؟',
+    'حذف مسئولیت',
+    { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
+  )
+  if (!result.isConfirmed) return
 
-        if (pagination.value && pagination.value.current_page > 1) {
-          const itemsOnCurrentPage = roles.value.length
-          if (itemsOnCurrentPage === 1) {
-            currentPage.value = pagination.value.current_page - 1
-          }
-        }
+  try {
+    await apiClient.delete(`/roles/${id}`)
+    showToast('مسئولیت با موفقیت حذف شد', 'success')
 
-        phoneVerification.resetVerificationState()
-        fetchRoles()
-      } catch (err) {
-        console.error('Delete role error:', err)
-
-        if (await phoneVerification.handleApiVerificationError(err)) {
-          return
-        }
-
-        showToast(err.response?.data?.message || 'خطا در حذف مسئولیت', 'error')
+    if (pagination.value && pagination.value.current_page > 1) {
+      const itemsOnCurrentPage = roles.value.length
+      if (itemsOnCurrentPage === 1) {
+        currentPage.value = pagination.value.current_page - 1
       }
     }
-  )
+
+    fetchRoles()
+  } catch (err) {
+    console.error('Delete role error:', err)
+    showToast(err.response?.data?.message || 'خطا در حذف مسئولیت', 'error')
+  }
 }
 
 const fetchRoles = async () => {
