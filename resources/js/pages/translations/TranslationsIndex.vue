@@ -111,6 +111,8 @@
               size="sm"
               variant="glass"
               rounded="full"
+              :loading="exportingId === row.id"
+              :disabled="exportingId !== null"
               @click="() => handleExport(row)"
             >
               خروجی JSON
@@ -172,6 +174,7 @@ const router = useRouter()
 
 const loading = ref(false)
 const creating = ref(false)
+const exportingId = ref(null)
 const error = ref('')
 const translations = ref([])
 const pagination = ref(null)
@@ -309,9 +312,10 @@ const handleToggleStatus = async () => {
   }
 }
 
-const handleExport = async () => {
+const handleExport = async (row) => {
+  exportingId.value = row.id
   try {
-    const result = await translationApi.exportTranslation(translation.id)
+    const result = await translationApi.exportTranslation(row.id)
 
     if (result.type === 'file') {
       const url = window.URL.createObjectURL(result.blob)
@@ -323,12 +327,14 @@ const handleExport = async () => {
       link.remove()
       window.URL.revokeObjectURL(url)
 
-      showToast(`فایل JSON برای ${translation.name} دانلود شد.`, 'success')
+      showToast(`فایل JSON برای ${row.name} دانلود شد.`, 'success')
     } else if (result.type === 'message') {
       showToast(result.data?.message || 'صادرات با موفقیت انجام شد.', 'success')
     }
   } catch (err) {
     showToast(err?.response?.data?.message || 'امکان صادرات ترجمه وجود ندارد.', 'error')
+  } finally {
+    exportingId.value = null
   }
 }
 
