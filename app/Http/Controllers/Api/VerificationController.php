@@ -101,13 +101,16 @@ class VerificationController extends Controller
             ]);
         }
 
+        $minDuration = (int) config('phone_verification.min_duration_minutes', 5);
+        $maxDuration = (int) config('phone_verification.max_duration_minutes', 50);
+
         $validated = $request->validate([
             'phone_verification' => ['required', 'integer', 'digits:6', 'is_valid_verify_code'],
             'duration_minutes' => [
                 'required',
                 'integer',
-                'min:'.config('phone_verification.min_duration_minutes'),
-                'max:'.config('phone_verification.max_duration_minutes'),
+                "min:{$minDuration}",
+                "max:{$maxDuration}",
             ],
         ]);
 
