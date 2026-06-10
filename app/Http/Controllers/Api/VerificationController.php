@@ -31,12 +31,37 @@ class VerificationController extends Controller
             ], 401);
         }
 
+        $cooldownSeconds = (int) config('phone_verification.sms_resend_cooldown_seconds', 60);
+        $cooldownKey = 'verify.sms.cooldown.'.$admin->id;
+        $cooldownUntil = Cache::get($cooldownKey);
+
+        if (is_int($cooldownUntil) && $cooldownUntil > now()->timestamp) {
+            $remaining = $cooldownUntil - now()->timestamp;
+
+            return response()->json([
+                'success' => false,
+                'message' => 'لطفاً قبل از درخواست مجدد کمی صبر کنید.',
+                'data' => [
+                    'resend_available_in' => $remaining,
+                ],
+            ], 429);
+        }
+
         try {
             $admin->notify(new SendVerificationCode);
+
+            Cache::put(
+                $cooldownKey,
+                now()->addSeconds($cooldownSeconds)->timestamp,
+                $cooldownSeconds
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => 'کد تایید با موفقیت ارسال گردید',
+                'data' => [
+                    'resend_available_in' => $cooldownSeconds,
+                ],
             ]);
         } catch (\Exception $e) {
             return response()->json([

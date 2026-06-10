@@ -18,8 +18,10 @@ export const usePhoneVerificationStore = defineStore('phoneVerification', {
     sendingCode: false,
     confirming: false,
     codeError: '',
+    resendCountdown: 0,
     pendingRetries: [],
     countdownTimer: null,
+    resendCountdownTimer: null,
     statusPollTimer: null
   }),
 
@@ -123,6 +125,30 @@ export const usePhoneVerificationStore = defineStore('phoneVerification', {
       this.codeError = ''
       this.sendingCode = false
       this.confirming = false
+      this.stopResendCountdown()
+      this.resendCountdown = 0
+    },
+
+    startResendCountdown(seconds = 60) {
+      this.stopResendCountdown()
+      this.resendCountdown = seconds
+
+      this.resendCountdownTimer = setInterval(() => {
+        if (this.resendCountdown > 0) {
+          this.resendCountdown -= 1
+        }
+
+        if (this.resendCountdown <= 0) {
+          this.stopResendCountdown()
+        }
+      }, 1000)
+    },
+
+    stopResendCountdown() {
+      if (this.resendCountdownTimer) {
+        clearInterval(this.resendCountdownTimer)
+        this.resendCountdownTimer = null
+      }
     },
 
     openModal() {
@@ -173,17 +199,38 @@ export const usePhoneVerificationStore = defineStore('phoneVerification', {
 
         if (response.data?.success) {
           this.modalStep = 'code'
+          this.startResendCountdown(response.data?.data?.resend_available_in ?? 60)
           return true
         }
 
         this.codeError = response.data?.message || 'خطا در ارسال کد تایید'
         return false
       } catch (error) {
+        const remaining = error.response?.data?.data?.resend_available_in
+
+        if (remaining) {
+          this.startResendCountdown(remaining)
+        }
+
         this.codeError = error.response?.data?.message || 'خطا در ارسال کد تایید'
         return false
       } finally {
         this.sendingCode = false
       }
+    },
+
+    async resendCode() {
+      if (this.resendCountdown > 0 || this.sendingCode) {
+        return false
+      }
+
+      const sent = await this.sendCode()
+
+      if (sent) {
+        this.codeError = ''
+      }
+
+      return sent
     },
 
     async confirmCode(code) {
@@ -225,6 +272,7 @@ export const usePhoneVerificationStore = defineStore('phoneVerification', {
 
     destroy() {
       this.stopLocalCountdown()
+      this.stopResendCountdown()
       this.stopStatusPolling()
       this.rejectPendingRetries(new Error('Phone verification store destroyed'))
     }

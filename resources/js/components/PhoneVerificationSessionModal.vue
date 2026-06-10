@@ -55,16 +55,36 @@
           :dismissible="false"
         />
 
-        <MaskedInput
-          ref="maskedInputRef"
-          v-model="verificationCode"
-          placeholder="کد تایید را وارد کنید"
-          :max-length="6"
-          :error="store.codeError"
-          :show-toggle="true"
-          :auto-reveal-on-focus="true"
-          @complete="handleCodeComplete"
-        />
+        <div>
+          <MaskedInput
+            ref="maskedInputRef"
+            v-model="verificationCode"
+            placeholder="کد تایید را وارد کنید"
+            :max-length="6"
+            :error="store.codeError"
+            :show-toggle="true"
+            :auto-reveal-on-focus="true"
+            @complete="handleCodeComplete"
+          />
+
+          <div v-if="store.resendCountdown > 0" class="mt-2 text-right">
+            <p class="text-sm text-[var(--theme-text-secondary)]">
+              ارسال مجدد تا {{ formatResendTime(store.resendCountdown) }}
+            </p>
+          </div>
+
+          <div v-else class="mt-2 text-right">
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 text-sm text-primary-400 underline transition-colors hover:text-primary-300 disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="store.sendingCode"
+              @click="handleResendCode"
+            >
+              <Spinner v-if="store.sendingCode" size="sm" />
+              <span>ارسال مجدد کد تایید</span>
+            </button>
+          </div>
+        </div>
 
         <div class="flex justify-end gap-3">
           <Button variant="glass" rounded="full" @click="store.modalStep = 'duration'">
@@ -111,6 +131,22 @@ watch(verificationCode, () => {
     store.codeError = ''
   }
 })
+
+const formatResendTime = (seconds) => {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+}
+
+const handleResendCode = async () => {
+  const sent = await store.resendCode()
+
+  if (sent) {
+    verificationCode.value = ''
+    await nextTick()
+    maskedInputRef.value?.focusFirstInput?.()
+  }
+}
 
 const handleSendCode = async () => {
   const duration = Number(store.durationInput)
