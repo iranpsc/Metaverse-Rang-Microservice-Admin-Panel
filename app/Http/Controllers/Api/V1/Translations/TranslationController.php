@@ -14,13 +14,12 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TranslationController extends Controller
 {
-    public function __construct(private readonly TranslationService $translationService)
-    {
-    }
+    public function __construct(private readonly TranslationService $translationService) {}
 
     public function index(Request $request): JsonResponse
     {
         $translations = Translation::query()
+            ->active()
             ->withCount('modals')
             ->orderBy('name')
             ->get();
@@ -125,5 +124,3 @@ class TranslationController extends Controller
         ]);
     }
 }
-
-
