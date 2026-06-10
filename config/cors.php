@@ -15,11 +15,15 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'translations/*', 'uploads/*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        'https://metarang.com',
+        'https://world.metarang.com',
+        'https://admin.metarang.com',
+    ],
 
     'allowed_origins_patterns' => [],
 
