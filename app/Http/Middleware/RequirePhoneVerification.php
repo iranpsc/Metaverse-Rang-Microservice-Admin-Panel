@@ -27,7 +27,7 @@ class RequirePhoneVerification
 
     public function handle(Request $request, Closure $next): Response
     {
-        if (! app()->environment('production')) {
+        if (! $this->phoneVerificationSession->isEnabled()) {
             return $next($request);
         }
 

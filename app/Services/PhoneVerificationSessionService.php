@@ -2,22 +2,31 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+
 class PhoneVerificationSessionService
 {
-    private const SESSION_KEY_VERIFIED_AT = 'phone_verified_at';
+    private function cacheKey(?int $adminId = null): ?string
+    {
+        $adminId ??= Auth::guard('admin')->id();
 
-    private const SESSION_KEY_DURATION = 'phone_verification_duration_minutes';
+        if (! $adminId) {
+            return null;
+        }
+
+        return 'phone.verification.'.$adminId;
+    }
+
+    public function isEnabled(): bool
+    {
+        return app()->environment('production');
+    }
 
     public function isVerified(): bool
     {
-        if (! app()->environment('production')) {
+        if (! $this->isEnabled()) {
             return true;
-        }
-
-        $verifiedAt = session(self::SESSION_KEY_VERIFIED_AT);
-
-        if (! $verifiedAt) {
-            return false;
         }
 
         return $this->remainingSeconds() > 0;
@@ -25,23 +34,32 @@ class PhoneVerificationSessionService
 
     public function confirm(int $durationMinutes): void
     {
-        session([
-            self::SESSION_KEY_VERIFIED_AT => now()->timestamp,
-            self::SESSION_KEY_DURATION => $durationMinutes,
-        ]);
+        $key = $this->cacheKey();
+
+        if (! $key) {
+            return;
+        }
+
+        $durationMinutes = $this->clampDuration($durationMinutes);
+
+        Cache::put($key, [
+            'verified_at' => now()->timestamp,
+            'duration_minutes' => $durationMinutes,
+        ], now()->addMinutes($durationMinutes));
     }
 
-    public function clear(): void
+    public function clear(?int $adminId = null): void
     {
-        session()->forget([
-            self::SESSION_KEY_VERIFIED_AT,
-            self::SESSION_KEY_DURATION,
-        ]);
+        $key = $this->cacheKey($adminId);
+
+        if ($key) {
+            Cache::forget($key);
+        }
     }
 
     public function getStatus(): array
     {
-        if (! app()->environment('production')) {
+        if (! $this->isEnabled()) {
             return [
                 'verified' => true,
                 'expires_at' => null,
@@ -50,13 +68,9 @@ class PhoneVerificationSessionService
             ];
         }
 
-        $verifiedAt = session(self::SESSION_KEY_VERIFIED_AT);
-        $durationMinutes = (int) session(
-            self::SESSION_KEY_DURATION,
-            config('phone_verification.default_duration_minutes')
-        );
+        $payload = $this->getPayload();
 
-        if (! $verifiedAt) {
+        if (! $payload) {
             return [
                 'verified' => false,
                 'expires_at' => null,
@@ -66,6 +80,8 @@ class PhoneVerificationSessionService
         }
 
         $remainingSeconds = $this->remainingSeconds();
+        $durationMinutes = (int) $payload['duration_minutes'];
+        $verifiedAt = (int) $payload['verified_at'];
         $expiresAt = $remainingSeconds > 0
             ? now()->setTimestamp($verifiedAt)->addMinutes($durationMinutes)->toIso8601String()
             : null;
@@ -86,20 +102,30 @@ class PhoneVerificationSessionService
         return max($min, min($max, $durationMinutes));
     }
 
+    private function getPayload(): ?array
+    {
+        $key = $this->cacheKey();
+
+        if (! $key) {
+            return null;
+        }
+
+        $payload = Cache::get($key);
+
+        return is_array($payload) ? $payload : null;
+    }
+
     private function remainingSeconds(): int
     {
-        $verifiedAt = session(self::SESSION_KEY_VERIFIED_AT);
+        $payload = $this->getPayload();
 
-        if (! $verifiedAt) {
+        if (! $payload) {
             return 0;
         }
 
-        $durationMinutes = (int) session(
-            self::SESSION_KEY_DURATION,
-            config('phone_verification.default_duration_minutes')
-        );
-
-        $expiresAt = (int) $verifiedAt + ($durationMinutes * 60);
+        $verifiedAt = (int) $payload['verified_at'];
+        $durationMinutes = (int) $payload['duration_minutes'];
+        $expiresAt = $verifiedAt + ($durationMinutes * 60);
 
         return $expiresAt - now()->timestamp;
     }

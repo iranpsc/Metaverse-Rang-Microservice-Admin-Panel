@@ -51,7 +51,7 @@ class VerificationController extends Controller
      */
     public function verify(Request $request): JsonResponse
     {
-        if (! app()->environment('production')) {
+        if (! $this->phoneVerificationSession->isEnabled()) {
             return response()->json([
                 'success' => true,
                 'message' => 'کد تایید با موفقیت تایید شد',
@@ -87,7 +87,7 @@ class VerificationController extends Controller
      */
     public function confirm(Request $request): JsonResponse
     {
-        if (! app()->environment('production')) {
+        if (! $this->phoneVerificationSession->isEnabled()) {
             $duration = $this->phoneVerificationSession->clampDuration(
                 (int) $request->input('duration_minutes', config('phone_verification.default_duration_minutes'))
             );

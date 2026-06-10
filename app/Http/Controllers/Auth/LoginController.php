@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AuthenticatedUserResource;
 use App\Services\ActivityLoggerService;
+use App\Services\PhoneVerificationSessionService;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Foundation\Auth\ThrottlesLogins;
 use Illuminate\Support\Facades\Auth;
@@ -78,6 +79,7 @@ class LoginController extends Controller
 
         if ($user) {
             Auth::guard('admin')->setUser($user);
+            app(PhoneVerificationSessionService::class)->clear($user->id);
             ActivityLoggerService::logAuth('logout', 'خروج از سیستم', [
                 'email' => $user->email,
                 'ip' => $request->ip(),

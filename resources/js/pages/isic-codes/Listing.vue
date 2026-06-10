@@ -337,7 +337,7 @@ const submitCreateRequest = async () => {
       code: form.code.trim()
     }
 
-    const { data } = await apiClient.post('/isic-codes')
+    const { data } = await apiClient.post('/isic-codes', payload)
 
     if (data?.success) {
       showToast(data.message || 'کد ISIC با موفقیت ایجاد شد.', 'success')
@@ -434,7 +434,7 @@ const updateIsicCodeInList = (updated) => {
   }
 }
 
-const handleApprove = async () => {
+const handleApprove = async (row) => {
   try {
     actionLoading.approve = row.id
     const { data } = await apiClient.post(`/isic-codes/${row.id}/approve`)
@@ -459,7 +459,7 @@ const handleApprove = async () => {
   }
 }
 
-const handleDeny = async () => {
+const handleDeny = async (row) => {
   try {
     actionLoading.deny = row.id
     const { data } = await apiClient.post(`/isic-codes/${row.id}/deny`)
