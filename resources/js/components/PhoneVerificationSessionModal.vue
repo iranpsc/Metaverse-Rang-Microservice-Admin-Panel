@@ -3,6 +3,7 @@
     :model-value="store.showModal"
     title="تمدید جلسه تایید موبایل"
     size="md"
+    :z-index="100"
     :close-on-backdrop="false"
     :close-on-escape="false"
     @update:model-value="onDialogUpdate"

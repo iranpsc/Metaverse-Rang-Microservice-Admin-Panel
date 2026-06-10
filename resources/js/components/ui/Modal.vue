@@ -10,7 +10,8 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        class="fixed inset-0 flex items-center justify-center p-4"
+        :style="{ zIndex }"
         @click.self="handleBackdropClick"
       >
         <!-- Backdrop -->
@@ -126,6 +127,10 @@ const props = defineProps({
   closeOnEscape: {
     type: Boolean,
     default: true
+  },
+  zIndex: {
+    type: Number,
+    default: 50
   }
 })
 

@@ -3,8 +3,6 @@
     <!-- Toast Container -->
     <ToastContainer />
 
-    <PhoneVerificationSessionModal />
-
     <!-- Header -->
     <Header
       :sidebar-collapsed="sidebarCollapsed"
@@ -24,6 +22,8 @@
         </router-view>
       </ContentArea>
     </div>
+
+    <PhoneVerificationSessionModal />
   </div>
 </template>
 
