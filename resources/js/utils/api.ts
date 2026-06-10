@@ -56,6 +56,59 @@ const ensureCsrfCookie = async (force = false) => {
 
 export { ensureCsrfCookie }
 
+type ErrorResponsePayload = {
+  requires_phone_verification?: boolean
+}
+
+type ResponseHeaders = NonNullable<AxiosError['response']>['headers']
+
+const getResponseContentType = (headers: ResponseHeaders | undefined): string => {
+  const value = headers?.['content-type']
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (Array.isArray(value)) {
+    return value[0] ?? ''
+  }
+
+  return ''
+}
+
+const parseErrorResponseData = async (
+  data: unknown,
+  contentType = '',
+  forceJson = false
+): Promise<ErrorResponsePayload | null> => {
+  if (!data) {
+    return null
+  }
+
+  if (data instanceof Blob) {
+    const shouldTryJson = forceJson
+      || contentType.includes('application/json')
+      || data.type.includes('application/json')
+
+    if (!shouldTryJson) {
+      return null
+    }
+
+    try {
+      const text = await data.text()
+      return JSON.parse(text) as ErrorResponsePayload
+    } catch {
+      return null
+    }
+  }
+
+  if (typeof data === 'object') {
+    return data as ErrorResponsePayload
+  }
+
+  return null
+}
+
 apiClient.interceptors.request.use(
   async (config) => {
     const method = config.method?.toLowerCase()
@@ -81,7 +134,7 @@ apiClient.interceptors.request.use(
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     if (error.response) {
       if (error.response.status === 401 && window.location.pathname !== '/login') {
         localStorage.removeItem('admin_authenticated')
@@ -104,7 +157,13 @@ apiClient.interceptors.response.use(
         })
       }
 
-      const responseData = error.response.data as { requires_phone_verification?: boolean }
+      const contentType = getResponseContentType(error.response.headers)
+      const responseData = await parseErrorResponseData(
+        error.response.data,
+        contentType,
+        error.response.status === 423
+      )
+
       if (
         error.response.status === 423 &&
         responseData?.requires_phone_verification &&

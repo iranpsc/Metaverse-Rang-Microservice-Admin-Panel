@@ -61,13 +61,22 @@ export const translationApi = {
         blob: response.data
       }
     } catch (error) {
-      const contentType = error.response?.headers?.['content-type']
+      const contentType = error.response?.headers?.['content-type'] || ''
+      let data = error.response?.data
 
-      if (contentType && contentType.includes('application/json')) {
-        const text = await error.response.data.text()
+      if (data instanceof Blob && contentType.includes('application/json')) {
+        const text = await data.text()
+        data = JSON.parse(text)
+      }
+
+      if (data?.requires_phone_verification) {
+        throw error
+      }
+
+      if (contentType.includes('application/json') && data && typeof data === 'object') {
         return {
           type: 'message',
-          data: JSON.parse(text)
+          data
         }
       }
 
