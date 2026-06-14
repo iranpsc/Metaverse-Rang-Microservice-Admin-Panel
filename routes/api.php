@@ -263,7 +263,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class, RequirePhoneVe
 
     // Videos routes
     Route::get('/videos/meta', [VideosController::class, 'meta']);
-    Route::post('/videos/chunk', VideoUploadController::class);
+    Route::post('/videos/chunk', VideoUploadController::class)->withoutMiddleware('throttle:api');
     Route::apiResource('videos', VideosController::class)->except(['show']);
 
     // Dynasty - Messages routes
