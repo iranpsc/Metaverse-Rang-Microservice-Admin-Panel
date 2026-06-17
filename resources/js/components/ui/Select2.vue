@@ -19,6 +19,7 @@
         v-for="option in options"
         :key="option.value ?? option"
         :value="option.value ?? option"
+        :disabled="Boolean(option.disabled)"
       >
         {{ option.label ?? option }}
       </option>
@@ -284,6 +285,17 @@ watch(
 :global(.select2-results__option--highlighted) {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.22));
   color: var(--theme-text-primary);
+}
+
+:global(.select2-results__option[aria-disabled='true']) {
+  color: var(--theme-text-muted);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+:global(.select2-results__option[aria-disabled='true'].select2-results__option--highlighted) {
+  background: transparent;
+  color: var(--theme-text-muted);
 }
 
 :global([data-theme='light'] .select2-dropdown) {

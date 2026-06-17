@@ -86,7 +86,7 @@ Route::middleware(['guest'])->group(function () {
 
 // Protected auth routes
 // Use sanctum for token-based authentication with admin guard support
-Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class, RequirePhoneVerification::class])->group(function () {
+Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(function () {
     Route::get('/me', [LoginController::class, 'me']);
     Route::post('/logout', [LoginController::class, 'logout']);
     Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -159,6 +159,8 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class, RequirePhoneVe
 
     // Lands routes
     Route::get('/lands', [LandsController::class, 'index']);
+    Route::get('/lands/owner-transfer/options', [LandsController::class, 'ownerTransferOptions']);
+    Route::post('/lands/owner-transfer', [LandsController::class, 'transferOwner']);
     Route::put('/lands/features/{id}/properties', [LandsController::class, 'updateProperties']);
     Route::put('/lands/features/{id}/coordinates', [LandsController::class, 'updateCoordinates']);
 

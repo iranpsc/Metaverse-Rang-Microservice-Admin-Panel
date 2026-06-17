@@ -1,9 +1,14 @@
 <template>
   <div class="p-6 space-y-6">
     <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">لیست املاک</h1>
-      <p class="text-[var(--theme-text-secondary)]">مدیریت و مشاهده اطلاعات املاک</p>
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">لیست املاک</h1>
+        <p class="text-[var(--theme-text-secondary)]">مدیریت و مشاهده اطلاعات املاک</p>
+      </div>
+      <Button variant="primary" @click="showTransferModal = true">
+        انتقال مالکیت
+      </Button>
     </div>
 
     <!-- Search Box -->
@@ -54,13 +59,19 @@
       @page-change="goToPage"
     />
 
+    <TransferOwnerModal
+      v-model="showTransferModal"
+      @transferred="fetchProperties"
+    />
+
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Pagination, SearchBox, LoadingState, ErrorState, Alert } from '../../components/ui'
+import { Table, Pagination, SearchBox, LoadingState, ErrorState, Alert, Button } from '../../components/ui'
+import TransferOwnerModal from '../../components/lands/TransferOwnerModal.vue'
 
 const loading = ref(true)
 const error = ref(null)
@@ -68,6 +79,7 @@ const properties = ref([])
 const pagination = ref(null)
 const searchTerm = ref('')
 const currentPage = ref(1)
+const showTransferModal = ref(false)
 
 // Table columns configuration
 const tableColumns = [
@@ -98,6 +110,10 @@ const tableColumns = [
   {
     key: 'publisher_name',
     label: 'ثبت کننده'
+  },
+  {
+    key: 'owner_name',
+    label: 'مالک'
   }
 ]
 
@@ -144,6 +160,7 @@ const fetchProperties = async () => {
         address: property.address?.length > 15 ? property.address.substring(0, 15) + '...' : property.address,
         date: property.date ? formatDate(property.date) : '-',
         publisher_name: property.feature?.map?.publisher_name || '-',
+        owner_name: getOwnerName(property.feature),
         feature: property.feature
       }))
       pagination.value = response.data.data.pagination
@@ -187,6 +204,16 @@ const getApplicationTitle = (karbari) => {
   }
 
   return mapping[karbari] || '-'
+}
+
+const getOwnerName = (feature) => {
+  if (!feature) return '-'
+
+  if (feature.owner_id === 1) {
+    return 'سیستم'
+  }
+
+  return feature.owner?.name || '-'
 }
 
 const formatDate = (dateString) => {

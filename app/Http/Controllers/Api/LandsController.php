@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Feature;
 use App\Models\FeatureProperties;
 use App\Models\Coordinate;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,7 @@ class LandsController extends Controller
         $perPage = $request->get('per_page', 10);
         $page = $request->get('page', 1);
 
-        $query = FeatureProperties::with(['feature', 'feature.map', 'feature.geometry.coordinates']);
+        $query = FeatureProperties::with(['feature', 'feature.map', 'feature.owner:id,name,code', 'feature.geometry.coordinates']);
 
         if ($searchTerm) {
             $query->where('id', 'like', '%' . trim($searchTerm) . '%');
@@ -152,6 +153,112 @@ class LandsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'خطا در ثبت اطلاعات',
+            ], 500);
+        }
+    }
+
+    /**
+     * Get lands and users for the owner transfer modal
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function ownerTransferOptions(Request $request): JsonResponse
+    {
+        $landsSearch = $request->get('lands_search', '');
+        $usersSearch = $request->get('users_search', '');
+
+        $landsQuery = FeatureProperties::with(['feature.owner:id,name'])
+            ->orderBy('id', 'asc');
+
+        if ($landsSearch) {
+            $landsQuery->where('id', 'like', '%' . trim($landsSearch) . '%');
+        }
+
+        $lands = $landsQuery->limit(500)->get()->map(function (FeatureProperties $property) {
+            $ownerId = $property->feature?->owner_id;
+            $transferable = $ownerId === 1;
+            $ownerName = $property->feature?->owner?->name ?? '-';
+
+            return [
+                'value' => $property->feature_id,
+                'label' => $transferable
+                    ? $property->id
+                    : "{$property->id} (مالک: {$ownerName})",
+                'disabled' => !$transferable,
+            ];
+        });
+
+        $usersQuery = User::query()
+            ->where('id', '!=', 1)
+            ->orderBy('name');
+
+        if ($usersSearch) {
+            $usersQuery->where(function ($query) use ($usersSearch) {
+                $query->where('name', 'like', '%' . trim($usersSearch) . '%')
+                    ->orWhere('code', 'like', '%' . trim($usersSearch) . '%')
+                    ->orWhere('email', 'like', '%' . trim($usersSearch) . '%');
+            });
+        }
+
+        $users = $usersQuery->limit(500)->get()->map(function (User $user) {
+            $code = $user->code ?? '-';
+
+            return [
+                'value' => $user->id,
+                'label' => "{$user->name} ({$code})",
+                'disabled' => false,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'lands' => $lands,
+                'users' => $users,
+            ],
+            'message' => 'Owner transfer options retrieved successfully.',
+        ]);
+    }
+
+    /**
+     * Transfer land ownership from system (owner_id = 1) to a user
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function transferOwner(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'feature_id' => 'required|integer|exists:features,id',
+            'new_owner_id' => 'required|integer|exists:users,id|not_in:1',
+        ]);
+
+        $feature = Feature::findOrFail($validated['feature_id']);
+
+        if ($feature->owner_id !== 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'فقط زمین‌های بدون مالک کاربر قابل انتقال هستند',
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $feature->update(['owner_id' => $validated['new_owner_id']]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'مالکیت زمین با موفقیت منتقل شد',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در انتقال مالکیت',
             ], 500);
         }
     }
