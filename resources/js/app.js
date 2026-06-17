@@ -4,7 +4,6 @@ import Root from './components/Root.vue';
 import router from './router';
 import PrimeVue from 'primevue/config';
 import Aura from '@primevue/themes/aura';
-import 'select2/dist/css/select2.min.css';
 import 'simple-line-icons/css/simple-line-icons.css';
 
 function bootstrap() {

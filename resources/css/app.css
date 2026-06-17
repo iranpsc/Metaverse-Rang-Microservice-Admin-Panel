@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import 'quill/dist/quill.core.css';
 @import 'quill/dist/quill.snow.css';
+@import 'select2/dist/css/select2.min.css';
+@import './select2-theme.css';
 
 /* Tailwind CSS v4 Dark Mode Custom Variant */
 @custom-variant dark (&:where(.dark, .dark *));
