@@ -6,13 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Feature;
 use App\Models\FeatureProperties;
 use App\Models\Coordinate;
-use App\Models\User;
+use App\Services\Lands\LandOwnerTransferService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class LandsController extends Controller
 {
+    public function __construct(
+        private readonly LandOwnerTransferService $landOwnerTransferService
+    ) {
+    }
     /**
      * Get paginated lands/properties with search
      *
@@ -158,66 +163,33 @@ class LandsController extends Controller
     }
 
     /**
-     * Get lands and users for the owner transfer modal
+     * Get paginated lands or users for the owner transfer modal
      *
      * @param Request $request
      * @return JsonResponse
      */
     public function ownerTransferOptions(Request $request): JsonResponse
     {
-        $landsSearch = $request->get('lands_search', '');
-        $usersSearch = $request->get('users_search', '');
+        $validated = $request->validate([
+            'type' => 'required|in:lands,users',
+            'search' => 'nullable|string|max:255',
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
 
-        $landsQuery = FeatureProperties::with(['feature.owner:id,name'])
-            ->orderBy('id', 'asc');
-
-        if ($landsSearch) {
-            $landsQuery->where('id', 'like', '%' . trim($landsSearch) . '%');
-        }
-
-        $lands = $landsQuery->limit(500)->get()->map(function (FeatureProperties $property) {
-            $ownerId = $property->feature?->owner_id;
-            $transferable = $ownerId === 1;
-            $ownerName = $property->feature?->owner?->name ?? '-';
-
-            return [
-                'value' => $property->feature_id,
-                'label' => $transferable
-                    ? $property->id
-                    : "{$property->id} (مالک: {$ownerName})",
-                'disabled' => !$transferable,
-            ];
-        });
-
-        $usersQuery = User::query()
-            ->where('id', '!=', 1)
-            ->orderBy('name');
-
-        if ($usersSearch) {
-            $usersQuery->where(function ($query) use ($usersSearch) {
-                $query->where('name', 'like', '%' . trim($usersSearch) . '%')
-                    ->orWhere('code', 'like', '%' . trim($usersSearch) . '%')
-                    ->orWhere('email', 'like', '%' . trim($usersSearch) . '%');
-            });
-        }
-
-        $users = $usersQuery->limit(500)->get()->map(function (User $user) {
-            $code = $user->code ?? '-';
-
-            return [
-                'value' => $user->id,
-                'label' => "{$user->name} ({$code})",
-                'disabled' => false,
-            ];
-        });
+        $result = $this->landOwnerTransferService->getOptions(
+            $validated['type'],
+            trim($validated['search'] ?? ''),
+            $validated['page'] ?? 1,
+            $validated['per_page'] ?? 20
+        );
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'lands' => $lands,
-                'users' => $users,
-            ],
-            'message' => 'Owner transfer options retrieved successfully.',
+            'data' => $result,
+            'message' => $validated['type'] === 'lands'
+                ? 'Land options retrieved successfully.'
+                : 'User options retrieved successfully.',
         ]);
     }
 
@@ -234,28 +206,22 @@ class LandsController extends Controller
             'new_owner_id' => 'required|integer|exists:users,id|not_in:1',
         ]);
 
-        $feature = Feature::findOrFail($validated['feature_id']);
-
-        if ($feature->owner_id !== 1) {
-            return response()->json([
-                'success' => false,
-                'message' => 'فقط زمین‌های بدون مالک کاربر قابل انتقال هستند',
-            ], 422);
-        }
-
-        DB::beginTransaction();
         try {
-            $feature->update(['owner_id' => $validated['new_owner_id']]);
-
-            DB::commit();
+            $this->landOwnerTransferService->transferOwner(
+                $validated['feature_id'],
+                $validated['new_owner_id']
+            );
 
             return response()->json([
                 'success' => true,
                 'message' => 'مالکیت زمین با موفقیت منتقل شد',
             ]);
+        } catch (HttpException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->getStatusCode());
         } catch (\Exception $e) {
-            DB::rollBack();
-
             return response()->json([
                 'success' => false,
                 'message' => 'خطا در انتقال مالکیت',

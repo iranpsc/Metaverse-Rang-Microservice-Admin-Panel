@@ -5,15 +5,7 @@
     size="md"
     @update:model-value="handleClose"
   >
-    <div v-if="loading" class="flex justify-center py-8">
-      <Spinner size="lg" />
-    </div>
-
-    <div v-else-if="loadError" class="py-2">
-      <Alert variant="danger" :message="loadError" :dismissible="false" />
-    </div>
-
-    <div v-else class="space-y-6" dir="rtl">
+    <div class="space-y-6" dir="rtl">
       <Alert variant="info" :dismissible="false">
         فقط زمین‌هایی که هنوز به کاربری اختصاص داده نشده‌اند (مالک سیستم) قابل انتقال هستند.
         زمین‌های دارای مالک در لیست غیرفعال نمایش داده می‌شوند.
@@ -23,17 +15,18 @@
         v-model="selectedLandId"
         label="انتخاب زمین"
         placeholder="زمین را انتخاب کنید"
-        :options="landOptions"
+        :remote-fetch="fetchLandOptions"
         :error="errors.feature_id"
         required
         :allow-clear="true"
+        @option-select="handleLandSelect"
       />
 
       <Select2
         v-model="selectedUserId"
         label="انتخاب کاربر جدید"
         placeholder="کاربر را انتخاب کنید"
-        :options="userOptions"
+        :remote-fetch="fetchUserOptions"
         :error="errors.new_owner_id"
         required
         :allow-clear="true"
@@ -44,7 +37,6 @@
       <Button
         variant="primary"
         :loading="saving"
-        :disabled="loading || Boolean(loadError)"
         @click="handleTransfer"
       >
         انتقال مالکیت
@@ -59,7 +51,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import apiClient from '../../utils/api'
-import { Modal, Button, Alert, Spinner } from '../ui'
+import { Modal, Button, Alert } from '../ui'
 import Select2 from '../ui/Select2.vue'
 import { notifySuccess, notifyError } from '../../utils/notifications'
 
@@ -72,41 +64,47 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'transferred'])
 
-const loading = ref(false)
+const OPTIONS_PER_PAGE = 20
+
 const saving = ref(false)
-const loadError = ref(null)
-const landOptions = ref([])
-const userOptions = ref([])
 const selectedLandId = ref('')
 const selectedUserId = ref('')
+const selectedLandDisabled = ref(false)
 const errors = ref({})
 
 const resetForm = () => {
   selectedLandId.value = ''
   selectedUserId.value = ''
+  selectedLandDisabled.value = false
   errors.value = {}
-  loadError.value = null
 }
 
-const fetchOptions = async () => {
-  try {
-    loading.value = true
-    loadError.value = null
-
-    const response = await apiClient.get('/lands/owner-transfer/options')
-
-    if (response.data.success) {
-      landOptions.value = response.data.data.lands
-      userOptions.value = response.data.data.users
-    } else {
-      loadError.value = 'خطا در دریافت لیست زمین‌ها و کاربران'
+const fetchTransferOptions = async (type, { search, page }) => {
+  const response = await apiClient.get('/lands/owner-transfer/options', {
+    params: {
+      type,
+      search,
+      page,
+      per_page: OPTIONS_PER_PAGE
     }
-  } catch (err) {
-    console.error('Owner transfer options fetch error:', err)
-    loadError.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-  } finally {
-    loading.value = false
+  })
+
+  if (!response.data.success) {
+    throw new Error('خطا در دریافت اطلاعات')
   }
+
+  return {
+    results: response.data.data.options,
+    more: response.data.data.pagination.more
+  }
+}
+
+const fetchLandOptions = ({ search, page }) => fetchTransferOptions('lands', { search, page })
+
+const fetchUserOptions = ({ search, page }) => fetchTransferOptions('users', { search, page })
+
+const handleLandSelect = (option) => {
+  selectedLandDisabled.value = Boolean(option.disabled)
 }
 
 const validateForm = () => {
@@ -117,11 +115,7 @@ const validateForm = () => {
     return false
   }
 
-  const selectedLand = landOptions.value.find(
-    (option) => String(option.value) === String(selectedLandId.value)
-  )
-
-  if (selectedLand?.disabled) {
+  if (selectedLandDisabled.value) {
     errors.value.feature_id = 'این زمین قابل انتقال نیست'
     return false
   }
@@ -188,7 +182,6 @@ watch(
   (isOpen) => {
     if (isOpen) {
       resetForm()
-      fetchOptions()
     }
   }
 )

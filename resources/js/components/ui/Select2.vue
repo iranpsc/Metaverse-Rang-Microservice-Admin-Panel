@@ -14,7 +14,7 @@
       class="w-full"
       :disabled="disabled"
     >
-      <option v-if="placeholder" value="">{{ placeholder }}</option>
+      <option v-if="placeholder && !remoteFetch" value="">{{ placeholder }}</option>
       <option
         v-for="option in options"
         :key="option.value ?? option"
@@ -42,6 +42,7 @@
 
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import 'select2/dist/css/select2.min.css'
 
 const props = defineProps({
   modelValue: {
@@ -87,10 +88,14 @@ const props = defineProps({
   helperText: {
     type: String,
     default: ''
+  },
+  remoteFetch: {
+    type: Function,
+    default: null
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'change'])
+const emit = defineEmits(['update:modelValue', 'change', 'option-select'])
 
 const selectRef = ref(null)
 let initialized = false
@@ -116,6 +121,50 @@ const ensureSelect2 = () => {
   return select2Loader
 }
 
+const buildSelect2Config = () => {
+  const config = {
+    placeholder: props.placeholder,
+    allowClear: props.allowClear,
+    dir: 'rtl',
+    width: '100%'
+  }
+
+  if (props.remoteFetch) {
+    config.minimumInputLength = 0
+    config.ajax = {
+      delay: 300,
+      transport: (params, success, failure) => {
+        const search = params.data?.search ?? ''
+        const page = params.data?.page ?? 1
+
+        props.remoteFetch({ search, page })
+          .then((data) => success(data))
+          .catch((error) => failure(error))
+      },
+      data: (params) => ({
+        search: params.term ?? '',
+        page: params.page ?? 1
+      }),
+      processResults: (data, params) => {
+        params.page = params.page || 1
+
+        return {
+          results: (data.results || []).map((item) => ({
+            id: String(item.value),
+            text: item.label,
+            disabled: Boolean(item.disabled)
+          })),
+          pagination: {
+            more: Boolean(data.more)
+          }
+        }
+      }
+    }
+  }
+
+  return config
+}
+
 const initSelect2 = async () => {
   if (!selectRef.value) return
 
@@ -126,12 +175,7 @@ const initSelect2 = async () => {
     return
   }
 
-  $el.select2({
-    placeholder: props.placeholder,
-    allowClear: props.allowClear,
-    dir: 'rtl',
-    width: '100%'
-  })
+  $el.select2(buildSelect2Config())
 
   const syncModelFromDom = () => {
     const raw = $el.val()
@@ -142,15 +186,26 @@ const initSelect2 = async () => {
     }
   }
 
-  // Select2: ensure v-model updates on user selection (change + explicit select handlers).
   $el.on('change.select2Component', syncModelFromDom)
-  $el.on('select2:select.select2Component', syncModelFromDom)
+  $el.on('select2:select.select2Component', (event) => {
+    syncModelFromDom()
+    const selected = event.params?.data
+    if (selected) {
+      emit('option-select', {
+        value: selected.id,
+        label: selected.text,
+        disabled: Boolean(selected.disabled)
+      })
+    }
+  })
   $el.on('select2:clear.select2Component', syncModelFromDom)
 
-  if (props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== '') {
-    $el.val(String(props.modelValue)).trigger('change')
-  } else if (props.placeholder) {
-    $el.val('').trigger('change')
+  if (!props.remoteFetch) {
+    if (props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== '') {
+      $el.val(String(props.modelValue)).trigger('change')
+    } else if (props.placeholder) {
+      $el.val('').trigger('change')
+    }
   }
 
   initialized = true
@@ -180,7 +235,7 @@ onBeforeUnmount(() => {
 watch(
   () => props.options,
   async () => {
-    if (!selectRef.value) return
+    if (props.remoteFetch || !selectRef.value) return
     await destroySelect2()
     await nextTick()
     await initSelect2()
@@ -191,7 +246,7 @@ watch(
 watch(
   () => props.modelValue,
   async (value) => {
-    if (!initialized || !selectRef.value) return
+    if (!initialized || !selectRef.value || props.remoteFetch) return
     const jQuery = await ensureSelect2()
     const $el = jQuery(selectRef.value)
     const nextStr = value == null || value === '' ? '' : String(value)
@@ -213,3 +268,121 @@ watch(
   }
 )
 </script>
+
+<style scoped>
+:global(.select2-container) {
+  width: 100% !important;
+}
+
+:global(.select2-container--default .select2-selection--single) {
+  background-color: var(--theme-bg-elevated);
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
+  height: 44px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.18);
+}
+
+:global(.select2-container--default .select2-selection--single:hover) {
+  border-color: rgba(124, 58, 237, 0.45);
+}
+
+:global(.select2-container--default .select2-selection--single .select2-selection__rendered) {
+  color: var(--theme-text-primary);
+  line-height: 1.5;
+  padding-right: 0;
+  padding-left: 24px;
+}
+
+:global(.select2-container--default .select2-selection--single .select2-selection__placeholder) {
+  color: var(--theme-text-muted);
+}
+
+:global(.select2-container--default .select2-selection--single .select2-selection__arrow) {
+  right: auto;
+  left: 12px;
+}
+
+:global(.select2-container--default .select2-selection--single .select2-selection__arrow b) {
+  border-color: var(--theme-text-secondary) transparent transparent transparent;
+}
+
+:global(.select2-container--default.select2-container--open .select2-selection--single) {
+  border-color: rgba(124, 58, 237, 0.7);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+:global(.select2-dropdown) {
+  background-color: var(--theme-bg-elevated);
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.35);
+  overflow: hidden;
+}
+
+:global(.select2-dropdown .select2-search__field) {
+  border-radius: 10px;
+  border: 1px solid var(--theme-border);
+  background: var(--theme-bg-base);
+  color: var(--theme-text-primary);
+}
+
+:global(.select2-results__option) {
+  padding: 10px 16px;
+  color: var(--theme-text-primary);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+:global(.select2-results__option--highlighted) {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.22));
+  color: var(--theme-text-primary);
+}
+
+:global(.select2-results__option[aria-disabled='true']) {
+  color: var(--theme-text-muted);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+:global(.select2-results__option[aria-disabled='true'].select2-results__option--highlighted) {
+  background: transparent;
+  color: var(--theme-text-muted);
+}
+
+:global([data-theme='light'] .select2-dropdown) {
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+}
+
+:global([data-theme='light'] .select2-container--default .select2-selection--single) {
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+:global([data-theme='light'] .select2-results__option--highlighted) {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(6, 182, 212, 0.16));
+}
+
+:global([data-theme='dark'] .select2-container--default .select2-selection--single) {
+  box-shadow: inset 0 1px 3px rgba(8, 12, 24, 0.4);
+}
+
+:global([data-theme='dark'] .select2-dropdown) {
+  box-shadow: 0 18px 40px rgba(8, 12, 24, 0.55);
+}
+
+:global([data-theme='dark'] .select2-results__option--highlighted) {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(6, 182, 212, 0.3));
+}
+
+:global(.select2-container--default .select2-selection--single .select2-selection__clear) {
+  color: var(--theme-text-secondary);
+  margin-left: 8px;
+  transition: color 0.2s ease;
+}
+
+:global(.select2-container--default .select2-selection--single .select2-selection__clear:hover) {
+  color: rgba(239, 68, 68, 0.9);
+}
+</style>
