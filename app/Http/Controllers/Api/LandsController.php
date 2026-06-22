@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Feature;
 use App\Models\FeatureProperties;
-use App\Models\Coordinate;
+use App\Models\User;
 use App\Services\Lands\LandOwnerTransferService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,14 +26,24 @@ class LandsController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $searchTerm = $request->get('search', '');
+        $searchTerm = trim($request->get('search', ''));
         $perPage = $request->get('per_page', 10);
         $page = $request->get('page', 1);
 
         $query = FeatureProperties::with(['feature', 'feature.map', 'feature.owner:id,name,code', 'feature.geometry.coordinates']);
 
-        if ($searchTerm) {
-            $query->where('id', 'like', '%' . trim($searchTerm) . '%');
+        if ($searchTerm !== '') {
+            $owner = User::query()
+                ->where('code', $searchTerm)
+                ->first(['id']);
+
+            if ($owner) {
+                $query->whereHas('feature', function ($featureQuery) use ($owner) {
+                    $featureQuery->where('owner_id', $owner->id);
+                });
+            } else {
+                $query->where('id', 'like', '%' . $searchTerm . '%');
+            }
         }
 
         $properties = $query->orderBy('id', 'asc')->paginate($perPage, ['*'], 'page', $page);

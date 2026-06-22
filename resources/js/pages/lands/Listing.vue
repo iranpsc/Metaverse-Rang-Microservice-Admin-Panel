@@ -1,26 +1,26 @@
 <template>
   <div class="p-6 space-y-6">
     <!-- Page Header -->
-    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">لیست املاک</h1>
-        <p class="text-[var(--theme-text-secondary)]">مدیریت و مشاهده اطلاعات املاک</p>
-      </div>
-      <Button variant="primary" @click="showTransferModal = true">
-        انتقال مالکیت
-      </Button>
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">لیست املاک</h1>
+      <p class="text-[var(--theme-text-secondary)]">مدیریت و مشاهده اطلاعات املاک</p>
     </div>
 
-    <!-- Search Box -->
-    <div class="mb-6">
-      <SearchBox
-        v-model="searchTerm"
-        placeholder="شناسه ملک را وارد کنید"
-        :debounce-ms="500"
-        container-class="max-w-md"
-        @search="handleSearch"
-        @clear="handleClear"
-      />
+    <!-- Search and Actions Row -->
+    <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="w-full lg:max-w-md">
+        <SearchBox
+          v-model="searchTerm"
+          placeholder="شناسه ملک یا کد کاربری را وارد کنید"
+          :debounce-ms="500"
+          container-class="w-full"
+          @search="handleSearch"
+          @clear="handleClear"
+        />
+      </div>
+      <Button variant="primary" class="shrink-0" @click="showTransferModal = true">
+        انتقال مالکیت
+      </Button>
     </div>
 
     <!-- Loading State -->
