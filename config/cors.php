@@ -23,6 +23,9 @@ return [
         'https://metarang.com',
         'https://world.metarang.com',
         'https://admin.metarang.com',
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://localhost:5175',
     ],
 
     'allowed_origins_patterns' => [],
