@@ -65,7 +65,19 @@ export default [
     ]
   },
   { id: 'map-management', label: 'مدیریت نقشه ها', route: '/maps', icon: 'map', color: 'primary', roles: ['maps-management', 'super-admin'], permissions: [] },
-  { id: 'levels', label: 'مدیریت سطوح', route: '/levels', icon: 'levelUp', color: 'primary', roles: ['level-management', 'super-admin'], permissions: [] },
+  {
+    id: 'levels-group',
+    label: 'مدیریت سطوح',
+    route: '#',
+    icon: 'levelUp',
+    color: 'primary',
+    roles: ['level-management', 'super-admin'],
+    permissions: [],
+    children: [
+      { id: 'levels', label: 'مدیریت سطوح', route: '/levels', icon: 'levelUp', color: 'primary', permissions: [] },
+      { id: 'user-levels', label: 'سطوح کاربران', route: '/user-levels', icon: 'user', color: 'primary', permissions: [] }
+    ]
+  },
   { id: 'calendar', label: 'تقویم', route: '/calendar', icon: 'calendar', color: 'primary', roles: ['calendar-management', 'super-admin'], permissions: [] },
   { id: 'versions', label: 'ورژن ها', route: '/versions', icon: 'list', color: 'primary', roles: ['versions-management', 'super-admin'], permissions: [] },
   { id: 'reports', label: 'گزارشات کاربران', route: '/reports', icon: 'eye', color: 'blue', roles: ['reports-management', 'super-admin'], permissions: [] },

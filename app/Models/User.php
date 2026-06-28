@@ -4,8 +4,10 @@ namespace App\Models;
 
 use App\Models\Challenge\UserChallengePrizes;
 use App\Models\Challenge\UserQuestionAnswer;
+use App\Models\Level\Level;
 use App\Models\Level\UserLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -142,6 +144,13 @@ class User extends Authenticatable
 
     public function log() {
         return $this->hasOne(UserLog::class);
+    }
+
+    public function levels(): BelongsToMany
+    {
+        return $this->belongsToMany(Level::class, 'level_user')
+            ->withTimestamps()
+            ->orderByPivot('created_at', 'asc');
     }
 
     public function activities() {

@@ -22,6 +22,7 @@ const Pricing = () => import('../pages/lands/Pricing.vue')
 const Sold = () => import('../pages/lands/Sold.vue')
 const Traded = () => import('../pages/lands/Traded.vue')
 const LevelsListing = () => import('../pages/levels/Listing.vue')
+const UserLevelsListing = () => import('../pages/levels/UserLevels.vue')
 const CalendarListing = () => import('../pages/calendar/Listing.vue')
 const Versions = () => import('../pages/calendar/Versions.vue')
 const LevelPrize = () => import('../pages/levels/Prize.vue')
@@ -250,6 +251,14 @@ const routes = [
         component: LevelsListing,
         meta: {
           title: 'مدیریت سطوح'
+        }
+      },
+      {
+        path: 'user-levels',
+        name: 'user-levels',
+        component: UserLevelsListing,
+        meta: {
+          title: 'سطوح کاربران'
         }
       },
       {

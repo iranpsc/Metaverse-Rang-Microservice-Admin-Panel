@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\LevelLicenseController;
 use App\Http\Controllers\Api\LevelGeneralInfoController;
 use App\Http\Controllers\Api\LevelGemController;
 use App\Http\Controllers\Api\LevelsController;
+use App\Http\Controllers\Api\UserLevelsController;
 use App\Http\Controllers\Api\MapsController;
 use App\Http\Controllers\Api\OptionsController;
 use App\Http\Controllers\Api\PermissionsController;
@@ -181,6 +182,11 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     Route::get('/levels/{level}/general-info', [LevelGeneralInfoController::class, 'show']);
     Route::post('/levels/{level}/general-info', [LevelGeneralInfoController::class, 'store']);
     Route::put('/levels/{level}/general-info', [LevelGeneralInfoController::class, 'update']);
+
+    // User levels routes
+    Route::get('/user-levels', [UserLevelsController::class, 'index']);
+    Route::post('/user-levels/promote', [UserLevelsController::class, 'promote']);
+    Route::get('/users/search', [UserLevelsController::class, 'searchUsers']);
 
     // Feature Limits routes
     Route::get('/lands/feature-limits', [FeatureLimitsController::class, 'index']);
