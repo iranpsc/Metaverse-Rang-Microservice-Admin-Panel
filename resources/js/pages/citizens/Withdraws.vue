@@ -39,8 +39,7 @@ const fetchWithdraws = async () => {
     const response = await apiClient.get('/withdraws')
 
     if (response.data.success) {
-      // Currently withdraws data is empty as per Livewire component
-      // This can be implemented when withdraw functionality is added
+      // Withdraw data is not yet implemented on the backend
     } else {
       error.value = 'خطا در دریافت اطلاعات برداشت‌ها'
     }

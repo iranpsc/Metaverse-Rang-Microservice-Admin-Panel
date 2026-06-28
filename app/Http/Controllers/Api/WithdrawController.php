@@ -8,8 +8,8 @@ use Illuminate\Http\JsonResponse;
 class WithdrawController extends Controller
 {
     /**
-     * Get withdraw information
-     * Currently returns empty data as per Livewire component
+     * Get withdraw information.
+     * Currently returns empty data until withdraw functionality is implemented.
      *
      * @return JsonResponse
      */

@@ -264,6 +264,8 @@ class TranslationService
     public function createField(Tab $tab, string $translationValue): Field
     {
         return DB::connection('sqlite')->transaction(function () use ($tab, $translationValue) {
+            $tab->loadMissing('modal');
+
             $latestUniqueId = (int) Field::max('unique_id');
             $nextUniqueId = $latestUniqueId > 0 ? $latestUniqueId + 1 : 1;
 
@@ -272,7 +274,11 @@ class TranslationService
                 'translation' => $translationValue,
             ]);
 
-            $matchingTabs = Tab::where('name', $tab->name)
+            $matchingTabs = Tab::query()
+                ->where('name', $tab->name)
+                ->whereHas('modal', function ($query) use ($tab) {
+                    $query->where('name', $tab->modal->name);
+                })
                 ->whereKeyNot($tab->getKey())
                 ->get();
 

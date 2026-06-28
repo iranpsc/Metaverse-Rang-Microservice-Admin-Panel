@@ -13,7 +13,6 @@
         "laravel/tinker": "^2.7",
         "laravel/ui": "^4.1",
         "league/flysystem-ftp": "3.0",
-        "livewire/livewire": "^3.0",
         "maatwebsite/excel": "^3.1",
         "morilog/jalali": "3.*",
         "pion/laravel-chunk-upload": "^1.5",

@@ -19,7 +19,7 @@ class WalletController extends Controller
     {
         $perPage = $request->get('per_page', 10);
 
-        // Use the same algorithm as Livewire Assets component
+        // Paginate wallets with related user and feature data
         $wallets = Wallet::with('user:id,name', 'user.features:id,owner_id')
             ->paginate($perPage);
 
