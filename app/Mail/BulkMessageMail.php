@@ -25,6 +25,7 @@ class BulkMessageMail extends Mailable
     {
         return new Envelope(
             replyTo: [config('mail.from.address')],
+            subject: __('Metarang Information Service'),
         );
     }
 
