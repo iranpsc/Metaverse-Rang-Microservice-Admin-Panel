@@ -12,7 +12,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use App\Models\SellFeatureRequests;
 use App\Models\Note;
 use App\Models\User\UserActivity;
 use App\Models\Wallet;
@@ -72,7 +71,7 @@ class User extends Authenticatable
 
     public function sellRequests()
     {
-        return $this->hasMany(SellFeatureRequests::class, 'seller_id');
+        return $this->hasMany(SellFeatureRequest::class, 'seller_id');
     }
 
     public function buyRequests()
