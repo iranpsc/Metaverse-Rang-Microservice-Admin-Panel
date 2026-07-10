@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AdminsController;
 use App\Http\Controllers\Api\BankAccountController;
+use App\Http\Controllers\Api\BulkMessageController;
 use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\ChallengeQuestionsController;
 use App\Http\Controllers\Api\DashboardController;
@@ -330,4 +331,8 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     Route::post('/translations/{translation}/modals/{modal}/tabs/{tab}/fields', [TranslationFieldController::class, 'store']);
     Route::patch('/translations/{translation}/modals/{modal}/tabs/{tab}/fields/{field}', [TranslationFieldController::class, 'update']);
     Route::delete('/translations/{translation}/modals/{modal}/tabs/{tab}/fields/{field}', [TranslationFieldController::class, 'destroy']);
+
+    // Bulk messaging routes (super-admin only)
+    Route::get('/bulk-messages/users/search', [BulkMessageController::class, 'searchUsers']);
+    Route::post('/bulk-messages/send', [BulkMessageController::class, 'send']);
 });
