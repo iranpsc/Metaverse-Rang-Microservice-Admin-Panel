@@ -24,18 +24,28 @@ const levelAccess = {
 
 const translationAccess = {
   roles: ['access-management'],
-  permissions: ['manage-access']
+  permissions: ['manage-access', 'manage-translations']
+}
+
+const isicAccess = {
+  roles: ['access-management'],
+  permissions: ['manage-access', 'manage-isic-codes']
+}
+
+const challengeAccess = {
+  roles: ['level-management'],
+  permissions: ['manage-level', 'manage-challenge']
 }
 
 /** Route path -> { roles, permissions } derived from menu config plus nested pages. */
 export const routeAccessMap = {
   ...flattenMenuAccess(menuConfig),
-  '/profile': { roles: [], permissions: [] },
+  '/profile': { roles: [], permissions: ['manage-profile'] },
   '/levels': levelAccess,
   '/user-levels': levelAccess,
   '/calendar': { roles: ['calendar-management'], permissions: ['manage-calendar'] },
-  '/challenge': { roles: ['level-management'], permissions: ['manage-level'] },
-  '/isic-codes': translationAccess,
+  '/challenge': challengeAccess,
+  '/isic-codes': isicAccess,
   '/translations': translationAccess
 }
 

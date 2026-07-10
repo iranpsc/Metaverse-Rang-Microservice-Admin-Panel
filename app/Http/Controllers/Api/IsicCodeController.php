@@ -23,7 +23,7 @@ class IsicCodeController extends Controller
 
     public function __construct()
     {
-        $this->authorizeAdminAccess(['access-management', 'manage-access']);
+        $this->authorizeAdminAccess(['access-management', 'manage-access', 'manage-isic-codes']);
     }
 
     /**

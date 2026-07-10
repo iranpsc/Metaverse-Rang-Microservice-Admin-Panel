@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\RequestPasswordChangeRequest;
 use App\Http\Requests\Profile\UpdateProfileInfoRequest;
@@ -18,7 +19,14 @@ use Throwable;
 
 class ProfileController extends Controller
 {
+    use AuthorizesAdminAccess;
+
     private const PENDING_PASSWORD_CACHE_PREFIX = 'admin.password.pending.';
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess('manage-profile');
+    }
 
     /**
      * Display the authenticated admin profile.

@@ -18,7 +18,7 @@ class TranslationController extends Controller
     use AuthorizesAdminAccess;
     public function __construct(private readonly TranslationService $translationService)
     {
-        $this->authorizeAdminAccess(['access-management', 'manage-access']);
+        $this->authorizeAdminAccess(['access-management', 'manage-access', 'manage-translations']);
     }
 
     public function index(Request $request): JsonResponse

@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             // PostSeeder::class,
             // CommentSeeder::class,
             TranslationFieldSeeder::class,
+            AdminRoutePermissionsSeeder::class,
         ]);
     }
 }

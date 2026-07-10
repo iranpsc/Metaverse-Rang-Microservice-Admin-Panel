@@ -20,7 +20,7 @@ class FieldController extends Controller
     use AuthorizesAdminAccess;
     public function __construct(private readonly TranslationService $translationService)
     {
-        $this->authorizeAdminAccess(['access-management', 'manage-access']);
+        $this->authorizeAdminAccess(['access-management', 'manage-access', 'manage-translations']);
     }
 
     public function index(Request $request, Translation $translation, Modal $modal, Tab $tab): JsonResponse

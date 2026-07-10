@@ -21,7 +21,7 @@ class ChallengeQuestionsController extends Controller
 
     public function __construct()
     {
-        $this->authorizeAdminAccess(['level-management', 'manage-level']);
+        $this->authorizeAdminAccess(['level-management', 'manage-level', 'manage-challenge']);
     }
 
     /**

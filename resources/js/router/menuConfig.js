@@ -1,5 +1,5 @@
 export default [
-  { id: 'dashboard', label: 'داشبورد', route: '/', icon: 'home', color: 'primary', roles: [], permissions: [] },
+  { id: 'dashboard', label: 'داشبورد', route: '/', icon: 'home', color: 'primary', roles: [], permissions: ['view-dashboard'] },
   {
     id: 'citizens',
     label: 'شهروندان',
@@ -83,7 +83,7 @@ export default [
   { id: 'reports', label: 'گزارشات کاربران', route: '/reports', icon: 'eye', color: 'blue', roles: ['reports-management'], permissions: ['manage-repots'] },
   { id: 'system-variables', label: 'متغیرهای سیستم', route: '/system-variables', icon: 'puzzle', color: 'primary', roles: [], permissions: ['manage-system-variables'] },
   {
-    id: 'challenge', label: 'چالش پرسش و پاسخ', route: '#', icon: 'question', color: 'yellow', roles: ['level-management'], permissions: ['manage-level'],
+    id: 'challenge', label: 'چالش پرسش و پاسخ', route: '#', icon: 'question', color: 'yellow',     roles: ['level-management'], permissions: ['manage-level', 'manage-challenge'],
     children: [{ id: 'challenge-list', label: 'لیست سوالات', route: '/challenge', icon: 'list', color: 'yellow', permissions: [] }]
   },
   {
@@ -94,7 +94,7 @@ export default [
       { id: 'tutorials-sub-categories', label: 'زیر دسته های ویدیو', route: '/videos/sub-categories', icon: 'list', color: 'blue', permissions: [] }
     ]
   },
-  { id: 'translations', label: 'ترجمه', route: '/translations', icon: 'list', color: 'primary', roles: ['access-management'], permissions: ['manage-access'] },
-  { id: 'isic-codes', label: 'کدهای ISIC', route: '/isic-codes', icon: 'list', color: 'primary', roles: ['access-management'], permissions: ['manage-access'] },
+  { id: 'translations', label: 'ترجمه', route: '/translations', icon: 'list', color: 'primary', roles: ['access-management'], permissions: ['manage-access', 'manage-translations'] },
+  { id: 'isic-codes', label: 'کدهای ISIC', route: '/isic-codes', icon: 'list', color: 'primary', roles: ['access-management'], permissions: ['manage-access', 'manage-isic-codes'] },
   { id: 'activity-logs', label: 'گزارش فعالیت‌ها', route: '/activity-logs', icon: 'list', color: 'blue', roles: [], permissions: ['view-activity-logs'] }
 ]
