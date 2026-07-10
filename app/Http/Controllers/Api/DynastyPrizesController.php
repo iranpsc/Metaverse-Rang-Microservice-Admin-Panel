@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Dynasty\DynastyPrize;
 use Illuminate\Http\JsonResponse;
@@ -10,6 +11,13 @@ use Illuminate\Validation\Rule;
 
 class DynastyPrizesController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['manage-dynasty-prizes']);
+    }
+
     /**
      * Get paginated dynasty prizes
      *

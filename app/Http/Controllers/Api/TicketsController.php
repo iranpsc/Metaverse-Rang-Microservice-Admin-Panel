@@ -2,21 +2,37 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TicketResource;
 use App\Models\Ticket;
 use App\Notifications\TicketResponded;
+use App\Support\TicketDepartmentPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class TicketsController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(array_merge(
+            ['support-management'],
+            TicketDepartmentPermissions::all()
+        ));
+    }
+
     /**
      * Get tickets by department
      */
     public function index(Request $request)
     {
+        if ($response = TicketDepartmentPermissions::denyUnlessAuthorized($request)) {
+            return $response;
+        }
+
         $department = $request->query('department');
         $page = $request->query('page', 1);
         $perPage = $request->query('per_page', 10);
@@ -26,8 +42,7 @@ class TicketsController extends Controller
         $query = Ticket::with(['responses.responser', 'sender'])
             ->whereIn('department', (array) $department);
 
-        // Apply search filter if provided
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', '%' . $search . '%')
                   ->orWhere('title', 'like', '%' . $search . '%')
@@ -60,6 +75,10 @@ class TicketsController extends Controller
 
     public function show(Ticket $ticket)
     {
+        if ($response = TicketDepartmentPermissions::denyUnlessAuthorized(request(), $ticket->department)) {
+            return $response;
+        }
+
         return response()->json([
             'success' => true,
             'data' => new TicketResource($ticket->load('responses.responser'))
@@ -85,6 +104,10 @@ class TicketsController extends Controller
         }
 
         $ticket = Ticket::findOrFail($id);
+
+        if ($response = TicketDepartmentPermissions::denyUnlessAuthorized($request, $ticket->department)) {
+            return $response;
+        }
 
         $path = "";
         if ($request->hasFile('attachment')) {
@@ -135,6 +158,14 @@ class TicketsController extends Controller
 
         $ticket = Ticket::findOrFail($id);
 
+        if ($response = TicketDepartmentPermissions::denyUnlessAuthorized($request, $ticket->department)) {
+            return $response;
+        }
+
+        if ($response = TicketDepartmentPermissions::denyUnlessAuthorized($request, $request->department)) {
+            return $response;
+        }
+
         $ticket->update([
             'department' => $request->department,
             'importance' => $request->importance
@@ -169,4 +200,3 @@ class TicketsController extends Controller
         ]);
     }
 }
-

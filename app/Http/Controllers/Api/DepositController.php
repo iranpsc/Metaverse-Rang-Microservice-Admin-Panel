@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Exports\PaymentsExport;
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
@@ -10,6 +11,13 @@ use Illuminate\Http\Request;
 
 class DepositController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['citizens-management', 'view-deposits']);
+    }
+
     /**
      * Get paginated Deposit/Payment records with search
      *

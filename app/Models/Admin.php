@@ -51,7 +51,7 @@ class Admin extends Authenticatable
      */
     public function getGuardName(): string
     {
-        return 'admin';
+        return 'sanctum';
     }
 
     public function getRoleTitles(): Collection

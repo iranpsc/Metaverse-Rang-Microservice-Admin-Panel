@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Videos\StoreVideoRequest;
 use App\Http\Requests\Videos\UpdateVideoRequest;
@@ -16,8 +17,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VideosController extends Controller
 {
+    use AuthorizesAdminAccess;
     public function __construct(private readonly VideoService $service)
     {
+        $this->authorizeAdminAccess(['tutorials-management', 'manage-tutorials']);
     }
 
     public function index(Request $request): JsonResponse

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Variable;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +13,13 @@ use Illuminate\Validation\Rule;
 
 class VariablesController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['manage-currencies']);
+    }
+
     /**
      * Get all variables with their relationships
      *

@@ -1,5 +1,6 @@
 import axios, { type AxiosError, type AxiosRequestConfig } from 'axios'
 import { usePhoneVerificationStore } from '../store/phoneVerificationStore'
+import { clearAuthStorage } from './authorization'
 
 export type ApiResponse<T> = {
   success: boolean
@@ -137,11 +138,13 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     if (error.response) {
       if (error.response.status === 401 && window.location.pathname !== '/login') {
-        localStorage.removeItem('admin_authenticated')
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem('admin_token_expires_at')
-        localStorage.removeItem('admin_user_data')
+        clearAuthStorage()
         window.location.href = '/login'
+        return Promise.reject(error)
+      }
+
+      if (error.response.status === 403 && !window.location.pathname.endsWith('/forbidden')) {
+        window.location.href = '/forbidden'
         return Promise.reject(error)
       }
 

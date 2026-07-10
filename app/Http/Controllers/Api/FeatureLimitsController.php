@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Models\FeatureLimit;
 use App\Models\FeatureProperties;
@@ -12,6 +13,13 @@ use Morilog\Jalali\Jalalian;
 
 class FeatureLimitsController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['manage-features-info']);
+    }
+
     /**
      * Get paginated feature limits
      *

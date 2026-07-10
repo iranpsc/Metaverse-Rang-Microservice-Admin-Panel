@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Translations;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Translations\StoreTranslationRequest;
 use App\Http\Resources\Translations\TranslationResource;
@@ -14,7 +15,11 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TranslationController extends Controller
 {
-    public function __construct(private readonly TranslationService $translationService) {}
+    use AuthorizesAdminAccess;
+    public function __construct(private readonly TranslationService $translationService)
+    {
+        $this->authorizeAdminAccess(['access-management', 'manage-access']);
+    }
 
     public function index(Request $request): JsonResponse
     {

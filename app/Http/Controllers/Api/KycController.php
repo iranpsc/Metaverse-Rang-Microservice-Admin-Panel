@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\KycResource;
 use App\Models\Kyc;
@@ -12,6 +13,13 @@ use Illuminate\Support\Facades\Auth;
 
 class KycController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['citizens-management', 'verify-kyc']);
+    }
+
     /**
      * Get paginated KYC records with search
      *

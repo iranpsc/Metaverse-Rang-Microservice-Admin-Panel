@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Level\LevelLicenseRequest;
 use App\Http\Resources\Level\LevelLicenseResource;
@@ -12,6 +13,13 @@ use Throwable;
 
 class LevelLicenseController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['level-management', 'manage-level']);
+    }
+
     public function show(Level $level): JsonResponse
     {
         $licenses = $level->licenses;

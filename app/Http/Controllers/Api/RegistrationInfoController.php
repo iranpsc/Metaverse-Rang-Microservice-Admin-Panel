@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\RegistrationInfoResource;
 use App\Models\User;
@@ -10,6 +11,13 @@ use Illuminate\Http\Request;
 
 class RegistrationInfoController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['citizens-management', 'view-registration-info']);
+    }
+
     /**
      * Get paginated registration information
      *

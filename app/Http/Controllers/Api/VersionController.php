@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Version\StoreVersionRequest;
 use App\Http\Resources\Calendar\CalendarResource;
@@ -13,6 +14,13 @@ use Morilog\Jalali\Jalalian;
 
 class VersionController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['versions-management', 'manage-versions']);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $perPage = (int) $request->get('per_page', 10);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SystemVariable\StoreSystemVariableRequest;
 use App\Http\Requests\SystemVariable\UpdateSystemVariableRequest;
@@ -14,6 +15,13 @@ use Illuminate\Support\Facades\DB;
 
 class SystemVariablesController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['manage-system-variables']);
+    }
+
     /**
      * Display a listing of the system variables.
      */

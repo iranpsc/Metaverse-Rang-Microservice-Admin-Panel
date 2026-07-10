@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Translations;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Translations\StoreFieldRequest;
 use App\Http\Requests\Translations\UpdateFieldRequest;
@@ -16,8 +17,10 @@ use Illuminate\Http\Request;
 
 class FieldController extends Controller
 {
+    use AuthorizesAdminAccess;
     public function __construct(private readonly TranslationService $translationService)
     {
+        $this->authorizeAdminAccess(['access-management', 'manage-access']);
     }
 
     public function index(Request $request, Translation $translation, Modal $modal, Tab $tab): JsonResponse

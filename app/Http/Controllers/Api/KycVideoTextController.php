@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\KycVideoTextResource;
 use App\Models\KycVerifyText;
@@ -10,6 +11,13 @@ use Illuminate\Http\Request;
 
 class KycVideoTextController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['citizens-management', 'verify-kyc']);
+    }
+
     /**
      * Get paginated KYC video verification texts
      *

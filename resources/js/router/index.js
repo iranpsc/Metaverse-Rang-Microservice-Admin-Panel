@@ -4,8 +4,11 @@ import ForgotPassword from '../pages/auth/ForgotPassword.vue'
 import ResetPassword from '../pages/auth/ResetPassword.vue'
 import App from '../components/App.vue'
 import NotFound from '../components/errors/NotFound.vue'
+import Forbidden from '../components/errors/Forbidden.vue'
 import { navigationProgress } from '../composables/useNavigationProgress'
 import { useAuth } from '../composables/useAuth'
+import { canAccess, clearAuthStorage, hasValidAuthToken } from '../utils/authorization'
+import { resolveRouteAccess } from './routeAccess'
 const Dashboard = () => import('../pages/Dashboard.vue')
 const RegistrationInfo = () => import('../pages/citizens/RegistrationInfo.vue')
 const KycList = () => import('../pages/citizens/KycList.vue')
@@ -107,6 +110,14 @@ const routes = [
         component: Profile,
         meta: {
           title: 'پروفایل من'
+        }
+      },
+      {
+        path: 'forbidden',
+        name: 'forbidden',
+        component: Forbidden,
+        meta: {
+          title: 'دسترسی غیرمجاز'
         }
       },
       {
@@ -372,9 +383,11 @@ const routes = [
         props: (route) => {
           const titleMap = {
             investment: 'پشتیبانی - سرمایه گذاری',
+            citizens_safety: 'پشتیبانی - امنیت شهروندان',
             'citizens-safety': 'پشتیبانی - امنیت شهروندان',
             inspection: 'پشتیبانی - بازرسی',
             protection: 'پشتیبانی - حراست',
+            technical_support: 'پشتیبانی فنی',
             'technical-support': 'پشتیبانی فنی',
             ztb: 'مدیریت کل ز.ت.ب'
           }
@@ -456,8 +469,7 @@ const routes = [
         name: 'activity-logs',
         component: ActivityLogs,
         meta: {
-          title: 'گزارش فعالیت‌ها',
-          permission: 'view-activity-logs'
+          title: 'گزارش فعالیت‌ها'
         }
       },
       {
@@ -501,9 +513,11 @@ const routes = [
 
 const supportTitleMap = {
   investment: 'پشتیبانی - سرمایه گذاری',
+  citizens_safety: 'پشتیبانی - امنیت شهروندان',
   'citizens-safety': 'پشتیبانی - امنیت شهروندان',
   inspection: 'پشتیبانی - بازرسی',
   protection: 'پشتیبانی - حراست',
+  technical_support: 'پشتیبانی فنی',
   'technical-support': 'پشتیبانی فنی',
   ztb: 'مدیریت کل ز.ت.ب'
 }
@@ -515,93 +529,65 @@ const router = createRouter({
 
 // Navigation guards
 router.beforeEach(async (to, from, next) => {
-  // Start navigation progress
   navigationProgress.start()
 
-  // Helper function to check if token exists and is valid
-  const hasValidToken = () => {
-    const token = localStorage.getItem('admin_token')
-    const expiresAt = localStorage.getItem('admin_token_expires_at')
-    const authenticated = localStorage.getItem('admin_authenticated') === 'true'
-
-    if (!token || !authenticated) return false
-
-    // Check if token is expired
-    if (expiresAt) {
-      const expiryDate = new Date(expiresAt)
-      if (expiryDate < new Date()) {
-        return false
-      }
-    }
-
-    return true
-  }
-
-  // If route requires auth, check authentication
   if (to.meta.requiresAuth) {
-    // Check if we have a token in localStorage
-    if (!hasValidToken()) {
-      // Clear invalid auth state
-      localStorage.removeItem('admin_authenticated')
-      localStorage.removeItem('admin_token')
-      localStorage.removeItem('admin_token_expires_at')
-      localStorage.removeItem('admin_user_data')
+    if (!hasValidAuthToken()) {
+      clearAuthStorage()
       next({ name: 'login' })
       return
     }
 
-    // Only verify with server immediately after login
-    // On page refresh, trust localStorage; API calls will enforce auth
-    const isPageRefresh = !from.name || from.name === null
-    const isFromLogin = from.name === 'login'
+    const { checkAuth } = useAuth()
+    const needsFreshUser = from.name === 'login' || !from.name || to.name === 'forbidden'
 
-    if (isFromLogin) {
+    if (needsFreshUser || !localStorage.getItem('admin_user_data')) {
       try {
-        const { checkAuth } = useAuth()
         const result = await checkAuth()
-        if (!result || !result.authenticated) {
-          // Clear auth state before redirecting
-          localStorage.removeItem('admin_authenticated')
-          localStorage.removeItem('admin_token')
-          localStorage.removeItem('admin_token_expires_at')
-          localStorage.removeItem('admin_user_data')
+        if (!result?.authenticated) {
+          clearAuthStorage()
           next({ name: 'login' })
           return
         }
-      } catch (error) {
-        // Unexpected error; proceed and let API calls handle auth
-        console.warn('Auth check after login failed; proceeding:', error)
+      } catch {
+        clearAuthStorage()
+        next({ name: 'login' })
+        return
       }
     }
 
-    if (to.meta.permission) {
+    if (to.name === 'forbidden') {
+      next()
+      return
+    }
+
+    const routeAccess = resolveRouteAccess(to.path)
+    if (routeAccess) {
       let userData = null
       try {
         userData = JSON.parse(localStorage.getItem('admin_user_data') || 'null')
       } catch {
         userData = null
       }
-      const permissions = userData?.permissions || []
-      const roles = userData?.roles || []
-      const hasPermission = permissions.includes(to.meta.permission)
-      const isSuperAdmin = roles.includes('super-admin')
-      if (!hasPermission && !isSuperAdmin) {
-        next({ name: 'dashboard' })
+
+      if (!canAccess(routeAccess, userData)) {
+        next({ name: 'forbidden' })
         return
       }
     }
 
     next()
-  } else if (to.meta.requiresGuest) {
-    // Check if already authenticated
-    if (hasValidToken()) {
-      next({ path: '/' })
-    } else {
-      next()
-    }
-  } else {
-    next()
+    return
   }
+
+  if (to.meta.requiresGuest) {
+    if (hasValidAuthToken()) {
+      next({ path: '/' })
+      return
+    }
+  }
+
+  next()
 })
 
 // Update page title on route change and finish progress
