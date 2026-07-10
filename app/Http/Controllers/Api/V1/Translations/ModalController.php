@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Translations;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Translations\StoreModalRequest;
 use App\Http\Requests\Translations\UpdateModalRequest;
@@ -14,8 +15,10 @@ use Illuminate\Http\Request;
 
 class ModalController extends Controller
 {
+    use AuthorizesAdminAccess;
     public function __construct(private readonly TranslationService $translationService)
     {
+        $this->authorizeAdminAccess(['access-management', 'manage-access', 'manage-translations']);
     }
 
     public function index(Request $request, Translation $translation): JsonResponse

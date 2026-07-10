@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Option;
 use App\Models\Variable;
@@ -12,6 +13,13 @@ use Illuminate\Validation\Rule;
 
 class OptionsController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['manage-packages']);
+    }
+
     /**
      * Get all options with pagination
      *

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,6 +12,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VideoUploadController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['tutorials-management', 'manage-tutorials']);
+    }
+
     public function __invoke(Request $request): JsonResponse
     {
         $request->validate([

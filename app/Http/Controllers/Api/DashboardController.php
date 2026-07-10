@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\DashboardResource;
 use App\Models\Dynasty\Dynasty;
@@ -15,11 +16,14 @@ use Illuminate\Http\JsonResponse;
 
 class DashboardController extends Controller
 {
+    use AuthorizesAdminAccess;
+
     public function __construct(
         private UserRepository $userRepository,
         private FeatureRepository $featureRepository,
         private OrderRepository $orderRepository
     ) {
+        $this->authorizeAdminAccess('view-dashboard');
     }
 
     /**

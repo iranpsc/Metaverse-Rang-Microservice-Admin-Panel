@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\Employee\Employee;
@@ -18,6 +19,13 @@ use Morilog\Jalali\Jalalian;
 
 class AdminsController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['access-management', 'manage-access']);
+    }
+
     /**
      * Get all admins
      *
@@ -139,7 +147,7 @@ class AdminsController extends Controller
         // Get permissions not already assigned via roles (filter by web or admin guard)
         $permissionsViaRoles = $admin->getPermissionsViaRoles()->pluck('name');
         $availablePermissions = Permission::whereNotIn('name', $permissionsViaRoles)
-            ->whereIn('guard_name', ['web', 'admin'])
+            ->whereIn('guard_name', ['web', 'admin', 'sanctum'])
             ->get()
             ->map(function ($permission) {
                 return [
@@ -154,7 +162,7 @@ class AdminsController extends Controller
 
         $availableRoles = Role::whereNotIn('name', $assignedRoleNames)
             ->whereNotIn('name', ['super-admin'])
-            ->whereIn('guard_name', ['web', 'admin'])
+            ->whereIn('guard_name', ['web', 'admin', 'sanctum'])
             ->get()
             ->map(function ($role) {
                 return [
@@ -240,7 +248,7 @@ class AdminsController extends Controller
 
         // Find roles with web or admin guard (matching the Admin model's guard)
         $roles = Role::whereIn('id', $request->roles)
-            ->whereIn('guard_name', ['web', 'admin'])
+            ->whereIn('guard_name', ['web', 'admin', 'sanctum'])
             ->get();
 
         if ($roles->isEmpty()) {
@@ -303,7 +311,7 @@ class AdminsController extends Controller
         if ($request->has('roles') && count($request->roles) > 0) {
             // Find roles with web or admin guard (matching the Admin model's guard)
             $roles = Role::whereIn('id', $request->roles)
-                ->whereIn('guard_name', ['web', 'admin'])
+                ->whereIn('guard_name', ['web', 'admin', 'sanctum'])
                 ->get();
 
             if ($roles->isEmpty()) {

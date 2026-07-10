@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Calendar\StoreCalendarRequest;
 use App\Http\Requests\Calendar\UpdateCalendarRequest;
@@ -14,6 +15,13 @@ use Morilog\Jalali\Jalalian;
 
 class CalendarController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['calendar-management', 'manage-calendar']);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $search = $request->get('search');

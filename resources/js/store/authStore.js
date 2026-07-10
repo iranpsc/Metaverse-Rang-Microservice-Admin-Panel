@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { authApi } from '../utils/api'
+import { clearAuthStorage, hasValidAuthToken } from '../utils/authorization'
 
 const restoreUserFromStorage = () => {
   try {
@@ -32,9 +33,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
     isTokenExpired() {
-      const expiresAt = localStorage.getItem('admin_token_expires_at')
-      if (!expiresAt) return true
-      return new Date(expiresAt) < new Date()
+      return !hasValidAuthToken()
     },
     async login(credentials) {
       this.isLoading = true
@@ -83,8 +82,7 @@ export const useAuthStore = defineStore('auth', {
       const token = localStorage.getItem('admin_token')
       if (!token || this.isTokenExpired()) {
         this.setUserData(null)
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem('admin_token_expires_at')
+        clearAuthStorage()
         return { success: false, authenticated: false }
       }
       this.checkAuthPromise = (async () => {
@@ -115,8 +113,7 @@ export const useAuthStore = defineStore('auth', {
         this.checkAuth().catch(() => {})
       } else {
         this.setUserData(null)
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem('admin_token_expires_at')
+        clearAuthStorage()
       }
     },
     async refreshUser() {

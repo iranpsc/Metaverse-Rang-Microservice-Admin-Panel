@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Challenge\ImportChallengeQuestionsRequest;
 use App\Http\Resources\Challenge\QuestionResource;
@@ -16,6 +17,13 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ChallengeQuestionsController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['level-management', 'manage-level', 'manage-challenge']);
+    }
+
     /**
      * Display a listing of the challenge questions.
      */

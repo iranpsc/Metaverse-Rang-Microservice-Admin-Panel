@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Trade;
 use Illuminate\Http\JsonResponse;
@@ -9,6 +10,13 @@ use Illuminate\Http\Request;
 
 class SoldController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['view-sold-features']);
+    }
+
     /**
      * Get paginated sold lands
      *

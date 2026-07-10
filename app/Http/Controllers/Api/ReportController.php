@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ReportResource;
 use App\Models\Report;
@@ -12,6 +13,13 @@ use Illuminate\Validation\Rule;
 
 class ReportController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['reports-management', 'manage-repots']);
+    }
+
     /**
      * Supported report subjects.
      */

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Services\ActivityLogCategoryResolver;
 use Illuminate\Http\JsonResponse;
@@ -11,17 +12,15 @@ use Spatie\Activitylog\Models\Activity;
 
 class ActivityLogController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess('view-activity-logs');
+    }
+
     public function categories(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        if (! $user || (! $user->can('view-activity-logs') && ! $user->hasRole('super-admin'))) {
-            return response()->json([
-                'success' => false,
-                'message' => 'شما دسترسی مشاهده گزارش فعالیت‌ها را ندارید.',
-            ], 403);
-        }
-
         $categories = collect(ActivityLogCategoryResolver::categories())
             ->map(fn ($label, $id) => ['id' => $id, 'label' => $label])
             ->values();
@@ -34,15 +33,6 @@ class ActivityLogController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        if (! $user || (! $user->can('view-activity-logs') && ! $user->hasRole('super-admin'))) {
-            return response()->json([
-                'success' => false,
-                'message' => 'شما دسترسی مشاهده گزارش فعالیت‌ها را ندارید.',
-            ], 403);
-        }
-
         $perPage = min((int) $request->get('per_page', 15), 50);
         $page = (int) $request->get('page', 1);
         $search = trim((string) $request->get('search', ''));
@@ -98,15 +88,6 @@ class ActivityLogController extends Controller
 
     public function show(Request $request, int $id): JsonResponse
     {
-        $user = $request->user();
-
-        if (! $user || (! $user->can('view-activity-logs') && ! $user->hasRole('super-admin'))) {
-            return response()->json([
-                'success' => false,
-                'message' => 'شما دسترسی مشاهده گزارش فعالیت‌ها را ندارید.',
-            ], 403);
-        }
-
         $activity = Activity::with(['causer', 'subject'])->findOrFail($id);
 
         return response()->json([

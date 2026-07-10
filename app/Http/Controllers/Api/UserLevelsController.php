@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserLevelResource;
 use App\Models\Level\Level;
@@ -13,6 +14,13 @@ use Throwable;
 
 class UserLevelsController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['level-management', 'manage-level']);
+    }
+
     /**
      * Display a paginated listing of users with level information.
      */

@@ -2,11 +2,19 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 
 class WithdrawController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['citizens-management', 'view-withdraws']);
+    }
+
     /**
      * Get withdraw information.
      * Currently returns empty data until withdraw functionality is implemented.

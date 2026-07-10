@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Translations;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Translations\StoreTabRequest;
 use App\Http\Requests\Translations\UpdateTabRequest;
@@ -15,8 +16,10 @@ use Illuminate\Http\Request;
 
 class TabController extends Controller
 {
+    use AuthorizesAdminAccess;
     public function __construct(private readonly TranslationService $translationService)
     {
+        $this->authorizeAdminAccess(['access-management', 'manage-access', 'manage-translations']);
     }
 
     public function index(Request $request, Translation $translation, Modal $modal): JsonResponse

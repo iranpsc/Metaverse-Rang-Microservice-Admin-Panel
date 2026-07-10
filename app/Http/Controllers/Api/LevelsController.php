@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Level\StoreLevelRequest;
 use App\Http\Requests\Level\UpdateLevelRequest;
@@ -15,6 +16,13 @@ use Throwable;
 
 class LevelsController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['level-management', 'manage-level']);
+    }
+
     /**
      * Display a listing of the levels.
      */

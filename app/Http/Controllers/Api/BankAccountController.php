@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BankAccountResource;
 use App\Models\BankAccount;
@@ -11,6 +12,13 @@ use Illuminate\Http\Request;
 
 class BankAccountController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['citizens-management', 'verify-bank-accounts']);
+    }
+
     /**
      * Get paginated Bank Account records with search
      *

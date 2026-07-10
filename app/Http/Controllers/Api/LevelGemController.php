@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Level\LevelGemRequest;
 use App\Http\Resources\Level\LevelGemResource;
@@ -14,6 +15,13 @@ use Throwable;
 
 class LevelGemController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['level-management', 'manage-level']);
+    }
+
     public function show(Level $level): JsonResponse
     {
         $gem = $level->gem;

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\IsicCode\ImportIsicCodeRequest;
 use App\Http\Requests\IsicCode\StoreIsicCodeRequest;
@@ -18,6 +19,13 @@ use Throwable;
 
 class IsicCodeController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['access-management', 'manage-access', 'manage-isic-codes']);
+    }
+
     /**
      * Display a paginated listing of ISIC codes.
      */

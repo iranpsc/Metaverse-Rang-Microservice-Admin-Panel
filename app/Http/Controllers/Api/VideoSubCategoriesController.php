@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Videos\StoreVideoSubCategoryRequest;
 use App\Http\Requests\Videos\UpdateVideoSubCategoryRequest;
@@ -14,8 +15,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VideoSubCategoriesController extends Controller
 {
+    use AuthorizesAdminAccess;
     public function __construct(private readonly VideoSubCategoryService $service)
     {
+        $this->authorizeAdminAccess(['tutorials-management', 'manage-tutorials']);
     }
 
     public function index(Request $request): JsonResponse

@@ -1,12 +1,12 @@
 export default [
-  { id: 'dashboard', label: 'داشبورد', route: '/', icon: 'home', color: 'primary', roles: [], permissions: [] },
+  { id: 'dashboard', label: 'داشبورد', route: '/', icon: 'home', color: 'primary', roles: [], permissions: ['view-dashboard'] },
   {
     id: 'citizens',
     label: 'شهروندان',
     route: '#',
     icon: 'user',
     color: 'secondary',
-    roles: ['citizens-management', 'super-admin'],
+    roles: ['citizens-management'],
     permissions: [],
     children: [
       { id: 'citizens-registration', label: 'مشخصات ثبت نام', route: '/citizens/registration-info', icon: 'user', color: 'secondary', permissions: ['view-registration-info'] },
@@ -19,11 +19,11 @@ export default [
     ]
   },
   {
-    id: 'features', label: 'زمین ها', route: '#', icon: 'cube', color: 'primary', roles: ['features-management', 'super-admin'], permissions: [],
+    id: 'features', label: 'زمین ها', route: '#', icon: 'cube', color: 'primary', roles: [], permissions: [],
     children: [
       { id: 'features-all', label: 'کل زمین ها', route: '/features/all', icon: 'cube', color: 'primary', permissions: ['manage-features-info'] },
-      { id: 'features-limits', label: 'محدودیت های املاک', route: '/features/limits', icon: 'cube', color: 'primary', permissions: ['manage-features-limits'] },
-      { id: 'features-pricing-limits', label: 'محدودیت های قیمت گذاری', route: '/features/pricing-limits', icon: 'cube', color: 'primary', permissions: ['manage-features-pricing-limits'] },
+      { id: 'features-limits', label: 'محدودیت های املاک', route: '/features/limits', icon: 'cube', color: 'primary', permissions: ['manage-features-info'] },
+      { id: 'features-pricing-limits', label: 'محدودیت های قیمت گذاری', route: '/features/pricing-limits', icon: 'cube', color: 'primary', permissions: ['manage-pricing-limits'] },
       { id: 'features-prices', label: 'قیمت زمین ها', route: '/features/prices', icon: 'cube', color: 'primary', permissions: ['view-features-prices'] },
       { id: 'features-priced', label: 'قیمت گذاری زمین', route: '/features/priced', icon: 'cube', color: 'primary', permissions: ['view-priced-features'] },
       { id: 'features-sold', label: 'زمین های فروخته شده', route: '/features/sold', icon: 'cube', color: 'primary', permissions: ['view-sold-features'] },
@@ -31,7 +31,7 @@ export default [
     ]
   },
   {
-    id: 'access-management', label: 'مدیریت دسترسی ها', route: '#', icon: 'key', color: 'primary', roles: [], permissions: ['access-management'],
+    id: 'access-management', label: 'مدیریت دسترسی ها', route: '#', icon: 'key', color: 'primary', roles: ['access-management'], permissions: ['manage-access'],
     children: [
       { id: 'access-employees', label: 'مدیران', route: '/access-management/employees', icon: 'user', color: 'primary', permissions: [] },
       { id: 'access-roles', label: 'مسئولیت ها', route: '/access-management/roles', icon: 'key', color: 'primary', permissions: [] },
@@ -39,7 +39,7 @@ export default [
     ]
   },
   {
-    id: 'support', label: 'پشتیبانی', route: '#', icon: 'phone', color: 'rose', roles: ['support-management', 'super-admin'], permissions: [],
+    id: 'support', label: 'پشتیبانی', route: '#', icon: 'phone', color: 'rose', roles: ['support-management'], permissions: [],
     children: [
       { id: 'support-citizens-safety', label: 'امنیت شهروندان', route: '/support/citizens_safety', icon: 'phone', color: 'rose', permissions: ['respond-to-citziens-safety-tickets'] },
       { id: 'support-technical-support', label: 'پشتیبانی فنی', route: '/support/technical_support', icon: 'phone', color: 'rose', permissions: ['respond-to-technical-support-tickets'] },
@@ -50,51 +50,51 @@ export default [
     ]
   },
   {
-    id: 'store', label: 'فروشگاه', route: '#', icon: 'shoppingCart', color: 'emerald', roles: ['store-management', 'super-admin'], permissions: [],
+    id: 'store', label: 'فروشگاه', route: '#', icon: 'shoppingCart', color: 'emerald', roles: [], permissions: [],
     children: [
       { id: 'store-packages', label: 'بسته ها', route: '/store/packages', icon: 'shoppingCart', color: 'emerald', permissions: ['manage-packages'] },
       { id: 'store-currencies', label: 'ارزها', route: '/store/currencies', icon: 'shoppingCart', color: 'emerald', permissions: ['manage-currencies'] }
     ]
   },
   {
-    id: 'dynasty', label: 'سلسله', route: '#', icon: 'users', color: 'yellow', roles: ['dynasty-management', 'super-admin'], permissions: [],
+    id: 'dynasty', label: 'سلسله', route: '#', icon: 'users', color: 'yellow', roles: [], permissions: [],
     children: [
       { id: 'dynasty-prizes', label: 'جوایزه سلسله', route: '/dynasty/prizes', icon: 'users', color: 'yellow', permissions: ['manage-dynasty-prizes'] },
       { id: 'dynasty-messages', label: 'پیام های سلسله', route: '/dynasty/messages', icon: 'users', color: 'yellow', permissions: ['manage-dynasty-messages'] },
       { id: 'dynasty-permissions', label: 'دسترسی ها', route: '/dynasty/permissions', icon: 'users', color: 'yellow', permissions: ['manage-dynasty-permissions'] }
     ]
   },
-  { id: 'map-management', label: 'مدیریت نقشه ها', route: '/maps', icon: 'map', color: 'primary', roles: ['maps-management', 'super-admin'], permissions: [] },
+  { id: 'map-management', label: 'مدیریت نقشه ها', route: '/maps', icon: 'map', color: 'primary', roles: [], permissions: ['manage-maps'] },
   {
     id: 'levels-group',
     label: 'مدیریت سطوح',
     route: '#',
     icon: 'levelUp',
     color: 'primary',
-    roles: ['level-management', 'super-admin'],
-    permissions: [],
+    roles: ['level-management'],
+    permissions: ['manage-level'],
     children: [
       { id: 'levels', label: 'مدیریت سطوح', route: '/levels', icon: 'levelUp', color: 'primary', permissions: [] },
       { id: 'user-levels', label: 'سطوح کاربران', route: '/user-levels', icon: 'user', color: 'primary', permissions: [] }
     ]
   },
-  { id: 'calendar', label: 'تقویم', route: '/calendar', icon: 'calendar', color: 'primary', roles: ['calendar-management', 'super-admin'], permissions: [] },
-  { id: 'versions', label: 'ورژن ها', route: '/versions', icon: 'list', color: 'primary', roles: ['versions-management', 'super-admin'], permissions: [] },
-  { id: 'reports', label: 'گزارشات کاربران', route: '/reports', icon: 'eye', color: 'blue', roles: ['reports-management', 'super-admin'], permissions: [] },
-  { id: 'system-variables', label: 'متغیرهای سیستم', route: '/system-variables', icon: 'puzzle', color: 'primary', roles: ['system-variables-management', 'super-admin'], permissions: [] },
+  { id: 'calendar', label: 'تقویم', route: '/calendar', icon: 'calendar', color: 'primary', roles: ['calendar-management'], permissions: ['manage-calendar'] },
+  { id: 'versions', label: 'ورژن ها', route: '/versions', icon: 'list', color: 'primary', roles: ['versions-management'], permissions: ['manage-versions'] },
+  { id: 'reports', label: 'گزارشات کاربران', route: '/reports', icon: 'eye', color: 'blue', roles: ['reports-management'], permissions: ['manage-repots'] },
+  { id: 'system-variables', label: 'متغیرهای سیستم', route: '/system-variables', icon: 'puzzle', color: 'primary', roles: [], permissions: ['manage-system-variables'] },
   {
-    id: 'challenge', label: 'چالش پرسش و پاسخ', route: '#', icon: 'question', color: 'yellow', roles: ['challenge-management', 'super-admin'], permissions: [],
+    id: 'challenge', label: 'چالش پرسش و پاسخ', route: '#', icon: 'question', color: 'yellow',     roles: ['level-management'], permissions: ['manage-level', 'manage-challenge'],
     children: [{ id: 'challenge-list', label: 'لیست سوالات', route: '/challenge', icon: 'list', color: 'yellow', permissions: [] }]
   },
   {
-    id: 'tutorials', label: 'فیلم های آموزشی', route: '#', icon: 'video', color: 'blue', roles: ['tutorials-management', 'super-admin'], permissions: [],
+    id: 'tutorials', label: 'فیلم های آموزشی', route: '#', icon: 'video', color: 'blue', roles: ['tutorials-management'], permissions: ['manage-tutorials'],
     children: [
       { id: 'tutorials-videos', label: 'ویدیوها', route: '/videos/listing', icon: 'video', color: 'blue', permissions: [] },
       { id: 'tutorials-categories', label: 'دسته بندی ویدیوها', route: '/videos/categories', icon: 'list', color: 'blue', permissions: [] },
       { id: 'tutorials-sub-categories', label: 'زیر دسته های ویدیو', route: '/videos/sub-categories', icon: 'list', color: 'blue', permissions: [] }
     ]
   },
-  { id: 'translations', label: 'ترجمه', route: '/translations', icon: 'list', color: 'primary', roles: ['translations-management', 'super-admin'], permissions: [] },
-  { id: 'isic-codes', label: 'کدهای ISIC', route: '/isic-codes', icon: 'list', color: 'primary', roles: ['isic-codes-management', 'super-admin'], permissions: [] },
+  { id: 'translations', label: 'ترجمه', route: '/translations', icon: 'list', color: 'primary', roles: ['access-management'], permissions: ['manage-access', 'manage-translations'] },
+  { id: 'isic-codes', label: 'کدهای ISIC', route: '/isic-codes', icon: 'list', color: 'primary', roles: ['access-management'], permissions: ['manage-access', 'manage-isic-codes'] },
   { id: 'activity-logs', label: 'گزارش فعالیت‌ها', route: '/activity-logs', icon: 'list', color: 'blue', roles: [], permissions: ['view-activity-logs'] }
 ]

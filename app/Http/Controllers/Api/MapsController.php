@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Jobs\ImportMaps;
 use App\Models\Map;
@@ -12,6 +13,13 @@ use Illuminate\Support\Facades\Storage;
 
 class MapsController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['manage-maps']);
+    }
+
     /**
      * Get paginated maps
      *

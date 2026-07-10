@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Feature;
 use App\Models\FeatureProperties;
@@ -14,9 +15,12 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class LandsController extends Controller
 {
+    use AuthorizesAdminAccess;
     public function __construct(
         private readonly LandOwnerTransferService $landOwnerTransferService
-    ) {
+    )
+    {
+        $this->authorizeAdminAccess(['manage-features-info']);
     }
     /**
      * Get paginated lands/properties with search

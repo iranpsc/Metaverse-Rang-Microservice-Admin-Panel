@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\AuthorizesAdminAccess;
 use App\Http\Controllers\Controller;
 use App\Models\Dynasty\DynastyMessage;
 use Illuminate\Http\JsonResponse;
@@ -10,6 +11,13 @@ use Illuminate\Validation\Rule;
 
 class DynastyMessagesController extends Controller
 {
+    use AuthorizesAdminAccess;
+
+    public function __construct()
+    {
+        $this->authorizeAdminAccess(['manage-dynasty-messages']);
+    }
+
     /**
      * Get all dynasty messages
      *
