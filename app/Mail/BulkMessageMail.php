@@ -26,7 +26,7 @@ class BulkMessageMail extends Mailable
         return new Envelope(
             replyTo: [config('mail.from.address')],
             subject: __('Metarang Information Service'),
-            from: new Address(config('mail.from.address'), ' متارنگ | Contact Metarang'),
+            from: new Address(config('mail.from.address'), ' متارنگ | Metarang'),
         );
     }
 
