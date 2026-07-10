@@ -1,4 +1,4 @@
-/* Select2 theme overrides — lives in app.css entry so load order stays correct in production. */
+/* Select2 theme overrides — imported after select2.min.css in app.css so load order stays correct in production. */
 
 .select2-container {
   width: 100% !important;
@@ -66,7 +66,8 @@
   transition: background 0.2s ease, color 0.2s ease;
 }
 
-.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable,
+.select2-results__option--highlighted {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.22));
   color: var(--theme-text-primary);
 }
@@ -90,7 +91,8 @@
   box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
-:root[data-theme='light'] .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+:root[data-theme='light'] .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable,
+:root[data-theme='light'] .select2-results__option--highlighted {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.16), rgba(6, 182, 212, 0.16));
 }
 
@@ -102,7 +104,8 @@
   box-shadow: 0 18px 40px rgba(8, 12, 24, 0.55);
 }
 
-:root[data-theme='dark'] .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+:root[data-theme='dark'] .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable,
+:root[data-theme='dark'] .select2-results__option--highlighted {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(6, 182, 212, 0.3));
 }
 
@@ -114,4 +117,62 @@
 
 .select2-container--default .select2-selection--single .select2-selection__clear:hover {
   color: rgba(239, 68, 68, 0.9);
+}
+
+.select2-container--default .select2-selection--multiple {
+  background-color: var(--theme-bg-elevated);
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
+  min-height: 44px;
+  padding: 4px 8px;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.18);
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.22));
+  border: 1px solid var(--theme-border);
+  border-radius: 8px;
+  color: var(--theme-text-primary);
+  padding: 2px 8px;
+  margin: 2px;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+  color: var(--theme-text-secondary);
+  margin-left: 4px;
+}
+
+.select2-container--default.select2-container--open .select2-selection--multiple {
+  border-color: rgba(124, 58, 237, 0.7);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+.select2-container--default .select2-selection--multiple .select2-search--inline {
+  width: auto;
+  min-width: 10rem;
+  flex: 1;
+}
+
+.select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field {
+  width: 100% !important;
+  min-width: 10rem;
+  margin-top: 2px;
+  padding: 2px 4px;
+  color: var(--theme-text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field::placeholder {
+  color: var(--theme-text-muted);
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__rendered {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
 }
