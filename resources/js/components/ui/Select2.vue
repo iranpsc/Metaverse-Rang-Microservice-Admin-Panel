@@ -13,6 +13,7 @@
       ref="selectRef"
       class="w-full"
       :disabled="disabled"
+      :multiple="multiple"
     >
       <option v-if="placeholder && !remoteFetch" value="">{{ placeholder }}</option>
       <option
@@ -46,7 +47,7 @@ import 'select2/dist/css/select2.min.css'
 
 const props = defineProps({
   modelValue: {
-    type: [String, Number],
+    type: [String, Number, Array],
     default: ''
   },
   options: {
@@ -92,6 +93,18 @@ const props = defineProps({
   remoteFetch: {
     type: Function,
     default: null
+  },
+  multiple: {
+    type: Boolean,
+    default: false
+  },
+  minimumInputLength: {
+    type: Number,
+    default: null
+  },
+  dropdownParent: {
+    type: [String, Object],
+    default: null
   }
 })
 
@@ -124,13 +137,21 @@ const ensureSelect2 = () => {
 const buildSelect2Config = () => {
   const config = {
     placeholder: props.placeholder,
-    allowClear: props.allowClear,
+    allowClear: props.allowClear && !props.multiple,
     dir: 'rtl',
-    width: '100%'
+    width: '100%',
+    closeOnSelect: !props.multiple,
+    language: {
+      inputTooShort: () => 'برای جستجو تایپ کنید',
+      searching: () => 'در حال جستجو...',
+      noResults: () => 'نتیجه‌ای یافت نشد',
+      loadingMore: () => 'در حال بارگذاری...'
+    }
   }
 
   if (props.remoteFetch) {
-    config.minimumInputLength = 0
+    config.minimumInputLength = props.minimumInputLength ?? 0
+    config.minimumResultsForSearch = 0
     config.ajax = {
       delay: 300,
       transport: (params, success, failure) => {
@@ -165,6 +186,24 @@ const buildSelect2Config = () => {
   return config
 }
 
+const resolveDropdownParent = (jQuery, $el) => {
+  if (props.dropdownParent) {
+    if (typeof props.dropdownParent === 'string') {
+      const matched = jQuery(props.dropdownParent)
+      if (matched.length) return matched
+    } else if (props.dropdownParent instanceof HTMLElement) {
+      return jQuery(props.dropdownParent)
+    }
+  }
+
+  const modalPanel = $el.closest('.fixed.inset-0').find('> .relative').first()
+  if (modalPanel.length) {
+    return modalPanel
+  }
+
+  return jQuery(document.body)
+}
+
 const initSelect2 = async () => {
   if (!selectRef.value) return
 
@@ -175,10 +214,24 @@ const initSelect2 = async () => {
     return
   }
 
-  $el.select2(buildSelect2Config())
+  const config = buildSelect2Config()
+  config.dropdownParent = resolveDropdownParent(jQuery, $el)
+
+  $el.select2(config)
 
   const syncModelFromDom = () => {
     const raw = $el.val()
+
+    if (props.multiple) {
+      const value = Array.isArray(raw) ? raw.map(String) : (raw ? [String(raw)] : [])
+      const current = Array.isArray(props.modelValue) ? props.modelValue.map(String) : []
+      if (JSON.stringify(value) !== JSON.stringify(current)) {
+        emit('update:modelValue', value)
+        emit('change', value)
+      }
+      return
+    }
+
     const value = raw == null || raw === '' ? '' : String(raw)
     if (value !== String(props.modelValue ?? '')) {
       emit('update:modelValue', value)
@@ -201,7 +254,10 @@ const initSelect2 = async () => {
   $el.on('select2:clear.select2Component', syncModelFromDom)
 
   if (!props.remoteFetch) {
-    if (props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== '') {
+    if (props.multiple) {
+      const values = Array.isArray(props.modelValue) ? props.modelValue.map(String) : []
+      $el.val(values).trigger('change')
+    } else if (props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== '') {
       $el.val(String(props.modelValue)).trigger('change')
     } else if (props.placeholder) {
       $el.val('').trigger('change')
@@ -246,9 +302,22 @@ watch(
 watch(
   () => props.modelValue,
   async (value) => {
-    if (!initialized || !selectRef.value || props.remoteFetch) return
+    if (!initialized || !selectRef.value) return
     const jQuery = await ensureSelect2()
     const $el = jQuery(selectRef.value)
+
+    if (props.multiple) {
+      const next = Array.isArray(value) ? value.map(String) : []
+      const current = $el.val() || []
+      const currentArr = Array.isArray(current) ? current.map(String) : []
+      if (JSON.stringify(next) !== JSON.stringify(currentArr)) {
+        $el.val(next).trigger('change')
+      }
+      return
+    }
+
+    if (props.remoteFetch) return
+
     const nextStr = value == null || value === '' ? '' : String(value)
     const current = $el.val()
     const currentStr = current == null || current === '' ? '' : String(current)
@@ -384,5 +453,63 @@ watch(
 
 :global(.select2-container--default .select2-selection--single .select2-selection__clear:hover) {
   color: rgba(239, 68, 68, 0.9);
+}
+
+:global(.select2-container--default .select2-selection--multiple) {
+  background-color: var(--theme-bg-elevated);
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
+  min-height: 44px;
+  padding: 4px 8px;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.18);
+}
+
+:global(.select2-container--default .select2-selection--multiple .select2-selection__choice) {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.22));
+  border: 1px solid var(--theme-border);
+  border-radius: 8px;
+  color: var(--theme-text-primary);
+  padding: 2px 8px;
+  margin: 2px;
+}
+
+:global(.select2-container--default .select2-selection--multiple .select2-selection__choice__remove) {
+  color: var(--theme-text-secondary);
+  margin-left: 4px;
+}
+
+:global(.select2-container--default.select2-container--open .select2-selection--multiple) {
+  border-color: rgba(124, 58, 237, 0.7);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+}
+
+:global(.select2-container--default .select2-selection--multiple .select2-search--inline) {
+  width: auto;
+  min-width: 10rem;
+  flex: 1;
+}
+
+:global(.select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field) {
+  width: 100% !important;
+  min-width: 10rem;
+  margin-top: 2px;
+  padding: 2px 4px;
+  color: var(--theme-text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+:global(.select2-container--default .select2-selection--multiple .select2-search--inline .select2-search__field::placeholder) {
+  color: var(--theme-text-muted);
+}
+
+:global(.select2-container--default .select2-selection--multiple .select2-selection__rendered) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
 }
 </style>

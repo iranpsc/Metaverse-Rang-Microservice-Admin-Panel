@@ -51,6 +51,7 @@ const ModalTabs = () => import('../pages/translations/ModalTabs.vue')
 const TabFields = () => import('../pages/translations/TabFields.vue')
 const IsicCodes = () => import('../pages/isic-codes/Listing.vue')
 const ActivityLogs = () => import('../pages/activity-logs/Listing.vue')
+const BulkMessages = () => import('../pages/messaging/BulkMessages.vue')
 const Profile = () => import('../pages/profile/Profile.vue')
 
 const routes = [
@@ -449,6 +450,15 @@ const routes = [
         meta: {
           title: 'گزارش فعالیت‌ها',
           permission: 'view-activity-logs'
+        }
+      },
+      {
+        path: 'messaging',
+        name: 'bulk-messages',
+        component: BulkMessages,
+        meta: {
+          title: 'ارسال پیام به کاربران',
+          role: 'super-admin'
         }
       },
       {
