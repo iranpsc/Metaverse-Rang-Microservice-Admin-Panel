@@ -15,7 +15,6 @@ use Laravel\Sanctum\HasApiTokens;
 use App\Models\SellFeatureRequests;
 use App\Models\Note;
 use App\Models\User\UserActivity;
-use App\Models\Level\Level;
 use App\Models\Wallet;
 
 class User extends Authenticatable
@@ -54,11 +53,6 @@ class User extends Authenticatable
     public function wallet()
     {
         return $this->hasOne(Wallet::class);
-    }
-
-    public function levels()
-    {
-        return $this->belongsToMany(Level::class, 'level_user');
     }
 
     public function getHasReferenceAttribute()
