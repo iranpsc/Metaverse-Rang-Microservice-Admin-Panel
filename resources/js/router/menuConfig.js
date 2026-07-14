@@ -15,7 +15,8 @@ export default [
       { id: 'citizens-deposits', label: 'واریزی ها', route: '/citizens/deposits', icon: 'user', color: 'secondary', permissions: ['view-deposits'] },
       { id: 'citizens-withdraws', label: 'برداشت ها', route: '/citizens/withdraws', icon: 'user', color: 'secondary', permissions: ['view-withdraws'] },
       { id: 'citizens-profile-details', label: 'جزئیات پروفایل', route: '/citizens/profile-details', icon: 'user', color: 'secondary', permissions: ['view-profile-details'] },
-      { id: 'citizens-assets', label: 'دارایی ها', route: '/citizens/assets', icon: 'user', color: 'secondary', permissions: ['view-assets'] }
+      { id: 'citizens-assets', label: 'دارایی ها', route: '/citizens/assets', icon: 'user', color: 'secondary', permissions: ['view-assets'] },
+      { id: 'citizens-connected-wallets', label: 'کیف پول‌های متصل', route: '/citizens/connected-wallets', icon: 'user', color: 'secondary', permissions: ['view-connected-wallets'] }
     ]
   },
   {

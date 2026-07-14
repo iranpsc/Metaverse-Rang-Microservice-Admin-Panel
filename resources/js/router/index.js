@@ -14,6 +14,7 @@ const Assets = () => import('../pages/citizens/Assets.vue')
 const Deposits = () => import('../pages/citizens/Deposits.vue')
 const ProfileDetails = () => import('../pages/citizens/ProfileDetails.vue')
 const Withdraws = () => import('../pages/citizens/Withdraws.vue')
+const ConnectedWallets = () => import('../pages/citizens/ConnectedWallets.vue')
 const LandsListing = () => import('../pages/lands/Listing.vue')
 const FeatureLimits = () => import('../pages/lands/FeatureLimits.vue')
 const FeaturePricingLimits = () => import('../pages/lands/FeaturePricingLimits.vue')
@@ -188,6 +189,14 @@ const routes = [
         component: Withdraws,
         meta: {
           title: 'برداشت ها'
+        }
+      },
+      {
+        path: 'citizens/connected-wallets',
+        name: 'connected-wallets',
+        component: ConnectedWallets,
+        meta: {
+          title: 'کیف پول‌های متصل'
         }
       },
       {

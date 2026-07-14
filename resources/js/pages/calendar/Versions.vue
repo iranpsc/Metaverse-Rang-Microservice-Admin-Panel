@@ -288,7 +288,7 @@ const submitCreate = async () => {
       starts_at: createForm.starts_at
     }
 
-    const response = await apiClient.post('/versions')
+    const response = await apiClient.post('/versions', payload)
 
     if (response.data.success) {
       showToast(response.data.message || 'ورژن جدید با موفقیت ایجاد شد', 'success')
@@ -328,7 +328,7 @@ const handleDelete = async (row) => {
   if (!result.isConfirmed) return
 
   try {
-        const response = await apiClient.delete(`/versions/${version.id}`)
+        const response = await apiClient.delete(`/versions/${row.id}`)
 
         if (response.data.success) {
           showToast(response.data.message || 'ورژن با موفقیت حذف شد', 'success')

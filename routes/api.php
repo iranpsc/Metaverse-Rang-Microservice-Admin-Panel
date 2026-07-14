@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AdminsController;
 use App\Http\Controllers\Api\BankAccountController;
+use App\Http\Controllers\Api\ConnectedWalletController;
 use App\Http\Controllers\Api\BulkMessageController;
 use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\ChallengeQuestionsController;
@@ -98,6 +99,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     Route::get('/activity-logs', [ActivityLogController::class, 'index']);
     Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
     Route::get('/registration-info', [RegistrationInfoController::class, 'index']);
+    Route::get('/connected-wallets', [ConnectedWalletController::class, 'index']);
     Route::get('/reports', [ReportController::class, 'index']);
 
     // Challenge routes
