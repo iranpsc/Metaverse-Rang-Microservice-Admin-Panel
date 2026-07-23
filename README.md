@@ -1,64 +1,157 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# Admin Hamgit
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 12 + Vue 3 admin panel for Hamgit. The backend exposes a JSON API; the frontend is a Vite-powered SPA served from Laravel.
 
-## About Laravel
+## Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Layer | Technology |
+| --- | --- |
+| Backend | PHP 8.2, Laravel 12, Sanctum, Spatie Permission / Activity Log |
+| Frontend | Vue 3, Vite 8, Pinia, PrimeVue, Tailwind CSS 4 |
+| Data | MySQL 8, Redis 7 |
+| Runtime | Docker (PHP-FPM + Nginx), optional XAMPP for local PHP |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requirements
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**Docker (recommended)**
 
-## Learning Laravel
+- Docker Desktop / Docker Engine with Compose v2
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+**Local (without Docker)**
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- PHP 8.2+, Composer, Node.js 22+, MySQL, Redis (optional)
 
-## Laravel Sponsors
+## Quick start (Docker development)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+```bash
+cp .env.docker.example .env
+docker compose up -d --build
+docker compose exec app php artisan migrate
+```
 
-### Premium Partners
+Then open:
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+| Service | URL |
+| --- | --- |
+| Application | http://localhost:8080 |
+| Vite (HMR) | http://localhost:5173 |
+| Mailpit | http://localhost:8025 |
 
-## Contributing
+### Development services
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+`docker compose up` starts:
 
-## Code of Conduct
+- **app** — PHP 8.2-FPM
+- **nginx** — HTTP front (port `8080`)
+- **mysql** — MySQL 8
+- **redis** — cache / session / queue
+- **node** — Vite dev server
+- **mailpit** — local SMTP + UI
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Optional queue worker and scheduler:
 
-## Security Vulnerabilities
+```bash
+docker compose --profile queue up -d
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Useful commands
+
+```bash
+docker compose exec app php artisan tinker
+docker compose exec app composer install
+docker compose exec app php artisan test
+docker compose logs -f app nginx
+docker compose down
+```
+
+## Production deployment (Docker)
+
+1. Create a production `.env` (start from `.env.docker.example`):
+
+```bash
+cp .env.docker.example .env
+```
+
+Set at least:
+
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `APP_KEY=` (run `php artisan key:generate` after first start if empty)
+- `APP_URL=` your public URL
+- Strong `DB_*` / `MYSQL_*` passwords
+- Real mail / FTP / AWS credentials as needed
+
+2. Build and start:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+3. Migrate:
+
+```bash
+docker compose -f docker-compose.prod.yml exec app php artisan migrate --force
+```
+
+### Production services
+
+| Service | Role |
+| --- | --- |
+| **app** | PHP-FPM (assets built into the image) |
+| **nginx** | Serves `public/` and proxies PHP |
+| **mysql** | Database (persistent volume) |
+| **redis** | Cache, sessions, queues |
+| **queue** | `queue:work` on Redis |
+| **scheduler** | Runs `schedule:run` every minute |
+
+Frontend assets are compiled inside the production image — no Node/Vite container at runtime. Uploads and logs persist via the `storage-data` volume.
+
+## Environment files
+
+| File | Use |
+| --- | --- |
+| `.env.docker.example` | Docker defaults (`DB_HOST=mysql`, Redis, Mailpit, `APP_URL=http://localhost:8080`) |
+| `.env.example` | Non-Docker / XAMPP defaults (`DB_HOST=127.0.0.1`) |
+
+Never commit `.env`. Optional Compose port overrides:
+
+```env
+APP_PORT=8080
+VITE_PORT=5173
+FORWARD_DB_PORT=3306
+FORWARD_REDIS_PORT=6379
+FORWARD_MAIL_PORT=1025
+FORWARD_MAIL_DASHBOARD_PORT=8025
+```
+
+## Local setup (without Docker)
+
+```bash
+cp .env.example .env
+composer install
+php artisan key:generate
+# configure DB_* in .env, then:
+php artisan migrate
+npm install
+npm run dev
+```
+
+Serve with `php artisan serve` or your local Apache/Nginx (e.g. XAMPP) pointing at `public/`.
+
+## Project layout
+
+```
+app/                 Laravel application code
+resources/js/        Vue SPA (pages, components, composables)
+routes/              web + API routes
+docker/              PHP/Nginx images and configs
+Dockerfile           Multi-stage production image
+docker-compose.yml   Development stack
+docker-compose.prod.yml
+```
+
+More Docker detail: [docker/README.md](docker/README.md).
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT (Laravel framework portions as upstream).

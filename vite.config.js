@@ -76,4 +76,15 @@ export default defineConfig({
     define: {
         __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,
     },
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        strictPort: true,
+        hmr: {
+            host: 'localhost',
+        },
+        watch: {
+            usePolling: true,
+        },
+    },
 });

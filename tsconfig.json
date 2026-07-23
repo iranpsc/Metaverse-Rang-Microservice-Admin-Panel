@@ -13,9 +13,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "types": ["vite/client"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["resources/js/*"]
+      "@/*": ["./resources/js/*"]
     }
   },
   "include": [

@@ -1,0 +1,127 @@
+name: admin-hamgit
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_HOST: mysql
+      REDIS_HOST: redis
+    volumes:
+      - storage-data:/var/www/html/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - admin-hamgit
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - storage-data:/var/www/html/storage:ro
+    depends_on:
+      - app
+    networks:
+      - admin-hamgit
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-admin_hamgit}
+      MYSQL_USER: ${DB_USERNAME:-admin}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - admin-hamgit
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - admin-hamgit
+
+  queue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    restart: unless-stopped
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    env_file:
+      - .env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_HOST: mysql
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
+    volumes:
+      - storage-data:/var/www/html/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      app:
+        condition: service_started
+    networks:
+      - admin-hamgit
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    restart: unless-stopped
+    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    env_file:
+      - .env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_HOST: mysql
+      REDIS_HOST: redis
+    volumes:
+      - storage-data:/var/www/html/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+      app:
+        condition: service_started
+    networks:
+      - admin-hamgit
+
+volumes:
+  mysql-data:
+  redis-data:
+  storage-data:
+
+networks:
+  admin-hamgit:
+    driver: bridge
