@@ -6,14 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Level\LevelGiftRequest;
 use App\Http\Resources\Level\LevelGiftResource;
 use App\Models\Level\Level;
+use App\Repositories\LevelGiftRepository;
+use App\Services\Level\LevelGiftUploadService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use InvalidArgumentException;
 use Throwable;
 
 class LevelGiftController extends Controller
 {
+    public function __construct(
+        private LevelGiftRepository $levelGiftRepository,
+        private LevelGiftUploadService $levelGiftUploadService,
+    ) {}
+
     public function show(Level $level): JsonResponse
     {
         $gift = $level->gift;
@@ -38,20 +44,23 @@ class LevelGiftController extends Controller
             ], 422);
         }
 
-        $validated = $this->preparePayload($request->validated());
+        $validated = $this->levelGiftUploadService->preparePayload($request->validated());
         $storedFiles = [];
 
         try {
-            $fileUploads = $this->handleFileUploads($request);
-            $storedFiles = array_column($fileUploads, 'path');
-
-            foreach ($fileUploads as $field => $fileData) {
-                $validated[$field] = $fileData['url'];
+            if (isset($validated['fbx_file'])) {
+                $validated['fbx_file'] = $this->levelGiftUploadService->validateFbxFileExtensions($validated['fbx_file']);
             }
 
-            $gift = DB::transaction(function () use ($level, $validated) {
-                return $level->gift()->create($validated);
-            });
+            $fileUploads = $this->levelGiftUploadService->handleFileUploads($request);
+            $storedFiles = array_column($fileUploads, 'path');
+            $validated = $this->levelGiftUploadService->applyUploadedFiles($fileUploads, $validated);
+
+            if (! array_key_exists('fbx_file', $validated) || ! is_array($validated['fbx_file'])) {
+                unset($validated['fbx_file']);
+            }
+
+            $gift = $this->levelGiftRepository->createForLevel($level, $validated);
 
             return response()->json([
                 'success' => true,
@@ -60,8 +69,15 @@ class LevelGiftController extends Controller
                 ],
                 'message' => 'هدیه سطح با موفقیت ثبت شد.',
             ], 201);
+        } catch (InvalidArgumentException $exception) {
+            $this->levelGiftUploadService->cleanupFiles($storedFiles);
+
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
         } catch (Throwable $throwable) {
-            $this->cleanupFiles($storedFiles);
+            $this->levelGiftUploadService->cleanupFiles($storedFiles);
             report($throwable);
 
             return response()->json([
@@ -75,35 +91,40 @@ class LevelGiftController extends Controller
     {
         $gift = $level->gift;
 
-        if (!$gift) {
+        if (! $gift) {
             return response()->json([
                 'success' => false,
                 'message' => 'برای این سطح هدیه‌ای ثبت نشده است.',
             ], 404);
         }
 
-        $validated = $this->preparePayload($request->validated());
+        $validated = $this->levelGiftUploadService->preparePayload($request->validated());
         $storedFiles = [];
         $replacedFiles = [];
 
         try {
-            $fileUploads = $this->handleFileUploads($request);
-            $storedFiles = array_column($fileUploads, 'path');
-
-            foreach ($fileUploads as $field => $fileData) {
-                if ($gift->{$field}) {
-                    $replacedFiles[] = $this->extractStoragePath($gift->{$field});
-                }
-                $validated[$field] = $fileData['url'];
+            if (isset($validated['fbx_file'])) {
+                $validated['fbx_file'] = $this->levelGiftUploadService->validateFbxFileExtensions($validated['fbx_file']);
             }
 
-            DB::transaction(function () use ($gift, $validated) {
-                $gift->update($validated);
-            });
+            $fileUploads = $this->levelGiftUploadService->handleFileUploads($request);
+            $storedFiles = array_column($fileUploads, 'path');
+            $previousFbxFiles = is_array($gift->fbx_file) ? $gift->fbx_file : [];
+            $replacedFiles = $this->levelGiftUploadService->collectReplacedFilePaths($gift, $fileUploads);
+            $validated = $this->levelGiftUploadService->applyUploadedFiles($fileUploads, $validated);
 
-            $gift->refresh();
+            if (array_key_exists('fbx_file', $validated) && is_array($validated['fbx_file'])) {
+                $validated['fbx_file'] = $this->levelGiftUploadService->mergeFbxFileLinks(
+                    $previousFbxFiles,
+                    $validated['fbx_file']
+                );
+            } else {
+                unset($validated['fbx_file']);
+            }
 
-            $this->cleanupFiles($replacedFiles);
+            $gift = $this->levelGiftRepository->update($gift, $validated);
+
+            $this->levelGiftUploadService->cleanupFiles(array_filter($replacedFiles));
 
             return response()->json([
                 'success' => true,
@@ -112,8 +133,15 @@ class LevelGiftController extends Controller
                 ],
                 'message' => 'هدیه سطح با موفقیت بروزرسانی شد.',
             ]);
+        } catch (InvalidArgumentException $exception) {
+            $this->levelGiftUploadService->cleanupFiles($storedFiles);
+
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
         } catch (Throwable $throwable) {
-            $this->cleanupFiles($storedFiles);
+            $this->levelGiftUploadService->cleanupFiles($storedFiles);
             report($throwable);
 
             return response()->json([
@@ -123,113 +151,80 @@ class LevelGiftController extends Controller
         }
     }
 
-    private function preparePayload(array $data): array
+    public function destroyFile(Request $request, Level $level): JsonResponse
     {
-        $payload = $data;
+        $gift = $level->gift;
 
-        $stringFields = [
-            'name',
-            'description',
-            'features',
-            'seller_link',
-            'designer',
-            'start_vod_id',
-            'end_vod_id',
-        ];
-
-        foreach ($stringFields as $field) {
-            if (array_key_exists($field, $payload) && $payload[$field] !== null) {
-                $payload[$field] = trim((string) $payload[$field]);
-            }
+        if (! $gift) {
+            return response()->json([
+                'success' => false,
+                'message' => 'برای این سطح هدیه‌ای ثبت نشده است.',
+            ], 404);
         }
 
-        $booleanFields = [
-            'store_capacity',
-            'sell_capacity',
-            'sell',
-            'vod_document_registration',
-            'has_animation',
-            'rent',
-        ];
+        $validated = $request->validate([
+            'field' => ['required', 'string', 'in:png_file,gif_file,fbx_file'],
+            'file_key' => ['nullable', 'string', 'max:64'],
+        ]);
 
-        foreach ($booleanFields as $field) {
-            if (array_key_exists($field, $payload)) {
-                $payload[$field] = filter_var($payload[$field], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
-            }
-        }
+        $field = $validated['field'];
 
-        $integerFields = [
-            'monthly_capacity_count',
-            'three_d_model_points',
-            'three_d_model_lines',
-            'vod_count',
-        ];
+        try {
+            if ($field === 'fbx_file') {
+                $fileKey = $validated['file_key'] ?? null;
 
-        foreach ($integerFields as $field) {
-            if (array_key_exists($field, $payload)) {
-                $payload[$field] = (int) $payload[$field];
-            }
-        }
-
-        if (array_key_exists('three_d_model_volume', $payload)) {
-            $payload['three_d_model_volume'] = (float) $payload['three_d_model_volume'];
-        }
-
-        return $payload;
-    }
-
-    private function handleFileUploads(LevelGiftRequest $request): array
-    {
-        $uploads = [];
-
-        $fileFields = [
-            'png_file',
-            'fbx_file',
-            'gif_file',
-        ];
-
-        foreach ($fileFields as $field) {
-            if ($request->hasFile($field)) {
-                $file = $request->file($field);
-                if ($field === 'fbx_file') {
-                    $filename = $file->getClientOriginalName() ?: (Str::uuid() . '.' . $file->getClientOriginalExtension());
-                    $path = $file->storeAs('levels', $filename, 'public');
-                } else {
-                    $path = $file->store('levels', 'public');
+                if (! is_string($fileKey) || $fileKey === '') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'کلید فایل مدل برای حذف الزامی است.',
+                    ], 422);
                 }
-                $uploads[$field] = [
-                    'path' => $path,
-                    'url' => url('uploads/' . $path),
-                ];
+
+                $result = $this->levelGiftRepository->removeFbxFileEntry($gift, $fileKey);
+
+                if (! $result['found']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'فایل مورد نظر یافت نشد.',
+                    ], 404);
+                }
+
+                $deletedPath = $this->levelGiftUploadService->extractStoragePath($result['url']);
+            } else {
+                $result = $this->levelGiftRepository->clearFileField($gift, $field);
+
+                if (! $result['found']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'فایل مورد نظر یافت نشد.',
+                    ], 404);
+                }
+
+                $deletedPath = $this->levelGiftUploadService->extractStoragePath($result['url']);
             }
-        }
 
-        return $uploads;
-    }
+            $gift->refresh();
 
-    private function cleanupFiles(array $paths): void
-    {
-        foreach ($paths as $path) {
-            if ($path) {
-                Storage::disk('public')->delete($path);
+            if ($deletedPath) {
+                $this->levelGiftUploadService->cleanupFiles([$deletedPath]);
             }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'gift' => new LevelGiftResource($gift),
+                    'field' => $field,
+                    $field => $gift->{$field},
+                ],
+                'message' => 'فایل با موفقیت حذف شد.',
+            ]);
+        } catch (Throwable $throwable) {
+            report($throwable);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در حذف فایل هدیه سطح',
+            ], 500);
         }
-    }
-
-    private function extractStoragePath(?string $url): ?string
-    {
-        if (!$url) {
-            return null;
-        }
-
-        $baseUrl = rtrim(url('uploads'), '/');
-
-        if ($baseUrl && str_starts_with($url, $baseUrl)) {
-            return ltrim(substr($url, strlen($baseUrl)), '/');
-        }
-
-        return ltrim($url, '/');
     }
 }
-
-

@@ -6,14 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Level\LevelGeneralInfoRequest;
 use App\Http\Resources\Level\LevelGeneralInfoResource;
 use App\Models\Level\Level;
+use App\Repositories\LevelGeneralInfoRepository;
+use App\Services\Level\LevelGeneralInfoUploadService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use InvalidArgumentException;
 use Throwable;
 
 class LevelGeneralInfoController extends Controller
 {
+    public function __construct(
+        private LevelGeneralInfoRepository $levelGeneralInfoRepository,
+        private LevelGeneralInfoUploadService $levelGeneralInfoUploadService,
+    ) {}
+
     public function show(Level $level): JsonResponse
     {
         $generalInfo = $level->generalInfo;
@@ -38,21 +44,23 @@ class LevelGeneralInfoController extends Controller
             ], 422);
         }
 
-        $validated = $this->preparePayload($request->validated());
-
+        $validated = $this->levelGeneralInfoUploadService->preparePayload($request->validated());
         $storedFiles = [];
 
         try {
-            $fileUploads = $this->handleFileUploads($request);
-            $storedFiles = array_column($fileUploads, 'path');
-
-            foreach ($fileUploads as $field => $fileData) {
-                $validated[$field] = $fileData['url'];
+            if (isset($validated['fbx_file'])) {
+                $validated['fbx_file'] = $this->levelGeneralInfoUploadService->validateFbxFileExtensions($validated['fbx_file']);
             }
 
-            $generalInfo = DB::transaction(function () use ($level, $validated) {
-                return $level->generalInfo()->create($validated);
-            });
+            $fileUploads = $this->levelGeneralInfoUploadService->handleFileUploads($request);
+            $storedFiles = array_column($fileUploads, 'path');
+            $validated = $this->levelGeneralInfoUploadService->applyUploadedFiles($fileUploads, $validated);
+
+            if (! array_key_exists('fbx_file', $validated) || ! is_array($validated['fbx_file'])) {
+                unset($validated['fbx_file']);
+            }
+
+            $generalInfo = $this->levelGeneralInfoRepository->createForLevel($level, $validated);
 
             return response()->json([
                 'success' => true,
@@ -61,8 +69,15 @@ class LevelGeneralInfoController extends Controller
                 ],
                 'message' => 'اطلاعات کلی سطح با موفقیت ثبت شد.',
             ], 201);
+        } catch (InvalidArgumentException $exception) {
+            $this->levelGeneralInfoUploadService->cleanupFiles($storedFiles);
+
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
         } catch (Throwable $throwable) {
-            $this->cleanupFiles($storedFiles);
+            $this->levelGeneralInfoUploadService->cleanupFiles($storedFiles);
             report($throwable);
 
             return response()->json([
@@ -76,37 +91,40 @@ class LevelGeneralInfoController extends Controller
     {
         $generalInfo = $level->generalInfo;
 
-        if (!$generalInfo) {
+        if (! $generalInfo) {
             return response()->json([
                 'success' => false,
                 'message' => 'برای این سطح اطلاعات کلی ثبت نشده است.',
             ], 404);
         }
 
-        $validated = $this->preparePayload($request->validated());
-
+        $validated = $this->levelGeneralInfoUploadService->preparePayload($request->validated());
         $storedFiles = [];
         $replacedFiles = [];
 
         try {
-            $fileUploads = $this->handleFileUploads($request);
-            $storedFiles = array_column($fileUploads, 'path');
-
-            foreach ($fileUploads as $field => $fileData) {
-                if ($generalInfo->{$field}) {
-                    $replacedFiles[] = $this->extractStoragePath($generalInfo->{$field});
-                }
-
-                $validated[$field] = $fileData['url'];
+            if (isset($validated['fbx_file'])) {
+                $validated['fbx_file'] = $this->levelGeneralInfoUploadService->validateFbxFileExtensions($validated['fbx_file']);
             }
 
-            DB::transaction(function () use ($generalInfo, $validated) {
-                $generalInfo->update($validated);
-            });
+            $fileUploads = $this->levelGeneralInfoUploadService->handleFileUploads($request);
+            $storedFiles = array_column($fileUploads, 'path');
+            $previousFbxFiles = is_array($generalInfo->fbx_file) ? $generalInfo->fbx_file : [];
+            $replacedFiles = $this->levelGeneralInfoUploadService->collectReplacedFilePaths($generalInfo, $fileUploads);
+            $validated = $this->levelGeneralInfoUploadService->applyUploadedFiles($fileUploads, $validated);
 
-            $generalInfo->refresh();
+            if (array_key_exists('fbx_file', $validated) && is_array($validated['fbx_file'])) {
+                $validated['fbx_file'] = $this->levelGeneralInfoUploadService->mergeFbxFileLinks(
+                    $previousFbxFiles,
+                    $validated['fbx_file']
+                );
+            } else {
+                unset($validated['fbx_file']);
+            }
 
-            $this->cleanupFiles($replacedFiles);
+            $generalInfo = $this->levelGeneralInfoRepository->update($generalInfo, $validated);
+
+            $this->levelGeneralInfoUploadService->cleanupFiles(array_filter($replacedFiles));
 
             return response()->json([
                 'success' => true,
@@ -115,8 +133,15 @@ class LevelGeneralInfoController extends Controller
                 ],
                 'message' => 'اطلاعات کلی سطح با موفقیت بروزرسانی شد.',
             ]);
+        } catch (InvalidArgumentException $exception) {
+            $this->levelGeneralInfoUploadService->cleanupFiles($storedFiles);
+
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
         } catch (Throwable $throwable) {
-            $this->cleanupFiles($storedFiles);
+            $this->levelGeneralInfoUploadService->cleanupFiles($storedFiles);
             report($throwable);
 
             return response()->json([
@@ -126,106 +151,80 @@ class LevelGeneralInfoController extends Controller
         }
     }
 
-    private function preparePayload(array $data): array
+    public function destroyFile(Request $request, Level $level): JsonResponse
     {
-        $payload = $data;
+        $generalInfo = $level->generalInfo;
 
-        $stringFields = [
-            'description',
-            'used_colors',
-            'persian_font',
-            'english_font',
-            'designer',
-            'model_designer',
-            'creation_date',
-        ];
-
-        foreach ($stringFields as $field) {
-            if (array_key_exists($field, $payload) && $payload[$field] !== null) {
-                $payload[$field] = trim((string) $payload[$field]);
-            }
+        if (! $generalInfo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'برای این سطح اطلاعات کلی ثبت نشده است.',
+            ], 404);
         }
 
-        $integerFields = [
-            'score',
-            'rank',
-            'subcategories',
-            'points',
-            'lines',
-        ];
+        $validated = $request->validate([
+            'field' => ['required', 'string', 'in:png_file,gif_file,fbx_file'],
+            'file_key' => ['nullable', 'string', 'max:64'],
+        ]);
 
-        foreach ($integerFields as $field) {
-            if (array_key_exists($field, $payload)) {
-                $payload[$field] = (int) $payload[$field];
-            }
-        }
+        $field = $validated['field'];
 
-        $booleanFields = [
-            'has_animation',
-        ];
+        try {
+            if ($field === 'fbx_file') {
+                $fileKey = $validated['file_key'] ?? null;
 
-        foreach ($booleanFields as $field) {
-            if (array_key_exists($field, $payload)) {
-                $payload[$field] = filter_var($payload[$field], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
-            }
-        }
-
-        if (array_key_exists('file_volume', $payload)) {
-            $payload['file_volume'] = (float) $payload['file_volume'];
-        }
-
-        return $payload;
-    }
-
-    private function handleFileUploads(LevelGeneralInfoRequest $request): array
-    {
-        $uploads = [];
-
-        $fileFields = ['png_file', 'fbx_file', 'gif_file'];
-
-        foreach ($fileFields as $field) {
-            if ($request->hasFile($field)) {
-                $file = $request->file($field);
-                if ($field === 'fbx_file') {
-                    $filename = $file->getClientOriginalName() ?: (Str::uuid() . '.' . $file->getClientOriginalExtension());
-                    $path = $file->storeAs('levels', $filename, 'public');
-                } else {
-                    $path = $file->store('levels', 'public');
+                if (! is_string($fileKey) || $fileKey === '') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'کلید فایل مدل برای حذف الزامی است.',
+                    ], 422);
                 }
 
-                $uploads[$field] = [
-                    'path' => $path,
-                    'url' => url('uploads/' . $path),
-                ];
+                $result = $this->levelGeneralInfoRepository->removeFbxFileEntry($generalInfo, $fileKey);
+
+                if (! $result['found']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'فایل مورد نظر یافت نشد.',
+                    ], 404);
+                }
+
+                $deletedPath = $this->levelGeneralInfoUploadService->extractStoragePath($result['url']);
+            } else {
+                $result = $this->levelGeneralInfoRepository->clearFileField($generalInfo, $field);
+
+                if (! $result['found']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'فایل مورد نظر یافت نشد.',
+                    ], 404);
+                }
+
+                $deletedPath = $this->levelGeneralInfoUploadService->extractStoragePath($result['url']);
             }
-        }
 
-        return $uploads;
-    }
+            $generalInfo->refresh();
 
-    private function cleanupFiles(array $paths): void
-    {
-        foreach ($paths as $path) {
-            if ($path) {
-                Storage::disk('public')->delete($path);
+            if ($deletedPath) {
+                $this->levelGeneralInfoUploadService->cleanupFiles([$deletedPath]);
             }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'general_info' => new LevelGeneralInfoResource($generalInfo),
+                    'field' => $field,
+                    $field => $generalInfo->{$field},
+                ],
+                'message' => 'فایل با موفقیت حذف شد.',
+            ]);
+        } catch (Throwable $throwable) {
+            report($throwable);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در حذف فایل اطلاعات کلی سطح',
+            ], 500);
         }
-    }
-
-    private function extractStoragePath(?string $url): ?string
-    {
-        if (!$url) {
-            return null;
-        }
-
-        $baseUrl = rtrim(url('uploads'), '/');
-
-        if ($baseUrl && str_starts_with($url, $baseUrl)) {
-            return ltrim(substr($url, strlen($baseUrl)), '/');
-        }
-
-        return ltrim($url, '/');
     }
 }
-
-

@@ -23,5 +23,6 @@ class LevelGift extends Model
         'has_animation' => 'boolean',
         'rent' => 'boolean',
         'vod_count' => 'integer',
+        'fbx_file' => 'array',
     ];
 }

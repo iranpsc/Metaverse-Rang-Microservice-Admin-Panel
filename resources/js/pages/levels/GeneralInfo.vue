@@ -250,19 +250,75 @@
                 helper-text="حداکثر 5 مگابایت"
                 :error="errors.png_file"
               />
-              <ExistingFileHint :url="existingFiles.png_file" label="تصویر فعلی" />
+              <ExistingFileHint
+                :url="existingFiles.png_file"
+                label="تصویر فعلی"
+                :deletable="Boolean(fileDeleteUrl)"
+                field="png_file"
+                :delete-url="fileDeleteUrl"
+                @deleted="handleExistingFileDeleted"
+              />
             </div>
 
             <div class="space-y-2">
-              <FileInput
-                v-model="form.fbx_file"
-                label="فایل FBX"
-                accept=".fbx"
-                placeholder="انتخاب مدل FBX"
-                helper-text="حداکثر 300 مگابایت"
-                :error="errors.fbx_file"
+              <label class="block text-sm font-medium text-[var(--theme-text-primary)]">
+                فایل مدل
+              </label>
+              <div
+                :class="[
+                  'flex items-center justify-between gap-3 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-bg-elevated)]/80 px-4 py-3',
+                  errors.fbx_file ? 'border-error' : ''
+                ]"
+              >
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm text-[var(--theme-text-primary)]">
+                    {{ fbxFileSummary || 'انتخاب فایل‌های مدل (تا ۲۰ فایل)' }}
+                  </p>
+                  <p class="text-xs text-[var(--theme-text-muted)]">
+                    bin, glb, gltf, png, jpeg, jpg, fbx — حداکثر ۳۰۰ مگابایت برای هر فایل
+                  </p>
+                </div>
+                <div class="flex shrink-0 items-center gap-2">
+                  <Button
+                    v-if="hasPendingFbxFiles"
+                    variant="ghost"
+                    size="sm"
+                    rounded="full"
+                    type="button"
+                    @click="clearFbxFile"
+                  >
+                    پاک کردن
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    rounded="full"
+                    type="button"
+                    @click="showFbxUploadModal = true"
+                  >
+                    {{ hasPendingFbxFiles ? 'تغییر فایل‌ها' : 'انتخاب فایل' }}
+                  </Button>
+                </div>
+              </div>
+              <p v-if="errors.fbx_file" class="text-xs text-error">
+                {{ errors.fbx_file }}
+              </p>
+              <ExistingFileHint
+                v-if="hasPendingFbxFiles"
+                :url="form.fbx_file"
+                label="فایل‌های جدید آماده‌ی ذخیره"
+                deletable
+                field="fbx_file"
+                @deleted="handlePendingFbxDeleted"
               />
-              <ExistingFileHint :url="existingFiles.fbx_file" label="مدل فعلی" />
+              <ExistingFileHint
+                :url="existingFiles.fbx_file"
+                label="مدل‌های فعلی"
+                :deletable="Boolean(fileDeleteUrl)"
+                field="fbx_file"
+                :delete-url="fileDeleteUrl"
+                @deleted="handleExistingFileDeleted"
+              />
             </div>
 
             <div class="space-y-2">
@@ -274,9 +330,31 @@
                 helper-text="حداکثر 5 مگابایت"
                 :error="errors.gif_file"
               />
-              <ExistingFileHint :url="existingFiles.gif_file" label="گیف فعلی" />
+              <ExistingFileHint
+                :url="existingFiles.gif_file"
+                label="گیف فعلی"
+                :deletable="Boolean(fileDeleteUrl)"
+                field="gif_file"
+                :delete-url="fileDeleteUrl"
+                @deleted="handleExistingFileDeleted"
+              />
             </div>
           </div>
+
+          <FileUploadModal
+            v-model="showFbxUploadModal"
+            title="بارگذاری فایل‌های مدل"
+            subtitle="تا ۲۰ فایل را بکشید و رها کنید یا از مرورگر انتخاب کنید"
+            :accept="MODEL_FILE_ACCEPT"
+            helper-text="فرمت‌های مجاز: bin, glb, gltf, png, jpeg, jpg, fbx — حداکثر ۲۰ فایل، هر فایل تا ۳۰۰ مگابایت"
+            upload-label="بارگذاری فایل‌ها"
+            chunk-upload
+            chunk-target="/api/upload/chunk"
+            :multiple="true"
+            :max-files="20"
+            :max-file-size="fbxMaxFileSize"
+            @upload="handleFbxUpload"
+          />
         </Card>
       </div>
     </template>
@@ -287,7 +365,7 @@
 import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import apiClient from '../../utils/api'
-import { Button, Card, Checkbox, Input, LoadingState, ErrorState, FileInput } from '../../components/ui'
+import { Button, Card, Checkbox, Input, LoadingState, ErrorState, FileInput, FileUploadModal } from '../../components/ui'
 import Editor from 'primevue/editor'
 import ExistingFileHint from '../../components/levels/ExistingFileHint.vue'
 import { useToast } from '../../composables/useToast'
@@ -300,6 +378,11 @@ const router = useRouter()
 const loading = ref(true)
 const saving = ref(false)
 const error = ref(null)
+const showFbxUploadModal = ref(false)
+const ALLOWED_MODEL_FILE_TYPES = ['bin', 'glb', 'gltf', 'png', 'jpeg', 'jpg', 'fbx']
+const MODEL_FILE_ACCEPT = '.bin,.glb,.gltf,.png,.jpeg,.jpg,.fbx,image/png,image/jpeg'
+
+const fbxMaxFileSize = 300 * 1024 * 1024
 
 const hasExistingGeneralInfo = ref(false)
 
@@ -333,6 +416,18 @@ const existingFiles = reactive({
   gif_file: null
 })
 
+const hasPendingFbxFiles = computed(() => (
+  form.fbx_file
+  && typeof form.fbx_file === 'object'
+  && !Array.isArray(form.fbx_file)
+  && Object.keys(form.fbx_file).length > 0
+))
+
+const fbxFileSummary = computed(() => {
+  if (!hasPendingFbxFiles.value) return ''
+  return `${Object.keys(form.fbx_file).length} فایل آماده ذخیره`
+})
+
 const originalValues = ref({ ...defaultValues })
 
 const errors = reactive({
@@ -359,6 +454,9 @@ const fieldKeys = Object.keys(defaultValues)
 
 const levelId = computed(() => route.params?.levelId || null)
 const levelLabel = computed(() => route.query?.name || route.query?.title || '')
+const fileDeleteUrl = computed(() => (
+  levelId.value ? `/levels/${levelId.value}/general-info/files` : ''
+))
 
 const submitButtonLabel = computed(() => {
   return 'ثبت اطلاعات'
@@ -529,8 +627,65 @@ const validateFile = (field, file, { maxSizeMB, allowedTypes = [], allowedExtens
 
 const hasFormChanges = () => {
   const nonFileChanged = fieldKeys.some((key) => form[key] !== originalValues.value[key])
-  const fileChanged = Boolean(form.png_file || form.fbx_file || form.gif_file)
+  const fileChanged = Boolean(form.png_file || hasPendingFbxFiles.value || form.gif_file)
   return nonFileChanged || fileChanged
+}
+
+const validateFbxLinks = () => {
+  if (!hasPendingFbxFiles.value) {
+    errors.fbx_file = ''
+    return true
+  }
+
+  const entries = Object.entries(form.fbx_file)
+  const existingCount = (
+    existingFiles.fbx_file
+    && typeof existingFiles.fbx_file === 'object'
+    && !Array.isArray(existingFiles.fbx_file)
+  )
+    ? Object.keys(existingFiles.fbx_file).length
+    : 0
+
+  if (existingCount + entries.length > 20) {
+    errors.fbx_file = `حداکثر ۲۰ فایل مدل مجاز است. ${existingCount} فایل قبلی ذخیره شده و ${entries.length} فایل جدید انتخاب شده است.`
+    return false
+  }
+
+  for (const [fileType, url] of entries) {
+    const normalizedType = String(fileType).toLowerCase().replace(/_\d+$/, '')
+    if (!ALLOWED_MODEL_FILE_TYPES.includes(normalizedType)) {
+      errors.fbx_file = `فرمت فایل مجاز نیست. فرمت‌های مجاز: ${ALLOWED_MODEL_FILE_TYPES.join(', ')}`
+      return false
+    }
+
+    if (typeof url !== 'string' || !url.trim()) {
+      errors.fbx_file = 'لینک یکی از فایل‌های مدل نامعتبر است'
+      return false
+    }
+
+    let urlPath = url
+    try {
+      urlPath = new URL(url).pathname
+    } catch {
+      // keep raw url for extension parsing
+    }
+
+    const urlExtension = urlPath.split('.').pop()?.toLowerCase() || ''
+    if (!ALLOWED_MODEL_FILE_TYPES.includes(urlExtension)) {
+      errors.fbx_file = `پسوند لینک فایل مدل مجاز نیست. فرمت‌های مجاز: ${ALLOWED_MODEL_FILE_TYPES.join(', ')}`
+      return false
+    }
+
+    const jpegFamily = ['jpeg', 'jpg']
+    const compatibleJpeg = jpegFamily.includes(normalizedType) && jpegFamily.includes(urlExtension)
+    if (normalizedType !== urlExtension && !compatibleJpeg) {
+      errors.fbx_file = `نوع فایل «${normalizedType}» با پسوند لینک «${urlExtension}» هم‌خوانی ندارد`
+      return false
+    }
+  }
+
+  errors.fbx_file = ''
+  return true
 }
 
 const validateForm = () => {
@@ -555,7 +710,7 @@ const validateForm = () => {
   const filesValid = [
     validateFile('png_file', form.png_file, { maxSizeMB: 5, allowedTypes: ['image/png'], allowedExtensions: ['.png'] }),
     validateFile('gif_file', form.gif_file, { maxSizeMB: 5, allowedTypes: ['image/gif'], allowedExtensions: ['.gif'] }),
-    validateFile('fbx_file', form.fbx_file, { maxSizeMB: 300, allowedExtensions: ['.fbx'] })
+    validateFbxLinks()
   ]
 
   const allValid = [...validators, ...filesValid].every(Boolean)
@@ -607,6 +762,13 @@ const appendFormData = (payload) => {
   })
 
   Object.entries(payload.files).forEach(([key, file]) => {
+    if (key === 'fbx_file') {
+      if (file && typeof file === 'object' && !(file instanceof File) && Object.keys(file).length > 0) {
+        formData.append('fbx_file', JSON.stringify(file))
+      }
+      return
+    }
+
     if (file instanceof File) {
       formData.append(key, file)
     }
@@ -715,6 +877,33 @@ const handleSubmit = async () => {
   }
 
   await persistGeneralInfo()
+}
+
+const handleFbxUpload = (links) => {
+  if (!links || typeof links !== 'object' || Array.isArray(links) || Object.keys(links).length === 0) {
+    return
+  }
+
+  form.fbx_file = { ...links }
+  errors.fbx_file = ''
+  showFbxUploadModal.value = false
+}
+
+const handlePendingFbxDeleted = ({ remaining }) => {
+  form.fbx_file = remaining
+  if (!remaining) {
+    errors.fbx_file = ''
+  }
+}
+
+const handleExistingFileDeleted = ({ field, remaining }) => {
+  if (!field || !(field in existingFiles)) return
+  existingFiles[field] = remaining
+}
+
+const clearFbxFile = () => {
+  form.fbx_file = null
+  errors.fbx_file = ''
 }
 
 const goBackToListing = () => {

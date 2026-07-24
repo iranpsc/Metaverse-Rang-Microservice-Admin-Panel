@@ -18,7 +18,8 @@ class RequirePhoneVerification
         'api/logout',
         'api/password/email',
         'api/password/reset',
-        'api/videos/chunk'
+        'api/videos/chunk',
+        'api/upload/chunk',
     ];
 
     public function __construct(

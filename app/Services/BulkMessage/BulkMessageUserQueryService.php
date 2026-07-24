@@ -29,8 +29,8 @@ class BulkMessageUserQueryService
 
         return $query->whereHas('levels', function ($q) use ($levelIds) {
             $q->whereIn('levels.id', $levelIds)
-                ->whereRaw('levels.slug = (
-                    SELECT MAX(l2.slug) FROM level_user lu2
+                ->whereRaw('CAST(levels.score AS UNSIGNED) = (
+                    SELECT MAX(CAST(l2.score AS UNSIGNED)) FROM level_user lu2
                     JOIN levels l2 ON lu2.level_id = l2.id
                     WHERE lu2.user_id = level_user.user_id
                 )');

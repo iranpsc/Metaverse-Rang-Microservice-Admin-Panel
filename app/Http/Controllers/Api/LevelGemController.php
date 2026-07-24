@@ -6,14 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Level\LevelGemRequest;
 use App\Http\Resources\Level\LevelGemResource;
 use App\Models\Level\Level;
+use App\Repositories\LevelGemRepository;
+use App\Services\Level\LevelGemUploadService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use InvalidArgumentException;
 use Throwable;
 
 class LevelGemController extends Controller
 {
+    public function __construct(
+        private LevelGemRepository $levelGemRepository,
+        private LevelGemUploadService $levelGemUploadService,
+    ) {}
+
     public function show(Level $level): JsonResponse
     {
         $gem = $level->gem;
@@ -38,20 +44,23 @@ class LevelGemController extends Controller
             ], 422);
         }
 
-        $validated = $this->preparePayload($request->validated());
+        $validated = $this->levelGemUploadService->preparePayload($request->validated());
         $storedFiles = [];
 
         try {
-            $fileUploads = $this->handleFileUploads($request);
-            $storedFiles = array_column($fileUploads, 'path');
-
-            foreach ($fileUploads as $field => $fileData) {
-                $validated[$field] = $fileData['url'];
+            if (isset($validated['fbx_file'])) {
+                $validated['fbx_file'] = $this->levelGemUploadService->validateFbxFileExtensions($validated['fbx_file']);
             }
 
-            $gem = DB::transaction(function () use ($level, $validated) {
-                return $level->gem()->create($validated);
-            });
+            $fileUploads = $this->levelGemUploadService->handleFileUploads($request);
+            $storedFiles = array_column($fileUploads, 'path');
+            $validated = $this->levelGemUploadService->applyUploadedFiles($fileUploads, $validated);
+
+            if (! array_key_exists('fbx_file', $validated) || ! is_array($validated['fbx_file'])) {
+                unset($validated['fbx_file']);
+            }
+
+            $gem = $this->levelGemRepository->createForLevel($level, $validated);
 
             return response()->json([
                 'success' => true,
@@ -60,8 +69,15 @@ class LevelGemController extends Controller
                 ],
                 'message' => 'گوهر سطح با موفقیت ثبت شد.',
             ], 201);
+        } catch (InvalidArgumentException $exception) {
+            $this->levelGemUploadService->cleanupFiles($storedFiles);
+
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
         } catch (Throwable $throwable) {
-            $this->cleanupFiles($storedFiles);
+            $this->levelGemUploadService->cleanupFiles($storedFiles);
             report($throwable);
 
             return response()->json([
@@ -75,36 +91,40 @@ class LevelGemController extends Controller
     {
         $gem = $level->gem;
 
-        if (!$gem) {
+        if (! $gem) {
             return response()->json([
                 'success' => false,
                 'message' => 'برای این سطح گوهری ثبت نشده است.',
             ], 404);
         }
 
-        $validated = $this->preparePayload($request->validated());
+        $validated = $this->levelGemUploadService->preparePayload($request->validated());
         $storedFiles = [];
         $replacedFiles = [];
 
         try {
-            $fileUploads = $this->handleFileUploads($request);
-            $storedFiles = array_column($fileUploads, 'path');
-
-            foreach ($fileUploads as $field => $fileData) {
-                if ($gem->{$field}) {
-                    $replacedFiles[] = $this->extractStoragePath($gem->{$field});
-                }
-
-                $validated[$field] = $fileData['url'];
+            if (isset($validated['fbx_file'])) {
+                $validated['fbx_file'] = $this->levelGemUploadService->validateFbxFileExtensions($validated['fbx_file']);
             }
 
-            DB::transaction(function () use ($gem, $validated) {
-                $gem->update($validated);
-            });
+            $fileUploads = $this->levelGemUploadService->handleFileUploads($request);
+            $storedFiles = array_column($fileUploads, 'path');
+            $previousFbxFiles = is_array($gem->fbx_file) ? $gem->fbx_file : [];
+            $replacedFiles = $this->levelGemUploadService->collectReplacedFilePaths($gem, $fileUploads);
+            $validated = $this->levelGemUploadService->applyUploadedFiles($fileUploads, $validated);
 
-            $gem->refresh();
+            if (array_key_exists('fbx_file', $validated) && is_array($validated['fbx_file'])) {
+                $validated['fbx_file'] = $this->levelGemUploadService->mergeFbxFileLinks(
+                    $previousFbxFiles,
+                    $validated['fbx_file']
+                );
+            } else {
+                unset($validated['fbx_file']);
+            }
 
-            $this->cleanupFiles($replacedFiles);
+            $gem = $this->levelGemRepository->update($gem, $validated);
+
+            $this->levelGemUploadService->cleanupFiles(array_filter($replacedFiles));
 
             return response()->json([
                 'success' => true,
@@ -113,8 +133,15 @@ class LevelGemController extends Controller
                 ],
                 'message' => 'گوهر سطح با موفقیت بروزرسانی شد.',
             ]);
+        } catch (InvalidArgumentException $exception) {
+            $this->levelGemUploadService->cleanupFiles($storedFiles);
+
+            return response()->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], 422);
         } catch (Throwable $throwable) {
-            $this->cleanupFiles($storedFiles);
+            $this->levelGemUploadService->cleanupFiles($storedFiles);
             report($throwable);
 
             return response()->json([
@@ -124,102 +151,80 @@ class LevelGemController extends Controller
         }
     }
 
-    private function preparePayload(array $data): array
+    public function destroyFile(Request $request, Level $level): JsonResponse
     {
-        $payload = $data;
+        $gem = $level->gem;
 
-        $stringFields = [
-            'name',
-            'description',
-            'thread',
-            'color',
-            'designer',
-        ];
-
-        foreach ($stringFields as $field) {
-            if (array_key_exists($field, $payload) && $payload[$field] !== null) {
-                $payload[$field] = trim((string) $payload[$field]);
-            }
+        if (! $gem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'برای این سطح گوهری ثبت نشده است.',
+            ], 404);
         }
 
-        $integerFields = [
-            'points',
-            'lines',
-        ];
+        $validated = $request->validate([
+            'field' => ['required', 'string', 'in:png_file,fbx_file'],
+            'file_key' => ['nullable', 'string', 'max:64'],
+        ]);
 
-        foreach ($integerFields as $field) {
-            if (array_key_exists($field, $payload)) {
-                $payload[$field] = (int) $payload[$field];
-            }
-        }
+        $field = $validated['field'];
 
-        $booleanFields = [
-            'encryption',
-            'has_animation',
-        ];
+        try {
+            if ($field === 'fbx_file') {
+                $fileKey = $validated['file_key'] ?? null;
 
-        foreach ($booleanFields as $field) {
-            if (array_key_exists($field, $payload)) {
-                $payload[$field] = filter_var($payload[$field], FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? false;
-            }
-        }
-
-        if (array_key_exists('volume', $payload)) {
-            $payload['volume'] = (float) $payload['volume'];
-        }
-
-        return $payload;
-    }
-
-    private function handleFileUploads(LevelGemRequest $request): array
-    {
-        $uploads = [];
-
-        $fileFields = ['png_file', 'fbx_file'];
-
-        foreach ($fileFields as $field) {
-            if ($request->hasFile($field)) {
-                $file = $request->file($field);
-                if ($field === 'fbx_file') {
-                    $filename = $file->getClientOriginalName() ?: (Str::uuid() . '.' . $file->getClientOriginalExtension());
-                    $path = $file->storeAs('levels', $filename, 'public');
-                } else {
-                    $path = $file->store('levels', 'public');
+                if (! is_string($fileKey) || $fileKey === '') {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'کلید فایل مدل برای حذف الزامی است.',
+                    ], 422);
                 }
 
-                $uploads[$field] = [
-                    'path' => $path,
-                    'url' => url('uploads/' . $path),
-                ];
+                $result = $this->levelGemRepository->removeFbxFileEntry($gem, $fileKey);
+
+                if (! $result['found']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'فایل مورد نظر یافت نشد.',
+                    ], 404);
+                }
+
+                $deletedPath = $this->levelGemUploadService->extractStoragePath($result['url']);
+            } else {
+                $result = $this->levelGemRepository->clearFileField($gem, $field);
+
+                if (! $result['found']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'فایل مورد نظر یافت نشد.',
+                    ], 404);
+                }
+
+                $deletedPath = $this->levelGemUploadService->extractStoragePath($result['url']);
             }
-        }
 
-        return $uploads;
-    }
+            $gem->refresh();
 
-    private function cleanupFiles(array $paths): void
-    {
-        foreach ($paths as $path) {
-            if ($path) {
-                Storage::disk('public')->delete($path);
+            if ($deletedPath) {
+                $this->levelGemUploadService->cleanupFiles([$deletedPath]);
             }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'gem' => new LevelGemResource($gem),
+                    'field' => $field,
+                    $field => $gem->{$field},
+                ],
+                'message' => 'فایل با موفقیت حذف شد.',
+            ]);
+        } catch (Throwable $throwable) {
+            report($throwable);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در حذف فایل گوهر سطح',
+            ], 500);
         }
-    }
-
-    private function extractStoragePath(?string $url): ?string
-    {
-        if (!$url) {
-            return null;
-        }
-
-        $baseUrl = rtrim(url('uploads'), '/');
-
-        if ($baseUrl && str_starts_with($url, $baseUrl)) {
-            return ltrim(substr($url, strlen($baseUrl)), '/');
-        }
-
-        return ltrim($url, '/');
     }
 }
-
-

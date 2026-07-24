@@ -10,4 +10,12 @@ class LevelGem extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    protected $casts = [
+        'fbx_file' => 'array',
+        'encryption' => 'boolean',
+        'has_animation' => 'boolean',
+        'points' => 'integer',
+        'lines' => 'integer',
+    ];
 }

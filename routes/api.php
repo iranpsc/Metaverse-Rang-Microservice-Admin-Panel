@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\LevelLicenseController;
 use App\Http\Controllers\Api\LevelGeneralInfoController;
 use App\Http\Controllers\Api\LevelGemController;
 use App\Http\Controllers\Api\LevelsController;
+use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\Api\UserLevelsController;
 use App\Http\Controllers\Api\MapsController;
 use App\Http\Controllers\Api\OptionsController;
@@ -169,6 +170,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     Route::put('/lands/features/{id}/coordinates', [LandsController::class, 'updateCoordinates']);
 
     // Levels routes
+    Route::post('/upload/chunk', [FileUploadController::class, 'upload'])->withoutMiddleware('throttle:api');
     Route::apiResource('levels', LevelsController::class)->except(['show']);
     Route::get('/levels/{level}/prize', [LevelPrizeController::class, 'show']);
     Route::post('/levels/{level}/prize', [LevelPrizeController::class, 'store']);
@@ -176,15 +178,18 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     Route::get('/levels/{level}/gift', [LevelGiftController::class, 'show']);
     Route::post('/levels/{level}/gift', [LevelGiftController::class, 'store']);
     Route::put('/levels/{level}/gift', [LevelGiftController::class, 'update']);
+    Route::delete('/levels/{level}/gift/files', [LevelGiftController::class, 'destroyFile']);
     Route::get('/levels/{level}/licenses', [LevelLicenseController::class, 'show']);
     Route::post('/levels/{level}/licenses', [LevelLicenseController::class, 'store']);
     Route::put('/levels/{level}/licenses', [LevelLicenseController::class, 'update']);
     Route::get('/levels/{level}/gem', [LevelGemController::class, 'show']);
     Route::post('/levels/{level}/gem', [LevelGemController::class, 'store']);
     Route::put('/levels/{level}/gem', [LevelGemController::class, 'update']);
+    Route::delete('/levels/{level}/gem/files', [LevelGemController::class, 'destroyFile']);
     Route::get('/levels/{level}/general-info', [LevelGeneralInfoController::class, 'show']);
     Route::post('/levels/{level}/general-info', [LevelGeneralInfoController::class, 'store']);
     Route::put('/levels/{level}/general-info', [LevelGeneralInfoController::class, 'update']);
+    Route::delete('/levels/{level}/general-info/files', [LevelGeneralInfoController::class, 'destroyFile']);
 
     // User levels routes
     Route::get('/user-levels', [UserLevelsController::class, 'index']);
