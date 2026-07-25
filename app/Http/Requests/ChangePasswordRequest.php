@@ -30,8 +30,6 @@ class ChangePasswordRequest extends FormRequest
                 'confirmed',
                 Password::min(8)->mixedCase()->numbers()->symbols()
             ],
-            'phone_verification' => 'required|integer|digits:6|is_valid_verify_code',
-            'access_password' => 'required|is_valid_access_password'
         ];
     }
 }

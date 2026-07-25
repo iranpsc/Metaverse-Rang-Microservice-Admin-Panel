@@ -17,7 +17,7 @@ class FilterIp
      */
     public function handle(Request $request, Closure $next)
     {
-        if ($request->routeIs('api.translations') || app()->environment('local')) {
+        if ($request->is('api/v1/translations*') || app()->environment('local')) {
             return $next($request);
         }
 

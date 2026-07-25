@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Observers\ModelActivityObserver;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -38,5 +41,28 @@ class AppServiceProvider extends ServiceProvider
             'App\Rules\IsValidAccessPassword@passes',
             'رمز دسترسی صحیح نیست!'
         );
+
+        $this->registerModelActivityObservers();
+    }
+
+    protected function registerModelActivityObservers(): void
+    {
+        $excluded = [
+            Activity::class,
+        ];
+
+        foreach (glob(app_path('Models/*.php')) as $file) {
+            $class = 'App\\Models\\' . basename($file, '.php');
+
+            if (! class_exists($class) || ! is_subclass_of($class, Model::class)) {
+                continue;
+            }
+
+            if (in_array($class, $excluded, true)) {
+                continue;
+            }
+
+            $class::observe(ModelActivityObserver::class);
+        }
     }
 }

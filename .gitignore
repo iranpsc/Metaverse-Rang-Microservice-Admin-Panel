@@ -18,3 +18,6 @@ yarn-error.log
 admin-laravel-worker.conf
 admin-worker.log
 public/uploads
+/.cursor
+.htaccess
+/public/lang/*

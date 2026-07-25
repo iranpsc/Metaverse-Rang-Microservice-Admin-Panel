@@ -20,4 +20,8 @@ class TicketResponse extends Model
     public function ticket() {
         return $this->belongsTo(Ticket::class);
     }
+
+    public function responser() {
+        return $this->belongsTo(User::class, 'responser_id');
+    }
 }

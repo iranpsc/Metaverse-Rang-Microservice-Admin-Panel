@@ -4,23 +4,21 @@ namespace App\Models;
 
 use App\Models\Challenge\UserChallengePrizes;
 use App\Models\Challenge\UserQuestionAnswer;
+use App\Models\Level\Level;
 use App\Models\Level\UserLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use App\Models\SellFeatureRequests;
 use App\Models\Note;
 use App\Models\User\UserActivity;
+use App\Models\Wallet;
 
 class User extends Authenticatable
 {
     use Notifiable, HasFactory, HasApiTokens;
-
-    protected $dates = [
-        'email_verified_at'
-    ];
 
     protected $hidden = [
         'password',
@@ -34,11 +32,26 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'ip',
+        'phone',
+        'code',
+        'wallet_address',
     ];
 
-    public function assets()
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @return array
+     */
+    protected function casts(): array
     {
-        return $this->hasOne(Asset::class);
+        return [
+            'email_verified_at' => 'datetime',
+        ];
+    }
+
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
     }
 
     public function getHasReferenceAttribute()
@@ -58,7 +71,7 @@ class User extends Authenticatable
 
     public function sellRequests()
     {
-        return $this->hasMany(SellFeatureRequests::class, 'seller_id');
+        return $this->hasMany(SellFeatureRequest::class, 'seller_id');
     }
 
     public function buyRequests()
@@ -133,6 +146,13 @@ class User extends Authenticatable
 
     public function log() {
         return $this->hasOne(UserLog::class);
+    }
+
+    public function levels(): BelongsToMany
+    {
+        return $this->belongsToMany(Level::class, 'level_user')
+            ->withTimestamps()
+            ->orderByPivot('created_at', 'asc');
     }
 
     public function activities() {
