@@ -9,7 +9,7 @@ Laravel 12 + Vue 3 admin panel for Hamgit. The backend exposes a JSON API; the f
 | Backend | PHP 8.2, Laravel 12, Sanctum, Spatie Permission / Activity Log |
 | Frontend | Vue 3, Vite 8, Pinia, PrimeVue, Tailwind CSS 4 |
 | Data | MySQL 8, Redis 7 |
-| Runtime | Docker (PHP-FPM + Nginx), optional XAMPP for local PHP |
+| Runtime | Docker (PHP + MySQL + Redis), optional XAMPP for local PHP |
 
 ## Requirements
 
@@ -24,7 +24,7 @@ Laravel 12 + Vue 3 admin panel for Hamgit. The backend exposes a JSON API; the f
 ## Quick start (Docker development)
 
 ```bash
-cp .env.docker.example .env
+cp .env.example .env
 docker compose up -d --build
 docker compose exec app php artisan migrate
 ```
@@ -41,8 +41,7 @@ Then open:
 
 `docker compose up` starts:
 
-- **app** — PHP 8.2-FPM
-- **nginx** — HTTP front (port `8080`)
+- **app** — PHP 8.2 (`artisan serve` on port `8080`)
 - **mysql** — MySQL 8
 - **redis** — cache / session / queue
 - **node** — Vite dev server
@@ -60,58 +59,13 @@ docker compose --profile queue up -d
 docker compose exec app php artisan tinker
 docker compose exec app composer install
 docker compose exec app php artisan test
-docker compose logs -f app nginx
+docker compose logs -f app
 docker compose down
 ```
 
-## Production deployment (Docker)
-
-1. Create a production `.env` (start from `.env.docker.example`):
-
-```bash
-cp .env.docker.example .env
-```
-
-Set at least:
-
-- `APP_ENV=production`
-- `APP_DEBUG=false`
-- `APP_KEY=` (run `php artisan key:generate` after first start if empty)
-- `APP_URL=` your public URL
-- Strong `DB_*` / `MYSQL_*` passwords
-- Real mail / FTP / AWS credentials as needed
-
-2. Build and start:
-
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-3. Migrate:
-
-```bash
-docker compose -f docker-compose.prod.yml exec app php artisan migrate --force
-```
-
-### Production services
-
-| Service | Role |
-| --- | --- |
-| **app** | PHP-FPM (assets built into the image) |
-| **nginx** | Serves `public/` and proxies PHP |
-| **mysql** | Database (persistent volume) |
-| **redis** | Cache, sessions, queues |
-| **queue** | `queue:work` on Redis |
-| **scheduler** | Runs `schedule:run` every minute |
-
-Frontend assets are compiled inside the production image — no Node/Vite container at runtime. Uploads and logs persist via the `storage-data` volume.
-
 ## Environment files
 
-| File | Use |
-| --- | --- |
-| `.env.docker.example` | Docker defaults (`DB_HOST=mysql`, Redis, Mailpit, `APP_URL=http://localhost:8080`) |
-| `.env.example` | Non-Docker / XAMPP defaults (`DB_HOST=127.0.0.1`) |
+Copy `.env.example` to `.env` for Docker development (defaults use `DB_HOST=mysql`, Redis, Mailpit, `APP_URL=http://localhost:8080`). For non-Docker / XAMPP, set `DB_HOST=127.0.0.1` and adjust credentials as needed.
 
 Never commit `.env`. Optional Compose port overrides:
 
@@ -128,9 +82,9 @@ FORWARD_MAIL_DASHBOARD_PORT=8025
 
 ```bash
 cp .env.example .env
+# set DB_HOST=127.0.0.1 and local DB credentials
 composer install
 php artisan key:generate
-# configure DB_* in .env, then:
 php artisan migrate
 npm install
 npm run dev
@@ -144,10 +98,8 @@ Serve with `php artisan serve` or your local Apache/Nginx (e.g. XAMPP) pointing 
 app/                 Laravel application code
 resources/js/        Vue SPA (pages, components, composables)
 routes/              web + API routes
-docker/              PHP/Nginx images and configs
-Dockerfile           Multi-stage production image
-docker-compose.yml   Development stack
-docker-compose.prod.yml
+docker/              PHP Docker image and configs
+docker-compose.yml   Local development stack
 ```
 
 More Docker detail: [docker/README.md](docker/README.md).

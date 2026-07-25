@@ -1,13 +1,20 @@
+# VCS / IDE
 .git
 .github
 .idea
 .vscode
 .cursor
+agent-transcripts
+**/.DS_Store
+
+# Dependencies & build output (installed/built inside images or bind-mounted)
 node_modules
 vendor
 public/build
 public/hot
 public/uploads
+
+# Runtime / local state
 storage/logs/*
 !storage/logs/.gitignore
 storage/framework/cache/*
@@ -22,16 +29,23 @@ storage/app/public/*
 .env.*
 !.env.example
 .phpunit.result.cache
-npm-debug.log
-yarn-error.log
+npm-debug.log*
+yarn-error.log*
+auth.json
+
+# Docs & tooling not needed in image layers
+*.md
+docker-compose*.yml
+.dockerignore
+.editorconfig
+.php-cs-fixer*
+phpstan*
+pint.json
 Homestead.json
 Homestead.yaml
-auth.json
 admin-laravel-worker.conf
 admin-worker.log
-.DS_Store
 tests
-docker-compose*.yml
-Dockerfile
-docker/php/Dockerfile
-README.md
+.phpunit*
+phpunit.xml
+phpunit.xml.dist
