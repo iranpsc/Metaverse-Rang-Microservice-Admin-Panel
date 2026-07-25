@@ -14,7 +14,7 @@ class VideoUploadController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $request->validate([
-            'file' => ['required', 'file', 'max:2024'],
+            'file' => ['required', 'file', 'max:5120'],
         ]);
 
         $receiver = new FileReceiver('file', $request, HandlerFactory::classFromRequest($request));

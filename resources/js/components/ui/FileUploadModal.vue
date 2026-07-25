@@ -318,6 +318,8 @@ const internalError = ref('')
 const isUploading = ref(false)
 let dragDepth = 0
 let resumableInstance = null
+/** @type {WeakMap<object, { url: string, fileType: string|null, message: string|null }>} */
+const salvagedUploadInfo = new WeakMap()
 
 const hasMaxFilesLimit = computed(() => props.maxFiles > 0)
 const hasMaxSizeLimit = computed(() => props.maxFileSize > 0)
@@ -559,42 +561,63 @@ const extractUploadInfo = (payload) => {
 
 /**
  * Resumable fires fileSuccess with the chronologically last chunk response.
- * With simultaneousUploads > 1, that is often an intermediate chunk (no file_url),
- * while the assembling chunk (HTTP 201) already returned the final payload.
- * Scan all chunk XHR responses for the assembled file URL.
+ * That response is often an intermediate payload ("بخشی از فایل…") even when an
+ * earlier chunk already returned the assembled file_url (HTTP 201).
+ * Scan all chunk XHR bodies and any previously salvaged info for the real URL.
  */
 const resolveUploadInfoFromFile = (resumableFile, response) => {
   let info = extractUploadInfo(response)
 
-  if (info.url || !resumableFile?.chunks?.length) {
-    return info
-  }
+  if (!info.url && resumableFile?.chunks?.length) {
+    const chunkMessages = resumableFile.chunks
+      .map((chunk) => ({
+        status: chunk?.xhr?.status ?? 0,
+        message: typeof chunk?.message === 'function' ? chunk.message() : ''
+      }))
+      .filter((entry) => entry.message)
 
-  // Prefer HTTP 201 (final assembly) responses, then any response with a URL
-  const chunkMessages = resumableFile.chunks
-    .map((chunk) => ({
-      status: chunk?.xhr?.status ?? 0,
-      message: typeof chunk?.message === 'function' ? chunk.message() : ''
-    }))
-    .filter((entry) => entry.message)
+    const preferred = [
+      ...chunkMessages.filter((entry) => entry.status === 201),
+      ...chunkMessages.filter((entry) => entry.status !== 201)
+    ]
 
-  const preferred = [
-    ...chunkMessages.filter((entry) => entry.status === 201),
-    ...chunkMessages.filter((entry) => entry.status !== 201)
-  ]
-
-  for (const entry of preferred) {
-    const candidate = extractUploadInfo(entry.message)
-    if (candidate.url) {
-      return {
-        url: candidate.url,
-        fileType: candidate.fileType || info.fileType,
-        message: candidate.message || info.message
+    for (const entry of preferred) {
+      const candidate = extractUploadInfo(entry.message)
+      if (candidate.url) {
+        info = {
+          url: candidate.url,
+          fileType: candidate.fileType || info.fileType,
+          message: candidate.message || info.message
+        }
+        break
       }
     }
   }
 
+  if (!info.url && resumableFile) {
+    const salvaged = salvagedUploadInfo.get(resumableFile)
+    if (salvaged?.url) {
+      info = {
+        url: salvaged.url,
+        fileType: salvaged.fileType || info.fileType,
+        message: salvaged.message || info.message
+      }
+    }
+  }
+
+  if (info.url && resumableFile) {
+    salvagedUploadInfo.set(resumableFile, info)
+  }
+
   return info
+}
+
+const salvageUploadInfoFromChunks = (resumableFile) => {
+  if (!resumableFile) return
+  const info = resolveUploadInfoFromFile(resumableFile, '')
+  if (info.url) {
+    salvagedUploadInfo.set(resumableFile, info)
+  }
 }
 
 const buildLinksMap = () => {
@@ -679,8 +702,10 @@ const waitForChunkingComplete = (resumable, expectedCount) => new Promise((resol
   // Absolute fallback if chunkingComplete events were missed
   window.setTimeout(() => {
     const chunkSize = resumable.getOpt('chunkSize') || (1 * 1024 * 1024)
+    const forceChunkSize = Boolean(resumable.getOpt('forceChunkSize'))
+    const round = forceChunkSize ? Math.ceil : Math.floor
     const allChunked = resumable.files.every((file) => {
-      const expected = Math.max(Math.floor(file.size / chunkSize), 1)
+      const expected = Math.max(round(file.size / chunkSize), 1)
       return file.chunks.length >= expected
     })
     if (allChunked) {
@@ -730,6 +755,8 @@ const startChunkUpload = async () => {
   const resumable = new Resumable({
     target: props.chunkTarget,
     chunkSize: 1 * 1024 * 1024,
+    // Keep every chunk ≤ chunkSize so validation (max KB) never rejects the last piece.
+    forceChunkSize: true,
     fileType: acceptExtensions,
     headers: () => getSanctumStatefulHeaders(),
     testChunks: false,
@@ -738,9 +765,12 @@ const startChunkUpload = async () => {
     maxFileSize: props.maxFileSize > 0 ? props.maxFileSize : undefined,
     minFileSize: 0,
     withCredentials: true,
-    simultaneousUploads: 3,
+    // Sequential chunks avoid session-lock / out-of-order final-response races in production.
+    simultaneousUploads: 1,
     maxChunkRetries: 8,
     chunkRetryInterval: 2000,
+    // Large merges on the final chunk can exceed default proxy idle limits in production.
+    xhrTimeout: 10 * 60 * 1000,
     fileTypeErrorCallback: (file) => {
       const item = pendingItems.find((entry) => (
         entry.file.name === file?.name && entry.file.size === file?.size
@@ -780,6 +810,9 @@ const startChunkUpload = async () => {
   })
 
   resumable.on('fileProgress', (file) => {
+    // Capture file_url as soon as any chunk returns the assembled payload
+    salvageUploadInfoFromChunks(file)
+
     const item = findItemByResumableFile(file)
     if (!item) return
 
@@ -800,7 +833,11 @@ const startChunkUpload = async () => {
 
     if (!url) {
       item.status = 'error'
-      item.error = message || 'پاسخ نامعتبر از سرور دریافت شد.'
+      // Intermediate chunk copy must not surface as the user-facing failure reason
+      const isPartialMessage = typeof message === 'string' && message.includes('بخشی از فایل')
+      item.error = isPartialMessage
+        ? 'پاسخ نهایی بارگذاری از سرور دریافت نشد. لطفا دوباره تلاش کنید.'
+        : (message || 'پاسخ نامعتبر از سرور دریافت شد.')
       return
     }
 

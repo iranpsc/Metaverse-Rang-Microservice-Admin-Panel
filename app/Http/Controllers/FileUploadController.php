@@ -16,8 +16,9 @@ class FileUploadController extends Controller
 
     public function upload(Request $request): JsonResponse
     {
+        // Chunk size is 1MB; allow headroom for the last (possibly larger) chunk.
         $request->validate([
-            'file' => ['required', 'file', 'max:2024'],
+            'file' => ['required', 'file', 'max:5120'],
         ]);
 
         $receiver = new FileReceiver('file', $request, HandlerFactory::classFromRequest($request));
