@@ -557,6 +557,46 @@ const extractUploadInfo = (payload) => {
   return { url: null, fileType: null, message: null }
 }
 
+/**
+ * Resumable fires fileSuccess with the chronologically last chunk response.
+ * With simultaneousUploads > 1, that is often an intermediate chunk (no file_url),
+ * while the assembling chunk (HTTP 201) already returned the final payload.
+ * Scan all chunk XHR responses for the assembled file URL.
+ */
+const resolveUploadInfoFromFile = (resumableFile, response) => {
+  let info = extractUploadInfo(response)
+
+  if (info.url || !resumableFile?.chunks?.length) {
+    return info
+  }
+
+  // Prefer HTTP 201 (final assembly) responses, then any response with a URL
+  const chunkMessages = resumableFile.chunks
+    .map((chunk) => ({
+      status: chunk?.xhr?.status ?? 0,
+      message: typeof chunk?.message === 'function' ? chunk.message() : ''
+    }))
+    .filter((entry) => entry.message)
+
+  const preferred = [
+    ...chunkMessages.filter((entry) => entry.status === 201),
+    ...chunkMessages.filter((entry) => entry.status !== 201)
+  ]
+
+  for (const entry of preferred) {
+    const candidate = extractUploadInfo(entry.message)
+    if (candidate.url) {
+      return {
+        url: candidate.url,
+        fileType: candidate.fileType || info.fileType,
+        message: candidate.message || info.message
+      }
+    }
+  }
+
+  return info
+}
+
 const buildLinksMap = () => {
   const links = {}
   const typeCounts = {}
@@ -754,7 +794,7 @@ const startChunkUpload = async () => {
 
   resumable.on('fileSuccess', (file, response) => {
     const item = findItemByResumableFile(file)
-    const { url, fileType, message } = extractUploadInfo(response)
+    const { url, fileType, message } = resolveUploadInfoFromFile(file, response)
 
     if (!item) return
 
