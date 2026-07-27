@@ -1,64 +1,788 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# Metaverse Rang — Microservice Admin Panel
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Administrative panel for the **Metaverse Rang Microservice ecosystem**, built with Laravel and Vite.
 
-## About Laravel
+This application provides a centralized administration interface for managing administrative operations and interacting with the services that form the Metaverse Rang platform.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Table of Contents
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* [Overview](#overview)
+* [Features](#features)
+* [Technology Stack](#technology-stack)
+* [Requirements](#requirements)
+* [Installation](#installation)
+* [Environment Configuration](#environment-configuration)
+* [Database Setup](#database-setup)
+* [Running the Application](#running-the-application)
+* [Frontend Assets](#frontend-assets)
+* [Testing](#testing)
+* [Code Quality](#code-quality)
+* [Project Structure](#project-structure)
+* [Development Workflow](#development-workflow)
+* [Contributing](#contributing)
+* [Security](#security)
+* [License](#license)
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Overview
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**Metaverse Rang Microservice Admin Panel** is an administrative application developed as part of the Metaverse Rang platform.
 
-## Laravel Sponsors
+The project is designed to provide an administration layer for the platform and its microservice-based ecosystem.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+The Admin Panel is responsible for providing an administrative interface where authorized users can perform management and operational tasks through a centralized web application.
 
-### Premium Partners
+The application is built with **Laravel** and uses **Vite** for frontend asset development and bundling.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+---
+
+## Features
+
+The Admin Panel is designed to support administrative workflows across the Metaverse Rang ecosystem.
+
+Depending on the enabled modules and connected services, the application may provide functionality such as:
+
+* Administrative dashboard
+* Authentication and access control
+* User and account management
+* Resource management
+* Data management
+* CRUD operations
+* Form validation
+* Search and filtering
+* Pagination
+* Administrative workflows
+* Integration with backend services
+* Database-driven functionality
+* Localization support
+* Responsive administrative interface
+* Automated testing
+* Production-ready asset building
+
+> The exact functionality available in the application is determined by the current implementation and enabled modules.
+
+---
+
+## Technology Stack
+
+### Backend
+
+* PHP
+* Laravel
+* Laravel Routing
+* Laravel Middleware
+* Laravel Controllers
+* Laravel Models
+* Laravel Migrations
+* Laravel Validation
+* Laravel Configuration
+
+### Frontend
+
+* Blade templates
+* Vite
+* JavaScript
+* CSS
+* Frontend assets managed through the Vite build system
+
+### Database
+
+The application uses Laravel's database layer and migration system.
+
+The exact database engine is configured through the application's environment variables.
+
+### Testing
+
+* PHPUnit
+* Laravel testing utilities
+
+### Development Tools
+
+* Composer
+* Node.js
+* npm
+* Vite
+* Git
+* GitHub
+
+---
+
+## Requirements
+
+Before installing the project, make sure the following tools are available on your development machine.
+
+* PHP
+* Composer
+* Node.js
+* npm
+* A supported database
+* Git
+
+The exact PHP version and package requirements are defined by the project's `composer.json`.
+
+The frontend Node.js requirements and available scripts are defined by `package.json`.
+
+You can check the installed versions with:
+
+```bash
+php -v
+```
+
+```bash
+composer -V
+```
+
+```bash
+node -v
+```
+
+```bash
+npm -v
+```
+
+---
+
+## Installation
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/iranpsc/Metaverse-Rang-Microservice-Admin-Panel.git
+```
+
+Move into the project directory:
+
+```bash
+cd Metaverse-Rang-Microservice-Admin-Panel
+```
+
+---
+
+### 2. Install PHP Dependencies
+
+Install Laravel and PHP dependencies using Composer:
+
+```bash
+composer install
+```
+
+For production environments, use:
+
+```bash
+composer install --no-dev --optimize-autoloader
+```
+
+---
+
+### 3. Install Frontend Dependencies
+
+Install Node.js dependencies:
+
+```bash
+npm install
+```
+
+---
+
+## Environment Configuration
+
+Create your local environment configuration from the example environment file if one is provided by the repository:
+
+```bash
+cp .env.example .env
+```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Configure the required environment variables in `.env`.
+
+Typical Laravel configuration includes:
+
+```env
+APP_NAME="Metaverse Rang Admin Panel"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost
+```
+
+Database configuration:
+
+```env
+DB_CONNECTION=
+DB_HOST=
+DB_PORT=
+DB_DATABASE=
+DB_USERNAME=
+DB_PASSWORD=
+```
+
+Additional environment variables may be required depending on the services and integrations used by the application.
+
+> **Never commit your `.env` file to the repository.**
+
+Do not commit:
+
+* Passwords
+* API keys
+* Access tokens
+* Private keys
+* Database credentials
+* Production credentials
+* SMTP credentials
+* Other sensitive configuration
+
+---
+
+## Application Key
+
+Generate the Laravel application key:
+
+```bash
+php artisan key:generate
+```
+
+This command updates the `APP_KEY` value in your `.env` file.
+
+---
+
+## Database Setup
+
+Configure your database connection in `.env`.
+
+After configuring the database, run Laravel migrations:
+
+```bash
+php artisan migrate
+```
+
+If the project provides seeders and you need to populate the database with development data:
+
+```bash
+php artisan db:seed
+```
+
+Or:
+
+```bash
+php artisan migrate --seed
+```
+
+> Only run database reset commands such as `migrate:fresh` in development or test environments where data loss is acceptable.
+
+---
+
+## Storage Configuration
+
+If the application uses Laravel's public storage disk, create the required symbolic link:
+
+```bash
+php artisan storage:link
+```
+
+---
+
+## Running the Application
+
+### Laravel Development Server
+
+Start the Laravel development server:
+
+```bash
+php artisan serve
+```
+
+The application will be available at the local address displayed by Laravel.
+
+---
+
+## Frontend Assets
+
+The project uses Vite for frontend asset development and bundling.
+
+Start the Vite development server:
+
+```bash
+npm run dev
+```
+
+For production assets:
+
+```bash
+npm run build
+```
+
+During development, you may need to run both Laravel and Vite:
+
+```text
+Laravel Application
+        │
+        ▼
+php artisan serve
+
+        +
+
+Vite Development Server
+        │
+        ▼
+npm run dev
+```
+
+For production deployments, build the frontend assets before starting the application according to the project's deployment process.
+
+---
+
+## Common Commands
+
+### Laravel
+
+Run the development server:
+
+```bash
+php artisan serve
+```
+
+Clear application cache:
+
+```bash
+php artisan cache:clear
+```
+
+Clear configuration cache:
+
+```bash
+php artisan config:clear
+```
+
+Clear route cache:
+
+```bash
+php artisan route:clear
+```
+
+Clear compiled application files:
+
+```bash
+php artisan clear-compiled
+```
+
+Run migrations:
+
+```bash
+php artisan migrate
+```
+
+Create a migration:
+
+```bash
+php artisan make:migration create_example_table
+```
+
+Create a model:
+
+```bash
+php artisan make:model Example
+```
+
+Create a controller:
+
+```bash
+php artisan make:controller ExampleController
+```
+
+---
+
+### Frontend
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start development mode:
+
+```bash
+npm run dev
+```
+
+Build production assets:
+
+```bash
+npm run build
+```
+
+The exact scripts available in the project are defined in `package.json`.
+
+---
+
+## Testing
+
+Testing is an important part of the project's development and quality assurance process.
+
+The project uses PHPUnit and Laravel's testing capabilities.
+
+Run the test suite with:
+
+```bash
+php artisan test
+```
+
+Or directly with PHPUnit:
+
+```bash
+vendor/bin/phpunit
+```
+
+Run a specific test file:
+
+```bash
+php artisan test tests/Feature/ExampleTest.php
+```
+
+Run a specific test by name:
+
+```bash
+php artisan test --filter=ExampleTest
+```
+
+Before opening a Pull Request, contributors should ensure that:
+
+* Existing tests pass.
+* New functionality has appropriate tests.
+* Bug fixes include regression tests where applicable.
+* Tests are deterministic.
+* Tests do not depend on local production data.
+
+---
+
+## Testing Principles
+
+Tests should focus on application behavior rather than implementation details.
+
+Important areas to test include:
+
+* Authentication
+* Authorization
+* Validation
+* Business logic
+* Controllers
+* Database interactions
+* API integrations
+* Error handling
+* Edge cases
+* Regression scenarios
+
+When changing existing functionality, update affected tests accordingly.
+
+When adding new functionality, include tests that demonstrate both expected behavior and important failure scenarios.
+
+---
+
+## Code Quality
+
+All contributions should maintain the quality and consistency of the existing codebase.
+
+Contributors should:
+
+* Follow Laravel conventions.
+* Keep controllers focused.
+* Avoid unnecessary business logic inside controllers.
+* Reuse existing services and utilities where appropriate.
+* Validate user input.
+* Handle errors consistently.
+* Avoid duplicated logic.
+* Keep database queries efficient.
+* Avoid unnecessary dependencies.
+* Write maintainable and readable code.
+* Add tests for meaningful behavior changes.
+
+---
+
+## Project Structure
+
+The project follows a Laravel application structure.
+
+The main directories include:
+
+```text
+.
+├── app/
+│   ├── Console/
+│   ├── Exceptions/
+│   ├── Http/
+│   ├── Models/
+│   └── Providers/
+│
+├── bootstrap/
+│
+├── config/
+│
+├── database/
+│   ├── factories/
+│   ├── migrations/
+│   └── seeders/
+│
+├── lang/
+│
+├── public/
+│
+├── resources/
+│
+├── routes/
+│
+├── storage/
+│
+├── tests/
+│
+├── .github/
+│
+├── artisan
+├── composer.json
+├── package.json
+├── phpunit.xml
+├── vite.config.js
+├── CONTRIBUTING.md
+├── LICENSE
+├── SECURITY.md
+└── README.md
+```
+
+The exact structure may evolve as the project grows.
+
+---
+
+## Microservice Integration
+
+The Admin Panel is part of the broader Metaverse Rang microservice ecosystem.
+
+Depending on the implemented modules, the application may communicate with backend services through configured APIs or service integrations.
+
+When modifying service integrations, contributors should consider:
+
+* API contracts
+* Authentication
+* Authorization
+* Request validation
+* Response handling
+* Error handling
+* Timeouts
+* Retry behavior
+* Backward compatibility
+* Logging
+* Security
+
+Changes that affect communication with backend microservices should be documented in the Pull Request.
+
+Breaking changes to service contracts should be coordinated with the maintainers of the affected services.
+
+---
+
+## Development Workflow
+
+The recommended workflow is:
+
+```text
+Issue / Task
+     │
+     ▼
+Create Branch
+     │
+     ▼
+Implement Change
+     │
+     ▼
+Add / Update Tests
+     │
+     ▼
+Run Quality Checks
+     │
+     ▼
+Commit Changes
+     │
+     ▼
+Push Branch
+     │
+     ▼
+Open Pull Request
+     │
+     ▼
+CI Validation
+     │
+     ▼
+Code Review
+     │
+     ▼
+Approval
+     │
+     ▼
+Merge
+```
+
+All contributors should read [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting changes.
+
+---
+
+## Branch Naming
+
+Use descriptive branch names.
+
+Recommended naming conventions:
+
+```text
+feature/<description>
+fix/<description>
+refactor/<description>
+test/<description>
+docs/<description>
+chore/<description>
+hotfix/<description>
+```
+
+Examples:
+
+```text
+feature/admin-user-management
+fix/authentication-error
+test/user-management
+refactor/service-layer
+docs/update-readme
+chore/update-dependencies
+```
+
+Keep branches focused on one logical change.
+
+---
+
+## Commit Messages
+
+Use clear and meaningful commit messages.
+
+Recommended format:
+
+```text
+type(scope): short description
+```
+
+Examples:
+
+```text
+feat(users): add user management
+fix(auth): handle expired session
+test(users): add user management tests
+refactor(api): improve service integration
+docs(readme): update installation guide
+chore(ci): update test workflow
+```
+
+Recommended commit types:
+
+* `feat` — New functionality
+* `fix` — Bug fix
+* `test` — Tests
+* `refactor` — Code restructuring
+* `docs` — Documentation
+* `style` — Formatting or style-only changes
+* `perf` — Performance improvement
+* `chore` — Maintenance
+* `ci` — CI/CD changes
+* `build` — Build system changes
+
+---
+
+## Pull Requests
+
+All code changes should be submitted through Pull Requests.
+
+A Pull Request should:
+
+* Have a clear title.
+* Explain what was changed.
+* Explain why the change was necessary.
+* Reference the related Issue or task when applicable.
+* Include appropriate tests.
+* Pass required CI checks.
+* Avoid unrelated changes.
+* Include screenshots for significant UI changes.
+* Document configuration changes.
+* Document API or microservice contract changes.
+
+### Pull Request Checklist
+
+Before requesting review:
+
+* [ ] The change follows project conventions.
+* [ ] Relevant tests were added or updated.
+* [ ] Existing tests pass.
+* [ ] The application runs successfully.
+* [ ] Frontend assets build successfully.
+* [ ] No secrets were committed.
+* [ ] Environment changes are documented.
+* [ ] Documentation was updated when necessary.
+* [ ] The Pull Request is focused on one logical change.
+* [ ] CI checks are passing.
+
+---
+
+## Security
+
+Security is a critical part of the project.
+
+Never commit sensitive information to the repository.
+
+This includes:
+
+* Passwords
+* API keys
+* Access tokens
+* Private keys
+* Database credentials
+* Production environment files
+* SMTP credentials
+
+Security vulnerabilities should not be reported through public GitHub Issues.
+
+Please follow the security reporting process described in [`SECURITY.md`](SECURITY.md).
+
+---
 
 ## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Contributions are welcome.
 
-## Code of Conduct
+Before contributing, please read:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+👉 [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
-## Security Vulnerabilities
+All contributions are subject to code review and automated quality checks.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is distributed under the license specified in [`LICENSE`](LICENSE).
+
+Please review the license file before using, modifying, or redistributing the project.
+
+---
+
+## Maintainers
+
+Maintained as part of the **Metaverse Rang** project ecosystem.
+
+Repository:
+
+https://github.com/iranpsc/Metaverse-Rang-Microservice-Admin-Panel
+
+---
+
+## Acknowledgements
+
+Thank you to everyone who contributes to the Metaverse Rang ecosystem through code, testing, documentation, issue reports, and technical feedback.
