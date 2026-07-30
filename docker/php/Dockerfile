@@ -1,7 +1,10 @@
-# syntax=docker/dockerfile:1
+# syntax=docker.arvancloud.ir/docker/dockerfile:1
 # Local PHP-FPM image. Build with context ./docker/php (see docker-compose.yml).
 
-FROM php:8.2-fpm-bookworm
+ARG DOCKER_REGISTRY=docker.arvancloud.ir
+FROM ${DOCKER_REGISTRY}/composer:2 AS composer
+
+FROM ${DOCKER_REGISTRY}/php:8.2-fpm-bookworm
 
 # Runtime libs stay; *-dev and $PHPIZE_DEPS are purged after compile.
 # Apt cache mounts speed rebuilds without bloating layers (Docker BuildKit).
@@ -57,7 +60,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libonig-dev; \
     rm -rf /tmp/* /tmp/pear ~/.pearrc
 
-COPY --link --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY --link --from=composer /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
