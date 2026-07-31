@@ -4,23 +4,19 @@ x-docker-registry: &docker-registry ${DOCKER_REGISTRY:-docker.arvancloud.ir}
 x-php-image: &php-image admin-panel-php:local
 
 x-app-volumes: &app-volumes
-  - .:/var/www/html:cached
-  - composer-cache:/tmp/composer-cache
+  - app-storage:/var/www/html/storage
 
 x-php-environment: &php-environment
-  COMPOSER_CACHE_DIR: /tmp/composer-cache
   REDIS_HOST: redis
   REDIS_PORT: 6379
 
 services:
   app:
     build:
-      context: ./docker/php
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/php/Dockerfile
       args:
         DOCKER_REGISTRY: *docker-registry
-      cache_from:
-        - admin-panel-php:local
     image: *php-image
     pull_policy: build
     restart: unless-stopped
@@ -37,8 +33,6 @@ services:
       QUEUE_CONNECTION: redis
     command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
     depends_on:
-      node:
-        condition: service_completed_successfully
       redis:
         condition: service_healthy
     init: true
@@ -60,19 +54,6 @@ services:
       timeout: 3s
       retries: 5
       start_period: 5s
-    networks:
-      - admin-panel
-
-  node:
-    image: ${DOCKER_REGISTRY:-docker.arvancloud.ir}/node:22-alpine
-    pull_policy: if_not_present
-    restart: "no"
-    working_dir: /var/www/html
-    volumes:
-      - .:/var/www/html:cached
-      - node-modules:/var/www/html/node_modules
-      - npm-cache:/root/.npm
-    command: ["sh", "docker/scripts/build-assets.sh"]
     networks:
       - admin-panel
 
@@ -122,9 +103,7 @@ services:
       - admin-panel
 
 volumes:
-  node-modules:
-  npm-cache:
-  composer-cache:
+  app-storage:
 
 networks:
   admin-panel:

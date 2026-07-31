@@ -1,10 +1,47 @@
 # syntax=docker.arvancloud.ir/docker/dockerfile:1
-# Local PHP-FPM image. Build with context ./docker/php (see docker-compose.yml).
+# Production PHP image with Laravel app baked in.
+# Build with context at the project root (see docker-compose.yml).
 
 ARG DOCKER_REGISTRY=docker.arvancloud.ir
-FROM ${DOCKER_REGISTRY}/composer:2 AS composer
 
-FROM ${DOCKER_REGISTRY}/php:8.2-fpm-bookworm
+# -----------------------------------------------------------------------------
+# Composer dependencies
+# -----------------------------------------------------------------------------
+FROM ${DOCKER_REGISTRY}/composer:2 AS vendor
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --prefer-dist \
+    --optimize-autoloader \
+    --no-scripts \
+    --ignore-platform-reqs
+
+# -----------------------------------------------------------------------------
+# Frontend assets (Vite)
+# -----------------------------------------------------------------------------
+FROM ${DOCKER_REGISTRY}/node:22-alpine AS frontend
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+RUN npm ci --prefer-offline --no-audit --no-fund
+
+# Full tree needed so laravel-vite-plugin resolves the Laravel root correctly.
+COPY . .
+RUN npm run build
+
+# -----------------------------------------------------------------------------
+# Runtime: PHP-FPM + application
+# -----------------------------------------------------------------------------
+FROM ${DOCKER_REGISTRY}/php:8.2-fpm-bookworm AS app
+
+ARG DOCKER_REGISTRY=docker.arvancloud.ir
 
 # Runtime libs stay; *-dev and $PHPIZE_DEPS are purged after compile.
 # Apt cache mounts speed rebuilds without bloating layers (Docker BuildKit).
@@ -60,12 +97,31 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libonig-dev; \
     rm -rf /tmp/* /tmp/pear ~/.pearrc
 
-COPY --link --from=composer /usr/bin/composer /usr/bin/composer
+COPY --link --from=vendor /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-COPY --link local.ini /usr/local/etc/php/conf.d/99-local.ini
-COPY --link --chmod=755 entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --link . .
+COPY --link --from=vendor /app/vendor ./vendor
+COPY --link --from=frontend /app/public/build ./public/build
+
+COPY --link docker/php/local.ini /usr/local/etc/php/conf.d/99-local.ini
+COPY --link --chmod=755 docker/php/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN set -eux; \
+    mkdir -p \
+        storage/app/public \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+        bootstrap/cache; \
+    composer dump-autoload --optimize --no-interaction; \
+    cp .env.example .env; \
+    php artisan package:discover --ansi; \
+    rm -f .env; \
+    chown -R www-data:www-data storage bootstrap/cache; \
+    chmod -R ug+rwx storage bootstrap/cache
 
 ENTRYPOINT ["entrypoint.sh"]
 CMD ["php-fpm"]

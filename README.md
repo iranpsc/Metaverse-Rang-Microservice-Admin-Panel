@@ -21,31 +21,27 @@ Laravel 12 + Vue 3 admin panel for Hamgit. The backend exposes a JSON API; the f
 
 - PHP 8.2+, Composer, Node.js 22+, MySQL, Redis (optional)
 
-## Quick start (Docker development)
+## Quick start (Docker)
+
+**Production / Dockploy** (app baked into the image — no host bind mount):
+
+```bash
+cp .env.example .env   # or inject env via your platform
+docker compose up -d --build
+docker compose exec app php artisan migrate --force
+```
+
+**Local development** (bind-mount source + asset build):
 
 ```bash
 cp .env.example .env
-docker compose up -d --build
-docker compose exec app php artisan migrate
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app php artisan migrate
 ```
 
-Then open:
+Then open the app at `http://localhost:${APP_PORT:-8088}`.
 
-| Service | URL |
-| --- | --- |
-| Application | http://localhost:8080 |
-| Vite (HMR) | http://localhost:5173 |
-| Mailpit | http://localhost:8025 |
-
-### Development services
-
-`docker compose up` starts:
-
-- **app** — PHP 8.2 (`artisan serve` on port `8080`)
-- **mysql** — MySQL 8
-- **redis** — cache / session / queue
-- **node** — Vite dev server
-- **mailpit** — local SMTP + UI
+See [docker/README.md](docker/README.md) for volumes, queue profile, and more commands.
 
 Optional queue worker and scheduler:
 

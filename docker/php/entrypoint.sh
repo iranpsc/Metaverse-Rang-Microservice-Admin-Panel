@@ -3,12 +3,30 @@ set -e
 
 cd /var/www/html
 
-if [ ! -f vendor/autoload.php ] || { [ -f composer.lock ] && [ composer.lock -nt vendor/composer/installed.json ]; }; then
+# Named volumes for storage/bootstrap may start empty — recreate Laravel dirs.
+mkdir -p \
+    storage/app/public \
+    storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    bootstrap/cache
+
+# Install Composer deps only when missing (dev bind-mount case).
+# Skip timestamp-based reinstalls so startup is not blocked on Packagist.
+if [ "${COMPOSER_SKIP_INSTALL:-0}" != "1" ] && [ ! -f vendor/autoload.php ] && [ -f composer.json ]; then
     composer install --no-interaction --prefer-dist --optimize-autoloader
 fi
 
+# Named volumes / host bind-mounts can retain stale package caches from --dev installs.
+# Always rediscover so providers match the vendor tree in this container.
+rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
+php artisan package:discover --ansi --no-interaction
+
 if [ -f .env ] && ! grep -q '^APP_KEY=base64:' .env; then
-    php artisan key:generate --force
+    if [ -z "${APP_KEY:-}" ]; then
+        php artisan key:generate --force
+    fi
 fi
 
 if [ ! -L public/storage ]; then

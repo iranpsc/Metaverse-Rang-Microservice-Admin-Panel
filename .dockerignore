@@ -13,8 +13,13 @@ vendor
 public/build
 public/hot
 public/uploads
+storage/debugbar
+*.log
+docker-compose.dev.yml
 
 # Runtime / local state
+bootstrap/cache/*.php
+!bootstrap/cache/.gitignore
 storage/logs/*
 !storage/logs/.gitignore
 storage/framework/cache/*
