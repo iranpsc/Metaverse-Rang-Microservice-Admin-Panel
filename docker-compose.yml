@@ -3,8 +3,11 @@ name: admin-panel
 x-docker-registry: &docker-registry ${DOCKER_REGISTRY:-docker.arvancloud.ir}
 x-php-image: &php-image admin-panel-php:local
 
+# Dokploy / production: persist uploads + Translation SQLite on the host.
+# Override with HOST_STORAGE_PATH / HOST_DATABASE_PATH if needed.
 x-app-volumes: &app-volumes
-  - app-storage:/var/www/html/storage
+  - ${HOST_STORAGE_PATH:-/opt/metarang/storage}:/var/www/html/storage
+  - ${HOST_DATABASE_PATH:-/opt/metarang/database}:/var/www/html/database
 
 x-php-environment: &php-environment
   REDIS_HOST: redis
@@ -101,9 +104,6 @@ services:
       - queue
     networks:
       - admin-panel
-
-volumes:
-  app-storage:
 
 networks:
   admin-panel:

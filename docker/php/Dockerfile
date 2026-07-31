@@ -62,16 +62,19 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libzip4 \
         libicu72 \
         libonig5 \
+        libsqlite3-0 \
         $PHPIZE_DEPS \
         libfreetype6-dev \
         libjpeg62-turbo-dev \
         libpng-dev \
         libzip-dev \
         libicu-dev \
-        libonig-dev; \
+        libonig-dev \
+        libsqlite3-dev; \
     docker-php-ext-configure gd --with-freetype --with-jpeg; \
     docker-php-ext-install -j"$(nproc)" \
         pdo_mysql \
+        pdo_sqlite \
         mbstring \
         exif \
         pcntl \
@@ -94,7 +97,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libpng-dev \
         libzip-dev \
         libicu-dev \
-        libonig-dev; \
+        libonig-dev \
+        libsqlite3-dev; \
     rm -rf /tmp/* /tmp/pear ~/.pearrc
 
 COPY --link --from=vendor /usr/bin/composer /usr/bin/composer
@@ -115,13 +119,16 @@ RUN set -eux; \
         storage/framework/sessions \
         storage/framework/views \
         storage/logs \
-        bootstrap/cache; \
+        bootstrap/cache \
+        database; \
+    touch database/database.sqlite; \
     composer dump-autoload --optimize --no-interaction; \
     cp .env.example .env; \
     php artisan package:discover --ansi; \
     rm -f .env; \
-    chown -R www-data:www-data storage bootstrap/cache; \
-    chmod -R ug+rwx storage bootstrap/cache
+    chown -R www-data:www-data storage bootstrap/cache database; \
+    chmod -R ug+rwx storage bootstrap/cache; \
+    chmod ug+rw database/database.sqlite
 
 ENTRYPOINT ["entrypoint.sh"]
 CMD ["php-fpm"]

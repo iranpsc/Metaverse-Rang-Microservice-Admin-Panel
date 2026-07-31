@@ -3,14 +3,20 @@ set -e
 
 cd /var/www/html
 
-# Named volumes for storage/bootstrap may start empty — recreate Laravel dirs.
+# Host bind-mounts (/opt/metarang/...) or named volumes may start empty — recreate dirs.
 mkdir -p \
     storage/app/public \
     storage/framework/cache/data \
     storage/framework/sessions \
     storage/framework/views \
     storage/logs \
-    bootstrap/cache
+    bootstrap/cache \
+    database
+
+# Translation models use the sqlite connection at database/database.sqlite.
+if [ ! -f database/database.sqlite ]; then
+    touch database/database.sqlite
+fi
 
 # Install Composer deps only when missing (dev bind-mount case).
 # Skip timestamp-based reinstalls so startup is not blocked on Packagist.
@@ -29,11 +35,13 @@ if [ -f .env ] && ! grep -q '^APP_KEY=base64:' .env; then
     fi
 fi
 
-if [ ! -L public/storage ]; then
+# config/filesystems.php links public/uploads → storage/app/public
+if [ ! -L public/uploads ]; then
     php artisan storage:link --force 2>/dev/null || true
 fi
 
-chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+chown -R www-data:www-data storage bootstrap/cache database 2>/dev/null || true
 chmod -R ug+rwx storage bootstrap/cache 2>/dev/null || true
+chmod ug+rw database/database.sqlite 2>/dev/null || true
 
 exec docker-php-entrypoint "$@"
