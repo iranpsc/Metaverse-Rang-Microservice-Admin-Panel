@@ -29,9 +29,16 @@ fi
 rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
 php artisan package:discover --ansi --no-interaction
 
-if [ -f .env ] && ! grep -q '^APP_KEY=base64:' .env; then
-    if [ -z "${APP_KEY:-}" ]; then
-        php artisan key:generate --force
+# Ensure APP_KEY is available. Prefer writing into a mounted .env; otherwise export
+# for this process (image builds omit .env via .dockerignore).
+if [ -z "${APP_KEY:-}" ]; then
+    if [ -f .env ]; then
+        if ! grep -q '^APP_KEY=base64:' .env; then
+            php artisan key:generate --force
+        fi
+    else
+        APP_KEY="$(php artisan key:generate --show)"
+        export APP_KEY
     fi
 fi
 

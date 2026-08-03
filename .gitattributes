@@ -1,5 +1,9 @@
 * text=auto
 
+*.sh text eol=lf
+docker/php/entrypoint.sh text eol=lf
+docker/scripts/build-assets.sh text eol=lf
+
 *.blade.php diff=html
 *.css diff=css
 *.html diff=html

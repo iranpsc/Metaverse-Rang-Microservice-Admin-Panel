@@ -1,6 +1,6 @@
-# Admin Hamgit
+# Metarang Admin Panel
 
-Laravel 12 + Vue 3 admin panel for Hamgit. The backend exposes a JSON API; the frontend is a Vite-powered SPA served from Laravel.
+Laravel 12 + Vue 3 admin panel for Metarang. The backend exposes a JSON API; the frontend is a Vite-powered SPA served from Laravel.
 
 ## Stack
 
@@ -23,7 +23,7 @@ Laravel 12 + Vue 3 admin panel for Hamgit. The backend exposes a JSON API; the f
 
 ## Quick start (Docker)
 
-**Production / Dockploy** (app baked into the image — no host bind mount):
+**Production / Dokploy** (app baked into the image):
 
 ```bash
 cp .env.example .env   # or inject env via your platform
@@ -31,17 +31,33 @@ docker compose up -d --build
 docker compose exec app php artisan migrate --force
 ```
 
-**Local development** (bind-mount source + asset build):
+**Local** (same stack; use project paths so `/opt/metarang` is not required):
 
 ```bash
 cp .env.example .env
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
-docker compose -f docker-compose.yml -f docker-compose.dev.yml exec app php artisan migrate
+# In .env:
+#   HOST_STORAGE_PATH=./storage
+#   HOST_DATABASE_PATH=./database
+docker compose up -d --build
+docker compose exec app php artisan migrate
+```
+
+**Local live development** (bind-mount source + frontend asset build):
+
+```bash
+# In .env:
+#   HOST_STORAGE_PATH=.
+#   HOST_STORAGE_TARGET=/var/www/html
+#   HOST_STORAGE_OPTIONS=:cached
+#   HOST_DATABASE_PATH=./database
+#   COMPOSE_PROFILES=dev
+docker compose up -d --build
+docker compose exec app php artisan migrate
 ```
 
 Then open the app at `http://localhost:${APP_PORT:-8088}`.
 
-See [docker/README.md](docker/README.md) for volumes, queue profile, and more commands.
+See [docker/README.md](docker/README.md) for volumes, profiles, and more commands.
 
 Optional queue worker and scheduler:
 
@@ -95,7 +111,7 @@ app/                 Laravel application code
 resources/js/        Vue SPA (pages, components, composables)
 routes/              web + API routes
 docker/              PHP Docker image and configs
-docker-compose.yml   Local development stack
+docker-compose.yml   Docker stack (local + production)
 ```
 
 More Docker detail: [docker/README.md](docker/README.md).

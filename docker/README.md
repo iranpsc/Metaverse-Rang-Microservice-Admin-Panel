@@ -1,5 +1,7 @@
 # Docker
 
+One Compose file: `docker-compose.yml` (production + local).
+
 ## Production build (verified locally)
 
 Prepare host persistence paths first (Dokploy server or local machine):
@@ -24,15 +26,14 @@ docker compose up -d
 curl -I http://127.0.0.1:8088/
 ```
 
-The image includes Laravel source, Composer `--no-dev` vendor, and Vite `public/build`. Compose does **not** bind-mount host source.
+The image includes Laravel source, Composer `--no-dev` vendor, and Vite `public/build`. Default mode does **not** bind-mount host source (only `storage` + `database`).
 
-For a local smoke test without `/opt/metarang`, override paths:
+For a local smoke test without `/opt/metarang`, set in `.env` (or the shell):
 
 ```bash
-mkdir -p ./.metarang/database ./.metarang/storage
-HOST_STORAGE_PATH="$PWD/.metarang/storage" \
-HOST_DATABASE_PATH="$PWD/.metarang/database" \
-  docker compose up -d --build
+HOST_STORAGE_PATH=./storage
+HOST_DATABASE_PATH=./database
+docker compose up -d --build
 ```
 
 ## Deploy on Dokploy
@@ -41,7 +42,7 @@ HOST_DATABASE_PATH="$PWD/.metarang/database" \
 
 1. In Dokploy → **Create Service** → **Docker Compose**.
 2. Connect your Git repository (this project).
-3. Set **Compose file** to `docker-compose.yml` (do **not** use `docker-compose.dev.yml`).
+3. Set **Compose file** to `docker-compose.yml`.
 4. Set the build/context root to the repo root (where `artisan` and `docker-compose.yml` live).
 
 ### 2. Host persistence (`/opt/metarang`)
@@ -179,10 +180,11 @@ curl -I https://your-domain.example
 
 | Topic | Detail |
 | --- | --- |
-| Compose file | Use **`docker-compose.yml` only** on Dokploy |
-| Local bind-mount | Use `docker-compose.dev.yml` only on your laptop |
+| Compose file | Single **`docker-compose.yml`** for Dokploy and local |
+| Local bind-mount | Set `HOST_STORAGE_PATH=.` + `HOST_STORAGE_TARGET=/var/www/html` and `COMPOSE_PROFILES=dev` |
 | Registry | Default base images: `docker.arvancloud.ir`. Override with `DOCKER_REGISTRY` if needed |
-| Persistence | Host `/opt/metarang/{storage,database}` bind-mounted into the container |
+| Persistence | Host `/opt/metarang/{storage,database}` by default; override with `HOST_*` |
+| Redis ports | Published on `127.0.0.1` only (`FORWARD_REDIS_PORT`) |
 | SQLite | `pdo_sqlite` enabled; Translation models use `database/database.sqlite` |
 | Uploads | `storage/app/public` ↔ `public/uploads` (created by entrypoint `storage:link`) |
 | MySQL | Not in this compose file — provide externally |
@@ -190,8 +192,29 @@ curl -I https://your-domain.example
 
 ## Local development
 
-```bash
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+Image-based (same as production, project paths):
+
+```env
+HOST_STORAGE_PATH=./storage
+HOST_DATABASE_PATH=./database
 ```
 
-The dev overlay bind-mounts the project root (including local `database/` and `storage/`), so `/opt/metarang` is not used in that mode.
+```bash
+docker compose up -d --build
+```
+
+Live source bind-mount + Vite asset build (`dev` profile):
+
+```env
+HOST_STORAGE_PATH=.
+HOST_STORAGE_TARGET=/var/www/html
+HOST_STORAGE_OPTIONS=:cached
+HOST_DATABASE_PATH=./database
+COMPOSE_PROFILES=dev
+```
+
+```bash
+docker compose up -d --build
+```
+
+With bind-mount enabled, local `database/` and `storage/` are used; `/opt/metarang` is not required.

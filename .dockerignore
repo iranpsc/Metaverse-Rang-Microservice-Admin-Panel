@@ -15,7 +15,6 @@ public/hot
 public/uploads
 storage/debugbar
 *.log
-docker-compose.dev.yml
 
 # Runtime / local state
 bootstrap/cache/*.php
