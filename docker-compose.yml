@@ -35,8 +35,6 @@ x-app-volumes: &app-volumes
   - composer-cache:/tmp/composer-cache
 
 x-php-environment: &php-environment
-  REDIS_HOST: redis
-  REDIS_PORT: 6379
   COMPOSER_CACHE_DIR: /tmp/composer-cache
 
 x-app-common: &app-common
@@ -67,33 +65,14 @@ services:
     environment:
       <<: *php-environment
       APP_URL: ${APP_URL:-http://localhost:8088}
-      CACHE_DRIVER: redis
-      SESSION_DRIVER: redis
-      QUEUE_CONNECTION: redis
+      CACHE_DRIVER: file
+      SESSION_DRIVER: file
+      QUEUE_CONNECTION: database
     command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
     depends_on:
-      redis:
-        condition: service_healthy
       node:
         condition: service_completed_successfully
         required: false
-
-  redis:
-    image: ${DOCKER_REGISTRY:-docker.arvancloud.ir}/redis:7-alpine
-    pull_policy: if_not_present
-    restart: unless-stopped
-    # Bind to loopback by default so Redis is not exposed on the LAN.
-    ports:
-      - "${FORWARD_REDIS_PORT:-127.0.0.1:6379}:6379"
-    command: redis-server --save "" --appendonly no --maxmemory 256mb --maxmemory-policy allkeys-lru
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    networks:
-      - admin-panel
 
   # One-shot Vite build against the bind-mounted tree (profile: dev).
   node:
@@ -114,13 +93,11 @@ services:
   queue:
     <<: *app-common
     pull_policy: never
-    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    command: php artisan queue:work database --sleep=3 --tries=3 --max-time=3600
     environment:
       <<: *php-environment
-      QUEUE_CONNECTION: redis
+      QUEUE_CONNECTION: database
     depends_on:
-      redis:
-        condition: service_healthy
       app:
         condition: service_started
     profiles:
