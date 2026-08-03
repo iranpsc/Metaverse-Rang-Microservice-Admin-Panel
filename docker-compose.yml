@@ -137,8 +137,8 @@ services:
       - queue
 
 networks:
-  admin-panel:
-    driver: bridge
+  dokploy-network:
+    external: True
 
 volumes:
   composer-cache:
