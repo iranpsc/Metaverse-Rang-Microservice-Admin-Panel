@@ -3,6 +3,7 @@
 namespace Tests\Concerns;
 
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 trait CreatesBulkMessageSchema
@@ -12,6 +13,9 @@ trait CreatesBulkMessageSchema
         config()->set('database.default', 'sqlite');
         config()->set('database.connections.sqlite.database', ':memory:');
         config()->set('activitylog.enabled', false);
+
+        DB::purge('sqlite');
+        DB::reconnect('sqlite');
 
         $this->createCoreTables();
         $this->createPermissionTables();

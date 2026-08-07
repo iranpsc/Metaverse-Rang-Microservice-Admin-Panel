@@ -3,6 +3,7 @@
 namespace Tests\Concerns;
 
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 trait CreatesAuthApiSchema
@@ -11,6 +12,9 @@ trait CreatesAuthApiSchema
     {
         config()->set('database.default', 'sqlite');
         config()->set('database.connections.sqlite.database', ':memory:');
+
+        DB::purge('sqlite');
+        DB::reconnect('sqlite');
 
         $this->createAdminsTable();
         $this->createPersonalAccessTokensTable();

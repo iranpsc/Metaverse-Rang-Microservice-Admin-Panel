@@ -6,6 +6,7 @@ use App\Models\Translations\Field;
 use App\Models\Translations\Translation;
 use App\Services\Translations\TranslationService;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class TranslationServiceTest extends TestCase
@@ -28,6 +29,9 @@ class TranslationServiceTest extends TestCase
 
         config()->set('database.default', 'sqlite');
         config()->set('database.connections.sqlite.database', ':memory:');
+
+        DB::purge('sqlite');
+        DB::reconnect('sqlite');
 
         foreach (self::TRANSLATION_MIGRATIONS as $path) {
             $this->artisan('migrate', [

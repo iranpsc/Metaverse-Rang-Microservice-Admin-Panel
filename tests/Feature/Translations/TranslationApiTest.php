@@ -4,24 +4,26 @@ namespace Tests\Feature\Translations;
 
 use App\Models\Admin;
 use App\Models\Translations\Translation;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\CreatesAuthApiSchema;
 use Tests\TestCase;
 
 class TranslationApiTest extends TestCase
 {
-    use RefreshDatabase;
+    use CreatesAuthApiSchema;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        config()->set('database.default', 'sqlite');
-        config()->set('database.connections.sqlite.database', ':memory:');
+        $this->setUpAuthApiSchema();
+        $this->createTranslationsTable();
+        $this->createTranslationStructureTables();
 
-        $this->artisan('migrate:fresh', ['--database' => 'sqlite']);
         Cache::forget('translations.available_languages');
     }
 
@@ -29,7 +31,7 @@ class TranslationApiTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $response = $this->getJson('/api/v1/translations/languages');
+        $response = $this->getJson('/api/translations/languages');
 
         $response->assertOk()
             ->assertJsonStructure([
@@ -47,7 +49,7 @@ class TranslationApiTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $response = $this->postJson('/api/v1/translations', [
+        $response = $this->postJson('/api/translations', [
             'code' => 'de',
         ]);
 
@@ -78,7 +80,7 @@ class TranslationApiTest extends TestCase
             'direction' => 'ltr',
         ]);
 
-        $response = $this->patchJson("/api/v1/translations/{$translation->id}/status");
+        $response = $this->patchJson("/api/translations/{$translation->id}/status");
 
         $response->assertOk()
             ->assertJson([
@@ -90,6 +92,54 @@ class TranslationApiTest extends TestCase
                     ],
                 ],
             ]);
+    }
+
+    private function createTranslationsTable(): void
+    {
+        if (Schema::connection('sqlite')->hasTable('translations')) {
+            return;
+        }
+
+        Schema::connection('sqlite')->create('translations', function (Blueprint $table) {
+            $table->id();
+            $table->string('code')->unique();
+            $table->string('name')->nullable();
+            $table->string('native_name')->nullable();
+            $table->string('direction')->nullable();
+            $table->boolean('status')->default(false);
+            $table->unsignedTinyInteger('version')->default(0);
+            $table->string('file_url')->nullable();
+        });
+    }
+
+    private function createTranslationStructureTables(): void
+    {
+        $schema = Schema::connection('sqlite');
+
+        if (! $schema->hasTable('modals')) {
+            $schema->create('modals', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('translation_id')->constrained()->cascadeOnDelete();
+                $table->string('name');
+            });
+        }
+
+        if (! $schema->hasTable('tabs')) {
+            $schema->create('tabs', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('modal_id')->constrained()->cascadeOnDelete();
+                $table->string('name');
+            });
+        }
+
+        if (! $schema->hasTable('fields')) {
+            $schema->create('fields', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('tab_id')->constrained()->cascadeOnDelete();
+                $table->string('unique_id')->nullable();
+                $table->text('translation')->nullable();
+            });
+        }
     }
 
     private function actingAsAdmin(): Admin
@@ -105,5 +155,3 @@ class TranslationApiTest extends TestCase
         return $admin;
     }
 }
-
-
