@@ -43,11 +43,11 @@ class ActivityLogController extends Controller
             ], 403);
         }
 
-        $perPage = min((int) $request->get('per_page', 15), 50);
-        $page = (int) $request->get('page', 1);
-        $search = trim((string) $request->get('search', ''));
-        $category = $request->get('category');
-        $event = $request->get('event');
+        $perPage = min((int) $request->input('per_page', 15), 50);
+        $page = (int) $request->input('page', 1);
+        $search = trim((string) $request->input('search', ''));
+        $category = $request->input('category');
+        $event = $request->input('event');
 
         $query = Activity::query()
             ->with(['causer', 'subject'])

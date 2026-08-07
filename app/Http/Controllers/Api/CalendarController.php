@@ -16,9 +16,9 @@ class CalendarController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $search = $request->get('search');
-        $perPage = (int) $request->get('per_page', 10);
-        $page = (int) $request->get('page', 1);
+        $search = $request->input('search');
+        $perPage = (int) $request->input('per_page', 10);
+        $page = (int) $request->input('page', 1);
 
         $query = Calendar::query()
             ->where('is_version', false)

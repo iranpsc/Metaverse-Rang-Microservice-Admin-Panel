@@ -68,9 +68,9 @@ class ReportController extends Controller
         }
 
         $reports = $query
-        ->with('user', 'images')
-        ->orderBy('created_at', 'desc')
-        ->paginate($perPage, ['*'], 'page', $page);
+            ->with('user', 'images')
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,
@@ -93,4 +93,3 @@ class ReportController extends Controller
         ]);
     }
 }
-
