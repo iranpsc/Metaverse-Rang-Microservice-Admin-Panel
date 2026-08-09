@@ -8,8 +8,11 @@ use Illuminate\Support\Facades\Schema;
 
 trait CreatesFeaturePricingLimitsApiSchema
 {
+    use CreatesAuthApiSchema;
+
     protected function setUpFeaturePricingLimitsApiSchema(): void
     {
+        $this->setUpAuthApiSchema();
         $this->createFeaturePricingLimitsTable();
         $this->resetFeaturePricingLimitsTable();
     }

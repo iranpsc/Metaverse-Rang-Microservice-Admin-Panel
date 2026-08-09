@@ -22,3 +22,4 @@ public/uploads
 /.cursor
 .htaccess
 /public/lang/*
+!/public/lang/lang.json

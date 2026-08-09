@@ -119,7 +119,8 @@ class TranslationService
             JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT
         );
 
-        file_put_contents($filePath, $encodedPayload);
+        $this->filesystem->ensureDirectoryExists(dirname($filePath));
+        $this->filesystem->put($filePath, $encodedPayload);
 
         $translation->increment('version');
         $absoluteUrl = sprintf('https://metarang.com/lang/%s', $fileName);
