@@ -26,9 +26,7 @@
     <coverage>
         <report>
             <clover outputFile="coverage/clover.xml"/>
-            <cobertura outputFile="coverage/cobertura.xml"/>
-            <html outputDirectory="coverage/html"/>
-            <text outputFile="coverage/coverage.txt" showUncoveredFiles="true" showOnlySummary="false"/>
+            <text outputFile="coverage/coverage.txt" showUncoveredFiles="false" showOnlySummary="true"/>
         </report>
     </coverage>
     <php>

@@ -12,7 +12,6 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   tests:
@@ -79,47 +78,28 @@ jobs:
           php -d memory_limit=1G vendor/bin/phpunit \
             --coverage-clover=coverage/clover.xml \
             --coverage-text=coverage/coverage.txt \
-            --coverage-cobertura=coverage/cobertura.xml \
             --colors=never
 
       - name: Enforce coverage threshold (≥98%)
-        if: matrix.php == '8.4'
-        run: php scripts/check-coverage.php coverage/clover.xml 98
+        id: coverage-gate
+        run: |
+          {
+            echo "## Test coverage"
+            echo ""
+            echo '```'
+            php scripts/check-coverage.php coverage/clover.xml 98
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage artifacts
-        if: matrix.php == '8.4' && always()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: |
             coverage/clover.xml
             coverage/coverage.txt
-            coverage/cobertura.xml
           retention-days: 14
-
-      - name: Publish coverage summary
-        if: matrix.php == '8.4' && always()
-        run: |
-          if [ -f coverage/coverage.txt ]; then
-            {
-              echo "## Test coverage"
-              echo ""
-              echo '```'
-              cat coverage/coverage.txt
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-      - name: Coverage PR comment
-        if: matrix.php == '8.4' && github.event_name == 'pull_request' && always()
-        continue-on-error: true
-        uses: orgoro/coverage@v3.2
-        with:
-          coverageFile: coverage/cobertura.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          thresholdAll: 98
-          thresholdNew: 90
-          thresholdModified: 90
 
   frontend:
     name: Frontend Build
