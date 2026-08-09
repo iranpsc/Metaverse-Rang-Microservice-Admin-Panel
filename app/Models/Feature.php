@@ -34,12 +34,14 @@ class Feature extends Model
 
     public function geometry()
     {
-        return $this->hasOne(Geometry::class,  'feature_id', 'id');
+        return $this->hasOne(Geometry::class, 'feature_id', 'id');
     }
+
     public function images()
     {
         return $this->hasMany(FeatureImage::class);
     }
+
     public function owner()
     {
         return $this->belongsTo(User::class);

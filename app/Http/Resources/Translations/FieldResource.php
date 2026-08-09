@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources\Translations;
 
+use App\Models\Translations\Field;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\Translations\Field */
+/** @mixin Field */
 class FieldResource extends JsonResource
 {
     /**
@@ -22,5 +23,3 @@ class FieldResource extends JsonResource
         ];
     }
 }
-
-

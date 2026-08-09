@@ -24,9 +24,9 @@ class UserFactory extends Factory
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'phone' => $this->faker->phoneNumber,
             'ip' => fake()->ipv4,
-            'code' => random_int(100,500),
-//            'role' => 'admin',
-//            'access_password' => random_int(100, 900),
+            'code' => random_int(100, 500),
+            //            'role' => 'admin',
+            //            'access_password' => random_int(100, 900),
             'remember_token' => Str::random(10),
         ];
     }

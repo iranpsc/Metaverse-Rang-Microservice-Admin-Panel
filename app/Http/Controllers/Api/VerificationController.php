@@ -14,8 +14,7 @@ class VerificationController extends Controller
 {
     public function __construct(
         private readonly PhoneVerificationSessionService $phoneVerificationSession
-    ) {
-    }
+    ) {}
 
     /**
      * Send SMS verification code to authenticated admin.

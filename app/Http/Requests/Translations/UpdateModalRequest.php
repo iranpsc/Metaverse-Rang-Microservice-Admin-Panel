@@ -26,5 +26,3 @@ class UpdateModalRequest extends FormRequest
         ];
     }
 }
-
-

@@ -2,9 +2,14 @@
 
 namespace App\Jobs;
 
+use App\Models\Coordinate;
+use App\Models\Crs;
+use App\Models\CrsProperty;
+use App\Models\Feature;
+use App\Models\FeatureProperties;
+use App\Models\Geometry;
 use App\Models\Map;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -19,11 +24,9 @@ class ImportMaps implements ShouldQueue
      *
      * @return void
      */
-
-    public function __construct(private Map $map)
-    {
-        //
-    }
+    public function __construct(
+        private Map $map
+    ) {}
 
     /**
      * Execute the job.
@@ -32,27 +35,27 @@ class ImportMaps implements ShouldQueue
      */
     public function handle()
     {
-        $file = file_get_contents(public_path('/uploads/maps/' . $this->map->fileName));
+        $file = file_get_contents(public_path('/uploads/maps/'.$this->map->fileName));
         $request = json_decode(explode('=', $file)[1], true);
 
         if ($request) {
-            $crs = \App\Models\Crs::create([
+            $crs = Crs::create([
                 'type' => $request['crs']['type'],
-                'map_id' => $this->map->id
+                'map_id' => $this->map->id,
             ]);
-            \App\Models\CrsProperty::create([
+            CrsProperty::create([
                 'name' => $request['crs']['properties']['name'],
-                'crs_id' => $crs->id
+                'crs_id' => $crs->id,
             ]);
 
             foreach ($request['features'] as $feature) {
-                $feature_db = \App\Models\Feature::create([
+                $feature_db = Feature::create([
                     'type' => $feature['type'],
                     'map_id' => $this->map->id,
                     'owner_id' => 1,
                 ]);
                 $stability = $feature['properties']['density'] * $feature['properties']['area'];
-                \App\Models\FeatureProperties::create([
+                FeatureProperties::create([
                     'id' => $feature['properties']['id'],
                     'id_prefix' => explode('-', $feature['properties']['id'])[0],
                     'id_postfix' => explode('-', $feature['properties']['id'])[1],
@@ -68,17 +71,18 @@ class ImportMaps implements ShouldQueue
                     'owner' => $feature['properties']['owner'],
                     'rgb' => $feature['properties']['rgb'],
                 ]);
-                $geo = \App\Models\Geometry::create([
+                $geo = Geometry::create([
                     'type' => $feature['geometry']['type'],
-                    'feature_id' => $feature_db->id
+                    'feature_id' => $feature_db->id,
                 ]);
                 foreach ($feature['geometry']['coordinates'][0][0] as $cordinates) {
-                    if (is_array($cordinates))
-                        \App\Models\Coordinate::create([
+                    if (is_array($cordinates)) {
+                        Coordinate::create([
                             'geometry_id' => $geo->id,
                             'x' => $cordinates[0],
-                            'y' => $cordinates[1]
+                            'y' => $cordinates[1],
                         ]);
+                    }
                 }
             }
         }

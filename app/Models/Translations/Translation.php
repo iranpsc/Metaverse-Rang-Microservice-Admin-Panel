@@ -12,7 +12,7 @@ class Translation extends Model
     protected $guarded = [];
 
     protected $attirbutes = [
-        'status' => 0
+        'status' => 0,
     ];
 
     protected $connection = 'sqlite';

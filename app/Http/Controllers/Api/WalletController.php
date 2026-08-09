@@ -11,13 +11,10 @@ class WalletController extends Controller
 {
     /**
      * Get paginated Wallet records
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = $request->get('per_page', 10);
+        $perPage = $request->input('per_page', 10);
 
         // Paginate wallets with related user and feature data
         $wallets = Wallet::with('user:id,name', 'user.features:id,owner_id')
@@ -26,13 +23,13 @@ class WalletController extends Controller
         $formattedWallets = $wallets->map(function ($wallet) {
             return [
                 'id' => $wallet->id,
-                'user_name' => $wallet->user->name ?? '-',
+                'user_name' => $wallet->user?->name ?? '-',
                 'psc' => number_format($wallet->psc ?? 0),
                 'blue' => number_format($wallet->blue ?? 0),
                 'red' => number_format($wallet->red ?? 0),
                 'yellow' => number_format($wallet->yellow ?? 0),
                 'irr' => number_format($wallet->irr ?? 0),
-                'features_count' => count($wallet->user->features ?? []),
+                'features_count' => count($wallet->user?->features ?? []),
             ];
         });
 
@@ -53,4 +50,3 @@ class WalletController extends Controller
         ]);
     }
 }
-

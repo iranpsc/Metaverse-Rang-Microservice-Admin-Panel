@@ -7,15 +7,11 @@ use App\Models\Variable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 
 class VariablesController extends Controller
 {
     /**
      * Get all variables with their relationships
-     *
-     * @return JsonResponse
      */
     public function index(): JsonResponse
     {
@@ -59,9 +55,6 @@ class VariablesController extends Controller
 
     /**
      * Store a new variable
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -84,7 +77,7 @@ class VariablesController extends Controller
             if ($request->hasFile('image')) {
                 $imagePath = $request->file('image')->store('variables', 'public');
                 $variable->image()->create([
-                    'url' => url('uploads/' . $imagePath)
+                    'url' => url('uploads/'.$imagePath),
                 ]);
             }
 
@@ -116,16 +109,12 @@ class VariablesController extends Controller
 
     /**
      * Update an existing variable
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(Request $request, int $id): JsonResponse
     {
         $variable = Variable::find($id);
 
-        if (!$variable) {
+        if (! $variable) {
             return response()->json([
                 'success' => false,
                 'message' => 'ارز یافت نشد',
@@ -167,7 +156,7 @@ class VariablesController extends Controller
                 // Upload new image
                 $imagePath = $request->file('image')->store('variables', 'public');
                 $variable->image()->create([
-                    'url' => url('uploads/' . $imagePath)
+                    'url' => url('uploads/'.$imagePath),
                 ]);
             }
 
@@ -208,15 +197,12 @@ class VariablesController extends Controller
 
     /**
      * Delete a variable
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function destroy(int $id): JsonResponse
     {
         $variable = Variable::find($id);
 
-        if (!$variable) {
+        if (! $variable) {
             return response()->json([
                 'success' => false,
                 'message' => 'ارز یافت نشد',
@@ -241,4 +227,3 @@ class VariablesController extends Controller
         }
     }
 }
-

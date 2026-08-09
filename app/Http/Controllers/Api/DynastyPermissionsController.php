@@ -11,8 +11,6 @@ class DynastyPermissionsController extends Controller
 {
     /**
      * Get dynasty permissions (single record)
-     *
-     * @return JsonResponse
      */
     public function show(): JsonResponse
     {
@@ -20,7 +18,7 @@ class DynastyPermissionsController extends Controller
             $permissions = DynastyPermission::first();
 
             // If no permissions exist, return defaults
-            if (!$permissions) {
+            if (! $permissions) {
                 return response()->json([
                     'success' => true,
                     'data' => [
@@ -72,13 +70,10 @@ class DynastyPermissionsController extends Controller
 
     /**
      * Update or create dynasty permissions
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function update(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'BFR' => 'nullable|boolean',
             'SF' => 'nullable|boolean',
             'W' => 'nullable|boolean',
@@ -139,4 +134,3 @@ class DynastyPermissionsController extends Controller
         }
     }
 }
-

@@ -39,8 +39,8 @@ class BulkMessageUserQueryService
 
     private function applyCodeRangeFilter(Builder $query, string $codeFrom, string $codeTo): Builder
     {
-        $from = 'hm-' . $codeFrom;
-        $to = 'hm-' . $codeTo;
+        $from = 'hm-'.$codeFrom;
+        $to = 'hm-'.$codeTo;
 
         return $query->where('code', '>=', $from)
             ->where('code', '<=', $to);

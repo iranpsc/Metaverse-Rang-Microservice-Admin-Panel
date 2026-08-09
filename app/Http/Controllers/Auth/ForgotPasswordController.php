@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Services\ActivityLoggerService;
 use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ForgotPasswordController extends Controller
@@ -29,6 +30,8 @@ class ForgotPasswordController extends Controller
             'ip' => $request->ip(),
         ]);
 
-        return parent::sendResetLinkResponse($request, $response);
+        return $request->wantsJson()
+            ? new JsonResponse(['message' => trans($response)], 200)
+            : back()->with('status', trans($response));
     }
 }

@@ -16,8 +16,7 @@ class BulkMessageController extends Controller
 {
     public function __construct(
         private readonly BulkMessageUserQueryService $userQueryService
-    ) {
-    }
+    ) {}
 
     public function send(SendBulkMessageRequest $request): JsonResponse
     {

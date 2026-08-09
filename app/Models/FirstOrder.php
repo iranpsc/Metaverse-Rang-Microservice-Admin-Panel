@@ -14,10 +14,11 @@ class FirstOrder extends Model
         'type',
         'amount',
         'date',
-        'bonus'
+        'bonus',
     ];
 
-    public function user() {
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 }

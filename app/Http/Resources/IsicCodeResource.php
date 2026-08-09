@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\IsicCode;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\IsicCode
+ * @mixin IsicCode
  */
 class IsicCodeResource extends JsonResource
 {
@@ -27,5 +28,3 @@ class IsicCodeResource extends JsonResource
         ];
     }
 }
-
-

@@ -62,7 +62,7 @@ class Level extends Model
     {
         $allowedOperators = ['>', '>=', '<', '<=', '='];
 
-        if (!in_array($operator, $allowedOperators, true)) {
+        if (! in_array($operator, $allowedOperators, true)) {
             throw new \InvalidArgumentException("Unsupported operator [{$operator}]");
         }
 

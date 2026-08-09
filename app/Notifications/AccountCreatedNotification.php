@@ -5,8 +5,8 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
-use Kavenegar\Laravel\Notification\KavenegarBaseNotification;
 use Kavenegar\Laravel\Message\KavenegarMessage;
+use Kavenegar\Laravel\Notification\KavenegarBaseNotification;
 
 class AccountCreatedNotification extends KavenegarBaseNotification implements ShouldQueue
 {
@@ -44,11 +44,11 @@ class AccountCreatedNotification extends KavenegarBaseNotification implements Sh
      */
     public function toKavenegar($notifiable)
     {
-        return (new KavenegarMessage())
+        return (new KavenegarMessage)
             ->verifyLookup('account-created', [
                 $this->email,
                 $this->password,
-                $this->access_password
+                $this->access_password,
             ]);
     }
 }

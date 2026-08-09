@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources\Translations;
 
+use App\Models\Translations\Modal;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\Translations\Modal */
+/** @mixin Modal */
 class ModalResource extends JsonResource
 {
     /**
@@ -21,5 +22,3 @@ class ModalResource extends JsonResource
         ];
     }
 }
-
-

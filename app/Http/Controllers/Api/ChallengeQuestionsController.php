@@ -21,9 +21,9 @@ class ChallengeQuestionsController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = (int) $request->get('per_page', 10);
+        $perPage = (int) $request->input('per_page', 10);
         $perPage = $perPage > 0 ? min($perPage, 50) : 10;
-        $search = $request->get('search');
+        $search = $request->input('search');
 
         $query = Question::query()
             ->with(['answers' => static fn ($query) => $query->orderBy('created_at')])
@@ -31,8 +31,8 @@ class ChallengeQuestionsController extends Controller
 
         if ($search) {
             $query->where(static function ($q) use ($search) {
-                $q->where('title', 'like', '%' . $search . '%')
-                    ->orWhere('code', 'like', '%' . $search . '%');
+                $q->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('code', 'like', '%'.$search.'%');
             });
         }
 
@@ -62,7 +62,7 @@ class ChallengeQuestionsController extends Controller
     {
         try {
             $uploadedFile = $request->file('file');
-            $sheets = Excel::toArray(new QuestionFileImport(), $uploadedFile);
+            $sheets = Excel::toArray(new QuestionFileImport, $uploadedFile);
             $data = $sheets[0] ?? [];
 
             if (empty($data)) {
@@ -106,5 +106,3 @@ class ChallengeQuestionsController extends Controller
         ]);
     }
 }
-
-

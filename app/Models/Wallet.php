@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Wallet
@@ -12,10 +13,11 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $variable_id
  * @property string $count
  * @property int $user_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Variable $variable
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User $user
+ * @property-read Variable $variable
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|Wallet newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Wallet newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Wallet query()
@@ -25,13 +27,14 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Wallet whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Wallet whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Wallet whereVariableId($value)
+ *
  * @mixin \Eloquent
  */
 class Wallet extends Model
 {
     use HasFactory;
 
-    protected $table = "wallets";
+    protected $table = 'wallets';
 
     protected $fillable = [
         'user_id',
@@ -48,4 +51,3 @@ class Wallet extends Model
         return $this->belongsTo(Variable::class);
     }
 }
-

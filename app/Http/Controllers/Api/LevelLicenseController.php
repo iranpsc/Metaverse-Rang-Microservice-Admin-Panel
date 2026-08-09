@@ -63,7 +63,7 @@ class LevelLicenseController extends Controller
     {
         $licenses = $level->licenses;
 
-        if (!$licenses) {
+        if (! $licenses) {
             return response()->json([
                 'success' => false,
                 'message' => 'برای این سطح مجوزی ثبت نشده است.',
@@ -95,5 +95,3 @@ class LevelLicenseController extends Controller
         }
     }
 }
-
-

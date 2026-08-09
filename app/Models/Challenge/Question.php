@@ -15,7 +15,7 @@ class Question extends Model
         'title',
         'creator_code',
         'prize',
-        'image'
+        'image',
     ];
 
     /**

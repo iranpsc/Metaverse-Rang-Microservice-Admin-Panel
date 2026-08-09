@@ -8,20 +8,16 @@ use App\Models\Variable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class OptionsController extends Controller
 {
     /**
      * Get all options with pagination
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
         try {
-            $perPage = $request->get('per_page', 10);
+            $perPage = (int) $request->input('per_page', 10);
             $options = Option::with(['priceChangeLogs', 'image'])->paginate($perPage);
 
             // Transform data for frontend
@@ -75,8 +71,6 @@ class OptionsController extends Controller
 
     /**
      * Get all available variables for dropdown
-     *
-     * @return JsonResponse
      */
     public function getVariables(): JsonResponse
     {
@@ -102,9 +96,6 @@ class OptionsController extends Controller
 
     /**
      * Store a new option
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -129,7 +120,7 @@ class OptionsController extends Controller
             if ($request->hasFile('image')) {
                 $imagePath = $request->file('image')->store('packages', 'public');
                 $option->image()->create([
-                    'url' => url('uploads/' . $imagePath)
+                    'url' => url('uploads/'.$imagePath),
                 ]);
             }
 
@@ -165,16 +156,12 @@ class OptionsController extends Controller
 
     /**
      * Update an existing option
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(Request $request, int $id): JsonResponse
     {
         $option = Option::find($id);
 
-        if (!$option) {
+        if (! $option) {
             return response()->json([
                 'success' => false,
                 'message' => 'پکیج یافت نشد',
@@ -216,11 +203,11 @@ class OptionsController extends Controller
 
                 if ($option->image) {
                     $option->image->update([
-                        'url' => url('uploads/' . $imagePath)
+                        'url' => url('uploads/'.$imagePath),
                     ]);
                 } else {
                     $option->image()->create([
-                        'url' => url('uploads/' . $imagePath)
+                        'url' => url('uploads/'.$imagePath),
                     ]);
                 }
             }
@@ -266,15 +253,12 @@ class OptionsController extends Controller
 
     /**
      * Delete an option
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function destroy(int $id): JsonResponse
     {
         $option = Option::find($id);
 
-        if (!$option) {
+        if (! $option) {
             return response()->json([
                 'success' => false,
                 'message' => 'پکیج یافت نشد',
@@ -299,4 +283,3 @@ class OptionsController extends Controller
         }
     }
 }
-

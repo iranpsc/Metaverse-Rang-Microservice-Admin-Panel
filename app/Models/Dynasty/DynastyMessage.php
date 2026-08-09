@@ -11,7 +11,7 @@ class DynastyMessage extends Model
 
     protected $fillable = [
         'type',
-        'message'
+        'message',
     ];
 
     public function getMessageTitle()

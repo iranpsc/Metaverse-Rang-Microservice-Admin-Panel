@@ -2,12 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
-use App\Models\Translations\Field as TranslationField;
 use App\Models\Translations\Modal as TranslationModal;
 use App\Models\Translations\Tab as TranslationTab;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class TranslationFieldSeeder extends Seeder
 {

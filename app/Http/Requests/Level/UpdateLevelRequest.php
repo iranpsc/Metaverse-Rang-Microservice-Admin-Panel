@@ -41,5 +41,3 @@ class UpdateLevelRequest extends FormRequest
         return $rules;
     }
 }
-
-

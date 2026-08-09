@@ -19,8 +19,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon|null $updated_at
  * @property Feature $feature
  * @property Collection|Coordinate[] $coordinates
- * @package App\Models
  * @property-read int|null $coordinates_count
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|Geometry newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Geometry newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Geometry query()
@@ -28,23 +28,23 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Geometry whereFeaturesId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Geometry whereType($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Geometry whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class Geometry extends Model
 {
+    protected $fillable = [
+        'type',
+        'feature_id',
+    ];
 
-	protected $fillable = [
-		'type',
-        'feature_id'
-	];
+    public function feature()
+    {
+        return $this->belongsTo(Feature::class, 'feature_id');
+    }
 
-	public function feature()
-	{
-		return $this->belongsTo(Feature::class, 'feature_id');
-	}
-
-	public function coordinates()
-	{
-		return $this->hasMany(Coordinate::class , 'geometry_id', 'id');
-	}
+    public function coordinates()
+    {
+        return $this->hasMany(Coordinate::class, 'geometry_id', 'id');
+    }
 }

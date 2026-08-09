@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\DashboardResource;
 use App\Models\Dynasty\Dynasty;
 use App\Models\Referral;
 use App\Models\ReferralOrderHistory;
@@ -19,13 +18,10 @@ class DashboardController extends Controller
         private UserRepository $userRepository,
         private FeatureRepository $featureRepository,
         private OrderRepository $orderRepository
-    ) {
-    }
+    ) {}
 
     /**
      * Get dashboard statistics
-     *
-     * @return JsonResponse
      */
     public function index(): JsonResponse
     {
@@ -62,4 +58,3 @@ class DashboardController extends Controller
         ]);
     }
 }
-

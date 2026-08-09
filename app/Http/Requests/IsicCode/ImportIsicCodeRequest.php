@@ -26,5 +26,3 @@ class ImportIsicCodeRequest extends FormRequest
         ];
     }
 }
-
-

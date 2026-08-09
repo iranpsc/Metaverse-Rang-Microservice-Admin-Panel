@@ -6,19 +6,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Map extends Model
 {
-	protected $guarded = [];
+    protected $guarded = [];
 
     public $timestamps = false;
 
-	public function crs()
-	{
-		return $this->hasMany(Cr::class);
-	}
+    public function crs()
+    {
+        return $this->hasMany(Cr::class);
+    }
 
-	public function features()
-	{
-		return $this->hasMany(Feature::class);
-	}
+    public function features()
+    {
+        return $this->hasMany(Feature::class);
+    }
 
     public function isPublished()
     {

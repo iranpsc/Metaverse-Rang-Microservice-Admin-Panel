@@ -34,20 +34,20 @@ class FileUploadController extends Controller
                 return response()->json([
                     'success' => false,
                     'status' => false,
-                    'message' => 'فرمت فایل مجاز نیست. فرمت‌های مجاز: ' . implode(', ', self::ALLOWED_EXTENSIONS),
+                    'message' => 'فرمت فایل مجاز نیست. فرمت‌های مجاز: '.implode(', ', self::ALLOWED_EXTENSIONS),
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
-            $originalName = $file->getClientOriginalName() ?: ('file.' . $extension);
+            $originalName = $file->getClientOriginalName() ?: ('file.'.$extension);
             $safeBaseName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) ?: 'upload';
-            $fileName = $safeBaseName . '-' . md5(uniqid((string) time(), true)) . '.' . $extension;
+            $fileName = $safeBaseName.'-'.md5(uniqid((string) time(), true)).'.'.$extension;
 
             Storage::disk('public')->makeDirectory('levels');
             $filePath = $file->storeAs('levels', $fileName, 'public');
 
             @unlink($file->getPathname());
 
-            $fileUrl = url('uploads/' . $filePath);
+            $fileUrl = url('uploads/'.$filePath);
 
             return response()->json([
                 'success' => true,

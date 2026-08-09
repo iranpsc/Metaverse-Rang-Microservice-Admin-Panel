@@ -13,22 +13,19 @@ class BankAccountController extends Controller
 {
     /**
      * Get paginated Bank Account records with search
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $searchTerm = $request->get('search', '');
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
+        $searchTerm = $request->input('search', '');
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
         $query = BankAccount::query()->with('bankable.kyc')->latest();
 
         if ($searchTerm) {
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('card_num', 'like', '%' . trim($searchTerm) . '%')
-                    ->orWhere('shaba_num', 'like', '%' . trim($searchTerm) . '%');
+                $q->where('card_num', 'like', '%'.trim($searchTerm).'%')
+                    ->orWhere('shaba_num', 'like', '%'.trim($searchTerm).'%');
             });
         }
 
@@ -53,9 +50,6 @@ class BankAccountController extends Controller
 
     /**
      * Get single Bank Account record details
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function show(int $id): JsonResponse
     {
@@ -70,10 +64,6 @@ class BankAccountController extends Controller
 
     /**
      * Update Bank Account status and errors
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -86,11 +76,11 @@ class BankAccountController extends Controller
         // Get bank_account_errors from request (default to empty array if not provided)
         $bankAccountErrors = $validated['bank_account_errors'] ?? [];
 
-        if (!empty($bankAccountErrors)) {
+        if (! empty($bankAccountErrors)) {
             // Has errors - reject Bank Account
             $bankAccount->update([
                 'status' => -1,
-                'errors' => $bankAccountErrors
+                'errors' => $bankAccountErrors,
             ]);
 
             $user = $bankAccount->bankable;
@@ -111,4 +101,3 @@ class BankAccountController extends Controller
         ]);
     }
 }
-

@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources\Translations;
 
+use App\Models\Translations\Translation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\Translations\Translation */
+/** @mixin Translation */
 class TranslationResource extends JsonResource
 {
     /**
@@ -26,5 +27,3 @@ class TranslationResource extends JsonResource
         ];
     }
 }
-
-

@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources\Translations;
 
+use App\Models\Translations\Tab;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\Translations\Tab */
+/** @mixin Tab */
 class TabResource extends JsonResource
 {
     /**
@@ -28,5 +29,3 @@ class TabResource extends JsonResource
         ];
     }
 }
-
-

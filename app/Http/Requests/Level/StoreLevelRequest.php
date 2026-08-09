@@ -30,5 +30,3 @@ class StoreLevelRequest extends FormRequest
         return $rules;
     }
 }
-
-

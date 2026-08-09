@@ -33,5 +33,3 @@ class LevelGeneralInfoResource extends JsonResource
         ];
     }
 }
-
-

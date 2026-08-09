@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property User $user
- * @package App\Models
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|Transaction newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Transaction newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Transaction query()
@@ -37,28 +37,30 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Transaction whereUserId($value)
+ *
  * @mixin \Eloquent
+ *
  * @property-read Model|\Eloquent $payable
  */
 class Transaction extends Model
 {
+    protected $fillable = [
+        'user_id',
+        'payable_id',
+        'payable_type',
+        'amount',
+        'asset',
+        'action',
+        'status',
+    ];
 
-	protected $fillable = [
-		'user_id',
-		'payable_id',
-		'payable_type',
-		'amount',
-		'asset',
-		'action',
-		'status'
-	];
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
-	public function user()
-	{
-		return $this->belongsTo(User::class);
-	}
-
-	public function payable(){
-	    return $this->morphTo();
+    public function payable()
+    {
+        return $this->morphTo();
     }
 }

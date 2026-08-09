@@ -24,8 +24,7 @@ class RequirePhoneVerification
 
     public function __construct(
         private readonly PhoneVerificationSessionService $phoneVerificationSession
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {

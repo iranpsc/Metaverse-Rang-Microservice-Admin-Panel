@@ -1,15 +1,12 @@
 <?php
 
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Api\ActivityLogController;
 use App\Http\Controllers\Api\AdminsController;
 use App\Http\Controllers\Api\BankAccountController;
-use App\Http\Controllers\Api\ConnectedWalletController;
 use App\Http\Controllers\Api\BulkMessageController;
 use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\ChallengeQuestionsController;
+use App\Http\Controllers\Api\ConnectedWalletController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepositController;
 use App\Http\Controllers\Api\DynastyMessagesController;
@@ -21,14 +18,12 @@ use App\Http\Controllers\Api\IsicCodeController;
 use App\Http\Controllers\Api\KycController;
 use App\Http\Controllers\Api\KycVideoTextController;
 use App\Http\Controllers\Api\LandsController;
-use App\Http\Controllers\Api\LevelPrizeController;
+use App\Http\Controllers\Api\LevelGemController;
+use App\Http\Controllers\Api\LevelGeneralInfoController;
 use App\Http\Controllers\Api\LevelGiftController;
 use App\Http\Controllers\Api\LevelLicenseController;
-use App\Http\Controllers\Api\LevelGeneralInfoController;
-use App\Http\Controllers\Api\LevelGemController;
+use App\Http\Controllers\Api\LevelPrizeController;
 use App\Http\Controllers\Api\LevelsController;
-use App\Http\Controllers\FileUploadController;
-use App\Http\Controllers\Api\UserLevelsController;
 use App\Http\Controllers\Api\MapsController;
 use App\Http\Controllers\Api\OptionsController;
 use App\Http\Controllers\Api\PermissionsController;
@@ -40,22 +35,27 @@ use App\Http\Controllers\Api\RegistrationInfoController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\RolesController;
 use App\Http\Controllers\Api\SoldController;
+use App\Http\Controllers\Api\SystemVariablesController;
 use App\Http\Controllers\Api\TicketsController;
 use App\Http\Controllers\Api\TradedController;
-use App\Http\Controllers\Api\VariablesController;
-use App\Http\Controllers\Api\VideoCategoriesController;
-use App\Http\Controllers\Api\VideoSubCategoriesController;
-use App\Http\Controllers\Api\VideoUploadController;
-use App\Http\Controllers\Api\VideosController;
-use App\Http\Controllers\Api\SystemVariablesController;
-use App\Http\Controllers\Api\VerificationController;
-use App\Http\Controllers\Api\WalletController;
-use App\Http\Controllers\Api\WithdrawController;
-use App\Http\Controllers\Api\VersionController;
+use App\Http\Controllers\Api\UserLevelsController;
 use App\Http\Controllers\Api\V1\Translations\FieldController as TranslationFieldController;
 use App\Http\Controllers\Api\V1\Translations\ModalController as TranslationModalController;
 use App\Http\Controllers\Api\V1\Translations\TabController as TranslationTabController;
 use App\Http\Controllers\Api\V1\Translations\TranslationController;
+use App\Http\Controllers\Api\VariablesController;
+use App\Http\Controllers\Api\VerificationController;
+use App\Http\Controllers\Api\VersionController;
+use App\Http\Controllers\Api\VideoCategoriesController;
+use App\Http\Controllers\Api\VideosController;
+use App\Http\Controllers\Api\VideoSubCategoriesController;
+use App\Http\Controllers\Api\VideoUploadController;
+use App\Http\Controllers\Api\WalletController;
+use App\Http\Controllers\Api\WithdrawController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\FileUploadController;
 use App\Http\Middleware\EnsureAdminSanctumAuth;
 use App\Http\Middleware\RequirePhoneVerification;
 use App\Models\KycVerifyText;
@@ -66,9 +66,7 @@ use Illuminate\Support\Facades\Route;
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
+| Here is where you can register API routes for your application.
 |
 */
 
@@ -84,192 +82,252 @@ Route::get('/kyc-verify-text', function () {
 // Authentication routes (guest only)
 Route::middleware(['guest'])->group(function () {
     Route::post('/login', [LoginController::class, 'login']);
-    Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail']);
-    Route::post('/password/reset', [ResetPasswordController::class, 'reset']);
+
+    Route::prefix('password')->group(function () {
+        Route::post('email', [ForgotPasswordController::class, 'sendResetLinkEmail']);
+        Route::post('reset', [ResetPasswordController::class, 'reset']);
+    });
 });
 
-// Protected auth routes
-// Use sanctum for token-based authentication with admin guard support
 Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(function () {
-    Route::get('/me', [LoginController::class, 'me']);
-    Route::post('/logout', [LoginController::class, 'logout']);
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::controller(LoginController::class)->group(function () {
+        Route::get('/me', 'me');
+        Route::post('/logout', 'logout');
+    });
 
-    // Activity logs
-    Route::get('/activity-logs/categories', [ActivityLogController::class, 'categories']);
-    Route::get('/activity-logs', [ActivityLogController::class, 'index']);
-    Route::get('/activity-logs/{id}', [ActivityLogController::class, 'show']);
+    Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/registration-info', [RegistrationInfoController::class, 'index']);
     Route::get('/connected-wallets', [ConnectedWalletController::class, 'index']);
     Route::get('/reports', [ReportController::class, 'index']);
-
-    // Challenge routes
-    Route::get('/challenge/questions', [ChallengeQuestionsController::class, 'index']);
-    Route::post('/challenge/questions/import', [ChallengeQuestionsController::class, 'import']);
-    Route::delete('/challenge/questions/{question}', [ChallengeQuestionsController::class, 'destroy']);
-
-    // Calendar routes
-    Route::get('/calendars', [CalendarController::class, 'index']);
-    Route::post('/calendars', [CalendarController::class, 'store']);
-    Route::put('/calendars/{calendar}', [CalendarController::class, 'update']);
-    Route::delete('/calendars/{calendar}', [CalendarController::class, 'destroy']);
-
-    // Versions routes
-    Route::get('/versions', [VersionController::class, 'index']);
-    Route::post('/versions', [VersionController::class, 'store']);
-    Route::delete('/versions/{version}', [VersionController::class, 'destroy']);
-
-    // KYC routes
-    Route::get('/kycs', [KycController::class, 'index']);
-    Route::get('/kycs/{id}', [KycController::class, 'show']);
-    Route::put('/kycs/{id}', [KycController::class, 'update']);
-
-    // Bank Account routes
-    Route::get('/bank-accounts', [BankAccountController::class, 'index']);
-    Route::get('/bank-accounts/{id}', [BankAccountController::class, 'show']);
-    Route::put('/bank-accounts/{id}', [BankAccountController::class, 'update']);
-
-    // KYC Video Text routes
-    Route::get('/kyc-video-texts', [KycVideoTextController::class, 'index']);
-    Route::post('/kyc-video-texts', [KycVideoTextController::class, 'store']);
-    Route::put('/kyc-video-texts/{id}', [KycVideoTextController::class, 'update']);
-    Route::delete('/kyc-video-texts/{id}', [KycVideoTextController::class, 'destroy']);
-
-    // Phone verification session routes (excluded from RequirePhoneVerification middleware)
-    Route::withoutMiddleware([RequirePhoneVerification::class])->group(function () {
-        Route::post('/send-verification-sms', [VerificationController::class, 'sendSMS']);
-        Route::post('/verify-verification-sms', [VerificationController::class, 'verify']);
-        Route::get('/phone-verification/status', [VerificationController::class, 'status']);
-        Route::post('/phone-verification/confirm', [VerificationController::class, 'confirm']);
-    });
-
-    // Wallets routes
     Route::get('/assets', [WalletController::class, 'index']);
-
-    // Deposits routes
-    Route::get('/deposits', [DepositController::class, 'index']);
-    Route::get('/deposits/export', [DepositController::class, 'export']);
-
-    // Profile Details routes
     Route::get('/profile-details', [ProfileDetailsController::class, 'index']);
-
-    // Profile routes
-    Route::get('/profile', [ProfileController::class, 'show']);
-    Route::put('/profile/info', [ProfileController::class, 'updateInfo']);
-    Route::post('/profile/password/request', [ProfileController::class, 'requestPasswordChange']);
-    Route::post('/profile/password/verify', [ProfileController::class, 'verifyPasswordChange']);
-
-    // Withdraws routes
     Route::get('/withdraws', [WithdrawController::class, 'index']);
 
-    // Lands routes
-    Route::get('/lands', [LandsController::class, 'index']);
-    Route::get('/lands/owner-transfer/options', [LandsController::class, 'ownerTransferOptions']);
-    Route::post('/lands/owner-transfer', [LandsController::class, 'transferOwner']);
-    Route::put('/lands/features/{id}/properties', [LandsController::class, 'updateProperties']);
-    Route::put('/lands/features/{id}/coordinates', [LandsController::class, 'updateCoordinates']);
+    // Activity logs
+    Route::prefix('activity-logs')->controller(ActivityLogController::class)->group(function () {
+        Route::get('categories', 'categories');
+        Route::get('/', 'index');
+        Route::get('{id}', 'show');
+    });
 
-    // Levels routes
+    // Challenge routes
+    Route::prefix('challenge/questions')->controller(ChallengeQuestionsController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('import', 'import');
+        Route::delete('{question}', 'destroy');
+    });
+
+    // Calendar routes
+    Route::prefix('calendars')->controller(CalendarController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::put('{calendar}', 'update');
+        Route::delete('{calendar}', 'destroy');
+    });
+
+    // Versions routes
+    Route::prefix('versions')->controller(VersionController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::delete('{version}', 'destroy');
+    });
+
+    // KYC routes
+    Route::prefix('kycs')->controller(KycController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('{id}', 'show');
+        Route::put('{id}', 'update');
+    });
+
+    // Bank Account routes
+    Route::prefix('bank-accounts')->controller(BankAccountController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('{id}', 'show');
+        Route::put('{id}', 'update');
+    });
+
+    // KYC Video Text routes
+    Route::prefix('kyc-video-texts')->controller(KycVideoTextController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::put('{id}', 'update');
+        Route::delete('{id}', 'destroy');
+    });
+
+    // Phone verification session routes (excluded from RequirePhoneVerification middleware)
+    Route::withoutMiddleware([RequirePhoneVerification::class])
+        ->controller(VerificationController::class)
+        ->group(function () {
+            Route::post('/send-verification-sms', 'sendSMS');
+            Route::post('/verify-verification-sms', 'verify');
+
+            Route::prefix('phone-verification')->group(function () {
+                Route::get('status', 'status');
+                Route::post('confirm', 'confirm');
+            });
+        });
+
+    // Deposits routes
+    Route::prefix('deposits')->controller(DepositController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('export', 'export');
+    });
+
+    // Profile routes
+    Route::prefix('profile')->controller(ProfileController::class)->group(function () {
+        Route::get('/', 'show');
+        Route::put('info', 'updateInfo');
+        Route::post('password/request', 'requestPasswordChange');
+        Route::post('password/verify', 'verifyPasswordChange');
+    });
+
+    // Lands routes
+    Route::prefix('lands')->group(function () {
+        Route::controller(LandsController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('owner-transfer/options', 'ownerTransferOptions');
+            Route::post('owner-transfer', 'transferOwner');
+            Route::put('features/{id}/properties', 'updateProperties');
+            Route::put('features/{id}/coordinates', 'updateCoordinates');
+        });
+
+        Route::prefix('feature-limits')->controller(FeatureLimitsController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::delete('{id}', 'destroy');
+        });
+
+        Route::prefix('feature-pricing-limits')->controller(FeaturePricingLimitsController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::post('/', 'update');
+        });
+
+        Route::get('prices', [PricesController::class, 'index']);
+        Route::get('pricing', [PricingController::class, 'index']);
+        Route::get('sold', [SoldController::class, 'index']);
+        Route::get('traded', [TradedController::class, 'index']);
+    });
+
+    // File Upload Controller
     Route::post('/upload/chunk', [FileUploadController::class, 'upload'])->withoutMiddleware('throttle:api');
+
+    // Levels Controller
     Route::apiResource('levels', LevelsController::class)->except(['show']);
-    Route::get('/levels/{level}/prize', [LevelPrizeController::class, 'show']);
-    Route::post('/levels/{level}/prize', [LevelPrizeController::class, 'store']);
-    Route::put('/levels/{level}/prize', [LevelPrizeController::class, 'update']);
-    Route::get('/levels/{level}/gift', [LevelGiftController::class, 'show']);
-    Route::post('/levels/{level}/gift', [LevelGiftController::class, 'store']);
-    Route::put('/levels/{level}/gift', [LevelGiftController::class, 'update']);
-    Route::delete('/levels/{level}/gift/files', [LevelGiftController::class, 'destroyFile']);
-    Route::get('/levels/{level}/licenses', [LevelLicenseController::class, 'show']);
-    Route::post('/levels/{level}/licenses', [LevelLicenseController::class, 'store']);
-    Route::put('/levels/{level}/licenses', [LevelLicenseController::class, 'update']);
-    Route::get('/levels/{level}/gem', [LevelGemController::class, 'show']);
-    Route::post('/levels/{level}/gem', [LevelGemController::class, 'store']);
-    Route::put('/levels/{level}/gem', [LevelGemController::class, 'update']);
-    Route::delete('/levels/{level}/gem/files', [LevelGemController::class, 'destroyFile']);
-    Route::get('/levels/{level}/general-info', [LevelGeneralInfoController::class, 'show']);
-    Route::post('/levels/{level}/general-info', [LevelGeneralInfoController::class, 'store']);
-    Route::put('/levels/{level}/general-info', [LevelGeneralInfoController::class, 'update']);
-    Route::delete('/levels/{level}/general-info/files', [LevelGeneralInfoController::class, 'destroyFile']);
+
+    // Level Prize Controller
+    Route::prefix('levels/{level}/prize')->controller(LevelPrizeController::class)->group(function () {
+        Route::get('/', 'show');
+        Route::post('/', 'store');
+        Route::put('/', 'update');
+    });
+
+    // Level Gift Controller
+    Route::prefix('levels/{level}/gift')->controller(LevelGiftController::class)->group(function () {
+        Route::get('/', 'show');
+        Route::post('/', 'store');
+        Route::put('/', 'update');
+        Route::delete('files', 'destroyFile');
+    });
+
+    // Level License Controller
+    Route::prefix('levels/{level}/licenses')->controller(LevelLicenseController::class)->group(function () {
+        Route::get('/', 'show');
+        Route::post('/', 'store');
+        Route::put('/', 'update');
+    });
+
+    // Level Gem Controller
+    Route::prefix('levels/{level}/gem')->controller(LevelGemController::class)->group(function () {
+        Route::get('/', 'show');
+        Route::post('/', 'store');
+        Route::put('/', 'update');
+        Route::delete('files', 'destroyFile');
+    });
+
+    // Level General Info Controller
+    Route::prefix('levels/{level}/general-info')->controller(LevelGeneralInfoController::class)->group(function () {
+        Route::get('/', 'show');
+        Route::post('/', 'store');
+        Route::put('/', 'update');
+        Route::delete('files', 'destroyFile');
+    });
 
     // User levels routes
-    Route::get('/user-levels', [UserLevelsController::class, 'index']);
-    Route::post('/user-levels/promote', [UserLevelsController::class, 'promote']);
-    Route::get('/users/search', [UserLevelsController::class, 'searchUsers']);
-
-    // Feature Limits routes
-    Route::get('/lands/feature-limits', [FeatureLimitsController::class, 'index']);
-    Route::post('/lands/feature-limits', [FeatureLimitsController::class, 'store']);
-    Route::delete('/lands/feature-limits/{id}', [FeatureLimitsController::class, 'destroy']);
-
-    // Feature Pricing Limits routes
-    Route::get('/lands/feature-pricing-limits', [FeaturePricingLimitsController::class, 'index']);
-    Route::post('/lands/feature-pricing-limits', [FeaturePricingLimitsController::class, 'update']);
-
-    // Prices routes
-    Route::get('/lands/prices', [PricesController::class, 'index']);
-
-    // Pricing routes
-    Route::get('/lands/pricing', [PricingController::class, 'index']);
-
-    // Sold routes
-    Route::get('/lands/sold', [SoldController::class, 'index']);
-
-    // Traded routes
-    Route::get('/lands/traded', [TradedController::class, 'index']);
+    Route::controller(UserLevelsController::class)->group(function () {
+        Route::prefix('user-levels')->group(function () {
+            Route::get('/', 'index');
+            Route::post('promote', 'promote');
+        });
+        Route::get('users/search', 'searchUsers');
+    });
 
     // Access Management - Roles routes
-    Route::get('/roles', [RolesController::class, 'index']);
-    Route::get('/roles/permissions', [RolesController::class, 'getPermissions']);
-    Route::get('/roles/{id}', [RolesController::class, 'show']);
-    Route::post('/roles', [RolesController::class, 'store']);
-    Route::put('/roles/{id}', [RolesController::class, 'update']);
-    Route::delete('/roles/{id}', [RolesController::class, 'destroy']);
-    Route::delete('/roles/{roleId}/permissions/{permissionId}', [RolesController::class, 'removePermission']);
+    Route::prefix('roles')->controller(RolesController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('permissions', 'getPermissions');
+        Route::get('{id}', 'show');
+        Route::post('/', 'store');
+        Route::put('{id}', 'update');
+        Route::delete('{id}', 'destroy');
+        Route::delete('{roleId}/permissions/{permissionId}', 'removePermission');
+    });
 
     // Access Management - Permissions routes
-    Route::get('/permissions', [PermissionsController::class, 'index']);
-    Route::get('/permissions/roles', [PermissionsController::class, 'getRoles']);
-    Route::get('/permissions/{id}', [PermissionsController::class, 'show']);
-    Route::post('/permissions', [PermissionsController::class, 'store']);
-    Route::put('/permissions/{id}', [PermissionsController::class, 'update']);
-    Route::delete('/permissions/{id}', [PermissionsController::class, 'destroy']);
-    Route::delete('/permissions/{permissionId}/roles/{roleId}', [PermissionsController::class, 'removeRole']);
+    Route::prefix('permissions')->controller(PermissionsController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('roles', 'getRoles');
+        Route::get('{id}', 'show');
+        Route::post('/', 'store');
+        Route::put('{id}', 'update');
+        Route::delete('{id}', 'destroy');
+        Route::delete('{permissionId}/roles/{roleId}', 'removeRole');
+    });
 
     // Access Management - Admins routes
-    Route::get('/admins', [AdminsController::class, 'index']);
-    Route::get('/admins/employees', [AdminsController::class, 'getEmployees']);
-    Route::get('/admins/roles', [AdminsController::class, 'getRoles']);
-    Route::get('/admins/{id}', [AdminsController::class, 'show']);
-    Route::post('/admins', [AdminsController::class, 'store']);
-    Route::put('/admins/{id}', [AdminsController::class, 'update']);
-    Route::delete('/admins/{id}', [AdminsController::class, 'destroy']);
-    Route::delete('/admins/{adminId}/roles/{roleId}', [AdminsController::class, 'removeRole']);
-    Route::delete('/admins/{adminId}/permissions/{permissionId}', [AdminsController::class, 'removePermission']);
+    Route::prefix('admins')->controller(AdminsController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('employees', 'getEmployees');
+        Route::get('roles', 'getRoles');
+        Route::get('{id}', 'show');
+        Route::post('/', 'store');
+        Route::put('{id}', 'update');
+        Route::delete('{id}', 'destroy');
+        Route::delete('{adminId}/roles/{roleId}', 'removeRole');
+        Route::delete('{adminId}/permissions/{permissionId}', 'removePermission');
+    });
 
     // Support - Tickets routes
-    Route::get('/tickets', [TicketsController::class, 'index']);
-    Route::get('/tickets/departments', [TicketsController::class, 'getDepartments']);
-    Route::post('/tickets/{id}/response', [TicketsController::class, 'sendResponse']);
-    Route::post('/tickets/{id}/transfer', [TicketsController::class, 'transfer']);
+    Route::prefix('tickets')->controller(TicketsController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('departments', 'getDepartments');
+        Route::post('{id}/response', 'sendResponse');
+        Route::post('{id}/transfer', 'transfer');
+    });
 
-    // Variables routes
-    Route::get('/variables', [VariablesController::class, 'index']);
-    Route::post('/variables', [VariablesController::class, 'store']);
-    Route::put('/variables/{id}', [VariablesController::class, 'update']);
-    Route::delete('/variables/{id}', [VariablesController::class, 'destroy']);
+    // VariablesController routes
+    Route::prefix('variables')->controller(VariablesController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::put('{id}', 'update');
+        Route::delete('{id}', 'destroy');
+    });
 
     // System variables routes
-    Route::get('/system-variables', [SystemVariablesController::class, 'index']);
-    Route::post('/system-variables', [SystemVariablesController::class, 'store']);
-    Route::put('/system-variables/{system_variable}', [SystemVariablesController::class, 'update']);
-    Route::delete('/system-variables/{system_variable}', [SystemVariablesController::class, 'destroy']);
+    Route::prefix('system-variables')->controller(SystemVariablesController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::post('/', 'store');
+        Route::put('{system_variable}', 'update');
+        Route::delete('{system_variable}', 'destroy');
+    });
 
-    // Options routes
-    Route::get('/options', [OptionsController::class, 'index']);
-    Route::get('/options/variables', [OptionsController::class, 'getVariables']);
-    Route::post('/options', [OptionsController::class, 'store']);
-    Route::put('/options/{id}', [OptionsController::class, 'update']);
-    Route::delete('/options/{id}', [OptionsController::class, 'destroy']);
+    // OptionsController routes
+    Route::prefix('options')->controller(OptionsController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('variables', 'getVariables');
+        Route::post('/', 'store');
+        Route::put('{id}', 'update');
+        Route::delete('{id}', 'destroy');
+    });
 
     // Video categories routes
     Route::apiResource('video-categories', VideoCategoriesController::class)->except(['show']);
@@ -278,68 +336,87 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     Route::apiResource('video-sub-categories', VideoSubCategoriesController::class)->except(['show']);
 
     // Videos routes
-    Route::get('/videos/meta', [VideosController::class, 'meta']);
-    Route::post('/videos/chunk', VideoUploadController::class)->withoutMiddleware('throttle:api');
+    Route::prefix('videos')->group(function () {
+        Route::get('meta', [VideosController::class, 'meta']);
+        Route::post('chunk', VideoUploadController::class)->withoutMiddleware('throttle:api');
+    });
     Route::apiResource('videos', VideosController::class)->except(['show']);
 
-    // Dynasty - Messages routes
-    Route::get('/dynasty/messages', [DynastyMessagesController::class, 'index']);
-    Route::post('/dynasty/messages', [DynastyMessagesController::class, 'store']);
-    Route::put('/dynasty/messages/{id}', [DynastyMessagesController::class, 'update']);
-    Route::delete('/dynasty/messages/{id}', [DynastyMessagesController::class, 'destroy']);
+    // Dynasty routes group
+    Route::prefix('dynasty')->group(function () {
+        Route::prefix('messages')->controller(DynastyMessagesController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::put('{id}', 'update');
+            Route::delete('{id}', 'destroy');
+        });
 
-    // Dynasty - Prizes routes
-    Route::get('/dynasty/prizes', [DynastyPrizesController::class, 'index']);
-    Route::post('/dynasty/prizes', [DynastyPrizesController::class, 'store']);
-    Route::put('/dynasty/prizes/{id}', [DynastyPrizesController::class, 'update']);
-    Route::delete('/dynasty/prizes/{id}', [DynastyPrizesController::class, 'destroy']);
+        Route::prefix('prizes')->controller(DynastyPrizesController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::post('/', 'store');
+            Route::put('{id}', 'update');
+            Route::delete('{id}', 'destroy');
+        });
 
-    // Dynasty - Permissions routes
-    Route::get('/dynasty/permissions', [DynastyPermissionsController::class, 'show']);
-    Route::put('/dynasty/permissions', [DynastyPermissionsController::class, 'update']);
+        Route::prefix('permissions')->controller(DynastyPermissionsController::class)->group(function () {
+            Route::get('/', 'show');
+            Route::put('/', 'update');
+        });
+    });
 
     // Maps routes
-    Route::get('/maps', [MapsController::class, 'index']);
-    Route::post('/maps', [MapsController::class, 'store']);
-    Route::put('/maps/{id}', [MapsController::class, 'update']);
-    Route::delete('/maps/{id}', [MapsController::class, 'destroy']);
-    Route::post('/maps/{id}/insert-into-database', [MapsController::class, 'insertIntoDatabase']);
+    Route::prefix('maps')->controller(MapsController::class)->group(function () {
+        Route::post('{map}/insert-into-database', 'insertIntoDatabase');
+    });
+    Route::apiResource('maps', MapsController::class)->except(['show']);
 
     // ISIC Codes routes
-    Route::get('/isic-codes', [IsicCodeController::class, 'index']);
-    Route::post('/isic-codes', [IsicCodeController::class, 'store']);
-    Route::post('/isic-codes/import', [IsicCodeController::class, 'import']);
-    Route::post('/isic-codes/{isicCode}/approve', [IsicCodeController::class, 'approve']);
-    Route::post('/isic-codes/{isicCode}/deny', [IsicCodeController::class, 'deny']);
-    Route::delete('/isic-codes/{isicCode}', [IsicCodeController::class, 'destroy']);
+    Route::prefix('isic-codes')->controller(IsicCodeController::class)->group(function () {
+        Route::post('import', 'import');
+        Route::post('{isicCode}/approve', 'approve');
+        Route::post('{isicCode}/deny', 'deny');
+    });
+    Route::apiResource('isic-codes', IsicCodeController::class)->except(['show', 'update']);
 
     // Translations routes
-    Route::get('/translations/languages', [TranslationController::class, 'languages']);
-    Route::get('/translations', [TranslationController::class, 'index'])->withoutMiddleware('auth:sanctum');
-    Route::get('/translations/{translation}', [TranslationController::class, 'show']);
-    Route::post('/translations', [TranslationController::class, 'store']);
-    Route::delete('/translations/{translation}', [TranslationController::class, 'destroy']);
-    Route::patch('/translations/{translation}/status', [TranslationController::class, 'toggleStatus']);
-    Route::post('/translations/{translation}/export', [TranslationController::class, 'export']);
+    Route::prefix('translations')->group(function () {
+        Route::controller(TranslationController::class)->group(function () {
+            Route::get('languages', 'languages');
+            Route::get('/', 'index')->withoutMiddleware('auth:sanctum');
+            Route::get('{translation}', 'show');
+            Route::post('/', 'store');
+            Route::delete('{translation}', 'destroy');
+            Route::patch('{translation}/status', 'toggleStatus');
+            Route::post('{translation}/export', 'export');
+        });
 
-    Route::get('/translations/{translation}/modals', [TranslationModalController::class, 'index']);
-    Route::get('/translations/{translation}/modals/{modal}', [TranslationModalController::class, 'show']);
-    Route::post('/translations/{translation}/modals', [TranslationModalController::class, 'store']);
-    Route::patch('/translations/{translation}/modals/{modal}', [TranslationModalController::class, 'update']);
-    Route::delete('/translations/{translation}/modals/{modal}', [TranslationModalController::class, 'destroy']);
+        Route::prefix('{translation}/modals')->controller(TranslationModalController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('{modal}', 'show');
+            Route::post('/', 'store');
+            Route::patch('{modal}', 'update');
+            Route::delete('{modal}', 'destroy');
 
-    Route::get('/translations/{translation}/modals/{modal}/tabs', [TranslationTabController::class, 'index']);
-    Route::get('/translations/{translation}/modals/{modal}/tabs/{tab}', [TranslationTabController::class, 'show']);
-    Route::post('/translations/{translation}/modals/{modal}/tabs', [TranslationTabController::class, 'store']);
-    Route::patch('/translations/{translation}/modals/{modal}/tabs/{tab}', [TranslationTabController::class, 'update']);
-    Route::delete('/translations/{translation}/modals/{modal}/tabs/{tab}', [TranslationTabController::class, 'destroy']);
+            Route::prefix('{modal}/tabs')->controller(TranslationTabController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::get('{tab}', 'show');
+                Route::post('/', 'store');
+                Route::patch('{tab}', 'update');
+                Route::delete('{tab}', 'destroy');
 
-    Route::get('/translations/{translation}/modals/{modal}/tabs/{tab}/fields', [TranslationFieldController::class, 'index']);
-    Route::post('/translations/{translation}/modals/{modal}/tabs/{tab}/fields', [TranslationFieldController::class, 'store']);
-    Route::patch('/translations/{translation}/modals/{modal}/tabs/{tab}/fields/{field}', [TranslationFieldController::class, 'update']);
-    Route::delete('/translations/{translation}/modals/{modal}/tabs/{tab}/fields/{field}', [TranslationFieldController::class, 'destroy']);
+                Route::prefix('{tab}/fields')->controller(TranslationFieldController::class)->group(function () {
+                    Route::get('/', 'index');
+                    Route::post('/', 'store');
+                    Route::patch('{field}', 'update');
+                    Route::delete('{field}', 'destroy');
+                });
+            });
+        });
+    });
 
     // Bulk messaging routes (super-admin only)
-    Route::get('/bulk-messages/users/search', [BulkMessageController::class, 'searchUsers']);
-    Route::post('/bulk-messages/send', [BulkMessageController::class, 'send']);
+    Route::prefix('bulk-messages')->controller(BulkMessageController::class)->group(function () {
+        Route::get('users/search', 'searchUsers');
+        Route::post('send', 'send');
+    });
 });

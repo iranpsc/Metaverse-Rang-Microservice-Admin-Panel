@@ -12,14 +12,11 @@ class KycVideoTextController extends Controller
 {
     /**
      * Get paginated KYC video verification texts
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
         $texts = KycVerifyText::latest()->paginate($perPage, ['*'], 'page', $page);
 
@@ -41,14 +38,11 @@ class KycVideoTextController extends Controller
 
     /**
      * Store a new KYC video verification text
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'text' => 'required|string'
+            'text' => 'required|string',
         ]);
 
         $text = KycVerifyText::create([
@@ -64,10 +58,6 @@ class KycVideoTextController extends Controller
 
     /**
      * Update a KYC video verification text
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -89,9 +79,6 @@ class KycVideoTextController extends Controller
 
     /**
      * Delete a KYC video verification text
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function destroy(int $id): JsonResponse
     {
@@ -104,4 +91,3 @@ class KycVideoTextController extends Controller
         ]);
     }
 }
-

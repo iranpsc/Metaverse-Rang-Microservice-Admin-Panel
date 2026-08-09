@@ -24,5 +24,3 @@ class LevelPrizeResource extends JsonResource
         ];
     }
 }
-
-

@@ -4,11 +4,11 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Mail\Mailables\Address;
 
 class BulkMessageMail extends Mailable
 {
@@ -18,8 +18,7 @@ class BulkMessageMail extends Mailable
         public readonly string $htmlContent,
         public readonly string $plainContent,
         public readonly ?string $unsubscribeUrl = null
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

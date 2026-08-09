@@ -7,20 +7,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class DepositController extends Controller
 {
     /**
      * Get paginated Deposit/Payment records with search
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $searchTerm = $request->get('search', '');
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
+        $searchTerm = $request->input('search', '');
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
         $query = Payment::with('user:id,name');
 
@@ -66,11 +64,10 @@ class DepositController extends Controller
     /**
      * Export deposits to Excel
      *
-     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     * @return BinaryFileResponse
      */
     public function export()
     {
         return (new PaymentsExport)->download('transactions.xlsx');
     }
 }
-

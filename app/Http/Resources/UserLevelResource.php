@@ -30,12 +30,12 @@ class UserLevelResource extends JsonResource
                 ->sortBy(fn ($level) => $level->numeric_score)
                 ->values()
                 ->map(fn ($level) => [
-                'id' => $level->id,
-                'name' => $level->name,
-                'slug' => $level->slug,
-                'score' => (int) $level->score,
-                'achieved_at' => optional($level->pivot->created_at)->toISOString(),
-            ])->values(),
+                    'id' => $level->id,
+                    'name' => $level->name,
+                    'slug' => $level->slug,
+                    'score' => (int) $level->score,
+                    'achieved_at' => optional($level->pivot->created_at)->toISOString(),
+                ])->values(),
         ];
     }
 }

@@ -21,25 +21,29 @@ class Ticket extends Model
         'importance',
     ];
 
-    public function sender() {
+    public function sender()
+    {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function reciever() {
+    public function reciever()
+    {
         return $this->belongsTo(User::class, 'reciever_id');
     }
 
-    public function responser() {
+    public function responser()
+    {
         return $this->hasMany(TicketResponse::class);
     }
 
-    public function responses() {
+    public function responses()
+    {
         return $this->hasMany(TicketResponse::class);
     }
 
     public function getPriorityTitle()
     {
-        return match($this->importance) {
+        return match ($this->importance) {
             0 => 'متوسط',
             1 => 'زیاد',
             -1 => 'کم'

@@ -12,9 +12,9 @@ class ConnectedWalletController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $searchTerm = $request->get('search', '');
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
+        $searchTerm = $request->input('search', '');
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
         $query = User::query()
             ->whereNotNull('wallet_address')
@@ -22,9 +22,9 @@ class ConnectedWalletController extends Controller
 
         if ($searchTerm) {
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('code', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('wallet_address', 'like', '%' . $searchTerm . '%');
+                $q->where('name', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('code', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('wallet_address', 'like', '%'.$searchTerm.'%');
             });
         }
 

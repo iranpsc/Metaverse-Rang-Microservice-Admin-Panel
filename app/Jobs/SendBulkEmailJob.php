@@ -26,8 +26,7 @@ class SendBulkEmailJob implements ShouldQueue
         public readonly array $userIds,
         public readonly string $emailContent,
         public readonly string $bulkSendId
-    ) {
-    }
+    ) {}
 
     public function handle(MessagePlaceholderService $placeholderService): void
     {

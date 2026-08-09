@@ -21,7 +21,7 @@ class VideoCategoryService
             ->withCount('subCategories')
             ->orderByDesc('created_at');
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($builder) use ($search) {
                 $builder->where('name', 'like', "%{$search}%")
                     ->orWhere('slug', 'like', "%{$search}%");
@@ -82,11 +82,11 @@ class VideoCategoryService
     public function delete(VideoCategory $category): void
     {
         // Delete files if they exist.
-        if (!empty($category->image)) {
+        if (! empty($category->image)) {
             Storage::disk('public')->delete($category->image);
         }
 
-        if (!empty($category->icon)) {
+        if (! empty($category->icon)) {
             Storage::disk('public')->delete($category->icon);
         }
 
@@ -108,7 +108,7 @@ class VideoCategoryService
 
     private function replaceImage(VideoCategory $category, UploadedFile $file): string
     {
-        if (!empty($category->image)) {
+        if (! empty($category->image)) {
             Storage::disk('public')->delete($category->image);
         }
 
@@ -119,7 +119,7 @@ class VideoCategoryService
 
     private function replaceIcon(VideoCategory $category, UploadedFile $file): string
     {
-        if (!empty($category->icon)) {
+        if (! empty($category->icon)) {
             Storage::disk('public')->delete($category->icon);
         }
 
@@ -128,5 +128,3 @@ class VideoCategoryService
         return $this->storeIcon($file, $slug);
     }
 }
-
-

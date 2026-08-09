@@ -16,9 +16,9 @@ class CalendarController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $search = $request->get('search');
-        $perPage = (int) $request->get('per_page', 10);
-        $page = (int) $request->get('page', 1);
+        $search = $request->input('search');
+        $perPage = (int) $request->input('per_page', 10);
+        $page = (int) $request->input('page', 1);
 
         $query = Calendar::query()
             ->where('is_version', false)
@@ -29,7 +29,7 @@ class CalendarController extends Controller
             ])
             ->orderByDesc('starts_at');
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('content', 'like', "%{$search}%");
@@ -78,7 +78,7 @@ class CalendarController extends Controller
             'writer' => $admin?->name,
             'btn_name' => $request->input('btn_name'),
             'btn_link' => $request->input('btn_link'),
-            'image' => url('uploads/' . $imagePath),
+            'image' => url('uploads/'.$imagePath),
         ]);
 
         $calendar->loadCount([
@@ -124,7 +124,7 @@ class CalendarController extends Controller
 
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('calendars', 'public');
-            $data['image'] = url('uploads/' . $imagePath);
+            $data['image'] = url('uploads/'.$imagePath);
         }
 
         $calendar->update($data);
@@ -157,5 +157,3 @@ class CalendarController extends Controller
         ]);
     }
 }
-
-

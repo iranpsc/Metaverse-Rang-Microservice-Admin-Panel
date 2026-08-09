@@ -2,12 +2,13 @@
 
 namespace App\Http\Resources\Videos;
 
+use App\Models\VideoSubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * @mixin \App\Models\VideoSubCategory
+ * @mixin VideoSubCategory
  */
 class VideoSubCategoryResource extends JsonResource
 {
@@ -33,7 +34,7 @@ class VideoSubCategoryResource extends JsonResource
                 'date' => jdate($this->created_at)->format('Y/m/d'),
                 'time' => jdate($this->created_at)->format('H:i:s'),
             ] : null,
-            'category' => $this->whenLoaded('category', function () use ($request) {
+            'category' => $this->whenLoaded('category', function () {
                 return [
                     'id' => $this->category->id,
                     'name' => $this->category->name,
@@ -43,5 +44,3 @@ class VideoSubCategoryResource extends JsonResource
         ];
     }
 }
-
-

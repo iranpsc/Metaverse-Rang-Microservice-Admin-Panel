@@ -35,7 +35,7 @@ class TranslationController extends Controller
                     'version' => $translation->version,
                     'status' => (bool) $translation->status,
                     'modals_count' => $translation->modals_count,
-                    'icon' => asset('assets/images/flags/' . strtoupper($translation->code) . '.svg'),
+                    'icon' => asset('assets/images/flags/'.strtoupper($translation->code).'.svg'),
                     'file_url' => $translation->file_url,
                 ];
             }),

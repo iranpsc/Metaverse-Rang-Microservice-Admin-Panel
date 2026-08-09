@@ -35,5 +35,3 @@ class LevelLicenseResource extends JsonResource
         ];
     }
 }
-
-

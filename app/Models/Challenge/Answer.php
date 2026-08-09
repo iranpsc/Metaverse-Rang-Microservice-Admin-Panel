@@ -14,12 +14,9 @@ class Answer extends Model
         'question_id',
         'image',
         'title',
-        'is_correct'
+        'is_correct',
     ];
 
-    /**
-     * @return BelongsTo
-     */
     public function question(): BelongsTo
     {
         return $this->belongsTo(Question::class);

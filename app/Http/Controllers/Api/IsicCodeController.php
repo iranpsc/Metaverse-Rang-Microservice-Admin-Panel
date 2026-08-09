@@ -25,7 +25,7 @@ class IsicCodeController extends Controller
     {
         $perPage = (int) $request->integer('per_page', 10);
         $perPage = $perPage > 0 ? min($perPage, 50) : 10;
-        $search = trim((string) $request->get('search', ''));
+        $search = trim((string) $request->input('search', ''));
 
         $query = IsicCode::query()
             ->orderBy('verified')
@@ -33,8 +33,8 @@ class IsicCodeController extends Controller
 
         if ($search !== '') {
             $query->where(static function (Builder $builder) use ($search) {
-                $builder->where('code', 'like', '%' . $search . '%')
-                    ->orWhere('name', 'like', '%' . $search . '%');
+                $builder->where('code', 'like', '%'.$search.'%')
+                    ->orWhere('name', 'like', '%'.$search.'%');
             });
         }
 
@@ -87,7 +87,7 @@ class IsicCodeController extends Controller
         try {
             $path = $request->file('file')->store('isic_codes/imports', 'public');
 
-            Excel::queueImport(new IsicCodesImport(), $path, 'public');
+            Excel::queueImport(new IsicCodesImport, $path, 'public');
 
             return response()->json([
                 'success' => true,
@@ -153,5 +153,3 @@ class IsicCodeController extends Controller
         ]);
     }
 }
-
-

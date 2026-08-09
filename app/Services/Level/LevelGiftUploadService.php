@@ -88,7 +88,7 @@ class LevelGiftUploadService
 
                 $uploads[$field] = [
                     'path' => $path,
-                    'url' => url('uploads/' . $path),
+                    'url' => url('uploads/'.$path),
                 ];
             }
         }
@@ -151,7 +151,7 @@ class LevelGiftUploadService
             $normalizedType = strtolower((string) preg_replace('/_\d+$/', '', (string) $fileType));
             if (! in_array($normalizedType, $allowed, true)) {
                 throw new InvalidArgumentException(
-                    'فرمت فایل مدل مجاز نیست. فرمت‌های مجاز: ' . implode(', ', $allowed)
+                    'فرمت فایل مدل مجاز نیست. فرمت‌های مجاز: '.implode(', ', $allowed)
                 );
             }
 
@@ -160,7 +160,7 @@ class LevelGiftUploadService
 
             if ($urlExtension === '' || ! in_array($urlExtension, $allowed, true)) {
                 throw new InvalidArgumentException(
-                    'پسوند لینک فایل مدل مجاز نیست. فرمت‌های مجاز: ' . implode(', ', $allowed)
+                    'پسوند لینک فایل مدل مجاز نیست. فرمت‌های مجاز: '.implode(', ', $allowed)
                 );
             }
 

@@ -12,8 +12,6 @@ class FeaturePricingLimitsController extends Controller
 {
     /**
      * Get pricing limits
-     *
-     * @return JsonResponse
      */
     public function index(): JsonResponse
     {
@@ -41,9 +39,6 @@ class FeaturePricingLimitsController extends Controller
 
     /**
      * Update pricing limits
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function update(Request $request): JsonResponse
     {
@@ -54,7 +49,7 @@ class FeaturePricingLimitsController extends Controller
 
         $priceLimits = FeaturePricingLimit::first();
 
-        if (!$priceLimits) {
+        if (! $priceLimits) {
             $priceLimits = FeaturePricingLimit::create([
                 'public_price_limit' => $validated['public_price_limit'],
                 'under_eighteen_price_limit' => $validated['under_eighteen_price_limit'],
@@ -72,4 +67,3 @@ class FeaturePricingLimitsController extends Controller
         ]);
     }
 }
-

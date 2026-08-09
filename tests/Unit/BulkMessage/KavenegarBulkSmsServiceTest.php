@@ -7,6 +7,7 @@ use App\Services\BulkMessage\KavenegarBulkSmsService;
 use App\Services\BulkMessage\MessagePlaceholderService;
 use Kavenegar\Exceptions\ApiException;
 use Kavenegar\KavenegarApi;
+use Mockery\MockInterface;
 use Tests\Concerns\CreatesBulkMessageSchema;
 use Tests\TestCase;
 
@@ -24,7 +25,7 @@ class KavenegarBulkSmsServiceTest extends TestCase
         config(['kavenegar.sender' => '10008663']);
     }
 
-    private function mockKavenegar(): \Mockery\MockInterface
+    private function mockKavenegar(): MockInterface
     {
         $mock = \Mockery::mock(KavenegarApi::class);
         $this->app->instance('kavenegar', $mock);

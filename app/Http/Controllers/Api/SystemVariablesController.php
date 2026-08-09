@@ -7,6 +7,7 @@ use App\Http\Requests\SystemVariable\StoreSystemVariableRequest;
 use App\Http\Requests\SystemVariable\UpdateSystemVariableRequest;
 use App\Http\Resources\SystemVariable\SystemVariableResource;
 use App\Models\SystemVariable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,18 +20,18 @@ class SystemVariablesController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = (int) $request->get('per_page', 10);
+        $perPage = (int) $request->input('per_page', 10);
         $perPage = $perPage > 0 ? min($perPage, 100) : 10;
-        $search = $request->get('search');
+        $search = $request->input('search');
 
         $query = SystemVariable::query()
             ->with(['changeLogs' => static fn ($query) => $query->orderByDesc('created_at')])
             ->orderByDesc('created_at');
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('slug', 'like', '%' . $search . '%');
+            $query->where(function (Builder $q) use ($search) {
+                $q->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('slug', 'like', '%'.$search.'%');
             });
         }
 
@@ -124,5 +125,3 @@ class SystemVariablesController extends Controller
         ]);
     }
 }
-
-

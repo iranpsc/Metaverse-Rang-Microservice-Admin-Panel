@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources\Challenge;
 
+use App\Models\Challenge\Answer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\Challenge\Answer
+ * @mixin Answer
  */
 class AnswerResource extends JsonResource
 {
@@ -28,5 +29,3 @@ class AnswerResource extends JsonResource
         ];
     }
 }
-
-

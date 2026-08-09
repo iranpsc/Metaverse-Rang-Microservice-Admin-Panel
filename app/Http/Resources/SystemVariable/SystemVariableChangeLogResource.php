@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources\SystemVariable;
 
+use App\Models\VariableChangeLog;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\VariableChangeLog
+ * @mixin VariableChangeLog
  */
 class SystemVariableChangeLogResource extends JsonResource
 {
@@ -28,5 +29,3 @@ class SystemVariableChangeLogResource extends JsonResource
         ];
     }
 }
-
-

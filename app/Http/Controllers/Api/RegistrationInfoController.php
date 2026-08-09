@@ -12,22 +12,19 @@ class RegistrationInfoController extends Controller
 {
     /**
      * Get paginated registration information
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $searchTerm = $request->get('search', '');
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
+        $searchTerm = $request->input('search', '');
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
         $query = User::query();
 
         if ($searchTerm) {
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('email', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('name', 'like', '%' . $searchTerm . '%');
+                $q->where('email', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('name', 'like', '%'.$searchTerm.'%');
             });
         }
 
@@ -50,4 +47,3 @@ class RegistrationInfoController extends Controller
         ]);
     }
 }
-

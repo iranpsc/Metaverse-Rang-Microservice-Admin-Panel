@@ -18,5 +18,3 @@ class StoreTabRequest extends FormRequest
         ];
     }
 }
-
-

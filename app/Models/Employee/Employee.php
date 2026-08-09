@@ -25,7 +25,7 @@ class Employee extends Model
         'address',
         'employee_code',
         'entry_date',
-        'email'
+        'email',
     ];
 
     public function bankAccounts(): MorphMany

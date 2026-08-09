@@ -23,8 +23,7 @@ class SendBulkSmsJob implements ShouldQueue
         public readonly array $userIds,
         public readonly string $smsContent,
         public readonly string $bulkSendId
-    ) {
-    }
+    ) {}
 
     public function handle(KavenegarBulkSmsService $smsService): void
     {

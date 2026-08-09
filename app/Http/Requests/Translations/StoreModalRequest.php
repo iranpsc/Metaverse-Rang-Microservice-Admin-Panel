@@ -18,5 +18,3 @@ class StoreModalRequest extends FormRequest
         ];
     }
 }
-
-

@@ -16,19 +16,16 @@ class LandsController extends Controller
 {
     public function __construct(
         private readonly LandOwnerTransferService $landOwnerTransferService
-    ) {
-    }
+    ) {}
+
     /**
      * Get paginated lands/properties with search
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $searchTerm = trim($request->get('search', ''));
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
+        $searchTerm = trim($request->input('search', ''));
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
         $query = FeatureProperties::with(['feature', 'feature.map', 'feature.owner:id,name,code', 'feature.geometry.coordinates']);
 
@@ -42,7 +39,7 @@ class LandsController extends Controller
                     $featureQuery->where('owner_id', $owner->id);
                 });
             } else {
-                $query->where('id', 'like', '%' . $searchTerm . '%');
+                $query->where('id', 'like', '%'.$searchTerm.'%');
             }
         }
 
@@ -68,15 +65,13 @@ class LandsController extends Controller
     /**
      * Update feature properties
      *
-     * @param Request $request
-     * @param int $id Feature ID
-     * @return JsonResponse
+     * @param  int  $id  Feature ID
      */
     public function updateProperties(Request $request, int $id): JsonResponse
     {
         $feature = Feature::with('properties')->findOrFail($id);
 
-        if (!$feature->properties) {
+        if (! $feature->properties) {
             return response()->json([
                 'success' => false,
                 'message' => 'Feature properties not found',
@@ -109,6 +104,7 @@ class LandsController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'خطا در ثبت اطلاعات',
@@ -119,15 +115,13 @@ class LandsController extends Controller
     /**
      * Update feature coordinates
      *
-     * @param Request $request
-     * @param int $id Feature ID
-     * @return JsonResponse
+     * @param  int  $id  Feature ID
      */
     public function updateCoordinates(Request $request, int $id): JsonResponse
     {
         $feature = Feature::with('geometry.coordinates')->findOrFail($id);
 
-        if (!$feature->geometry || !$feature->geometry->coordinates) {
+        if (! $feature->geometry || ! $feature->geometry->coordinates) {
             return response()->json([
                 'success' => false,
                 'message' => 'Feature coordinates not found',
@@ -165,6 +159,7 @@ class LandsController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
                 'message' => 'خطا در ثبت اطلاعات',
@@ -174,9 +169,6 @@ class LandsController extends Controller
 
     /**
      * Get paginated lands or users for the owner transfer modal
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function ownerTransferOptions(Request $request): JsonResponse
     {
@@ -205,9 +197,6 @@ class LandsController extends Controller
 
     /**
      * Transfer land ownership from system (owner_id = 1) to a user
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function transferOwner(Request $request): JsonResponse
     {
@@ -239,4 +228,3 @@ class LandsController extends Controller
         }
     }
 }
-

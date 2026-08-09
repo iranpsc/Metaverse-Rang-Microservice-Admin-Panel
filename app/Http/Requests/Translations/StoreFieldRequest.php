@@ -18,5 +18,3 @@ class StoreFieldRequest extends FormRequest
         ];
     }
 }
-
-

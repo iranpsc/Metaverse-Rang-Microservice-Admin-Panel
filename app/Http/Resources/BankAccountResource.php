@@ -10,7 +10,6 @@ class BankAccountResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -26,7 +25,7 @@ class BankAccountResource extends JsonResource
             'created_at' => $this->created_at ? jdate($this->created_at)->format('Y/m/d') : null,
             'bankable' => $this->whenLoaded('bankable', function () {
                 $bankable = $this->bankable;
-                if (!$bankable) {
+                if (! $bankable) {
                     return null;
                 }
 
@@ -53,4 +52,3 @@ class BankAccountResource extends JsonResource
         ];
     }
 }
-

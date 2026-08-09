@@ -23,5 +23,4 @@ class QuestionFile extends Model
     ];
 
     use HasFactory;
-
 }

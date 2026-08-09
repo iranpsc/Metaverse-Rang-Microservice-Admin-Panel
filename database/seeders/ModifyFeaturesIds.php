@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\FeatureProperties;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class ModifyFeaturesIds extends Seeder
@@ -17,7 +16,7 @@ class ModifyFeaturesIds extends Seeder
             foreach ($featureProperties as $featureProperty) {
                 $id = explode('-', $featureProperty->id);
 
-                if(count($id) !== 2) {
+                if (count($id) !== 2) {
                     continue;
                 }
 

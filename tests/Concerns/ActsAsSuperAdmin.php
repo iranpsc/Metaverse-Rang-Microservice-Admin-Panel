@@ -3,7 +3,6 @@
 namespace Tests\Concerns;
 
 use App\Models\Admin;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Role;
