@@ -10,8 +10,6 @@ class WithdrawController extends Controller
     /**
      * Get withdraw information.
      * Currently returns empty data until withdraw functionality is implemented.
-     *
-     * @return JsonResponse
      */
     public function index(): JsonResponse
     {
@@ -32,4 +30,3 @@ class WithdrawController extends Controller
         ]);
     }
 }
-

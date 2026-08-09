@@ -17,30 +17,29 @@ class TicketsController extends Controller
      */
     public function index(Request $request)
     {
-        $department = $request->query('department');
-        $page = $request->query('page', 1);
-        $perPage = $request->query('per_page', 10);
-        $search = $request->query('search');
-        $search = $search ? trim($search) : '';
+        $department = $request->input('department');
+        $page = $request->input('page', 1);
+        $perPage = $request->input('per_page', 10);
+        $search = $request->input('search');
 
         $query = Ticket::with(['responses.responser', 'sender'])
             ->whereIn('department', (array) $department);
 
         // Apply search filter if provided
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('code', 'like', '%' . $search . '%')
-                  ->orWhere('title', 'like', '%' . $search . '%')
-                  ->orWhereHas('sender', function ($senderQuery) use ($search) {
-                      $senderQuery->where('name', 'like', '%' . $search . '%')
-                                   ->orWhere('email', 'like', '%' . $search . '%');
-                  });
+                $q->where('code', 'like', '%'.$search.'%')
+                    ->orWhere('title', 'like', '%'.$search.'%')
+                    ->orWhereHas('sender', function ($senderQuery) use ($search) {
+                        $senderQuery->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('email', 'like', '%'.$search.'%');
+                    });
             });
         }
 
         $tickets = $query
-        ->orderBy('created_at', 'desc')
-        ->paginate($perPage, ['*'], 'page', $page);
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,
@@ -53,8 +52,8 @@ class TicketsController extends Controller
                     'last_page' => $tickets->lastPage(),
                     'from' => $tickets->firstItem(),
                     'to' => $tickets->lastItem(),
-                ]
-            ]
+                ],
+            ],
         ]);
     }
 
@@ -62,7 +61,7 @@ class TicketsController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data' => new TicketResource($ticket->load('responses.responser'))
+            'data' => new TicketResource($ticket->load('responses.responser')),
         ]);
     }
 
@@ -80,13 +79,13 @@ class TicketsController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'خطا در اعتبارسنجی',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
         $ticket = Ticket::findOrFail($id);
 
-        $path = "";
+        $path = '';
         if ($request->hasFile('attachment')) {
             $path = $request->file('attachment')->store('/tickets/ticketResponses', 'public');
         }
@@ -99,10 +98,10 @@ class TicketsController extends Controller
         ]);
 
         $ticket->update([
-            'status' => 1
+            'status' => 1,
         ]);
 
-        $message = 'به تیکت شما به شماره ' . $ticket->code . ' پاسخ داده شد';
+        $message = 'به تیکت شما به شماره '.$ticket->code.' پاسخ داده شد';
 
         $ticket->sender->notify(new TicketResponded($message));
 
@@ -110,8 +109,8 @@ class TicketsController extends Controller
             'success' => true,
             'message' => 'پاسخ تیکت ارسال شد',
             'data' => [
-                'ticket' => new TicketResource($ticket->load('responses'))
-            ]
+                'ticket' => new TicketResource($ticket->load('responses')),
+            ],
         ]);
     }
 
@@ -122,14 +121,14 @@ class TicketsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'department' => 'required|string|in:technical_support,citizens_safety,investment,inspection,protection,ztb',
-            'importance' => 'required|integer|in:-1,0,1'
+            'importance' => 'required|integer|in:-1,0,1',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'خطا در اعتبارسنجی',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -137,15 +136,15 @@ class TicketsController extends Controller
 
         $ticket->update([
             'department' => $request->department,
-            'importance' => $request->importance
+            'importance' => $request->importance,
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'تیکت به واحد مورد نظر ارجاع داده شد',
             'data' => [
-                'ticket' => new TicketResource($ticket)
-            ]
+                'ticket' => new TicketResource($ticket),
+            ],
         ]);
     }
 
@@ -164,9 +163,8 @@ class TicketsController extends Controller
                     ['value' => 'inspection', 'label' => 'بازرسی'],
                     ['value' => 'protection', 'label' => 'حراست'],
                     ['value' => 'ztb', 'label' => 'مدیریت کل ز.ت.ب'],
-                ]
-            ]
+                ],
+            ],
         ]);
     }
 }
-

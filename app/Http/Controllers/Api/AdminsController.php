@@ -12,16 +12,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Morilog\Jalali\Jalalian;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use Morilog\Jalali\Jalalian;
 
 class AdminsController extends Controller
 {
     /**
      * Get all admins
-     *
-     * @return JsonResponse
      */
     public function index(): JsonResponse
     {
@@ -32,7 +30,7 @@ class AdminsController extends Controller
             ->get()
             ->filter(function ($admin) {
                 // Filter out super-admin
-                return !$admin->hasRole('super-admin');
+                return ! $admin->hasRole('super-admin');
             })
             ->map(function ($admin) {
                 return [
@@ -72,15 +70,13 @@ class AdminsController extends Controller
 
     /**
      * Get all employees
-     *
-     * @return JsonResponse
      */
     public function getEmployees(): JsonResponse
     {
         $employees = Employee::select(['id', 'fname', 'lname'])->get()->map(function ($employee) {
             return [
                 'id' => $employee->id,
-                'name' => $employee->fname . ' ' . $employee->lname,
+                'name' => $employee->fname.' '.$employee->lname,
                 'fname' => $employee->fname,
                 'lname' => $employee->lname,
             ];
@@ -97,8 +93,6 @@ class AdminsController extends Controller
 
     /**
      * Get all roles for admin assignment
-     *
-     * @return JsonResponse
      */
     public function getRoles(): JsonResponse
     {
@@ -121,9 +115,6 @@ class AdminsController extends Controller
 
     /**
      * Get single admin with roles and permissions
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function show(int $id): JsonResponse
     {
@@ -197,9 +188,6 @@ class AdminsController extends Controller
 
     /**
      * Create a new admin from employee
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -232,7 +220,7 @@ class AdminsController extends Controller
         $access_password = random_int(100000, 999999);
 
         $admin = Admin::create([
-            'name' => $employee->fname . ' ' . $employee->lname,
+            'name' => $employee->fname.' '.$employee->lname,
             'email' => $employee->email,
             'phone' => $employee->phone,
             'password' => Hash::make($password),
@@ -269,10 +257,6 @@ class AdminsController extends Controller
 
     /**
      * Update admin roles and permissions
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -336,9 +320,6 @@ class AdminsController extends Controller
 
     /**
      * Delete an admin
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function destroy(int $id): JsonResponse
     {
@@ -373,10 +354,6 @@ class AdminsController extends Controller
 
     /**
      * Remove role from admin
-     *
-     * @param int $adminId
-     * @param int $roleId
-     * @return JsonResponse
      */
     public function removeRole(int $adminId, int $roleId): JsonResponse
     {
@@ -393,10 +370,6 @@ class AdminsController extends Controller
 
     /**
      * Remove permission from admin
-     *
-     * @param int $adminId
-     * @param int $permissionId
-     * @return JsonResponse
      */
     public function removePermission(int $adminId, int $permissionId): JsonResponse
     {
@@ -411,4 +384,3 @@ class AdminsController extends Controller
         ]);
     }
 }
-

@@ -8,26 +8,22 @@ use App\Models\Kyc;
 use App\Notifications\KycDeniedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class KycController extends Controller
 {
     /**
      * Get paginated KYC records with search
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $searchTerm = $request->get('search', '');
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
+        $searchTerm = $request->input('search', '');
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
         $query = Kyc::query()->latest();
 
         if ($searchTerm) {
-            $query->where('melli_code', 'like', '%' . trim($searchTerm) . '%');
+            $query->where('melli_code', 'like', '%'.trim($searchTerm).'%');
         }
 
         $kycs = $query->paginate($perPage, ['*'], 'page', $page);
@@ -51,9 +47,6 @@ class KycController extends Controller
 
     /**
      * Get single KYC record details
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function show(int $id): JsonResponse
     {
@@ -68,10 +61,6 @@ class KycController extends Controller
 
     /**
      * Update KYC status and errors
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -84,11 +73,11 @@ class KycController extends Controller
         // Get kyc_errors from request (default to empty array if not provided)
         $kycErrors = $validated['kyc_errors'] ?? [];
 
-        if (!empty($kycErrors)) {
+        if (! empty($kycErrors)) {
             // Has errors - reject KYC
             $kyc->update([
                 'status' => -1,
-                'errors' => $kycErrors
+                'errors' => $kycErrors,
             ]);
 
             $user = $kyc->user;
@@ -109,4 +98,3 @@ class KycController extends Controller
         ]);
     }
 }
-

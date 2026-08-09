@@ -14,15 +14,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VideoSubCategoriesController extends Controller
 {
-    public function __construct(private readonly VideoSubCategoryService $service)
-    {
-    }
+    public function __construct(private readonly VideoSubCategoryService $service) {}
 
     public function index(Request $request): JsonResponse
     {
-        $perPage = (int) $request->get('per_page', 10);
-        $categoryId = $request->get('video_category_id');
-        $search = $request->get('search');
+        $perPage = (int) $request->input('per_page', 10);
+        $categoryId = $request->integer('video_category_id');
+        $search = $request->input('search', '');
 
         $subCategories = $this->service->getSubCategories($perPage, $categoryId, $search);
 
@@ -76,5 +74,3 @@ class VideoSubCategoriesController extends Controller
         ]);
     }
 }
-
-

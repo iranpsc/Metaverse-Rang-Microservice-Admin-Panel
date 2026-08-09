@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Geometry $geometry
- * @package App\Models
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|Coordinate newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Coordinate newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Coordinate query()
@@ -31,19 +31,19 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Coordinate whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Coordinate whereX($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Coordinate whereY($value)
+ *
  * @mixin \Eloquent
  */
 class Coordinate extends Model
 {
+    protected $fillable = [
+        'geometry_id',
+        'x',
+        'y',
+    ];
 
-	protected $fillable = [
-		'geometry_id',
-		'x',
-		'y',
-	];
-
-	public function geometry()
-	{
-		return $this->belongsTo(Geometry::class, 'geometry_id', 'id');
-	}
+    public function geometry()
+    {
+        return $this->belongsTo(Geometry::class, 'geometry_id', 'id');
+    }
 }

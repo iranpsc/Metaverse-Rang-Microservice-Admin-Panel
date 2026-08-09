@@ -14,13 +14,11 @@ use Illuminate\Http\Request;
 
 class ModalController extends Controller
 {
-    public function __construct(private readonly TranslationService $translationService)
-    {
-    }
+    public function __construct(private readonly TranslationService $translationService) {}
 
     public function index(Request $request, Translation $translation): JsonResponse
     {
-        $perPage = (int) $request->get('per_page', 10);
+        $perPage = (int) $request->input('per_page', 10);
 
         $modals = $translation->modals()
             ->withCount('tabs')
@@ -46,7 +44,7 @@ class ModalController extends Controller
 
     public function store(StoreModalRequest $request, Translation $translation): JsonResponse
     {
-        $name = trim($request->get('name'));
+        $name = trim($request->input('name'));
         $this->translationService->createModal($name);
 
         $modal = $translation->modals()->where('name', $name)->withCount('tabs')->first();
@@ -79,7 +77,7 @@ class ModalController extends Controller
     {
         abort_unless($modal->translation_id === $translation->id, 404);
 
-        $name = trim($request->get('name'));
+        $name = trim($request->input('name'));
         $this->translationService->updateModal($modal, $name);
 
         $updatedModal = $translation->modals()->where('name', $name)->withCount('tabs')->first();
@@ -106,5 +104,3 @@ class ModalController extends Controller
         ]);
     }
 }
-
-

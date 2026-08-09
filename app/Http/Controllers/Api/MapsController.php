@@ -8,20 +8,16 @@ use App\Models\Map;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 
 class MapsController extends Controller
 {
     /**
      * Get paginated maps
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
         $maps = Map::orderBy('id', 'desc')->paginate($perPage, ['*'], 'page', $page);
 
@@ -44,9 +40,6 @@ class MapsController extends Controller
 
     /**
      * Store a new map
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -70,9 +63,9 @@ class MapsController extends Controller
             $request->file('point_file')->storePubliclyAs('maps', $pointFileName, 'public');
 
             // Read the file contents
-            $fileContents = file_get_contents(public_path('uploads/maps/' . $mapFileName));
-            $borderFileContents = file_get_contents(public_path('uploads/maps/' . $borderFileName));
-            $pointFileContents = file_get_contents(public_path('uploads/maps/' . $pointFileName));
+            $fileContents = file_get_contents(public_path('uploads/maps/'.$mapFileName));
+            $borderFileContents = file_get_contents(public_path('uploads/maps/'.$borderFileName));
+            $pointFileContents = file_get_contents(public_path('uploads/maps/'.$pointFileName));
 
             // Extract the relevant data from the file contents
             $fileContents = explode('=', $fileContents)[1];
@@ -94,11 +87,11 @@ class MapsController extends Controller
 
             // Get the first and last IDs, and the karbari title
             $first_id = $fileContents['features'][0]['properties']['id'];
-            $last_id = $fileContents['features'][count($fileContents['features']) - 1]['properties']['id'] ?? "";
+            $last_id = $fileContents['features'][count($fileContents['features']) - 1]['properties']['id'] ?? '';
             $karbari = $this->getFeatureTitle($fileContents['features'][0]['properties']['karbari']);
 
             // Create a new Map instance and save it to the database
-            $map = new Map();
+            $map = new Map;
             $map->name = $validated['name'];
             $map->publish_date = now()->format('Y/m/d');
             $map->publisher_name = Auth::guard('admin')->user()->name;
@@ -123,22 +116,16 @@ class MapsController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'خطا در بارگذاری فایل: ' . $e->getMessage(),
+                'message' => 'خطا در بارگذاری فایل: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Update an existing map
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(Request $request, Map $map): JsonResponse
     {
-        $map = Map::findOrFail($id);
-
         $validated = $request->validate([
             'name' => 'required|string|min:2',
             'point_file' => 'required|file|max:10240',
@@ -153,8 +140,8 @@ class MapsController extends Controller
             $request->file('border_file')->storePubliclyAs('maps', $borderFileName, 'public');
             $request->file('point_file')->storePubliclyAs('maps', $pointFileName, 'public');
 
-            $borderFileContents = file_get_contents(public_path('uploads/maps/' . $borderFileName));
-            $pointFileContents = file_get_contents(public_path('uploads/maps/' . $pointFileName));
+            $borderFileContents = file_get_contents(public_path('uploads/maps/'.$borderFileName));
+            $pointFileContents = file_get_contents(public_path('uploads/maps/'.$pointFileName));
 
             $borderFileContents = explode('=', $borderFileContents)[1];
             $pointFileContents = explode('=', $pointFileContents)[1];
@@ -168,7 +155,7 @@ class MapsController extends Controller
                 'border_coordinates' => json_encode($borderFileContents['features'][0]['geometry']['coordinates'][0][0]),
                 'central_point_coordinates' => json_encode($pointFileContents['features'][0]['geometry']['coordinates']),
                 'polygon_area' => intval($borderFileContents['features'][0]['properties']['area']),
-                'polygon_address' => json_encode($borderFileContents['features'][0]['properties']['address'])
+                'polygon_address' => json_encode($borderFileContents['features'][0]['properties']['address']),
             ]);
 
             return response()->json([
@@ -178,25 +165,20 @@ class MapsController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'خطا در ویرایش اطلاعات: ' . $e->getMessage(),
+                'message' => 'خطا در ویرایش اطلاعات: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Delete a map
-     *
-     * @param int $id
-     * @return JsonResponse
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Map $map): JsonResponse
     {
-        $map = Map::findOrFail($id);
-
         try {
             // Delete the map file from storage
-            if (file_exists(public_path('uploads/maps/' . $map->fileName))) {
-                unlink(public_path('uploads/maps/' . $map->fileName));
+            if (file_exists(public_path('uploads/maps/'.$map->fileName))) {
+                unlink(public_path('uploads/maps/'.$map->fileName));
             }
 
             $map->delete();
@@ -208,29 +190,16 @@ class MapsController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'خطا در حذف نقشه: ' . $e->getMessage(),
+                'message' => 'خطا در حذف نقشه: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Insert map into database (dispatch ImportMaps job)
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
-    public function insertIntoDatabase(Request $request, int $id): JsonResponse
+    public function insertIntoDatabase(Map $map): JsonResponse
     {
-        $map = Map::findOrFail($id);
-
-        if ($map->isPublished()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'این نقشه قبلاً منتشر شده است',
-            ], 422);
-        }
-
         try {
             ImportMaps::dispatch($map);
 
@@ -243,7 +212,7 @@ class MapsController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'خطا در وارد کردن اطلاعات: ' . $e->getMessage(),
+                'message' => 'خطا در وارد کردن اطلاعات: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -251,7 +220,7 @@ class MapsController extends Controller
     /**
      * Get the title for a feature type.
      *
-     * @param string $type The feature type.
+     * @param  string  $type  The feature type.
      * @return string The title for the feature type.
      */
     protected function getFeatureTitle(string $type): string
@@ -271,4 +240,3 @@ class MapsController extends Controller
         };
     }
 }
-

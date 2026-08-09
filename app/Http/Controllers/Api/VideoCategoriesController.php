@@ -14,14 +14,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VideoCategoriesController extends Controller
 {
-    public function __construct(private readonly VideoCategoryService $service)
-    {
-    }
+    public function __construct(private readonly VideoCategoryService $service) {}
 
     public function index(Request $request): JsonResponse
     {
-        $perPage = (int) $request->get('per_page', 10);
-        $search = $request->get('search');
+        $perPage = (int) $request->input('per_page', 10);
+        $search = $request->input('search', '');
 
         $categories = $this->service->getCategories($perPage, $search);
 
@@ -75,5 +73,3 @@ class VideoCategoriesController extends Controller
         ]);
     }
 }
-
-

@@ -2,13 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Models\Challenge\Question;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\Challenge\Question;
 
 class ImportChallengeQuestions implements ShouldQueue
 {
@@ -21,8 +20,7 @@ class ImportChallengeQuestions implements ShouldQueue
      */
     public function __construct(
         private array $data
-    ) {
-    }
+    ) {}
 
     /**
      * Execute the job.
@@ -32,7 +30,9 @@ class ImportChallengeQuestions implements ShouldQueue
     public function handle()
     {
         for ($i = 0; $i < count($this->data); $i++) {
-            if ($i == 0) continue;
+            if ($i == 0) {
+                continue;
+            }
 
             // Check if any field in the row is empty
             if (in_array('', $this->data[$i])) {
@@ -67,13 +67,13 @@ class ImportChallengeQuestions implements ShouldQueue
                     'image' => trim($this->data[$i][9]),
                     'title' => $this->data[$i][10],
                     'is_correct' => $this->isCorrect($i, 10),
-                ]
+                ],
             ]);
         }
     }
 
     protected function isCorrect(int $i, int $j)
     {
-        return (int)explode('_', $this->data[0][$j])[1] == (int)$this->data[$i][11];
+        return (int) explode('_', $this->data[0][$j])[1] == (int) $this->data[$i][11];
     }
 }

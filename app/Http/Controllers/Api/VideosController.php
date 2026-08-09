@@ -16,18 +16,16 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VideosController extends Controller
 {
-    public function __construct(private readonly VideoService $service)
-    {
-    }
+    public function __construct(private readonly VideoService $service) {}
 
     public function index(Request $request): JsonResponse
     {
-        $perPage = (int) $request->get('per_page', 10);
+        $perPage = (int) $request->input('per_page', 10);
         $perPage = $perPage > 0 ? $perPage : 10;
 
         $videos = $this->service->getVideos(
             $perPage,
-            $request->get('search'),
+            $request->input('search'),
             $request->integer('video_category_id') ?: null,
             $request->integer('video_sub_category_id') ?: null
         );

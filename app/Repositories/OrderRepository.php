@@ -8,7 +8,9 @@ use App\Models\Variable;
 
 class OrderRepository
 {
-    private $orders, $variables;
+    private $orders;
+
+    private $variables;
 
     public function __construct()
     {

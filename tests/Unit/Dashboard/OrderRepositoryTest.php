@@ -21,7 +21,7 @@ class OrderRepositoryTest extends TestCase
 
     public function test_asset_amounts_and_total_are_zero_when_empty(): void
     {
-        $repository = new OrderRepository();
+        $repository = new OrderRepository;
 
         $this->assertSame(0, $repository->pscOrderAmount());
         $this->assertSame(0, $repository->redOrderAmount());
@@ -37,7 +37,7 @@ class OrderRepositoryTest extends TestCase
         Order::create(['asset' => 'psc', 'amount' => 5, 'status' => 'done']);
         Order::create(['asset' => 'psc', 'amount' => 3, 'status' => 'done']);
 
-        $repository = new OrderRepository();
+        $repository = new OrderRepository;
 
         $this->assertSame(80.0, (float) $repository->pscOrderAmount());
     }
@@ -54,7 +54,7 @@ class OrderRepositoryTest extends TestCase
         Order::create(['asset' => 'yellow', 'amount' => 2.5, 'status' => 'done']);
         Order::create(['asset' => 'irr', 'amount' => 100, 'status' => 'done']);
 
-        $repository = new OrderRepository();
+        $repository = new OrderRepository;
 
         $this->assertSame(20.0, (float) $repository->redOrderAmount());
         $this->assertSame(12.0, (float) $repository->blueOrderAmount());
@@ -69,7 +69,7 @@ class OrderRepositoryTest extends TestCase
         Variable::create(['asset' => 'blue', 'price' => 3]);
         Order::create(['asset' => 'blue', 'amount' => 4, 'status' => 'done']);
 
-        $repository = new OrderRepository();
+        $repository = new OrderRepository;
 
         $this->assertSame(0.0, (float) $repository->pscOrderAmount());
         $this->assertSame(0.0, (float) $repository->redOrderAmount());
@@ -83,7 +83,7 @@ class OrderRepositoryTest extends TestCase
         Order::create(['asset' => 'psc', 'amount' => 2, 'status' => 'done']);
         Order::create(['asset' => 'red', 'amount' => 999, 'status' => 'done']);
 
-        $repository = new OrderRepository();
+        $repository = new OrderRepository;
 
         $this->assertSame(20.0, (float) $repository->pscOrderAmount());
         $this->assertSame(0.0, (float) $repository->redOrderAmount());
@@ -94,14 +94,14 @@ class OrderRepositoryTest extends TestCase
         Variable::create(['asset' => 'psc', 'price' => 10]);
         Order::create(['asset' => 'psc', 'amount' => 1, 'status' => 'done']);
 
-        $repository = new OrderRepository();
+        $repository = new OrderRepository;
         $this->assertSame(10.0, (float) $repository->pscOrderAmount());
 
         Order::create(['asset' => 'psc', 'amount' => 100, 'status' => 'done']);
 
         $this->assertSame(10.0, (float) $repository->pscOrderAmount());
 
-        $fresh = new OrderRepository();
+        $fresh = new OrderRepository;
         $this->assertSame(1010.0, (float) $fresh->pscOrderAmount());
     }
 
@@ -113,7 +113,7 @@ class OrderRepositoryTest extends TestCase
         Payment::create(['amount' => 1000, 'status' => 'paid']);
         Payment::create(['amount' => 500, 'status' => 'paid']);
 
-        $repository = new OrderRepository();
+        $repository = new OrderRepository;
 
         $this->assertSame(1500.0, (float) $repository->totalOrderAmount());
         $this->assertSame(9990.0, (float) $repository->pscOrderAmount());
@@ -124,7 +124,7 @@ class OrderRepositoryTest extends TestCase
         Order::create(['asset' => 'psc', 'amount' => 50, 'status' => 'done']);
         Variable::create(['asset' => 'psc', 'price' => 10]);
 
-        $repository = new OrderRepository();
+        $repository = new OrderRepository;
 
         $this->assertSame(0, $repository->totalOrderAmount());
         $this->assertSame(500.0, (float) $repository->pscOrderAmount());
@@ -135,7 +135,7 @@ class OrderRepositoryTest extends TestCase
         Variable::create(['asset' => 'yellow', 'price' => 0]);
         Order::create(['asset' => 'yellow', 'amount' => 25, 'status' => 'done']);
 
-        $repository = new OrderRepository();
+        $repository = new OrderRepository;
 
         $this->assertSame(0.0, (float) $repository->yellowOrderAmount());
     }

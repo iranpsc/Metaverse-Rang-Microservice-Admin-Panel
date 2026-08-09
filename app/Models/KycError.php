@@ -11,7 +11,7 @@ class KycError extends Model
 
     protected $fillable = [
         'key',
-        'value'
+        'value',
     ];
 
     public function errorable()

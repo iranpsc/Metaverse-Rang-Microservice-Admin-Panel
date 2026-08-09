@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Payment;
+use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -12,23 +13,21 @@ class PaymentsExport implements FromView, WithEvents
 {
     use Exportable;
 
-    public function view(): \Illuminate\Contracts\View\View
+    public function view(): View
     {
         return view('exports.payments', [
-            'payments' => Payment::with('user:id,name')->get()
+            'payments' => Payment::with('user:id,name')->get(),
         ]);
     }
 
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function(AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event) {
                 // Make sheet right to left
                 $event->sheet->setRightToLeft(true);
                 // $event->sheet->getDelegate()->getStyle('A1:G1')->getFont()->setBold(true);
-            }
+            },
         ];
     }
-
-    
 }

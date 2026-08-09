@@ -29,8 +29,8 @@ class UserLevelsController extends Controller
 
         if ($search !== '') {
             $query->where(function ($builder) use ($search) {
-                $builder->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('code', 'like', '%' . $search . '%');
+                $builder->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('code', 'like', '%'.$search.'%');
             });
         }
 
@@ -76,8 +76,8 @@ class UserLevelsController extends Controller
 
         if ($search !== '') {
             $query->where(function ($builder) use ($search) {
-                $builder->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('code', 'like', '%' . $search . '%');
+                $builder->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('code', 'like', '%'.$search.'%');
             });
         }
 
@@ -88,7 +88,7 @@ class UserLevelsController extends Controller
 
             return [
                 'value' => $user->id,
-                'label' => $user->name . $code,
+                'label' => $user->name.$code,
             ];
         })->values();
 
@@ -162,14 +162,15 @@ class UserLevelsController extends Controller
                 ->sortByDesc(fn (Level $level) => $level->numeric_score)
                 ->first();
 
-            if (!$currentLevel) {
+            if (! $currentLevel) {
                 $qualifyingLevel = Level::query()
                     ->whereNumericScore('<=', (int) $user->score)
                     ->orderByNumericScore()
                     ->first();
 
-                if ($qualifyingLevel && !in_array($qualifyingLevel->id, $achievedLevelIds, true)) {
+                if ($qualifyingLevel && ! in_array($qualifyingLevel->id, $achievedLevelIds, true)) {
                     $user->levels()->attach($qualifyingLevel->id);
+
                     continue;
                 }
 
@@ -184,9 +185,10 @@ class UserLevelsController extends Controller
             if (
                 $nextLevel
                 && (int) $user->score >= $nextLevel->numeric_score
-                && !in_array($nextLevel->id, $achievedLevelIds, true)
+                && ! in_array($nextLevel->id, $achievedLevelIds, true)
             ) {
                 $user->levels()->attach($nextLevel->id);
+
                 continue;
             }
 

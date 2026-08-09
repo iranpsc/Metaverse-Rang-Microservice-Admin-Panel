@@ -26,12 +26,12 @@ class Payment extends Model
 
     public function scopeSearch($query, $searchTerm)
     {
-        return $query->where('ref_id', 'like', '%' . $searchTerm . '%');
+        return $query->where('ref_id', 'like', '%'.$searchTerm.'%');
     }
 
     public function getTitle()
     {
-        return match($this->product) {
+        return match ($this->product) {
             'irr' => 'ریال',
             'psc' => 'PSC',
             'red' => 'رنگ قرمز',

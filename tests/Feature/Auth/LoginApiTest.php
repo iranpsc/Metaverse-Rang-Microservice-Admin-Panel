@@ -16,7 +16,9 @@ class LoginApiTest extends TestCase
     use CreatesAuthApiSchema;
 
     private const LOGIN_PATH = '/api/login';
+
     private const ME_PATH = '/api/me';
+
     private const LOGOUT_PATH = '/api/logout';
 
     protected function setUp(): void

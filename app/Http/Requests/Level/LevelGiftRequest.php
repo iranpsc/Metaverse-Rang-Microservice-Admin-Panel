@@ -65,8 +65,9 @@ class LevelGiftRequest extends FormRequest
                 if (! in_array($normalizedType, $allowed, true)) {
                     $validator->errors()->add(
                         'fbx_file',
-                        'کلیدهای فایل مدل باید یکی از این فرمت‌ها باشند: ' . implode(', ', $allowed)
+                        'کلیدهای فایل مدل باید یکی از این فرمت‌ها باشند: '.implode(', ', $allowed)
                     );
+
                     return;
                 }
 
@@ -74,8 +75,9 @@ class LevelGiftRequest extends FormRequest
                 if ($urlExtension === '' || ! in_array($urlExtension, $allowed, true)) {
                     $validator->errors()->add(
                         'fbx_file',
-                        'پسوند لینک فایل مدل باید یکی از این فرمت‌ها باشد: ' . implode(', ', $allowed)
+                        'پسوند لینک فایل مدل باید یکی از این فرمت‌ها باشد: '.implode(', ', $allowed)
                     );
+
                     return;
                 }
 
@@ -84,6 +86,7 @@ class LevelGiftRequest extends FormRequest
                         'fbx_file',
                         "نوع فایل «{$normalizedType}» با پسوند لینک «{$urlExtension}» هم‌خوانی ندارد."
                     );
+
                     return;
                 }
             }

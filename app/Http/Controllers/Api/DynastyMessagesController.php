@@ -12,8 +12,6 @@ class DynastyMessagesController extends Controller
 {
     /**
      * Get all dynasty messages
-     *
-     * @return JsonResponse
      */
     public function index(): JsonResponse
     {
@@ -47,9 +45,6 @@ class DynastyMessagesController extends Controller
 
     /**
      * Store a new dynasty message
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -57,7 +52,7 @@ class DynastyMessagesController extends Controller
             'type' => [
                 'required',
                 'in:requester_confirmation_message,reciever_message,reciever_accept_message,requester_accept_message',
-                Rule::unique('dynasty_messages', 'type')
+                Rule::unique('dynasty_messages', 'type'),
             ],
             'content' => 'required|string',
         ]);
@@ -91,16 +86,12 @@ class DynastyMessagesController extends Controller
 
     /**
      * Update an existing dynasty message
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(Request $request, int $id): JsonResponse
     {
         $message = DynastyMessage::find($id);
 
-        if (!$message) {
+        if (! $message) {
             return response()->json([
                 'success' => false,
                 'message' => 'پیام یافت نشد',
@@ -139,15 +130,12 @@ class DynastyMessagesController extends Controller
 
     /**
      * Delete a dynasty message
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function destroy(int $id): JsonResponse
     {
         $message = DynastyMessage::find($id);
 
-        if (!$message) {
+        if (! $message) {
             return response()->json([
                 'success' => false,
                 'message' => 'پیام یافت نشد',
@@ -170,4 +158,3 @@ class DynastyMessagesController extends Controller
         }
     }
 }
-

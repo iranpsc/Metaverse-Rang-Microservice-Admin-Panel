@@ -61,7 +61,7 @@ class LevelsController extends Controller
             $validated = $request->validated();
 
             $backgroundPath = $request->file('background_image')->store('levels', 'public');
-            $backgroundUrl = url('uploads/' . $backgroundPath);
+            $backgroundUrl = url('uploads/'.$backgroundPath);
 
             $level = Level::create([
                 'name' => $validated['name'],
@@ -128,7 +128,7 @@ class LevelsController extends Controller
 
             if ($request->hasFile('background_image')) {
                 $newBackgroundPath = $request->file('background_image')->store('levels', 'public');
-                $backgroundUrl = url('uploads/' . $newBackgroundPath);
+                $backgroundUrl = url('uploads/'.$newBackgroundPath);
             }
 
             $level->update([
@@ -228,7 +228,7 @@ class LevelsController extends Controller
 
     private function extractStoragePath(?string $url): ?string
     {
-        if (!$url) {
+        if (! $url) {
             return null;
         }
 
@@ -241,5 +241,3 @@ class LevelsController extends Controller
         return ltrim($url, '/');
     }
 }
-
-

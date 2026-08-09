@@ -24,7 +24,7 @@ class VideoUploadController extends Controller
         if ($fileReceived->isFinished()) {
             $file = $fileReceived->getFile();
             $extension = $file->getClientOriginalExtension();
-            $fileName = md5(uniqid((string) time(), true)) . '.' . $extension;
+            $fileName = md5(uniqid((string) time(), true)).'.'.$extension;
 
             $path = $file->storeAs('resumable-tmp', $fileName);
 

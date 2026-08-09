@@ -4,12 +4,11 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
-use Kavenegar\Laravel\Notification\KavenegarBaseNotification;
 use Kavenegar\Laravel\Message\KavenegarMessage;
+use Kavenegar\Laravel\Notification\KavenegarBaseNotification;
 
 class SendVerificationCode extends KavenegarBaseNotification implements ShouldQueue
 {
@@ -20,15 +19,14 @@ class SendVerificationCode extends KavenegarBaseNotification implements ShouldQu
      *
      * @return void
      */
-
-    private $code;
+    private int $code;
 
     public function __construct()
     {
         $this->code = random_int(100000, 999999);
 
         Cache::put(
-            'verify.code.' . Auth::guard('admin')->id(),
+            'verify.code.'.Auth::guard('admin')->id(),
             Hash::make($this->code),
             now()->addMinutes(1)
         );
@@ -53,7 +51,7 @@ class SendVerificationCode extends KavenegarBaseNotification implements ShouldQu
      */
     public function toKavenegar($notifiable)
     {
-        return (new KavenegarMessage())
+        return (new KavenegarMessage)
             ->verifyLookup('verify', $this->code);
     }
 }

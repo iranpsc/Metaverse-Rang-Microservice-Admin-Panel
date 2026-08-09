@@ -22,9 +22,9 @@ class ConnectedWalletController extends Controller
 
         if ($searchTerm) {
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('code', 'like', '%' . $searchTerm . '%')
-                    ->orWhere('wallet_address', 'like', '%' . $searchTerm . '%');
+                $q->where('name', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('code', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('wallet_address', 'like', '%'.$searchTerm.'%');
             });
         }
 

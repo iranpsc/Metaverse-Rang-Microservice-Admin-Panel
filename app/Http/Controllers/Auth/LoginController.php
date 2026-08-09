@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\AuthenticatedUserResource;
 use App\Services\ActivityLoggerService;
 use App\Services\PhoneVerificationSessionService;
+use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Foundation\Auth\ThrottlesLogins;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
@@ -35,12 +38,12 @@ class LoginController extends Controller
     protected $redirectTo = '/';
 
     protected $maxAttempts = 3;
+
     protected $decayMinutes = 5;
 
     /**
      * The user has been authenticated.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  mixed  $user
      * @return mixed
      */
@@ -62,16 +65,15 @@ class LoginController extends Controller
             'message' => 'ورود با موفقیت انجام شد',
             'data' => [
                 'token' => $token,
-                'token_expires_at' => $tokenExpiresAt
-            ]
+                'token_expires_at' => $tokenExpiresAt,
+            ],
         ], 200);
     }
 
     /**
      * Log the user out of the application.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
+     * @return RedirectResponse|JsonResponse
      */
     public function logout(Request $request)
     {
@@ -92,38 +94,37 @@ class LoginController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'خروج با موفقیت انجام شد'
+            'message' => 'خروج با موفقیت انجام شد',
         ], 200);
     }
 
     /**
      * Get the authenticated user.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function me(Request $request)
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
-                'message' => 'کاربر احراز هویت نشده است'
+                'message' => 'کاربر احراز هویت نشده است',
             ], 401);
         }
 
         // Return user data without creating a new token
         return response()->json([
             'success' => true,
-            'data' => new AuthenticatedUserResource($user)
+            'data' => new AuthenticatedUserResource($user),
         ], 200);
     }
 
     /**
      * Get the guard to be used during authentication.
      *
-     * @return \Illuminate\Contracts\Auth\StatefulGuard
+     * @return StatefulGuard
      */
     protected function guard()
     {

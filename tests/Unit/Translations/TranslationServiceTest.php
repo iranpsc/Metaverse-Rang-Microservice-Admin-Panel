@@ -3,10 +3,18 @@
 namespace Tests\Unit\Translations;
 
 use App\Models\Translations\Field;
+use App\Models\Translations\Modal;
+use App\Models\Translations\Tab;
 use App\Models\Translations\Translation;
 use App\Services\Translations\TranslationService;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use ReflectionMethod;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Tests\TestCase;
 
 class TranslationServiceTest extends TestCase
@@ -22,6 +30,9 @@ class TranslationServiceTest extends TestCase
         'database/migrations/2025_01_30_154700_change_unique_id_type_from_fields_table.php',
         'database/migrations/2025_04_13_090013_drop_name_from_fields_table.php',
     ];
+
+    /** @var list<string> */
+    private array $createdLangFiles = [];
 
     protected function setUp(): void
     {
@@ -40,6 +51,19 @@ class TranslationServiceTest extends TestCase
                 '--force' => true,
             ]);
         }
+
+        $this->createdLangFiles = [];
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->createdLangFiles as $path) {
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
+
+        parent::tearDown();
     }
 
     public function test_create_field_only_syncs_to_same_modal_and_tab_across_languages(): void
@@ -70,7 +94,7 @@ class TranslationServiceTest extends TestCase
         $germanSafetyTab = $germanSafety->tabs()->create(['name' => 'security-and-privacy']);
         $germanProfileTab = $germanProfile->tabs()->create(['name' => 'security-and-privacy']);
 
-        $service = new TranslationService(new Filesystem());
+        $service = new TranslationService(new Filesystem);
         $field = $service->createField($englishSafetyTab, 'Two-factor authentication');
 
         $uniqueId = $field->unique_id;
@@ -89,5 +113,210 @@ class TranslationServiceTest extends TestCase
             'unique_id' => $uniqueId,
         ], 'sqlite');
         $this->assertSame(2, Field::where('unique_id', $uniqueId)->count());
+    }
+
+    public function test_export_translation_writes_flat_json_sorted_by_unique_id_ascending(): void
+    {
+        $this->app['env'] = 'local';
+
+        $translation = Translation::create([
+            'code' => 'fr',
+            'name' => 'French',
+            'native_name' => 'Français',
+            'direction' => 'ltr',
+            'status' => true,
+            'version' => 1,
+        ]);
+
+        $modalA = $translation->modals()->create(['name' => 'profile']);
+        $modalB = $translation->modals()->create(['name' => 'safety']);
+        $tabA = $modalA->tabs()->create(['name' => 'general']);
+        $tabB = $modalB->tabs()->create(['name' => 'privacy']);
+
+        $tabA->fields()->create(['unique_id' => 10, 'translation' => 'Ten']);
+        $tabB->fields()->create(['unique_id' => 2, 'translation' => 'Two']);
+        $tabA->fields()->create(['unique_id' => 5, 'translation' => null]);
+
+        $service = new TranslationService(new Filesystem);
+        $result = $service->exportTranslation($translation);
+
+        $filePath = public_path('lang/fr.json');
+        $this->createdLangFiles[] = $filePath;
+
+        $this->assertInstanceOf(BinaryFileResponse::class, $result);
+        $this->assertFileExists($filePath);
+
+        $payload = json_decode((string) file_get_contents($filePath), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame([
+            2 => 'Two',
+            5 => null,
+            10 => 'Ten',
+        ], $payload);
+        $this->assertSame([2, 5, 10], array_keys($payload));
+
+        $raw = (string) file_get_contents($filePath);
+        $this->assertStringContainsString("\n", $raw);
+        $this->assertMatchesRegularExpression('/"2"\s*:\s*"Two".*"5"\s*:\s*null.*"10"\s*:\s*"Ten"/s', $raw);
+
+        $translation->refresh();
+        $this->assertSame(2, (int) $translation->version);
+        $this->assertSame('https://metarang.com/lang/fr.json', $translation->file_url);
+    }
+
+    public function test_export_translation_uploads_to_ftp_outside_local_environment(): void
+    {
+        $this->app['env'] = 'production';
+        Storage::fake('ftp');
+
+        $translation = Translation::create([
+            'code' => 'sq',
+            'name' => 'Albanian',
+            'native_name' => 'Shqip',
+            'direction' => 'ltr',
+            'status' => true,
+            'version' => 0,
+        ]);
+
+        $modal = $translation->modals()->create(['name' => 'home']);
+        $tab = $modal->tabs()->create(['name' => 'main']);
+        $tab->fields()->create(['unique_id' => 1, 'translation' => 'Pershendetje']);
+
+        $service = new TranslationService(new Filesystem);
+        $result = $service->exportTranslation($translation);
+
+        $filePath = public_path('lang/sq.json');
+        $this->createdLangFiles[] = $filePath;
+
+        $this->assertSame('Translation exported successfully.', $result);
+        Storage::disk('ftp')->assertExists('sq.json');
+        $this->assertSame(
+            [1 => 'Pershendetje'],
+            json_decode((string) Storage::disk('ftp')->get('sq.json'), true)
+        );
+    }
+
+    public function test_export_translation_throws_validation_exception_when_ftp_upload_fails(): void
+    {
+        $this->app['env'] = 'production';
+
+        $disk = \Mockery::mock();
+        $disk->shouldReceive('put')->once()->andReturn(false);
+        Storage::shouldReceive('disk')->with('ftp')->andReturn($disk);
+
+        $translation = Translation::create([
+            'code' => 'ak',
+            'name' => 'Akan',
+            'native_name' => 'Akan',
+            'direction' => 'ltr',
+            'status' => true,
+            'version' => 0,
+        ]);
+
+        $modal = $translation->modals()->create(['name' => 'home']);
+        $tab = $modal->tabs()->create(['name' => 'main']);
+        $tab->fields()->create(['unique_id' => 1, 'translation' => 'Hi']);
+
+        $service = new TranslationService(new Filesystem);
+
+        try {
+            $service->exportTranslation($translation);
+            $this->fail('Expected ValidationException was not thrown.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('export', $exception->errors());
+        } finally {
+            $this->createdLangFiles[] = public_path('lang/ak.json');
+        }
+    }
+
+    public function test_available_languages_throws_when_definition_file_is_missing(): void
+    {
+        Cache::forget('translations.available_languages');
+
+        $filesystem = \Mockery::mock(Filesystem::class);
+        $filesystem->shouldReceive('exists')->once()->andReturn(false);
+
+        $service = new TranslationService($filesystem);
+
+        $this->expectException(FileNotFoundException::class);
+        $service->availableLanguages();
+    }
+
+    public function test_available_languages_throws_validation_exception_for_invalid_json(): void
+    {
+        Cache::forget('translations.available_languages');
+
+        $filesystem = \Mockery::mock(Filesystem::class);
+        $filesystem->shouldReceive('exists')->once()->andReturn(true);
+        $filesystem->shouldReceive('get')->once()->andReturn('{not-valid-json');
+
+        $service = new TranslationService($filesystem);
+
+        $this->expectException(ValidationException::class);
+        $service->availableLanguages();
+    }
+
+    public function test_get_modals_tabs_and_fields_pagination_helpers(): void
+    {
+        $translation = Translation::create([
+            'code' => 'it',
+            'name' => 'Italian',
+            'native_name' => 'Italiano',
+            'direction' => 'ltr',
+            'status' => true,
+        ]);
+
+        $modal = $translation->modals()->create(['name' => 'home']);
+        $tab = $modal->tabs()->create(['name' => 'main']);
+        $tab->fields()->create(['unique_id' => 1, 'translation' => 'Ciao']);
+        $tab->fields()->create(['unique_id' => 2, 'translation' => null]);
+
+        $service = new TranslationService(new Filesystem);
+
+        $modals = $service->getModalsForTranslation($translation, 10);
+        $tabs = $service->getTabsForModal($modal, 10);
+        $fields = $service->getFieldsForTab($tab, 10);
+
+        $this->assertSame(1, $modals->total());
+        $this->assertSame(1, $tabs->total());
+        $this->assertSame(2, $fields->total());
+        $this->assertSame(1, (int) $modals->items()[0]->tabs_count);
+        $this->assertSame(2, (int) $tabs->items()[0]->fields_count);
+        $this->assertSame(1, (int) $tabs->items()[0]->translated_fields_count);
+    }
+
+    public function test_replicate_structure_skips_modals_that_already_exist_on_target(): void
+    {
+        $english = Translation::create([
+            'code' => 'en',
+            'name' => 'English',
+            'native_name' => 'English',
+            'direction' => 'ltr',
+            'status' => true,
+        ]);
+        $german = Translation::create([
+            'code' => 'de',
+            'name' => 'German',
+            'native_name' => 'Deutsch',
+            'direction' => 'ltr',
+            'status' => true,
+        ]);
+
+        $englishHome = $english->modals()->create(['name' => 'home']);
+        $englishHome->tabs()->create(['name' => 'main'])->fields()->create([
+            'unique_id' => 11,
+            'translation' => 'Hi',
+        ]);
+        $english->modals()->create(['name' => 'profile']);
+
+        $german->modals()->create(['name' => 'home']);
+
+        $service = new TranslationService(new Filesystem);
+        $method = new ReflectionMethod(TranslationService::class, 'replicateStructureForTranslation');
+        $method->setAccessible(true);
+        $method->invoke($service, $german);
+
+        $this->assertSame(1, $german->modals()->where('name', 'home')->count());
+        $this->assertSame(1, $german->modals()->where('name', 'profile')->count());
+        $this->assertSame(2, $german->modals()->count());
     }
 }

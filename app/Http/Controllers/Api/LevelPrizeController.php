@@ -63,7 +63,7 @@ class LevelPrizeController extends Controller
     {
         $prize = $level->prize;
 
-        if (!$prize) {
+        if (! $prize) {
             return response()->json([
                 'success' => false,
                 'message' => 'برای این سطح پاداشی ثبت نشده است.',
@@ -95,5 +95,3 @@ class LevelPrizeController extends Controller
         }
     }
 }
-
-

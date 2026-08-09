@@ -1,0 +1,95 @@
+name: CD
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: Push the built image to the registry
+        required: false
+        default: true
+        type: boolean
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-image:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Derive image metadata
+        id: meta
+        env:
+          DOCKER_REGISTRY: ${{ vars.DOCKER_REGISTRY }}
+          DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE }}
+        run: |
+          REGISTRY="${DOCKER_REGISTRY:-ghcr.io}"
+          IMAGE_NAME="${DOCKER_IMAGE:-${GITHUB_REPOSITORY}}"
+          IMAGE="$(echo "${REGISTRY}/${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')"
+
+          SHORT_SHA="${GITHUB_SHA::7}"
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF_NAME}"
+          else
+            TAG="${GITHUB_REF_NAME}-${SHORT_SHA}"
+          fi
+
+          SHOULD_PUSH=false
+          if [[ "${GITHUB_EVENT_NAME}" == "push" || "${{ inputs.push_image }}" == "true" ]]; then
+            SHOULD_PUSH=true
+          fi
+
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "latest_tag=latest" >> "$GITHUB_OUTPUT"
+          echo "should_push=${SHOULD_PUSH}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        if: steps.meta.outputs.should_push == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (and optionally push) image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/php/Dockerfile
+          push: ${{ steps.meta.outputs.should_push == 'true' }}
+          load: ${{ steps.meta.outputs.should_push != 'true' }}
+          tags: |
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.latest_tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Publish deploy summary
+        run: |
+          {
+            echo "## CD build"
+            echo ""
+            echo "- Image: \`${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}\`"
+            echo "- Pushed: \`${{ steps.meta.outputs.should_push }}\`"
+            echo "- Ref: \`${{ github.ref_name }}\`"
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo ""
+            echo "Configure Dokploy (or your registry consumer) to deploy this tag after CI is green."
+          } >> "$GITHUB_STEP_SUMMARY"

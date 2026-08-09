@@ -16,9 +16,7 @@ use Illuminate\Http\Request;
 
 class FieldController extends Controller
 {
-    public function __construct(private readonly TranslationService $translationService)
-    {
-    }
+    public function __construct(private readonly TranslationService $translationService) {}
 
     public function index(Request $request, Translation $translation, Modal $modal, Tab $tab): JsonResponse
     {
@@ -100,5 +98,3 @@ class FieldController extends Controller
         ]);
     }
 }
-
-

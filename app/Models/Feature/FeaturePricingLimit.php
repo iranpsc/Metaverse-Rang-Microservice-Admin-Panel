@@ -11,6 +11,6 @@ class FeaturePricingLimit extends Model
 
     protected $fillable = [
         'public_price_limit',
-        'under_eighteen_price_limit'
+        'under_eighteen_price_limit',
     ];
 }

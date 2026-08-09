@@ -49,4 +49,28 @@ class ActivityLogCategoryResolverTest extends TestCase
     {
         $this->assertSame('other', ActivityLogCategoryResolver::resolveForModel(null));
     }
+
+    public function test_resolve_for_model_uses_basename_heuristics_for_unmapped_models(): void
+    {
+        $this->assertSame(
+            'dynasty',
+            ActivityLogCategoryResolver::resolveForModel(new \App\Models\Dynasty\DynastyMessage)
+        );
+        $this->assertSame(
+            'levels',
+            ActivityLogCategoryResolver::resolveForModel(new \App\Models\Level\Level)
+        );
+        $this->assertSame(
+            'translations',
+            ActivityLogCategoryResolver::resolveForModel(new \App\Models\Translations\Translation)
+        );
+        $this->assertSame(
+            'challenge',
+            ActivityLogCategoryResolver::resolveForModel(new \App\Models\Challenge\Question)
+        );
+        $this->assertSame(
+            'other',
+            ActivityLogCategoryResolver::resolveForModel(new \App\Models\BulkMessageLog)
+        );
+    }
 }

@@ -18,7 +18,7 @@ class UserRepositoryTest extends TestCase
     {
         parent::setUp();
         $this->setUpDashboardSchema();
-        $this->repository = new UserRepository();
+        $this->repository = new UserRepository;
     }
 
     public function test_all_methods_return_zero_when_empty(): void

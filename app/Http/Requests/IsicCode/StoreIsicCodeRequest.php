@@ -39,5 +39,3 @@ class StoreIsicCodeRequest extends FormRequest
         ]);
     }
 }
-
-

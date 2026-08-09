@@ -25,5 +25,3 @@ class LevelPrizeRequest extends FormRequest
         return $rules;
     }
 }
-
-

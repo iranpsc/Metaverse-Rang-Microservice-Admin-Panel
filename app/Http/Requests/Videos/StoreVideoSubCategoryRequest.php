@@ -28,5 +28,3 @@ class StoreVideoSubCategoryRequest extends FormRequest
         ];
     }
 }
-
-

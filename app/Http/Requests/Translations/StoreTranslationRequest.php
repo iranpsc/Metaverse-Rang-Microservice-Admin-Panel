@@ -18,5 +18,3 @@ class StoreTranslationRequest extends FormRequest
         ];
     }
 }
-
-

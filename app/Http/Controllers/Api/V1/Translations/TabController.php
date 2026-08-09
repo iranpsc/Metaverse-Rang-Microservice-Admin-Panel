@@ -15,15 +15,13 @@ use Illuminate\Http\Request;
 
 class TabController extends Controller
 {
-    public function __construct(private readonly TranslationService $translationService)
-    {
-    }
+    public function __construct(private readonly TranslationService $translationService) {}
 
     public function index(Request $request, Translation $translation, Modal $modal): JsonResponse
     {
         abort_unless($modal->translation_id === $translation->id, 404);
 
-        $perPage = (int) $request->get('per_page', 10);
+        $perPage = (int) $request->input('per_page', 10);
 
         $tabs = $modal->tabs()
             ->withCount([
@@ -54,7 +52,7 @@ class TabController extends Controller
     {
         abort_unless($modal->translation_id === $translation->id, 404);
 
-        $name = trim($request->get('name'));
+        $name = trim($request->input('name'));
         $this->translationService->createTab($modal, $name);
 
         $tab = $modal->tabs()
@@ -96,7 +94,7 @@ class TabController extends Controller
     {
         abort_unless($modal->translation_id === $translation->id && $tab->modal_id === $modal->id, 404);
 
-        $name = trim($request->get('name'));
+        $name = trim($request->input('name'));
         $this->translationService->updateTab($tab, $name);
 
         $updatedTab = $modal->tabs()
@@ -129,5 +127,3 @@ class TabController extends Controller
         ]);
     }
 }
-
-

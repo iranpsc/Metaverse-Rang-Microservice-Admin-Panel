@@ -8,22 +8,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Morilog\Jalali\Jalalian;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use Morilog\Jalali\Jalalian;
+use Spatie\Permission\PermissionRegistrar;
 
 class PermissionsController extends Controller
 {
     /**
      * Get paginated permissions
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
         $permissions = Permission::with('roles')
             ->latest()
@@ -66,8 +64,6 @@ class PermissionsController extends Controller
 
     /**
      * Get all roles for permission creation/update
-     *
-     * @return JsonResponse
      */
     public function getRoles(): JsonResponse
     {
@@ -90,9 +86,6 @@ class PermissionsController extends Controller
 
     /**
      * Get single permission with roles
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function show(int $id): JsonResponse
     {
@@ -130,9 +123,6 @@ class PermissionsController extends Controller
 
     /**
      * Create a new permission
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -175,10 +165,6 @@ class PermissionsController extends Controller
 
     /**
      * Update a permission
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -228,9 +214,6 @@ class PermissionsController extends Controller
 
     /**
      * Delete a permission
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function destroy(int $id): JsonResponse
     {
@@ -239,7 +222,7 @@ class PermissionsController extends Controller
             $tableNames = config('permission.table_names');
             $permissionExists = DB::table($tableNames['permissions'])->where('id', $id)->exists();
 
-            if (!$permissionExists) {
+            if (! $permissionExists) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Permission not found.',
@@ -272,7 +255,7 @@ class PermissionsController extends Controller
             });
 
             // Clear the permission cache after deletion
-            app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+            app(PermissionRegistrar::class)->forgetCachedPermissions();
 
             return response()->json([
                 'success' => true,
@@ -282,22 +265,18 @@ class PermissionsController extends Controller
             Log::error('Permission deletion failed', [
                 'permission_id' => $id,
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete permission: ' . $e->getMessage(),
+                'message' => 'Failed to delete permission: '.$e->getMessage(),
             ], 500);
         }
     }
 
     /**
      * Remove role from permission
-     *
-     * @param int $permissionId
-     * @param int $roleId
-     * @return JsonResponse
      */
     public function removeRole(int $permissionId, int $roleId): JsonResponse
     {
@@ -312,4 +291,3 @@ class PermissionsController extends Controller
         ]);
     }
 }
-

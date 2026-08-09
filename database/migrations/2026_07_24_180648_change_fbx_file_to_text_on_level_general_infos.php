@@ -64,6 +64,7 @@ return new class extends Migration
 
                     if ($value === null || $value === '') {
                         DB::table(self::TABLE)->where('id', $row->id)->update(['fbx_file' => null]);
+
                         continue;
                     }
 

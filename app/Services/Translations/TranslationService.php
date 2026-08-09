@@ -20,9 +20,7 @@ class TranslationService
 {
     private const LANG_CACHE_KEY = 'translations.available_languages';
 
-    public function __construct(private readonly Filesystem $filesystem)
-    {
-    }
+    public function __construct(private readonly Filesystem $filesystem) {}
 
     /**
      * @return array<int, array{id: string, code: string, name: string, nativeName: string, dir: string}>
@@ -106,50 +104,32 @@ class TranslationService
 
     public function exportTranslation(Translation $translation): BinaryFileResponse|string
     {
-        $translation->load('modals.tabs.fields');
-
-        $clone = $translation->replicate();
-        $clone->setRelation('modals', $translation->modals->map(function (Modal $modal) {
-            $modalClone = $modal->replicate();
-            $modalClone->setRelation('tabs', $modal->tabs->map(function (Tab $tab) {
-                $tabClone = $tab->replicate();
-                $tabClone->setRelation('fields', $tab->fields->map(function (Field $field) {
-                    $fieldClone = $field->replicate();
-                    $fieldClone->makeHidden(['id', 'tab_id', 'name']);
-                    return $fieldClone;
-                }));
-
-                $tabClone->makeHidden(['id', 'modal_id']);
-                return $tabClone;
-            }));
-
-            $modalClone->makeHidden(['id', 'translation_id']);
-            return $modalClone;
-        }));
-
-        $clone->makeHidden(['id', 'created_at', 'updated_at']);
+        $payload = Field::query()
+            ->whereHas('tab.modal', function ($query) use ($translation) {
+                $query->where('translation_id', $translation->id);
+            })
+            ->orderBy('unique_id')
+            ->pluck('translation', 'unique_id')
+            ->all();
 
         $fileName = strtolower($translation->code).'.json';
         $filePath = public_path("lang/{$fileName}");
+        $encodedPayload = json_encode(
+            $payload,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT
+        );
 
-        $payload = collect($clone->toArray())
-            ->put('file_url', null)
-            ->toArray();
-
-        file_put_contents($filePath, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        file_put_contents($filePath, $encodedPayload);
 
         $translation->increment('version');
         $absoluteUrl = sprintf('https://metarang.com/lang/%s', $fileName);
         $translation->update(['file_url' => $absoluteUrl]);
 
-        $payload['file_url'] = $absoluteUrl;
-        file_put_contents($filePath, json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-
         if (app()->environment('local')) {
             return response()->download($filePath, $fileName);
         }
 
-        if (! Storage::disk('ftp')->put("{$fileName}", json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE))) {
+        if (! Storage::disk('ftp')->put($fileName, $encodedPayload)) {
             throw ValidationException::withMessages([
                 'export' => __('Translation export failed.'),
             ]);
@@ -339,5 +319,3 @@ class TranslationService
         }
     }
 }
-
-

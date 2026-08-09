@@ -48,7 +48,7 @@ class LandOwnerTransferService
             ->orderBy('id', 'asc');
 
         if ($search !== '') {
-            $query->where('id', 'like', '%' . $search . '%');
+            $query->where('id', 'like', '%'.$search.'%');
         }
 
         $properties = $query->paginate($perPage, ['*'], 'page', $page);
@@ -63,7 +63,7 @@ class LandOwnerTransferService
                 'label' => $transferable
                     ? $property->id
                     : "{$property->id} (مالک: {$ownerName})",
-                'disabled' => !$transferable,
+                'disabled' => ! $transferable,
             ];
         })->values();
 
@@ -84,9 +84,9 @@ class LandOwnerTransferService
 
         if ($search !== '') {
             $query->where(function ($subQuery) use ($search) {
-                $subQuery->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('code', 'like', '%' . $search . '%')
-                    ->orWhere('email', 'like', '%' . $search . '%');
+                $subQuery->where('name', 'like', '%'.$search.'%')
+                    ->orWhere('code', 'like', '%'.$search.'%')
+                    ->orWhere('email', 'like', '%'.$search.'%');
             });
         }
 

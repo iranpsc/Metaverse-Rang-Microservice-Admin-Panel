@@ -13,20 +13,14 @@ class UserChallengePrizes extends Model
 
     protected $fillable = [
         'user_id',
-        'question_prize_id'
+        'question_prize_id',
     ];
 
-    /**
-     * @return BelongsTo
-     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function questionPrize(): BelongsTo
     {
         return $this->belongsTo(QuestionPrize::class);

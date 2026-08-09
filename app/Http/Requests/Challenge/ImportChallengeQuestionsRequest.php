@@ -26,5 +26,3 @@ class ImportChallengeQuestionsRequest extends FormRequest
         ];
     }
 }
-
-

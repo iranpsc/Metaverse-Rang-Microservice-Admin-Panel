@@ -17,7 +17,7 @@ class FeatureRepositoryTest extends TestCase
     {
         parent::setUp();
         $this->setUpDashboardSchema();
-        $this->repository = new FeatureRepository();
+        $this->repository = new FeatureRepository;
     }
 
     public function test_all_and_sold_return_zero_when_empty(): void

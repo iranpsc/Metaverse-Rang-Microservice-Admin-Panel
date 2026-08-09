@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class TicketResource extends JsonResource
@@ -9,7 +10,7 @@ class TicketResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return array
      */
     public function toArray($request)
@@ -42,7 +43,7 @@ class TicketResource extends JsonResource
      */
     private function getStatusLabel()
     {
-        return match($this->status) {
+        return match ($this->status) {
             0 => 'جدید',
             1 => 'پاسخ داده شده',
             3 => 'درحال بررسی',
@@ -51,4 +52,3 @@ class TicketResource extends JsonResource
         };
     }
 }
-

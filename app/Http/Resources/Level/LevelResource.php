@@ -12,7 +12,7 @@ class LevelResource extends JsonResource
     public function toArray($request): array
     {
         $imagePath = $this->image?->url;
-        $imageFullUrl = $imagePath ? url('uploads/' . ltrim($imagePath, '/')) : null;
+        $imageFullUrl = $imagePath ? url('uploads/'.ltrim($imagePath, '/')) : null;
 
         return [
             'id' => $this->id,
@@ -34,5 +34,3 @@ class LevelResource extends JsonResource
         ];
     }
 }
-
-

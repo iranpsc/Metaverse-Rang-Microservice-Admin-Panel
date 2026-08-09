@@ -3,7 +3,6 @@
 namespace App\Services\BulkMessage;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 
 class MessagePlaceholderService
 {

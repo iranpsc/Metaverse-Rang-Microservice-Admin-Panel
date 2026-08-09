@@ -7,22 +7,19 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Morilog\Jalali\Jalalian;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
-use Morilog\Jalali\Jalalian;
 
 class RolesController extends Controller
 {
     /**
      * Get paginated roles
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
         $roles = Role::whereNot('name', 'super-admin')
             ->with('permissions')
@@ -66,8 +63,6 @@ class RolesController extends Controller
 
     /**
      * Get all permissions for role creation/update
-     *
-     * @return JsonResponse
      */
     public function getPermissions(): JsonResponse
     {
@@ -90,9 +85,6 @@ class RolesController extends Controller
 
     /**
      * Get single role with permissions
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function show(int $id): JsonResponse
     {
@@ -136,9 +128,6 @@ class RolesController extends Controller
 
     /**
      * Create a new role
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function store(Request $request): JsonResponse
     {
@@ -181,10 +170,6 @@ class RolesController extends Controller
 
     /**
      * Update a role
-     *
-     * @param Request $request
-     * @param int $id
-     * @return JsonResponse
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -199,7 +184,7 @@ class RolesController extends Controller
 
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|min:2|max:255',
-            'name' => 'required|string|min:2|max:255|unique:roles,name,' . $id,
+            'name' => 'required|string|min:2|max:255|unique:roles,name,'.$id,
             'permissions' => 'nullable|array',
             'permissions.*' => 'required|string|exists:permissions,name',
         ]);
@@ -240,9 +225,6 @@ class RolesController extends Controller
 
     /**
      * Delete a role
-     *
-     * @param int $id
-     * @return JsonResponse
      */
     public function destroy(int $id): JsonResponse
     {
@@ -270,10 +252,6 @@ class RolesController extends Controller
 
     /**
      * Remove permission from role
-     *
-     * @param int $roleId
-     * @param int $permissionId
-     * @return JsonResponse
      */
     public function removePermission(int $roleId, int $permissionId): JsonResponse
     {
@@ -288,4 +266,3 @@ class RolesController extends Controller
         ]);
     }
 }
-

@@ -11,6 +11,6 @@ class QuestionTime extends Model
 
     protected $fillable = [
         'key',
-        'value'
+        'value',
     ];
 }

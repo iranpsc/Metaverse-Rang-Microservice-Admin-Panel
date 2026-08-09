@@ -4,21 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Variable extends Model
 {
     use HasFactory;
 
-    protected $table = "variables";
+    protected $table = 'variables';
 
     protected $fillable = [
         'asset',
         'price',
-        'note'
+        'note',
     ];
 
     protected $casts = [
-        'price' => 'int'
+        'price' => 'int',
     ];
 
     public static function getRate($asset)
@@ -52,7 +53,7 @@ class Variable extends Model
     /**
      * Get the image associated with the variable.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphOne
+     * @return MorphOne
      */
     public function image()
     {

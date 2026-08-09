@@ -11,15 +11,12 @@ class ProfileDetailsController extends Controller
 {
     /**
      * Get paginated Profile Details with statistics
-     *
-     * @param Request $request
-     * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
     {
-        $searchTerm = $request->get('search', '');
-        $perPage = $request->get('per_page', 10);
-        $page = $request->get('page', 1);
+        $searchTerm = $request->input('search', '');
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
 
         $query = User::withSum('activities', 'total')
             ->withCount([
@@ -27,14 +24,14 @@ class ProfileDetailsController extends Controller
                 'payments',
                 'payments as more_than_a_million_payment' => function ($query) {
                     $query->where('amount', '>', 10000000);
-                }
+                },
             ]);
 
         if ($searchTerm) {
             $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('email', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('code', 'like', '%' . $searchTerm . '%');
+                $q->where('name', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('email', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('code', 'like', '%'.$searchTerm.'%');
             });
         }
 
@@ -70,4 +67,3 @@ class ProfileDetailsController extends Controller
         ]);
     }
 }
-

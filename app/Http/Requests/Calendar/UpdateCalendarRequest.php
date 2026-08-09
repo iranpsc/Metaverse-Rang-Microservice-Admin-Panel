@@ -27,5 +27,3 @@ class UpdateCalendarRequest extends FormRequest
         ];
     }
 }
-
-

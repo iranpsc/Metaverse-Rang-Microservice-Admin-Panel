@@ -17,6 +17,18 @@ class BulkMessageMailTest extends TestCase
         $this->assertSame('mail.bulk-message-text', $content->text);
     }
 
+    public function test_mailable_envelope_uses_configured_from_address(): void
+    {
+        config()->set('mail.from.address', 'noreply@metarang.test');
+
+        $mailable = new BulkMessageMail('<p>Hello</p>', 'Hello');
+        $envelope = $mailable->envelope();
+
+        $this->assertSame('noreply@metarang.test', $envelope->from->address);
+        $this->assertNotEmpty($envelope->subject);
+        $this->assertNotEmpty($envelope->replyTo);
+    }
+
     public function test_mailable_includes_list_unsubscribe_header(): void
     {
         $mailable = new BulkMessageMail('<p>Hi</p>', 'Hi', 'https://example.com/unsubscribe');

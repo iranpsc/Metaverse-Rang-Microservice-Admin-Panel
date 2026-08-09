@@ -50,7 +50,7 @@ class ReportController extends Controller
             $query->where('subject', $subject);
         }
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('content', 'like', "%{$search}%")

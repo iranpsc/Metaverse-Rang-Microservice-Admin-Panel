@@ -17,28 +17,18 @@ class QuestionPrize extends Model
         'amount',
     ];
 
-    /**
-     * @return HasMany
-     */
     public function userChallengePrizes(): HasMany
     {
         return $this->hasMany(UserChallengePrizes::class);
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function question(): BelongsTo
     {
         return $this->belongsTo(Question::class);
     }
 
-
-    /**
-     * @return BelongsTo
-     */
     public function challengePrizeList(): BelongsTo
     {
-        return $this->belongsTo(challengePrizesList::class);
+        return $this->belongsTo(ChallengePrizesList::class);
     }
 }

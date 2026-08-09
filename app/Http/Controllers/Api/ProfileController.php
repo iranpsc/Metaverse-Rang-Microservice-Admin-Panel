@@ -52,7 +52,7 @@ class ProfileController extends Controller
             if (
                 $imagePath
                 && $imagePath !== 'noimage.png'
-                && !Str::startsWith($imagePath, ['http://', 'https://'])
+                && ! Str::startsWith($imagePath, ['http://', 'https://'])
                 && Storage::disk('public')->exists($imagePath)
             ) {
                 Storage::disk('public')->delete($imagePath);
@@ -81,7 +81,7 @@ class ProfileController extends Controller
         $admin = $request->user();
         $data = $request->validated();
 
-        if (!app()->environment('production')) {
+        if (! app()->environment('production')) {
             $admin->forceFill([
                 'password' => Hash::make($data['password']),
             ])->save();
@@ -99,7 +99,7 @@ class ProfileController extends Controller
         Cache::put($pendingPasswordKey, $hashedPassword, now()->addMinutes(5));
 
         try {
-            $admin->notify(new SendVerificationCode());
+            $admin->notify(new SendVerificationCode);
         } catch (Throwable $exception) {
             Cache::forget($pendingPasswordKey);
 
@@ -121,7 +121,7 @@ class ProfileController extends Controller
      */
     public function verifyPasswordChange(VerifyPasswordChangeRequest $request): JsonResponse
     {
-        if (!app()->environment('production')) {
+        if (! app()->environment('production')) {
             return response()->json([
                 'success' => true,
                 'message' => 'تغییر رمز عبور در محیط غیر پروداکشن نیاز به تایید ندارد.',
@@ -132,17 +132,17 @@ class ProfileController extends Controller
         $pendingPasswordKey = $this->getPendingPasswordCacheKey($admin->id);
         $pendingPassword = Cache::get($pendingPasswordKey);
 
-        if (!$pendingPassword) {
+        if (! $pendingPassword) {
             return response()->json([
                 'success' => false,
                 'message' => 'درخواست تغییر رمز عبور یافت نشد یا منقضی شده است.',
             ], 422);
         }
 
-        $verifyCodeKey = 'verify.code.' . $admin->id;
+        $verifyCodeKey = 'verify.code.'.$admin->id;
         $cachedCode = Cache::get($verifyCodeKey);
 
-        if (!$cachedCode || !Hash::check($request->validated()['code'], $cachedCode)) {
+        if (! $cachedCode || ! Hash::check($request->validated()['code'], $cachedCode)) {
             return response()->json([
                 'success' => false,
                 'message' => 'کد تایید نامعتبر است یا منقضی شده است.',
@@ -164,8 +164,6 @@ class ProfileController extends Controller
 
     private function getPendingPasswordCacheKey(int $adminId): string
     {
-        return self::PENDING_PASSWORD_CACHE_PREFIX . $adminId;
+        return self::PENDING_PASSWORD_CACHE_PREFIX.$adminId;
     }
 }
-
-

@@ -15,16 +15,16 @@ class VersionController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $perPage = (int) $request->get('per_page', 10);
-        $page = (int) $request->get('page', 1);
-        $search = $request->get('search');
+        $perPage = (int) $request->input('per_page', 10);
+        $page = (int) $request->input('page', 1);
+        $search = $request->input('search');
 
         $query = Calendar::query()
             ->version()
             ->withCount('views')
             ->orderByDesc('id');
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($builder) use ($search) {
                 $builder->where('title', 'like', "%{$search}%")
                     ->orWhere('version_title', 'like', "%{$search}%")
@@ -81,7 +81,7 @@ class VersionController extends Controller
 
     public function destroy(Calendar $version): JsonResponse
     {
-        abort_if(!$version->is_version, 403, 'امکان حذف این ورژن وجود ندارد.');
+        abort_if(! $version->is_version, 403, 'امکان حذف این ورژن وجود ندارد.');
 
         $version->delete();
 
@@ -92,5 +92,3 @@ class VersionController extends Controller
         ]);
     }
 }
-
-

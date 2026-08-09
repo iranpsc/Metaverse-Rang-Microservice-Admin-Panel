@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, dev]
+  pull_request:
+    branches: [main, master, dev]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  tests:
+    name: Tests & Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: true
+      matrix:
+        php: ['8.3', '8.4']
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:2fl+Ktvkdu+F8fHJxkq8xG1pGq0xQb0m0k0Q5r5y5x8=
+      APP_URL: http://localhost
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      CACHE_STORE: array
+      CACHE_DRIVER: array
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+      MAIL_MAILER: array
+      TELESCOPE_ENABLED: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, bcmath, ctype, fileinfo, json, openssl, pdo, pdo_sqlite, sqlite3, tokenizer, xml, curl, redis, gd, zip, intl
+          coverage: pcov
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-${{ matrix.php }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress --optimize-autoloader
+
+      - name: Copy environment file
+        run: |
+          if [ ! -f .env ]; then
+            cp .env.example .env
+          fi
+          php artisan key:generate --force --no-interaction || true
+
+      - name: Run PHPUnit with coverage
+        run: |
+          mkdir -p coverage
+          php -d memory_limit=1G vendor/bin/phpunit \
+            --coverage-clover=coverage/clover.xml \
+            --coverage-text=coverage/coverage.txt \
+            --coverage-cobertura=coverage/cobertura.xml \
+            --colors=never
+
+      - name: Enforce coverage threshold (≥98%)
+        if: matrix.php == '8.4'
+        run: php scripts/check-coverage.php coverage/clover.xml 98
+
+      - name: Upload coverage artifacts
+        if: matrix.php == '8.4' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage/clover.xml
+            coverage/coverage.txt
+            coverage/cobertura.xml
+          retention-days: 14
+
+      - name: Publish coverage summary
+        if: matrix.php == '8.4' && always()
+        run: |
+          if [ -f coverage/coverage.txt ]; then
+            {
+              echo "## Test coverage"
+              echo ""
+              echo '```'
+              cat coverage/coverage.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Coverage PR comment
+        if: matrix.php == '8.4' && github.event_name == 'pull_request' && always()
+        continue-on-error: true
+        uses: orgoro/coverage@v3.2
+        with:
+          coverageFile: coverage/cobertura.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          thresholdAll: 98
+          thresholdNew: 90
+          thresholdModified: 90
+
+  frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Build frontend assets
+        run: npm run build

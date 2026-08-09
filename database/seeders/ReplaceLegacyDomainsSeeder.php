@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class ReplaceLegacyDomainsSeeder extends Seeder
 {
@@ -12,7 +11,7 @@ class ReplaceLegacyDomainsSeeder extends Seeder
      * URLs to replace.
      */
     private array $replacements = [
-        'https://api.rgb.irpsc.com'   => 'https://api.metarang.com',
+        'https://api.rgb.irpsc.com' => 'https://api.metarang.com',
         'https://admin.rgb.irpsc.com' => 'https://admin.metarang.com',
     ];
 
@@ -28,7 +27,7 @@ class ReplaceLegacyDomainsSeeder extends Seeder
         // Get all tables
         $tables = DB::select('SHOW TABLES');
 
-        $tableKey = 'Tables_in_' . $database;
+        $tableKey = 'Tables_in_'.$database;
 
         foreach ($tables as $tableObj) {
             $table = $tableObj->$tableKey;
@@ -58,7 +57,7 @@ class ReplaceLegacyDomainsSeeder extends Seeder
 
                     // Skip table update if old URL does not exist
                     $exists = DB::table($table)
-                        ->where($column, 'LIKE', '%' . $old . '%')
+                        ->where($column, 'LIKE', '%'.$old.'%')
                         ->exists();
 
                     if (! $exists) {
@@ -73,7 +72,7 @@ class ReplaceLegacyDomainsSeeder extends Seeder
                     ", [
                         $old,
                         $new,
-                        '%' . $old . '%',
+                        '%'.$old.'%',
                     ]);
 
                     $this->command?->info(

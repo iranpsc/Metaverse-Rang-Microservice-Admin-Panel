@@ -28,5 +28,3 @@ class UpdateVideoSubCategoryRequest extends FormRequest
         ];
     }
 }
-
-

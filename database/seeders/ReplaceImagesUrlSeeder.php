@@ -17,10 +17,10 @@ class ReplaceImagesUrlSeeder extends Seeder
     public function run(): void
     {
         $updated = DB::table('kycs')
-            ->where('melli_card', 'like', '%' . self::OLD_URL . '%')
+            ->where('melli_card', 'like', '%'.self::OLD_URL.'%')
             ->update([
                 'melli_card' => DB::raw(
-                    "REPLACE(melli_card, '" . self::OLD_URL . "', '" . self::NEW_URL . "')"
+                    "REPLACE(melli_card, '".self::OLD_URL."', '".self::NEW_URL."')"
                 ),
             ]);
 

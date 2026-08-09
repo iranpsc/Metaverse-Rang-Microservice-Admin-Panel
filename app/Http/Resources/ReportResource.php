@@ -12,7 +12,6 @@ class ReportResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param  Request  $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -34,8 +33,8 @@ class ReportResource extends JsonResource
                 return $this->images->map(function ($image) {
                     $url = $image->url;
 
-                    if ($url && !Str::startsWith($url, ['http://', 'https://'])) {
-                        $url = env('API_URL', 'https://api.metarang.com') . '/uploads/' . ltrim($url, '/');
+                    if ($url && ! Str::startsWith($url, ['http://', 'https://'])) {
+                        $url = env('API_URL', 'https://api.metarang.com').'/uploads/'.ltrim($url, '/');
                     }
 
                     return [
@@ -50,5 +49,3 @@ class ReportResource extends JsonResource
         ];
     }
 }
-
-

@@ -18,11 +18,13 @@ class LockedAsset extends Model
         'status',
     ];
 
-    public function user() {
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function assetable() {
+    public function assetable()
+    {
         return $this->morphTo();
     }
 }

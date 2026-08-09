@@ -11,7 +11,8 @@ class Prize extends Model
 
     protected $guarded = [];
 
-    public function level() {
+    public function level()
+    {
         return $this->belongsTo(Level::class);
     }
 }

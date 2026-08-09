@@ -2,7 +2,6 @@
 
 namespace App\Services\BulkMessage;
 
-use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Kavenegar\Exceptions\ApiException;
@@ -15,8 +14,7 @@ class KavenegarBulkSmsService
 
     public function __construct(
         private readonly MessagePlaceholderService $placeholderService
-    ) {
-    }
+    ) {}
 
     public function sendBulk(Collection $users, string $template, ?string $sendId = null): array
     {
@@ -105,9 +103,9 @@ class KavenegarBulkSmsService
         $normalized = preg_replace('/[\s\-()]/', '', $phone);
 
         if (str_starts_with($normalized, '+98')) {
-            $normalized = '0' . substr($normalized, 3);
+            $normalized = '0'.substr($normalized, 3);
         } elseif (str_starts_with($normalized, '98') && strlen($normalized) === 12) {
-            $normalized = '0' . substr($normalized, 2);
+            $normalized = '0'.substr($normalized, 2);
         }
 
         if (! preg_match('/^09\d{9}$/', $normalized)) {

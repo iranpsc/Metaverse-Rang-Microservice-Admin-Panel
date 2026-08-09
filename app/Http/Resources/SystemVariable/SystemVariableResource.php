@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources\SystemVariable;
 
+use App\Models\SystemVariable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\SystemVariable
+ * @mixin SystemVariable
  */
 class SystemVariableResource extends JsonResource
 {
@@ -30,5 +31,3 @@ class SystemVariableResource extends JsonResource
         ];
     }
 }
-
-

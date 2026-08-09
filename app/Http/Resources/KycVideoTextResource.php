@@ -10,7 +10,6 @@ class KycVideoTextResource extends JsonResource
     /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -23,4 +22,3 @@ class KycVideoTextResource extends JsonResource
         ];
     }
 }
-

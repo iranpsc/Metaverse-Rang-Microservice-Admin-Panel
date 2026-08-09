@@ -16,7 +16,21 @@
         <include>
             <directory>app</directory>
         </include>
+        <exclude>
+            <file>app/Providers/AppServiceProvider.php</file>
+            <file>app/Http/Controllers/Auth/RegisterController.php</file>
+            <file>app/Http/Controllers/Auth/VerificationController.php</file>
+            <file>app/Http/Controllers/Auth/ConfirmPasswordController.php</file>
+        </exclude>
     </source>
+    <coverage>
+        <report>
+            <clover outputFile="coverage/clover.xml"/>
+            <cobertura outputFile="coverage/cobertura.xml"/>
+            <html outputDirectory="coverage/html"/>
+            <text outputFile="coverage/coverage.txt" showUncoveredFiles="true" showOnlySummary="false"/>
+        </report>
+    </coverage>
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>

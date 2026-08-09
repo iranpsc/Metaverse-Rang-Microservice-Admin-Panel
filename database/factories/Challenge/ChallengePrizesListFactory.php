@@ -2,10 +2,11 @@
 
 namespace Database\Factories\Challenge;
 
+use App\Models\Challenge\ChallengePrizesList;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Challenge\ChallengePrizesList>
+ * @extends Factory<ChallengePrizesList>
  */
 class ChallengePrizesListFactory extends Factory
 {
