@@ -23,7 +23,8 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: ['8.3', '8.4']
+        # Lockfile resolves Symfony 8.x, which requires PHP >= 8.4.1
+        php: ['8.4']
 
     env:
       APP_ENV: testing
