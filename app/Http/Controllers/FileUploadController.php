@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class FileUploadController extends Controller
 {
-    public const ALLOWED_EXTENSIONS = ['bin', 'glb', 'gltf', 'png', 'jpeg', 'jpg', 'fbx', 'mp4'];
+    public const ALLOWED_EXTENSIONS = ['bin', 'glb', 'gltf', 'png', 'jpeg', 'gif', 'jpg', 'fbx', 'mp4'];
 
     public function upload(Request $request): JsonResponse
     {

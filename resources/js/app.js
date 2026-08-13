@@ -3,7 +3,7 @@ import { createPinia } from 'pinia';
 import Root from './components/Root.vue';
 import router from './router';
 import PrimeVue from 'primevue/config';
-import Aura from '@primevue/themes/aura';
+import Aura from '@primeuix/themes/aura';
 import 'simple-line-icons/css/simple-line-icons.css';
 
 function bootstrap() {

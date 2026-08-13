@@ -218,7 +218,7 @@
                     {{ fbxFileSummary || 'انتخاب فایل‌های مدل (تا ۲۰ فایل)' }}
                   </p>
                   <p class="text-xs text-[var(--theme-text-muted)]">
-                    bin, glb, gltf, png, jpeg, jpg, fbx — حداکثر ۳۰۰ مگابایت برای هر فایل
+                    bin, glb, gltf, png, jpeg, gif, jpg, fbx — حداکثر ۳۰۰ مگابایت برای هر فایل
                   </p>
                 </div>
                 <div class="flex shrink-0 items-center gap-2">
@@ -270,7 +270,7 @@
             title="بارگذاری فایل‌های مدل"
             subtitle="تا ۲۰ فایل را بکشید و رها کنید یا از مرورگر انتخاب کنید"
             :accept="MODEL_FILE_ACCEPT"
-            helper-text="فرمت‌های مجاز: bin, glb, gltf, png, jpeg, jpg, fbx — حداکثر ۲۰ فایل، هر فایل تا ۳۰۰ مگابایت"
+            helper-text="فرمت‌های مجاز: bin, glb, gltf, png, jpeg, gif, jpg, fbx — حداکثر ۲۰ فایل، هر فایل تا ۳۰۰ مگابایت"
             upload-label="بارگذاری فایل‌ها"
             chunk-upload
             chunk-target="/api/upload/chunk"
@@ -303,8 +303,8 @@ const loading = ref(true)
 const saving = ref(false)
 const error = ref(null)
 const showFbxUploadModal = ref(false)
-const ALLOWED_MODEL_FILE_TYPES = ['bin', 'glb', 'gltf', 'png', 'jpeg', 'jpg', 'fbx']
-const MODEL_FILE_ACCEPT = '.bin,.glb,.gltf,.png,.jpeg,.jpg,.fbx,image/png,image/jpeg'
+const ALLOWED_MODEL_FILE_TYPES = ['bin', 'glb', 'gltf', 'png', 'jpeg', 'gif', 'jpg', 'fbx']
+const MODEL_FILE_ACCEPT = '.bin,.glb,.gltf,.png,.jpeg,.gif,.jpg,.fbx,image/png,image/jpeg,image/gif'
 
 const fbxMaxFileSize = 300 * 1024 * 1024
 
