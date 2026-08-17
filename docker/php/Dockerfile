@@ -39,7 +39,7 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 # Runtime: PHP-FPM + application
 # -----------------------------------------------------------------------------
-FROM ${DOCKER_REGISTRY}/php:8.2-fpm-bookworm AS app
+FROM ${DOCKER_REGISTRY}/php:8.4-fpm-bookworm AS app
 
 ARG DOCKER_REGISTRY=docker.arvancloud.ir
 
