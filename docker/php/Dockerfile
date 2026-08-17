@@ -9,17 +9,33 @@ ARG DOCKER_REGISTRY=docker.arvancloud.ir
 # -----------------------------------------------------------------------------
 FROM ${DOCKER_REGISTRY}/composer:2 AS vendor
 
+ARG GITHUB_TOKEN=
+
 WORKDIR /app
 
 COPY composer.json composer.lock ./
 
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --prefer-dist \
-    --optimize-autoloader \
-    --no-scripts \
-    --ignore-platform-reqs
+# Prefer a regional Packagist mirror and retry: GitHub dist URLs often 429 on production hosts.
+RUN set -eux; \
+    if [ -n "$GITHUB_TOKEN" ]; then \
+        composer config -g github-oauth.github.com "$GITHUB_TOKEN"; \
+    fi; \
+    composer config -g repos.packagist composer "https://package-mirror.liara.ir/repository/composer/"; \
+    composer config -g github-protocols https; \
+    export COMPOSER_PROCESS_TIMEOUT=600; \
+    i=1; \
+    until composer install \
+        --no-dev \
+        --no-interaction \
+        --prefer-install=source \
+        --optimize-autoloader \
+        --no-scripts \
+        --ignore-platform-reqs; do \
+        if [ "$i" -ge 5 ]; then exit 1; fi; \
+        echo "composer install failed (attempt $i/5), retrying..."; \
+        i=$((i + 1)); \
+        sleep $((i * 10)); \
+    done
 
 # -----------------------------------------------------------------------------
 # Frontend assets (Vite)
@@ -84,12 +100,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         intl \
         ftp \
         opcache; \
-    docker-php-source extract; \
-    mkdir -p /usr/src/php/ext/redis; \
-    curl -fsSL https://github.com/phpredis/phpredis/archive/refs/tags/6.1.0.tar.gz \
-        | tar xz -C /usr/src/php/ext/redis --strip-components=1; \
-    docker-php-ext-install -j"$(nproc)" redis; \
-    docker-php-source delete; \
+    pecl install redis-6.1.0; \
+    docker-php-ext-enable redis; \
     apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
         $PHPIZE_DEPS \
         libfreetype6-dev \

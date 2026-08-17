@@ -55,6 +55,7 @@ services:
       dockerfile: docker/php/Dockerfile
       args:
         DOCKER_REGISTRY: *docker-registry
+        GITHUB_TOKEN: ${GITHUB_TOKEN:-}
     pull_policy: build
     ports:
       - "${APP_PORT:-8088}:8080"
