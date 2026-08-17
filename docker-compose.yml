@@ -1,55 +1,51 @@
-name: admin-panel
+name: ${COMPOSE_PROJECT_NAME:-admin-panel}
 
-# Single Compose file for production (Dokploy) and local use.
-#
-# Production / image-based (default):
-#   docker compose up -d --build
-#
-# Local with project-relative persistence (no /opt/metarang):
-#   Set in .env:
-#     HOST_STORAGE_PATH=./storage
-#     HOST_DATABASE_PATH=./database
-#   docker compose up -d --build
-#
-# Local live development (bind-mount source + build frontend assets):
-#   Set in .env:
-#     HOST_STORAGE_PATH=.
-#     HOST_STORAGE_TARGET=/var/www/html
-#     HOST_STORAGE_OPTIONS=:cached
-#     HOST_DATABASE_PATH=./database
-#     COMPOSE_PROFILES=dev
-#   docker compose up -d --build
-#
-# Queue worker + scheduler:
-#   docker compose --profile queue up -d
-#   (or COMPOSE_PROFILES=dev,queue)
+# Production Compose for Dokploy.
+# App source, Composer vendor, and Vite assets are baked by docker/php/Dockerfile.
+# Persist only Laravel storage and the SQLite database used by translations.
 
 x-docker-registry: &docker-registry ${DOCKER_REGISTRY:-docker.arvancloud.ir}
-x-php-image: &php-image admin-panel-php:local
+x-php-image: &php-image ${PHP_IMAGE:-admin-panel-php:production}
 
-# Dokploy defaults: /opt/metarang/{storage,database}.
-# Override HOST_* for local paths or full source bind-mount (see header).
 x-app-volumes: &app-volumes
   - ${HOST_STORAGE_PATH:-/opt/metarang/storage}:${HOST_STORAGE_TARGET:-/var/www/html/storage}${HOST_STORAGE_OPTIONS:-}
   - ${HOST_DATABASE_PATH:-/opt/metarang/database}:${HOST_DATABASE_TARGET:-/var/www/html/database}${HOST_DATABASE_OPTIONS:-}
-  - composer-cache:/tmp/composer-cache
+  - ./docker/php/production.ini:/usr/local/etc/php/conf.d/99-production.ini:ro
 
 x-php-environment: &php-environment
   COMPOSER_CACHE_DIR: /tmp/composer-cache
+  APP_ENV: ${APP_ENV:-production}
+  APP_KEY: ${APP_KEY:-}
+  APP_DEBUG: ${APP_DEBUG:-false}
+  APP_URL: ${APP_URL:-}
+  LOG_CHANNEL: ${LOG_CHANNEL:-stderr}
+  LOG_LEVEL: ${LOG_LEVEL:-error}
+  DB_CONNECTION: ${DB_CONNECTION:-mysql}
+  DB_HOST: ${DB_HOST:-}
+  DB_PORT: ${DB_PORT:-3306}
+  DB_DATABASE: ${DB_DATABASE:-}
+  DB_USERNAME: ${DB_USERNAME:-}
+  DB_PASSWORD: ${DB_PASSWORD:-}
+  CACHE_DRIVER: ${CACHE_DRIVER:-redis}
+  CACHE_STORE: ${CACHE_STORE:-redis}
+  SESSION_DRIVER: ${SESSION_DRIVER:-redis}
+  QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_PORT: ${REDIS_PORT:-6379}
+  FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
 
 x-app-common: &app-common
   image: *php-image
   restart: unless-stopped
   volumes: *app-volumes
   env_file:
-    - .env
+    - path: .env
+      required: false
   environment:
     <<: *php-environment
   init: true
-  extra_hosts:
-    - "host.docker.internal:host-gateway"
   networks:
-    - admin-panel
+    - admin-panel-private
 
 services:
   app:
@@ -64,15 +60,20 @@ services:
       - "${APP_PORT:-8088}:8080"
     environment:
       <<: *php-environment
-      APP_URL: ${APP_URL:-http://localhost:8088}
-      CACHE_DRIVER: file
-      SESSION_DRIVER: file
-      QUEUE_CONNECTION: database
-    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
+      PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
+    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080", "--no-reload"]
     depends_on:
-      node:
-        condition: service_completed_successfully
-        required: false
+      redis:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+      - admin-panel-private
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # One-shot Vite build against the bind-mounted tree (profile: dev).
   node:
@@ -88,36 +89,54 @@ services:
     profiles:
       - dev
     networks:
-      - admin-panel
+      - admin-panel-private
+
+  redis:
+    image: ${DOCKER_REGISTRY:-docker.arvancloud.ir}/redis:7-alpine
+    pull_policy: if_not_present
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - admin-panel-private
 
   queue:
     <<: *app-common
     pull_policy: never
-    command: php artisan queue:work database --sleep=3 --tries=3 --max-time=3600
+    command: ["php", "artisan", "queue:work", "redis", "--sleep=3", "--tries=3", "--max-time=3600"]
     environment:
       <<: *php-environment
-      QUEUE_CONNECTION: database
     depends_on:
       app:
-        condition: service_started
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     profiles:
       - queue
 
   scheduler:
     <<: *app-common
     pull_policy: never
-    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    command: ["sh", "-c", "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"]
     depends_on:
       app:
-        condition: service_started
+        condition: service_healthy
     profiles:
       - queue
 
 networks:
   dokploy-network:
-    external: True
+    external: true
+  admin-panel-private:
+    driver: bridge
 
 volumes:
-  composer-cache:
   node-modules:
   npm-cache:
+  redis-data:
