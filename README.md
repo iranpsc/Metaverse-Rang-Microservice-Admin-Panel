@@ -116,6 +116,20 @@ docker-compose.yml   Docker stack (local + production)
 
 More Docker detail: [docker/README.md](docker/README.md).
 
+## Translation management
+
+This is a CMS for **client (game) UI strings**, not Laravel `lang/` files for the admin panel. Data lives in **SQLite**. Access requires `translations-management` or `super-admin`.
+
+**Hierarchy:** locale (`Translation`: `fa`, `en`, …) → **modals** (screens) → **tabs** → **fields** (one string each). Each field shares a `unique_id` across locales; the `translation` value is per locale.
+
+**Catalog:** Allowed languages come from `public/lang/lang.json` (cached). RTL is inferred for `ar`, `fa`, `he`, and `ur`. Adding a locale copies the existing modal/tab/field tree with empty translations.
+
+**Sync:** Create, rename, or delete of a modal, tab, or field is applied to **all** languages in a SQLite transaction (matched by name / `unique_id`). Editing field text updates only that locale. The UI shows translated vs empty counts per modal and tab.
+
+**Export:** Builds `{unique_id: text}` JSON, writes `public/lang/{code}.json`, increments version, and sets `file_url` (`https://metarang.com/lang/{code}.json`). Locally the file is downloaded; otherwise it is uploaded via the FTP disk.
+
+**Operator flow:** `/translations` → language → modals → tabs → edit fields → export for the client app.
+
 ## License
 
 MIT (Laravel framework portions as upstream).
