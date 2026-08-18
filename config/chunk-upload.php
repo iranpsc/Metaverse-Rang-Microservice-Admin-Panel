@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @see https://github.com/pionl/laravel-chunk-upload
  */
@@ -25,11 +26,13 @@ return [
         ],
     ],
     'chunk' => [
-        // setup for the chunk naming setup to ensure same name upload at same time
+        // Chunk file naming. Prefer the client upload identifier (resumableIdentifier)
+        // over session/browser — session locking blocks parallel chunk requests during
+        // large merges in production and can prevent assembly from ever reaching 100%.
         'name' => [
             'use' => [
-                'session' => true, // should the chunk name use the session id? The uploader must send cookie!,
-                'browser' => false, // instead of session we can use the ip and browser?
+                'session' => false,
+                'browser' => false,
             ],
         ],
     ],

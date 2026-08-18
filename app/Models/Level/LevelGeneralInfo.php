@@ -12,4 +12,14 @@ class LevelGeneralInfo extends Model
     protected $guarded = [];
 
     public $timestamps = false;
+
+    protected $casts = [
+        'fbx_file' => 'array',
+        'has_animation' => 'boolean',
+        'score' => 'integer',
+        'rank' => 'integer',
+        'subcategories' => 'integer',
+        'points' => 'integer',
+        'lines' => 'integer',
+    ];
 }

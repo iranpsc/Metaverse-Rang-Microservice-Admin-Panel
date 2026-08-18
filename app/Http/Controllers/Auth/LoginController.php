@@ -3,10 +3,17 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Providers\RouteServiceProvider;
+use App\Http\Resources\AuthenticatedUserResource;
+use App\Services\ActivityLoggerService;
+use App\Services\PhoneVerificationSessionService;
+use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Foundation\Auth\ThrottlesLogins;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
@@ -28,15 +35,96 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = RouteServiceProvider::HOME;
+    protected $redirectTo = '/';
 
-    protected $maxAttemps = 3;
+    protected $maxAttempts = 3;
+
     protected $decayMinutes = 5;
 
-        /**
+    /**
+     * The user has been authenticated.
+     *
+     * @param  mixed  $user
+     * @return mixed
+     */
+    protected function authenticated(Request $request, $user)
+    {
+        Auth::guard('admin')->setUser($user);
+
+        ActivityLoggerService::logAuth('login', 'ورود موفق به سیستم', [
+            'email' => $user->email,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        $token = $user->createToken('auth-token', ['*'], now()->addHours(3))->plainTextToken;
+        $tokenExpiresAt = now()->addHours(3)->toIso8601String();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'ورود با موفقیت انجام شد',
+            'data' => [
+                'token' => $token,
+                'token_expires_at' => $tokenExpiresAt,
+            ],
+        ], 200);
+    }
+
+    /**
+     * Log the user out of the application.
+     *
+     * @return RedirectResponse|JsonResponse
+     */
+    public function logout(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user) {
+            Auth::guard('admin')->setUser($user);
+            app(PhoneVerificationSessionService::class)->clear($user->id);
+            ActivityLoggerService::logAuth('logout', 'خروج از سیستم', [
+                'email' => $user->email,
+                'ip' => $request->ip(),
+            ]);
+            $user->tokens()->delete();
+        }
+        $this->guard()->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'خروج با موفقیت انجام شد',
+        ], 200);
+    }
+
+    /**
+     * Get the authenticated user.
+     *
+     * @return JsonResponse
+     */
+    public function me(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'کاربر احراز هویت نشده است',
+            ], 401);
+        }
+
+        // Return user data without creating a new token
+        return response()->json([
+            'success' => true,
+            'data' => new AuthenticatedUserResource($user),
+        ], 200);
+    }
+
+    /**
      * Get the guard to be used during authentication.
      *
-     * @return \Illuminate\Contracts\Auth\StatefulGuard
+     * @return StatefulGuard
      */
     protected function guard()
     {
@@ -50,6 +138,19 @@ class LoginController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('guest')->except('logout');
+        $this->middleware('guest')->except(['logout', 'me']);
+    }
+
+    protected function sendFailedLoginResponse(Request $request)
+    {
+        ActivityLoggerService::logAuth('login_failed', 'تلاش ناموفق برای ورود', [
+            'email' => $request->input($this->username()),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        throw ValidationException::withMessages([
+            $this->username() => [trans('auth.failed')],
+        ]);
     }
 }

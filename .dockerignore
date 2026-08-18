@@ -1,0 +1,55 @@
+# VCS / IDE
+.git
+.github
+.idea
+.vscode
+.cursor
+agent-transcripts
+**/.DS_Store
+
+# Dependencies & build output (installed/built inside images or bind-mounted)
+node_modules
+vendor
+public/build
+public/hot
+public/uploads
+storage/debugbar
+*.log
+
+# Runtime / local state
+bootstrap/cache/*.php
+!bootstrap/cache/.gitignore
+storage/logs/*
+!storage/logs/.gitignore
+storage/framework/cache/*
+!storage/framework/cache/.gitignore
+storage/framework/sessions/*
+!storage/framework/sessions/.gitignore
+storage/framework/views/*
+!storage/framework/views/.gitignore
+storage/app/public/*
+!storage/app/public/.gitignore
+.env
+.env.*
+!.env.example
+.phpunit.result.cache
+npm-debug.log*
+yarn-error.log*
+auth.json
+
+# Docs & tooling not needed in image layers
+*.md
+docker-compose*.yml
+.dockerignore
+.editorconfig
+.php-cs-fixer*
+phpstan*
+pint.json
+Homestead.json
+Homestead.yaml
+admin-laravel-worker.conf
+admin-worker.log
+tests
+.phpunit*
+phpunit.xml
+phpunit.xml.dist

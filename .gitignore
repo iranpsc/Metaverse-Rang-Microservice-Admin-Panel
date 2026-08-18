@@ -7,6 +7,7 @@
 .env
 .env.backup
 .phpunit.result.cache
+/coverage
 Homestead.json
 Homestead.yaml
 auth.json
@@ -18,3 +19,7 @@ yarn-error.log
 admin-laravel-worker.conf
 admin-worker.log
 public/uploads
+/.cursor
+.htaccess
+/public/lang/*
+!/public/lang/lang.json

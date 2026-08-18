@@ -2,10 +2,11 @@
 
 namespace Database\Factories\Challenge;
 
+use App\Models\Challenge\QuestionPrize;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Challenge\QuestionPrize>
+ * @extends Factory<QuestionPrize>
  */
 class QuestionPrizeFactory extends Factory
 {
@@ -17,7 +18,7 @@ class QuestionPrizeFactory extends Factory
     public function definition()
     {
         return [
-            'amount' => random_int(1000,2000),
+            'amount' => random_int(1000, 2000),
         ];
     }
 }

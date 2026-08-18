@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('maps', function(Blueprint $table) {
+        Schema::table('maps', function (Blueprint $table) {
             $table->dropColumn('type');
             $table->string('karbari');
             $table->date('publish_date');

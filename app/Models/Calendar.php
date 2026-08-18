@@ -31,18 +31,22 @@ class Calendar extends Model
         return $query->where('is_version', false);
     }
 
-    public function interactions() {
+    public function interactions()
+    {
         return $this->morphMany(Interaction::class, 'likeable');
     }
 
-    public function views() {
+    public function views()
+    {
         return $this->morphMany(View::class, 'viewable');
     }
 
     public function getStatus()
     {
-        if($this->is_version) return '---';
+        if ($this->is_version) {
+            return '---';
+        }
+
         return $this->ends_at < now() ? 'سپری شده' : 'در حال برگزاری';
     }
 }
-

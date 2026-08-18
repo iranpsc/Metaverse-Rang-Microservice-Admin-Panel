@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Trade;
 
 class Comission extends Model
 {
@@ -12,10 +11,11 @@ class Comission extends Model
 
     protected $fillable = [
         'trade_id',
-        'amount'
+        'amount',
     ];
 
-    public function trade() {
+    public function trade()
+    {
         return $this->belongsTo(Trade::class);
     }
 }

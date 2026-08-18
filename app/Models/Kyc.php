@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Kyc extends Model
 {
@@ -26,7 +27,7 @@ class Kyc extends Model
     /**
      * Get the user that owns the Kyc.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function user()
     {
@@ -51,7 +52,7 @@ class Kyc extends Model
     /**
      * Get the verify text that owns the Kyc.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function verifyText()
     {

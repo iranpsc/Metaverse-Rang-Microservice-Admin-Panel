@@ -24,5 +24,4 @@ class Modal extends Model
     {
         return $this->hasMany(Tab::class);
     }
-
 }

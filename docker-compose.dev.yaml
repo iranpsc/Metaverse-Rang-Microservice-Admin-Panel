@@ -1,0 +1,159 @@
+name: admin-panel-dev
+
+x-app-environment: &app-environment
+  APP_ENV: ${APP_ENV:-local}
+  APP_DEBUG: ${APP_DEBUG:-true}
+  APP_URL: ${APP_URL:-http://localhost:8080}
+  DB_CONNECTION: mysql
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_DATABASE: ${DB_DATABASE:-admin_panel}
+  DB_USERNAME: ${DB_USERNAME:-root}
+  DB_PASSWORD: ${DB_PASSWORD:-secret}
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  MAIL_MAILER: smtp
+  MAIL_HOST: mailpit
+  MAIL_PORT: 1025
+  CACHE_DRIVER: redis
+  SESSION_DRIVER: redis
+  QUEUE_CONNECTION: redis
+
+x-php-service: &php-service
+  image: ${PHP_IMAGE:-admin-panel-php:dev}
+  build:
+    context: .
+    dockerfile: docker/php/Dockerfile
+  restart: unless-stopped
+  init: true
+  volumes:
+    - .:/var/www/html
+  environment:
+    <<: *app-environment
+    # Parallel workers for PHP built-in server (asset requests no longer serialize).
+    PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
+  networks:
+    - admin-panel
+  depends_on:
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  app:
+    <<: *php-service
+    ports:
+      - "${APP_PORT:-8080}:8000"
+    # --no-reload is required for PHP_CLI_SERVER_WORKERS to take effect.
+    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS --max-time 30 http://127.0.0.1:8000/ >/dev/null || exit 1"]
+      interval: 20s
+      timeout: 30s
+      retries: 6
+      start_period: 180s
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-admin_panel}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    networks:
+      - admin-panel
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_REDIS_PORT:-6379}:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks:
+      - admin-panel
+
+  node:
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+      # Linux-native deps (host Windows node_modules cannot run Rolldown/Vite in Alpine).
+      - node_modules:/var/www/html/node_modules
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - admin-panel
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_MAIL_PORT:-1025}:1025"
+      - "${FORWARD_MAIL_DASHBOARD_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8025/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - admin-panel
+
+  queue:
+    <<: *php-service
+    command: ["php", "artisan", "queue:work", "redis", "--sleep=3", "--tries=3", "--max-time=3600"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+    profiles:
+      - queue
+
+  scheduler:
+    <<: *php-service
+    command: ["sh", "-c", "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      app:
+        condition: service_healthy
+    profiles:
+      - queue
+
+volumes:
+  mysql-data:
+  redis-data:
+  node_modules:
+
+networks:
+  admin-panel:
+    driver: bridge

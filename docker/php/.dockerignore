@@ -1,0 +1,2 @@
+# Build context is the project root; root .dockerignore applies.
+# This file is unused when dockerfile is docker/php/Dockerfile with context: .

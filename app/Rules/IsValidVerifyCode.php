@@ -4,8 +4,8 @@ namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 
 class IsValidVerifyCode implements Rule
 {
@@ -28,7 +28,7 @@ class IsValidVerifyCode implements Rule
      */
     public function passes($attribute, $value)
     {
-        return Hash::check($value, Cache::get('verify.code.' . Auth::guard('admin')->id()));
+        return Hash::check($value, Cache::get('verify.code.'.Auth::guard('admin')->id()));
     }
 
     /**

@@ -15,11 +15,21 @@ return [
     |
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'translations/*', 'uploads/*'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => [
+        'https://metarang.com',
+        'https://world.metarang.com',
+        'https://admin.metarang.com',
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://localhost:5175',
+        'http://localhost:5174',
+        'https://dev-reactjs.metarang.com',
+        'https://dev-nextjs.metarang.com',
+    ],
 
     'allowed_origins_patterns' => [],
 

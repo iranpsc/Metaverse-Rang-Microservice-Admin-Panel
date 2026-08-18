@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Cr $cr
- * @package App\Models
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|CrsProperty newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|CrsProperty newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|CrsProperty query()
@@ -27,25 +27,27 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|CrsProperty whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|CrsProperty whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|CrsProperty whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class CrsProperty extends Model
 {
-	protected $table = 'crs_properties';
-	public $incrementing = false;
+    protected $table = 'crs_properties';
 
-	protected $casts = [
-		'id' => 'int',
-		'crs_id' => 'int'
-	];
+    public $incrementing = false;
 
-	protected $fillable = [
-		'crs_id',
-		'name'
-	];
+    protected $casts = [
+        'id' => 'int',
+        'crs_id' => 'int',
+    ];
 
-	public function crs()
-	{
-		return $this->belongsTo(Crs::class, 'crs_id');
-	}
+    protected $fillable = [
+        'crs_id',
+        'name',
+    ];
+
+    public function crs()
+    {
+        return $this->belongsTo(Crs::class, 'crs_id');
+    }
 }

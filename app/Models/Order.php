@@ -13,7 +13,8 @@ class Order extends Model
         'asset', 'amount', 'user_id', 'status',
     ];
 
-    public function transactions() {
-	    return $this->morphOne(Transaction::class , 'payable');
+    public function transactions()
+    {
+        return $this->morphOne(Transaction::class, 'payable');
     }
 }

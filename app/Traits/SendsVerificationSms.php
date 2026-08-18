@@ -5,6 +5,7 @@ namespace App\Traits;
 use App\Models\Admin;
 use App\Notifications\SendVerificationCode;
 use Illuminate\Support\Facades\Auth;
+
 trait SendsVerificationSms
 {
     public $phone_verification;

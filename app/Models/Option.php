@@ -6,21 +6,21 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Option extends Model
 {
-	protected $table = 'options';
+    protected $table = 'options';
 
-	protected $fillable = [
-		'asset',
-		'amount',
+    protected $fillable = [
+        'asset',
+        'amount',
         'note',
-        'code'
-	];
+        'code',
+    ];
 
-    public function variable() {
+    public function variable()
+    {
         return $this->hasOne(Variable::class);
     }
 
@@ -44,5 +44,4 @@ class Option extends Model
             'irr' => 'ریال',
         };
     }
-
 }

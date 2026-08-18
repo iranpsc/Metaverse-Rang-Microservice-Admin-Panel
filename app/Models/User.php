@@ -4,27 +4,23 @@ namespace App\Models;
 
 use App\Models\Challenge\UserChallengePrizes;
 use App\Models\Challenge\UserQuestionAnswer;
+use App\Models\Level\Level;
 use App\Models\Level\UserLog;
+use App\Models\User\UserActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use App\Models\SellFeatureRequests;
-use App\Models\Note;
-use App\Models\User\UserActivity;
 
 class User extends Authenticatable
 {
-    use Notifiable, HasFactory, HasApiTokens;
-
-    protected $dates = [
-        'email_verified_at'
-    ];
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $hidden = [
         'password',
-        'remember_token'
+        'remember_token',
     ];
 
     protected $fillable = [
@@ -34,21 +30,34 @@ class User extends Authenticatable
         'password',
         'remember_token',
         'ip',
+        'phone',
+        'code',
+        'wallet_address',
     ];
 
-    public function assets()
+    /**
+     * The attributes that should be cast to native types.
+     */
+    protected function casts(): array
     {
-        return $this->hasOne(Asset::class);
+        return [
+            'email_verified_at' => 'datetime',
+        ];
+    }
+
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
     }
 
     public function getHasReferenceAttribute()
     {
-        return !empty($this->referrer()->first());
+        return ! empty($this->referrer()->first());
     }
 
     public function ownField(Feature $feature)
     {
-        return ($feature->owner_id == $this->id);
+        return $feature->owner_id == $this->id;
     }
 
     public function features()
@@ -58,7 +67,7 @@ class User extends Authenticatable
 
     public function sellRequests()
     {
-        return $this->hasMany(SellFeatureRequests::class, 'seller_id');
+        return $this->hasMany(SellFeatureRequest::class, 'seller_id');
     }
 
     public function buyRequests()
@@ -107,50 +116,58 @@ class User extends Authenticatable
         return $this->belongsToMany(__CLASS__, 'follows', 'follower_id', 'following_id');
     }
 
-    public function tickets() {
+    public function tickets()
+    {
         return $this->hasMany(Ticket::class);
     }
 
-    public function recievedTickets() {
+    public function recievedTickets()
+    {
         return $this->hasMany(Ticket::class, 'reciever_id');
     }
 
-    public function notes() {
+    public function notes()
+    {
         return $this->hasMany(Note::class);
     }
 
-    public function kyc() {
+    public function kyc()
+    {
         return $this->hasOne(Kyc::class);
     }
 
-    public function settings() {
+    public function settings()
+    {
         return $this->hasOne(Setting::class);
     }
 
-    public function generalSettings() {
+    public function generalSettings()
+    {
         return $this->hasOne(GeneralSetting::class);
     }
 
-    public function log() {
+    public function log()
+    {
         return $this->hasOne(UserLog::class);
     }
 
-    public function activities() {
+    public function levels(): BelongsToMany
+    {
+        return $this->belongsToMany(Level::class, 'level_user')
+            ->withTimestamps()
+            ->orderByPivot('created_at', 'asc');
+    }
+
+    public function activities()
+    {
         return $this->hasMany(UserActivity::class);
     }
 
-
-    /**
-     * @return HasMany
-     */
     public function userChallengePrizes(): HasMany
     {
         return $this->hasMany(UserChallengePrizes::class);
     }
 
-    /**
-     * @return HasMany
-     */
     public function userQuestionAnswer(): HasMany
     {
         return $this->hasMany(related: UserQuestionAnswer::class);
@@ -165,5 +182,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(Payment::class);
     }
-
 }

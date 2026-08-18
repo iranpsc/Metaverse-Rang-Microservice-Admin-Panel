@@ -15,16 +15,16 @@ return new class extends Migration
     {
         Schema::create('permissions', function (Blueprint $table) {
             $table->id();
-            $table->boolean("BFR");
-            $table->boolean("SF");
-            $table->boolean("W");
-            $table->boolean("JU");
-            $table->boolean( "DM");
-            $table->boolean("PIUP");
-            $table->boolean("PITC");
-            $table->boolean("PIC");
-            $table->boolean("ESOO");
-            $table->boolean("COTB");
+            $table->boolean('BFR');
+            $table->boolean('SF');
+            $table->boolean('W');
+            $table->boolean('JU');
+            $table->boolean('DM');
+            $table->boolean('PIUP');
+            $table->boolean('PITC');
+            $table->boolean('PIC');
+            $table->boolean('ESOO');
+            $table->boolean('COTB');
 
             $table->timestamps();
         });

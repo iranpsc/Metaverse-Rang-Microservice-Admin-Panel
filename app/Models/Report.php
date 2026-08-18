@@ -9,14 +9,14 @@ class Report extends Model
 {
     use HasFactory;
 
-    protected $table = "reports";
+    protected $table = 'reports';
 
     protected $fillable = [
         'subject',
         'title',
         'content',
         'url',
-        'user_id'
+        'user_id',
     ];
 
     public function user()

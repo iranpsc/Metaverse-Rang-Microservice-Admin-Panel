@@ -9,13 +9,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
-use Spatie\Permission\Traits\HasPermissions;
 use Illuminate\Support\Collection;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasPermissions;
+use Spatie\Permission\Traits\HasRoles;
 
 class Admin extends Authenticatable
 {
-    use Notifiable, HasFactory, HasRoles, HasPermissions;
+    use HasApiTokens, HasFactory, HasPermissions, HasRoles, Notifiable;
 
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -23,7 +24,7 @@ class Admin extends Authenticatable
 
     protected $hidden = [
         'password',
-        'remember_token'
+        'remember_token',
     ];
 
     protected $fillable = [
@@ -33,14 +34,23 @@ class Admin extends Authenticatable
         'password',
         'phone',
         'active',
-        'access_password',
-        'image'
+        'image',
     ];
 
     protected $attributes = [
         'image' => 'noimage.png',
-        'active' => 1
+        'active' => 1,
     ];
+
+    /**
+     * Get the guard name for the model.
+     * This is used by Spatie Permission package to determine which guard to use for roles/permissions.
+     * Must match one of the guards defined in config/auth.php ('web' or 'admin').
+     */
+    public function getGuardName(): string
+    {
+        return 'admin';
+    }
 
     public function getRoleTitles(): Collection
     {
