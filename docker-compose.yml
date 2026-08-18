@@ -4,7 +4,6 @@ name: ${COMPOSE_PROJECT_NAME:-admin-panel}
 # App source, Composer vendor, and Vite assets are baked by docker/php/Dockerfile.
 # Persist only Laravel storage and the SQLite database used by translations.
 
-x-docker-registry: &docker-registry ${DOCKER_REGISTRY:-docker.arvancloud.ir}
 x-php-image: &php-image ${PHP_IMAGE:-admin-panel-php:production}
 
 x-app-volumes: &app-volumes
@@ -54,7 +53,6 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
       args:
-        DOCKER_REGISTRY: *docker-registry
         GITHUB_TOKEN: ${GITHUB_TOKEN:-}
     pull_policy: build
     ports:
@@ -78,7 +76,7 @@ services:
 
   # One-shot Vite build against the bind-mounted tree (profile: dev).
   node:
-    image: ${DOCKER_REGISTRY:-docker.arvancloud.ir}/node:22-alpine
+    image: node:22-alpine
     pull_policy: if_not_present
     restart: "no"
     working_dir: /var/www/html
@@ -93,7 +91,7 @@ services:
       - admin-panel-private
 
   redis:
-    image: ${DOCKER_REGISTRY:-docker.arvancloud.ir}/redis:7-alpine
+    image: redis:7-alpine
     pull_policy: if_not_present
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]

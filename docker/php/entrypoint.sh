@@ -26,7 +26,7 @@ fi
 
 # Named volumes / host bind-mounts can retain stale package caches from --dev installs.
 # Always rediscover so providers match the vendor tree in this container.
-rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
+rm -f bootstrap/cache/packages.php bootstrap/cache/services.php bootstrap/cache/config.php bootstrap/cache/routes*.php
 php artisan package:discover --ansi --no-interaction
 
 # Ensure APP_KEY is available. Prefer writing into a mounted .env; otherwise export

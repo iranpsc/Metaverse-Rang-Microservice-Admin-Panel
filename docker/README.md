@@ -1,6 +1,15 @@
 # Docker
 
-One Compose file: `docker-compose.yml` (production + local).
+Two Compose files:
+
+| File | Purpose |
+| --- | --- |
+| `docker-compose.yml` | Production (Dokploy / local smoke test) |
+| `docker-compose.dev.yaml` | Local development (MySQL, Redis, Mailpit, Vite HMR) |
+
+Both build `docker/php/Dockerfile` with **context at the project root** (where `artisan` lives).
+
+Base images are pulled from **Docker Hub**: `php:8.4-fpm-bookworm`, `composer:2`, `node:22-alpine`, `redis:7-alpine`, `mysql:8.0`, `axllent/mailpit:v1.21`.
 
 ## Production build (verified locally)
 
@@ -16,6 +25,12 @@ sudo mkdir -p \
   /opt/metarang/storage/logs
 sudo chown -R 33:33 /opt/metarang
 sudo chmod -R ug+rwX /opt/metarang
+```
+
+On Dokploy, the external network `dokploy-network` is created automatically. For a **local** production smoke test, create it once:
+
+```bash
+docker network create dokploy-network
 ```
 
 Then:
@@ -138,7 +153,7 @@ Translation models use a separate **sqlite** connection at `database/database.sq
 2. In Dokploy, attach your domain to the `app` service and enable HTTPS (Traefik/Caddy as configured by Dokploy).
 3. Set `APP_URL` to that public HTTPS URL (upload URLs are `{APP_URL}/uploads/...`).
 
-Optional: stop publishing Redis to the host in production by removing the `redis.ports` mapping in a Dokploy override, or leave it and firewall the port.
+Production Redis is **not** published to the host; it is reachable only on the internal `admin-panel-private` network.
 
 ### 6. Deploy
 
@@ -180,30 +195,51 @@ curl -I https://your-domain.example
 
 | Topic | Detail |
 | --- | --- |
-| Compose file | Single **`docker-compose.yml`** for Dokploy and local |
-| Local bind-mount | Set `HOST_STORAGE_PATH=.` + `HOST_STORAGE_TARGET=/var/www/html` and `COMPOSE_PROFILES=dev` |
-| Registry | Default base images: `docker.arvancloud.ir`. Override with `DOCKER_REGISTRY` if needed |
+| Compose files | **`docker-compose.yml`** (production) · **`docker-compose.dev.yaml`** (local dev) |
+| Dockerfile context | Project root for both compose files (`context: .`, `dockerfile: docker/php/Dockerfile`) |
+| Base images | Official Docker Hub: `php`, `composer`, `node`, `redis`, `mysql`, `mailpit` |
+| Local prod bind-mount | Set `HOST_STORAGE_PATH=.` + `HOST_STORAGE_TARGET=/var/www/html` and `COMPOSE_PROFILES=dev` on `docker-compose.yml` |
 | Persistence | Host `/opt/metarang/{storage,database}` by default; override with `HOST_*` |
-| Redis ports | Published on `127.0.0.1` only (`FORWARD_REDIS_PORT`) |
+| External network | Production `app` joins **`dokploy-network`** (external); create it locally before smoke tests |
 | SQLite | `pdo_sqlite` enabled; Translation models use `database/database.sqlite` |
 | Uploads | `storage/app/public` ↔ `public/uploads` (created by entrypoint `storage:link`) |
-| MySQL | Not in this compose file — provide externally |
+| MySQL | Not in production compose — provide externally; included in dev compose |
+| Bootstrap cache | Entrypoint clears stale `bootstrap/cache/*.php` on startup (avoids provider mismatches on bind mounts) |
 | `artisan serve` | Fine for small deployments; for heavy traffic prefer php-fpm + nginx later |
 
 ## Local development
 
-Image-based (same as production, project paths):
-
-```env
-HOST_STORAGE_PATH=./storage
-HOST_DATABASE_PATH=./database
-```
+Use **`docker-compose.dev.yaml`**. It bind-mounts the project tree, runs MySQL/Redis/Mailpit, and starts Vite on port 5173.
 
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.dev.yaml up -d --build
 ```
 
-Live source bind-mount + Vite asset build (`dev` profile):
+Default URLs:
+
+| Service | URL |
+| --- | --- |
+| App | http://localhost:8080 |
+| Vite | http://localhost:5173 |
+| Mailpit UI | http://localhost:8025 |
+
+Optional queue worker + scheduler:
+
+```bash
+docker compose -f docker-compose.dev.yaml --profile queue up -d
+```
+
+Stop the stack:
+
+```bash
+docker compose -f docker-compose.dev.yaml down
+```
+
+On Windows bind mounts, the first app health check can take 1–3 minutes; the compose file uses an extended `start_period` for this.
+
+### Production compose with live source (optional)
+
+To bind-mount source on **`docker-compose.yml`** and run a one-shot Vite build instead of the dev stack:
 
 ```env
 HOST_STORAGE_PATH=.
@@ -214,6 +250,7 @@ COMPOSE_PROFILES=dev
 ```
 
 ```bash
+docker network create dokploy-network   # if missing locally
 docker compose up -d --build
 ```
 

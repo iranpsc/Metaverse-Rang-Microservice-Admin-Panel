@@ -20,10 +20,12 @@ x-app-environment: &app-environment
   QUEUE_CONNECTION: redis
 
 x-php-service: &php-service
+  image: ${PHP_IMAGE:-admin-panel-php:dev}
   build:
-    context: ./docker/php
-    dockerfile: Dockerfile
+    context: .
+    dockerfile: docker/php/Dockerfile
   restart: unless-stopped
+  init: true
   volumes:
     - .:/var/www/html
   environment:
@@ -36,7 +38,7 @@ x-php-service: &php-service
     mysql:
       condition: service_healthy
     redis:
-      condition: service_started
+      condition: service_healthy
 
 services:
   app:
@@ -45,6 +47,12 @@ services:
       - "${APP_PORT:-8080}:8000"
     # --no-reload is required for PHP_CLI_SERVER_WORKERS to take effect.
     command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS --max-time 30 http://127.0.0.1:8000/ >/dev/null || exit 1"]
+      interval: 20s
+      timeout: 30s
+      retries: 6
+      start_period: 180s
 
   mysql:
     image: mysql:8.0
@@ -73,8 +81,14 @@ services:
     restart: unless-stopped
     ports:
       - "${FORWARD_REDIS_PORT:-6379}:6379"
+    command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
     networks:
       - admin-panel
 
@@ -92,16 +106,22 @@ services:
     environment:
       CHOKIDAR_USEPOLLING: "true"
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     networks:
       - admin-panel
 
   mailpit:
-    image: axllent/mailpit:latest
+    image: axllent/mailpit:v1.21
     restart: unless-stopped
     ports:
       - "${FORWARD_MAIL_PORT:-1025}:1025"
       - "${FORWARD_MAIL_DASHBOARD_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8025/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     networks:
       - admin-panel
 
@@ -112,9 +132,9 @@ services:
       mysql:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
       app:
-        condition: service_started
+        condition: service_healthy
     profiles:
       - queue
 
@@ -125,7 +145,7 @@ services:
       mysql:
         condition: service_healthy
       app:
-        condition: service_started
+        condition: service_healthy
     profiles:
       - queue
 

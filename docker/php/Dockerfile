@@ -1,13 +1,11 @@
-# syntax=docker.arvancloud.ir/docker/dockerfile:1
+# syntax=docker/dockerfile:1
 # Production PHP image with Laravel app baked in.
 # Build with context at the project root (see docker-compose.yml).
-
-ARG DOCKER_REGISTRY=docker.arvancloud.ir
 
 # -----------------------------------------------------------------------------
 # Composer dependencies
 # -----------------------------------------------------------------------------
-FROM ${DOCKER_REGISTRY}/composer:2 AS vendor
+FROM composer:2 AS vendor
 
 ARG GITHUB_TOKEN=
 
@@ -40,7 +38,7 @@ RUN set -eux; \
 # -----------------------------------------------------------------------------
 # Frontend assets (Vite)
 # -----------------------------------------------------------------------------
-FROM ${DOCKER_REGISTRY}/node:22-alpine AS frontend
+FROM node:22-alpine AS frontend
 
 WORKDIR /app
 
@@ -55,9 +53,7 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 # Runtime: PHP-FPM + application
 # -----------------------------------------------------------------------------
-FROM ${DOCKER_REGISTRY}/php:8.4-fpm-bookworm AS app
-
-ARG DOCKER_REGISTRY=docker.arvancloud.ir
+FROM php:8.4-fpm-bookworm AS app
 
 # Runtime libs stay; *-dev and $PHPIZE_DEPS are purged after compile.
 # Apt cache mounts speed rebuilds without bloating layers (Docker BuildKit).
@@ -100,8 +96,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         intl \
         ftp \
         opcache; \
-    pecl install redis-6.1.0; \
+    curl -fsSL -o /tmp/redis.tgz https://github.com/phpredis/phpredis/archive/refs/tags/6.2.0.tar.gz; \
+    tar xzf /tmp/redis.tgz -C /tmp; \
+    cd /tmp/phpredis-6.2.0; \
+    phpize; \
+    ./configure; \
+    make -j"$(nproc)"; \
+    make install; \
     docker-php-ext-enable redis; \
+    rm -rf /tmp/redis.tgz /tmp/phpredis-6.2.0; \
     apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
         $PHPIZE_DEPS \
         libfreetype6-dev \
