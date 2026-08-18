@@ -66,8 +66,12 @@
         ],
         "test:coverage": [
             "@php -r \"is_dir('coverage') || mkdir('coverage', 0777, true);\"",
-            "@php -d memory_limit=1G vendor/bin/phpunit --coverage-clover=coverage/clover.xml --coverage-text=coverage/coverage.txt",
+            "@php -d memory_limit=1G vendor/bin/phpunit --coverage-clover=coverage/clover.xml --coverage-text=coverage/coverage.txt --log-junit=coverage/junit.xml --testdox-text=coverage/testdox.txt",
             "@php scripts/check-coverage.php coverage/clover.xml 98"
+        ],
+        "test:ci": [
+            "@test:coverage",
+            "@php scripts/summarize-tests.php coverage/junit.xml coverage/clover.xml"
         ]
     },
     "extra": {

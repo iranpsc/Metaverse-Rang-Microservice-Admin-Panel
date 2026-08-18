@@ -78,9 +78,12 @@ jobs:
           php -d memory_limit=1G vendor/bin/phpunit \
             --coverage-clover=coverage/clover.xml \
             --coverage-text=coverage/coverage.txt \
+            --log-junit=coverage/junit.xml \
+            --testdox-text=coverage/testdox.txt \
             --colors=never
 
       - name: Enforce coverage threshold (≥98%)
+        if: always() && hashFiles('coverage/clover.xml') != ''
         id: coverage-gate
         run: |
           {
@@ -91,6 +94,10 @@ jobs:
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
+      - name: Publish categorized test summary
+        if: always()
+        run: php scripts/summarize-tests.php coverage/junit.xml coverage/clover.xml >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upload coverage artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -99,7 +106,10 @@ jobs:
           path: |
             coverage/clover.xml
             coverage/coverage.txt
+            coverage/junit.xml
+            coverage/testdox.txt
           retention-days: 14
+          if-no-files-found: warn
 
   frontend:
     name: Frontend Build
