@@ -5,7 +5,7 @@ import path from 'path';
 
 export default defineConfig({
     build: {
-        // @ckeditor/ckeditor5-build-classic is ~1.3 MiB minified; splitting it out still leaves a chunk over 500 KiB.
+        // ckeditor5 is a large bundle; splitting it out still leaves a chunk over 500 KiB.
         chunkSizeWarningLimit: 1536,
         rolldownOptions: {
             checks: {
@@ -19,14 +19,11 @@ export default defineConfig({
                     // Only split the prebuilt editor. Matching every path with "ckeditor" also
                     // catches @ckeditor/ckeditor5-vue and merges it into this chunk, which makes
                     // the app entry statically import from ckeditor-*.js and loads ~1.5MB on login.
-                    if (id.includes('@ckeditor/ckeditor5-build-classic')) {
+                    if (id.includes('/ckeditor5/') || id.includes('\\ckeditor5\\')) {
                         return 'ckeditor';
                     }
                     if (id.includes('@primevue') || id.includes('/primevue/')) {
                         return 'primevue';
-                    }
-                    if (id.includes('quill')) {
-                        return 'quill';
                     }
                     if (id.includes('jquery') || id.includes('select2')) {
                         return 'jquery';

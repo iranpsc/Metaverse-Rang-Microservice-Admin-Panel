@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      frontend-production:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@vitejs/*"
+          - "vite"
+          - "laravel-vite-plugin"
+          - "postcss"
+          - "sass"
+          - "baseline-browser-mapping"
+      frontend-development:
+        patterns:
+          - "@vitejs/*"
+          - "vite"
+          - "laravel-vite-plugin"
+          - "postcss"
+          - "sass"
+          - "baseline-browser-mapping"
+
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

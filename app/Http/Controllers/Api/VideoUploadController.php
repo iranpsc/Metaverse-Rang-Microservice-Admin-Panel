@@ -11,6 +11,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VideoUploadController extends Controller
 {
+    public const ALLOWED_EXTENSIONS = ['mp4', 'webm', 'mov', 'm4v', 'avi', 'mkv'];
+
     public function __invoke(Request $request): JsonResponse
     {
         $request->validate([
@@ -23,7 +25,17 @@ class VideoUploadController extends Controller
 
         if ($fileReceived->isFinished()) {
             $file = $fileReceived->getFile();
-            $extension = $file->getClientOriginalExtension();
+            $extension = strtolower((string) $file->getClientOriginalExtension());
+
+            if (! in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+                @unlink($file->getPathname());
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'فرمت ویدیو مجاز نیست. فرمت‌های مجاز: '.implode(', ', self::ALLOWED_EXTENSIONS),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
             $fileName = md5(uniqid((string) time(), true)).'.'.$extension;
 
             $path = $file->storeAs('resumable-tmp', $fileName);

@@ -14,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Storage;
 
 class ImportMaps implements ShouldQueue
 {
@@ -35,7 +36,8 @@ class ImportMaps implements ShouldQueue
      */
     public function handle()
     {
-        $file = file_get_contents(public_path('/uploads/maps/'.$this->map->fileName));
+        $fileName = basename(str_replace('\\', '/', (string) $this->map->fileName));
+        $file = file_get_contents(Storage::disk('public')->path('maps/'.$fileName));
         $request = json_decode(explode('=', $file)[1], true);
 
         if ($request) {
