@@ -1,0 +1,4 @@
+# Vendored third-party assets in public/assets/plugins are not maintained here.
+# Security fixes are applied via npm dependencies and Vite bundles instead.
+paths-ignore:
+  - public/assets/plugins
