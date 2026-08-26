@@ -10,14 +10,18 @@ x-app-environment: &app-environment
   DB_DATABASE: ${DB_DATABASE:-admin_panel}
   DB_USERNAME: ${DB_USERNAME:-root}
   DB_PASSWORD: ${DB_PASSWORD:-secret}
+  # Translation models use sqlite; must not inherit MySQL DB_DATABASE.
+  DB_SQLITE_DATABASE: ${DB_SQLITE_DATABASE:-/var/www/html/database/database.sqlite}
   REDIS_HOST: redis
   REDIS_PORT: 6379
   MAIL_MAILER: smtp
   MAIL_HOST: mailpit
   MAIL_PORT: 1025
   CACHE_DRIVER: redis
+  CACHE_STORE: redis
   SESSION_DRIVER: redis
   QUEUE_CONNECTION: redis
+  QUEUE_FAILED_DRIVER: ${QUEUE_FAILED_DRIVER:-database-uuids}
 
 x-php-service: &php-service
   image: ${PHP_IMAGE:-admin-panel-php:dev}
@@ -30,8 +34,6 @@ x-php-service: &php-service
     - .:/var/www/html
   environment:
     <<: *app-environment
-    # Parallel workers for PHP built-in server (asset requests no longer serialize).
-    PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
   networks:
     - admin-panel
   depends_on:
@@ -45,7 +47,11 @@ services:
     <<: *php-service
     ports:
       - "${APP_PORT:-8080}:8000"
-    # --no-reload is required for PHP_CLI_SERVER_WORKERS to take effect.
+    environment:
+      <<: *app-environment
+      # Parallel workers for PHP built-in server (asset requests no longer serialize).
+      # --no-reload is required for PHP_CLI_SERVER_WORKERS to take effect.
+      PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
     command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS --max-time 30 http://127.0.0.1:8000/ >/dev/null || exit 1"]
@@ -128,7 +134,9 @@ services:
 
   queue:
     <<: *php-service
-    command: ["php", "artisan", "queue:work", "redis", "--sleep=3", "--tries=3", "--max-time=3600"]
+    # Use default QUEUE_CONNECTION (redis). --max-time recycles the worker hourly; restart policy brings it back.
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600", "--timeout=90"]
+    stop_grace_period: 60s
     depends_on:
       mysql:
         condition: service_healthy
@@ -141,9 +149,13 @@ services:
 
   scheduler:
     <<: *php-service
-    command: ["sh", "-c", "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"]
+    # schedule:work keeps a single long-lived process (better signal handling than sleep loops).
+    command: ["php", "artisan", "schedule:work", "--verbose", "--no-interaction"]
+    stop_grace_period: 30s
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       app:
         condition: service_healthy

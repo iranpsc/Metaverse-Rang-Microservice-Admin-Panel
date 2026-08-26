@@ -27,10 +27,13 @@ x-php-environment: &php-environment
   DB_DATABASE: ${DB_DATABASE:-metarang_db}
   DB_USERNAME: ${DB_USERNAME:-metarang_user}
   DB_PASSWORD: ${DB_PASSWORD:-}
+  # Translation models use sqlite; must not inherit MySQL DB_DATABASE.
+  DB_SQLITE_DATABASE: ${DB_SQLITE_DATABASE:-/var/www/html/database/database.sqlite}
   CACHE_DRIVER: ${CACHE_DRIVER:-redis}
   CACHE_STORE: ${CACHE_STORE:-redis}
   SESSION_DRIVER: ${SESSION_DRIVER:-redis}
   QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+  QUEUE_FAILED_DRIVER: ${QUEUE_FAILED_DRIVER:-database-uuids}
   REDIS_HOST: ${REDIS_HOST:-redis}
   REDIS_PORT: ${REDIS_PORT:-6379}
   FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
@@ -111,10 +114,11 @@ services:
 
   queue:
     <<: *app-common
+    # Reuse the image built by `app` (same tag); do not pull a registry image by this name.
     pull_policy: never
-    command: ["php", "artisan", "queue:work", "redis", "--sleep=3", "--tries=3", "--max-time=3600"]
-    environment:
-      <<: *php-environment
+    # Use default QUEUE_CONNECTION (redis). --max-time recycles the worker hourly; restart policy brings it back.
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600", "--timeout=90"]
+    stop_grace_period: 60s
     depends_on:
       app:
         condition: service_healthy
@@ -126,9 +130,14 @@ services:
   scheduler:
     <<: *app-common
     pull_policy: never
-    command: ["sh", "-c", "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"]
+    # schedule:work keeps a single long-lived process (better signal handling than sleep loops).
+    # Redis is required for schedule mutexes when CACHE_STORE=redis.
+    command: ["php", "artisan", "schedule:work", "--verbose", "--no-interaction"]
+    stop_grace_period: 30s
     depends_on:
       app:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     profiles:
       - queue

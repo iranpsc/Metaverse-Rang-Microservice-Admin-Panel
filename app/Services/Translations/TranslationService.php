@@ -123,20 +123,10 @@ class TranslationService
         $this->filesystem->put($filePath, $encodedPayload);
 
         $translation->increment('version');
-        $absoluteUrl = sprintf('https://metarang.com/lang/%s', $fileName);
+        $absoluteUrl = sprintf(config('app.url').'/lang/%s', $fileName);
         $translation->update(['file_url' => $absoluteUrl]);
 
-        if (app()->environment('local')) {
-            return response()->download($filePath, $fileName);
-        }
-
-        if (! Storage::disk('ftp')->put($fileName, $encodedPayload)) {
-            throw ValidationException::withMessages([
-                'export' => __('Translation export failed.'),
-            ]);
-        }
-
-        return __('Translation exported successfully.');
+        return response()->download($filePath, $fileName);
     }
 
     public function getModalsForTranslation(Translation $translation, int $perPage = 10)
