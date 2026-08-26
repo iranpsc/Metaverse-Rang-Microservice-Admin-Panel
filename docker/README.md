@@ -27,10 +27,11 @@ sudo chown -R 33:33 /opt/metarang
 sudo chmod -R ug+rwX /opt/metarang
 ```
 
-On Dokploy, the external network `dokploy-network` is created automatically. For a **local** production smoke test, create it once:
+On Dokploy, the external networks `dokploy-network` (created by Dokploy) and `metarang-shared` (create once on the host) are required. For a **local** production smoke test:
 
 ```bash
 docker network create dokploy-network
+docker network create metarang-shared
 ```
 
 Then:
@@ -59,6 +60,14 @@ docker compose up -d --build
 2. Connect your Git repository (this project).
 3. Set **Compose file** to `docker-compose.yml`.
 4. Set the build/context root to the repo root (where `artisan` and `docker-compose.yml` live).
+
+Deploy the **microservices** Compose app first so MySQL is up. On the host, create the shared network once (Dokploy already has `dokploy-network`):
+
+```bash
+docker network create metarang-shared
+```
+
+Do **not** enable Isolated Deployment for this app or the microservices app.
 
 ### 2. Host persistence (`/opt/metarang`)
 
@@ -119,11 +128,11 @@ APP_URL=https://your-domain.example
 APP_PORT=8088
 
 DB_CONNECTION=mysql
-DB_HOST=your-mysql-host
+DB_HOST=metarang-mysql
 DB_PORT=3306
-DB_DATABASE=your_db
-DB_USERNAME=your_user
-DB_PASSWORD=your_password
+DB_DATABASE=metarang_db
+DB_USERNAME=metarang_user
+DB_PASSWORD=same-as-MYSQL_PASSWORD-on-microservices
 
 CACHE_DRIVER=redis
 SESSION_DRIVER=redis
@@ -143,7 +152,7 @@ Generate `APP_KEY` once (locally or in a one-off container):
 php artisan key:generate --show
 ```
 
-`REDIS_HOST=redis` must stay as the Compose service name. Point `DB_*` at your MySQL (Dokploy MySQL service, managed DB, or host).
+`REDIS_HOST=redis` must stay as **this** Compose service name (Laravel sessions/cache). Do **not** point it at the microservices Redis. `DB_HOST=metarang-mysql` is the network alias of MySQL in the microservices stack (`metarang-shared`). Credentials must match that stack's `MYSQL_*` values.
 
 Translation models use a separate **sqlite** connection at `database/database.sqlite` (persisted under `/opt/metarang/database`). Do **not** set `DB_CONNECTION=sqlite`.
 
@@ -159,12 +168,9 @@ Production Redis is **not** published to the host; it is reachable only on the i
 
 1. Trigger **Deploy** in Dokploy (builds `docker/php/Dockerfile` with context `.`).
 2. Wait until logs show: `Server running on [http://0.0.0.0:8080]`.
-3. Run migrations once:
+3. Run migrations only if this environment's Laravel `migrations` table matches this app. The microservices `metarang_db` already contains the shared schema — a blind `migrate --force` can alter Go-owned tables.
 
 ```bash
-# Main MySQL schema
-docker compose exec app php artisan migrate --force
-
 # Translation SQLite schema (skip if you already copied a populated database.sqlite)
 docker compose exec app php artisan migrate --database=sqlite --force
 ```
@@ -200,10 +206,10 @@ curl -I https://your-domain.example
 | Base images | Official Docker Hub: `php`, `composer`, `node`, `redis`, `mysql`, `mailpit` |
 | Local prod bind-mount | Set `HOST_STORAGE_PATH=.` + `HOST_STORAGE_TARGET=/var/www/html` and `COMPOSE_PROFILES=dev` on `docker-compose.yml` |
 | Persistence | Host `/opt/metarang/{storage,database}` by default; override with `HOST_*` |
-| External network | Production `app` joins **`dokploy-network`** (external); create it locally before smoke tests |
+| External network | Production `app` joins **`dokploy-network`** (Traefik) and **`metarang-shared`** (MySQL). Create both locally before smoke tests |
 | SQLite | `pdo_sqlite` enabled; Translation models use `database/database.sqlite` |
 | Uploads | `storage/app/public` ↔ `public/uploads` (created by entrypoint `storage:link`) |
-| MySQL | Not in production compose — provide externally; included in dev compose |
+| MySQL | Not in production compose — connect to microservices MySQL via `DB_HOST=metarang-mysql`; included in `docker-compose.dev.yaml` only |
 | Bootstrap cache | Entrypoint clears stale `bootstrap/cache/*.php` on startup (avoids provider mismatches on bind mounts) |
 | `artisan serve` | Fine for small deployments; for heavy traffic prefer php-fpm + nginx later |
 
@@ -251,6 +257,7 @@ COMPOSE_PROFILES=dev
 
 ```bash
 docker network create dokploy-network   # if missing locally
+docker network create metarang-shared   # if missing locally
 docker compose up -d --build
 ```
 
