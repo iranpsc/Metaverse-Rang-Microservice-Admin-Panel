@@ -16,10 +16,13 @@ export default defineConfig({
                     if (!id.includes('node_modules')) {
                         return;
                     }
-                    // Only split the prebuilt editor. Matching every path with "ckeditor" also
-                    // catches @ckeditor/ckeditor5-vue and merges it into this chunk, which makes
-                    // the app entry statically import from ckeditor-*.js and loads ~1.5MB on login.
-                    if (id.includes('/ckeditor5/') || id.includes('\\ckeditor5\\')) {
+                    // The resolved editor is the pre-bundled `ckeditor5/dist/browser`
+                    // file (see resolve.alias). Keep it and its CSS/translations in one
+                    // async chunk so login does not pull ~1.5MB. Do NOT also pull
+                    // `@ckeditor/ckeditor5-*` packages: npm nests extra copies of
+                    // ckeditor5-utils under those packages, and evaluating two copies
+                    // throws `ckeditor-duplicated-modules`.
+                    if (/[/\\]node_modules[/\\]ckeditor5[/\\]/.test(id)) {
                         return 'ckeditor';
                     }
                     if (id.includes('@primevue') || id.includes('/primevue/')) {
@@ -63,14 +66,39 @@ export default defineConfig({
         }),
     ],
     resolve: {
-        alias: {
-            '@': path.resolve(__dirname, 'resources/js'),
+        dedupe: ['ckeditor5', 'vue', 'vue-router'],
+        alias: [
+            // `ckeditor5`'s package root is a barrel that re-exports every plugin
+            // package. npm installs those plugins with nested copies of
+            // `@ckeditor/ckeditor5-utils`, so the barrel evaluates the version
+            // guard twice → `ckeditor-duplicated-modules`. The browser build is
+            // a single pre-bundled module with one copy of the editor.
+            {
+                find: /^ckeditor5$/,
+                replacement: path.resolve(__dirname, 'node_modules/ckeditor5/dist/browser/ckeditor5.js'),
+            },
+            {
+                find: '@',
+                replacement: path.resolve(__dirname, 'resources/js'),
+            },
             // Do not alias @primeuix/themes into /dist — that breaks package "exports"
             // and leaves bare imports in the primevue chunk (blank SPA in the browser).
-            dompurify: path.resolve(__dirname, 'resources/js/utils/dompurify-lite.js'),
-            pinia: path.resolve(__dirname, 'resources/js/utils/pinia-lite.js'),
-            vue: 'vue/dist/vue.esm-bundler.js',
-        },
+            {
+                find: 'dompurify',
+                replacement: path.resolve(__dirname, 'resources/js/utils/dompurify-lite.js'),
+            },
+            {
+                find: 'pinia',
+                replacement: path.resolve(__dirname, 'resources/js/utils/pinia-lite.js'),
+            },
+            {
+                find: 'vue',
+                replacement: 'vue/dist/vue.esm-bundler.js',
+            },
+        ],
+    },
+    optimizeDeps: {
+        include: ['ckeditor5'],
     },
     define: {
         __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,

@@ -44,7 +44,9 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 
-RUN npm ci --prefer-offline --no-audit --no-fund
+# --ignore-scripts: simple-line-icons postinstall needs `less`, which is not a
+# runtime dependency. Dist CSS is already shipped; Vite only imports that file.
+RUN npm ci --prefer-offline --no-audit --no-fund --ignore-scripts
 
 # Full tree needed so laravel-vite-plugin resolves the Laravel root correctly.
 COPY . .

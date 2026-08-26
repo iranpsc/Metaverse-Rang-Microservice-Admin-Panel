@@ -23,9 +23,9 @@ import {
     TableToolbar,
     TextTransformation,
 } from 'ckeditor5'
+import translations from 'ckeditor5/translations/fa.js'
 
 import 'ckeditor5/ckeditor5.css'
-import 'ckeditor5/build/translations/fa.js'
 
 class MetaverseClassicEditor extends ClassicEditor {}
 
@@ -55,6 +55,7 @@ MetaverseClassicEditor.builtinPlugins = [
 ]
 
 MetaverseClassicEditor.defaultConfig = {
+    licenseKey: 'GPL',
     toolbar: {
         items: [
             'undo',
@@ -91,6 +92,7 @@ MetaverseClassicEditor.defaultConfig = {
         contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'],
     },
     language: 'fa',
+    translations: [translations],
 }
 
 export default MetaverseClassicEditor
