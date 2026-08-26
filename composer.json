@@ -19,6 +19,7 @@
         "predis/predis": "^2.2",
         "psr/simple-cache": "^3.0",
         "sadegh19b/laravel-persian-validation": "^2.0",
+        "sentry/sentry-laravel": "^4.27",
         "spatie/laravel-activitylog": "^4.12",
         "spatie/laravel-permission": "^6.25"
     },

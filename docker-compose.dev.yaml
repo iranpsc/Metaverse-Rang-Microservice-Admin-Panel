@@ -22,6 +22,10 @@ x-app-environment: &app-environment
   SESSION_DRIVER: redis
   QUEUE_CONNECTION: redis
   QUEUE_FAILED_DRIVER: ${QUEUE_FAILED_DRIVER:-database-uuids}
+  SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN:-https://fbc0bb81b6fbcc6b8dcead79e099eca2@sentry.irpsc.com/11}
+  SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-1.0}
+  SENTRY_ENABLE_LOGS: ${SENTRY_ENABLE_LOGS:-false}
+  SENTRY_SEND_DEFAULT_PII: ${SENTRY_SEND_DEFAULT_PII:-false}
 
 x-php-service: &php-service
   image: ${PHP_IMAGE:-admin-panel-php:dev}
