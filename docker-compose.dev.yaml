@@ -56,7 +56,10 @@ services:
       # Parallel workers for PHP built-in server (asset requests no longer serialize).
       # --no-reload is required for PHP_CLI_SERVER_WORKERS to take effect.
       PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
-    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]
+    command:
+      - sh
+      - -c
+      - php artisan storage:link --force && exec php artisan serve --host=0.0.0.0 --port=8000 --no-reload
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS --max-time 30 http://127.0.0.1:8000/ >/dev/null || exit 1"]
       interval: 20s
@@ -148,8 +151,6 @@ services:
         condition: service_healthy
       app:
         condition: service_healthy
-    profiles:
-      - queue
 
   scheduler:
     <<: *php-service
@@ -163,8 +164,6 @@ services:
         condition: service_healthy
       app:
         condition: service_healthy
-    profiles:
-      - queue
 
 volumes:
   mysql-data:

@@ -70,7 +70,10 @@ services:
     environment:
       <<: *php-environment
       PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
-    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080", "--no-reload"]
+    command:
+      - sh
+      - -c
+      - php artisan storage:link && exec php artisan serve --host=0.0.0.0 --port=8080 --no-reload
     depends_on:
       redis:
         condition: service_healthy
@@ -128,8 +131,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    profiles:
-      - queue
 
   scheduler:
     <<: *app-common
@@ -143,8 +144,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    profiles:
-      - queue
 
 networks:
   dokploy-network:
