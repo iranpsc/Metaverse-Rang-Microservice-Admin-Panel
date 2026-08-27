@@ -30,7 +30,6 @@
         "jquery": "^3.7.1",
         "pinia": "^3.0.4",
         "primevue": "^4.4.1",
-        "quill": "^2.0.3",
         "resumablejs": "^1.1.0",
         "select2": "^4.1.0-rc.0",
         "simple-line-icons": "^2.5.1",

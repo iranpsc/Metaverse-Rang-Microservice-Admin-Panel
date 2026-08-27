@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import 'quill/dist/quill.core.css';
-@import 'quill/dist/quill.snow.css';
 @import 'select2/dist/css/select2.min.css';
 @import './select2-theme.css';
 
@@ -85,60 +83,5 @@ body.light {
 /* Set Vazirmatn as default font family */
 body {
   font-family: 'Vazirmatn', 'Inter', system-ui, -apple-system, sans-serif;
-}
-
-/* PrimeVue Editor Custom Styles */
-.p-editor-container {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.p-editor-container .p-editor-content {
-  background-color: var(--theme-bg-elevated);
-  color: var(--theme-text-primary);
-}
-
-.p-editor-container .ql-editor {
-  color: var(--theme-text-primary);
-  min-height: 300px;
-  direction: rtl !important;
-  text-align: right !important;
-}
-
-.p-editor-container .ql-container {
-  direction: rtl !important;
-}
-
-.p-editor-container .ql-toolbar {
-  background-color: var(--theme-bg-elevated);
-  border-color: var(--theme-border);
-  direction: rtl;
-}
-
-.p-editor-container .ql-toolbar .ql-formats {
-  direction: rtl;
-}
-
-.p-editor-container .ql-toolbar .ql-stroke {
-  stroke: var(--theme-text-secondary);
-}
-
-.p-editor-container .ql-toolbar .ql-fill {
-  fill: var(--theme-text-secondary);
-}
-
-.p-editor-container .ql-toolbar button:hover,
-.p-editor-container .ql-toolbar button.ql-active {
-  color: var(--color-primary-500);
-}
-
-.p-editor-container .ql-toolbar button:hover .ql-stroke,
-.p-editor-container .ql-toolbar button.ql-active .ql-stroke {
-  stroke: var(--color-primary-500);
-}
-
-.p-editor-container .ql-toolbar button:hover .ql-fill,
-.p-editor-container .ql-toolbar button.ql-active .ql-fill {
-  fill: var(--color-primary-500);
 }
 

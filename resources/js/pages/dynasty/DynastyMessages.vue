@@ -109,29 +109,13 @@
           required
         />
 
-        <!-- Message Content -->
-        <div>
-          <label class="block text-sm font-medium mb-2 text-text-primary">
-            متن پیام
-            <span class="text-error">*</span>
-          </label>
-          <Editor
-            v-model="form.content"
-            editorStyle="min-height: 200px"
-            :class="{ 'border-error': errors.content }"
-            :editorOptions="editorOptions"
-          />
-          <p v-if="errors.content" class="text-xs text-error flex items-center gap-1 mt-1.5">
-            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fill-rule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            {{ errors.content }}
-          </p>
-        </div>
+        <RichTextEditor
+          v-model="form.content"
+          label="متن پیام"
+          :error="errors.content"
+          min-height="200px"
+          required
+        />
       </div>
 
       <template #footer>
@@ -173,29 +157,13 @@
       @close="resetEditForm"
     >
       <div class="space-y-6">
-        <!-- Message Content -->
-        <div>
-          <label class="block text-sm font-medium mb-2 text-text-primary">
-            متن پیام
-            <span class="text-error">*</span>
-          </label>
-          <Editor
-            v-model="editForm.content"
-            editorStyle="min-height: 200px"
-            :class="{ 'border-error': errors.content }"
-            :editorOptions="editorOptions"
-          />
-          <p v-if="errors.content" class="text-xs text-error flex items-center gap-1 mt-1.5">
-            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fill-rule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                clip-rule="evenodd"
-              />
-            </svg>
-            {{ errors.content }}
-          </p>
-        </div>
+        <RichTextEditor
+          v-model="editForm.content"
+          label="متن پیام"
+          :error="errors.content"
+          min-height="200px"
+          required
+        />
       </div>
 
       <template #footer>
@@ -216,9 +184,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import Editor from 'primevue/editor'
 import apiClient from '../../utils/api'
 import { Table, Modal, Button, Select, Alert, LoadingState, ErrorState } from '../../components/ui'
+import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
@@ -253,28 +221,6 @@ const editForm = ref({
 
 const errors = ref({})
 const sanitizedViewingMessage = computed(() => sanitizeHtml(viewingMessage.value?.message || ''))
-
-// Quill Editor Options for RTL
-const editorOptions = {
-  modules: {
-    toolbar: [
-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
-      [{ 'font': [] }],
-      [{ 'size': [] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ 'color': [] }, { 'background': [] }],
-      [{ 'script': 'sub' }, { 'script': 'super' }],
-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-      [{ 'indent': '-1' }, { 'indent': '+1' }],
-      [{ 'direction': 'rtl' }],
-      [{ 'align': [] }],
-      ['link', 'image', 'video'],
-      ['clean']
-    ]
-  },
-  theme: 'snow',
-  formats: ['direction']
-}
 
 // Message type options
 const messageTypeOptions = [
