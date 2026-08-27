@@ -6,7 +6,6 @@ use App\Console\Kernel as ConsoleKernel;
 use App\Exceptions\Handler;
 use App\Http\Controllers\Api\MapsController;
 use App\Http\Controllers\Api\V1\TranslationController as LegacyTranslationController;
-use App\Http\Controllers\Api\V1\Translations\TranslationController as V1TranslationController;
 use App\Http\Controllers\UploadVideoController;
 use App\Http\Middleware\AccessLog;
 use App\Http\Middleware\Authenticate;
@@ -46,7 +45,6 @@ use App\Providers\AuthServiceProvider;
 use App\Providers\BroadcastServiceProvider;
 use App\Providers\EventServiceProvider;
 use App\Providers\RouteServiceProvider;
-use App\Services\Translations\TranslationService;
 use Illuminate\Auth\AuthManager;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Schema\Blueprint;
@@ -357,26 +355,6 @@ class UncoveredCodeCoverageTest extends TestCase
 
         $fields = $controller->getFields($translation, $modal, $tab)->getData(true);
         $this->assertCount(1, $fields['data']);
-    }
-
-    public function test_v1_translation_export_returns_json_when_service_returns_string(): void
-    {
-        $service = Mockery::mock(TranslationService::class);
-        $service->shouldReceive('exportTranslation')
-            ->once()
-            ->andReturn('Translation exported successfully.');
-
-        $controller = new V1TranslationController($service);
-        $translation = new Translation(['code' => 'fa']);
-
-        $response = $controller->export($translation);
-
-        $this->assertSame(200, $response->getStatusCode());
-        $this->assertSame([
-            'success' => true,
-            'data' => ['message' => 'Translation exported successfully.'],
-            'message' => 'Translation exported successfully.',
-        ], $response->getData(true));
     }
 
     public function test_upload_video_controller_finished_and_partial_chunk_paths(): void

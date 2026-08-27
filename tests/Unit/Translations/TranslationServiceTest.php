@@ -3,8 +3,6 @@
 namespace Tests\Unit\Translations;
 
 use App\Models\Translations\Field;
-use App\Models\Translations\Modal;
-use App\Models\Translations\Tab;
 use App\Models\Translations\Translation;
 use App\Services\Translations\TranslationService;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
