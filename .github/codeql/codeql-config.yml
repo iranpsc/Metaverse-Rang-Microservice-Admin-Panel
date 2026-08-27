@@ -1,0 +1,6 @@
+name: "Metaverse Admin CodeQL config"
+
+# Legacy auth Blade pages ship vendored third-party assets under public/assets.
+# They are not maintained application source and are excluded from CodeQL analysis.
+paths-ignore:
+  - public/assets

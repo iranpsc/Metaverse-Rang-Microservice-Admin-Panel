@@ -14,7 +14,13 @@ const sanitize = (input, options = {}) => {
     for (const attr of [...el.attributes]) {
       const name = attr.name.toLowerCase()
       const value = attr.value || ''
-      if (name.startsWith('on') || value.toLowerCase().startsWith('javascript:')) {
+      const normalizedValue = value.trim().replace(/\s+/g, '').toLowerCase()
+      const isUnsafeUrlScheme =
+        normalizedValue.startsWith('javascript:') ||
+        normalizedValue.startsWith('data:') ||
+        normalizedValue.startsWith('vbscript:')
+
+      if (name.startsWith('on') || isUnsafeUrlScheme) {
         el.removeAttribute(attr.name)
       }
     }
