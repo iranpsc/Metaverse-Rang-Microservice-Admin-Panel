@@ -20,6 +20,7 @@
         :editor="ClassicEditor"
         :model-value="modelValue"
         :config="mergedConfig"
+        :disabled="disabled"
         @update:model-value="onUpdate"
         @ready="onReady"
       />
@@ -77,6 +78,10 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  disabled: {
+    type: Boolean,
+    default: false
+  },
   editorClass: {
     type: String,
     default: ''
@@ -103,9 +108,12 @@ function normalizeEmpty(html) {
 
 const mergedConfig = computed(() => {
   const base = {
+    licenseKey: 'GPL',
     placeholder: props.placeholder,
-    contentsLangDirection: props.rtl ? 'rtl' : 'ltr',
-    language: props.rtl ? 'fa' : 'en'
+    language: {
+      ui: props.rtl ? 'fa' : 'en',
+      content: props.rtl ? 'fa' : 'en'
+    }
   }
   return { ...base, ...props.editorConfig }
 })

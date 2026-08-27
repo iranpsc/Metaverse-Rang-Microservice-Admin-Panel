@@ -13,7 +13,18 @@ export default defineConfig({
             },
             output: {
                 manualChunks(id) {
-                    if (id.includes('resources/js/components/ui')) {
+                    // Keep RichTextEditor + classicEditor out of the shared UI
+                    // chunk so every page does not eagerly pull CKEditor (~1MB).
+                    if (
+                        id.includes('resources/js/components/ui/RichTextEditor')
+                        || id.includes('resources/js/lib/classicEditor')
+                    ) {
+                        return 'rich-text-editor';
+                    }
+                    if (
+                        id.includes('resources/js/components/ui')
+                        && !id.includes('RichTextEditor')
+                    ) {
                         return 'ui';
                     }
                     if (
