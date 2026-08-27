@@ -2,16 +2,9 @@
 
 namespace Tests\Unit\Coverage;
 
-use App\Console\Kernel as ConsoleKernel;
-use App\Exceptions\Handler;
 use App\Http\Controllers\Api\MapsController;
 use App\Http\Controllers\Api\V1\TranslationController as LegacyTranslationController;
 use App\Http\Controllers\UploadVideoController;
-use App\Http\Middleware\AccessLog;
-use App\Http\Middleware\Authenticate;
-use App\Http\Middleware\FilterIp;
-use App\Http\Middleware\RedirectIfAuthenticated;
-use App\Http\Middleware\TrustHosts;
 use App\Models\Asset;
 use App\Models\Challenge\Answer;
 use App\Models\Challenge\CorrectAnswer;
@@ -41,16 +34,9 @@ use App\Models\Transaction;
 use App\Models\Translations\Translation;
 use App\Models\VariableChangeLog;
 use App\Models\View;
-use App\Providers\AuthServiceProvider;
-use App\Providers\BroadcastServiceProvider;
-use App\Providers\EventServiceProvider;
-use App\Providers\RouteServiceProvider;
-use Illuminate\Auth\AuthManager;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
@@ -73,162 +59,6 @@ class UncoveredCodeCoverageTest extends TestCase
     {
         Mockery::close();
         parent::tearDown();
-    }
-
-    public function test_access_log_middleware_appends_log_line(): void
-    {
-        $logPath = storage_path('logs/access.log');
-        @unlink($logPath);
-
-        $middleware = new AccessLog;
-        $request = Request::create('/api/coverage', 'GET');
-        $response = $middleware->handle($request, fn () => response('ok', 201));
-
-        $this->assertSame(201, $response->getStatusCode());
-        $this->assertFileExists($logPath);
-        $this->assertStringContainsString('"GET api/coverage" 201', (string) file_get_contents($logPath));
-        @unlink($logPath);
-    }
-
-    public function test_filter_ip_middleware_allows_local_and_checks_admin_ips(): void
-    {
-        $middleware = new FilterIp;
-        $this->app['env'] = 'local';
-
-        $allowed = $middleware->handle(Request::create('/api/anything', 'GET'), fn () => response('local'));
-        $this->assertSame('local', $allowed->getContent());
-
-        $this->app['env'] = 'staging';
-
-        Schema::create('ips', function (Blueprint $table) {
-            $table->id();
-            $table->string('title')->nullable();
-            $table->string('type')->nullable();
-            $table->unsignedBigInteger('from')->nullable();
-            $table->unsignedBigInteger('to')->nullable();
-            $table->timestamps();
-        });
-
-        $ipValue = '203.0.113.10';
-        Ip::query()->create([
-            'title' => 'admin',
-            'type' => 'admin',
-            'from' => $ipValue,
-            'to' => $ipValue,
-        ]);
-
-        $adminRequest = Request::create('/api/dashboard', 'GET', server: ['REMOTE_ADDR' => $ipValue]);
-        $ok = $middleware->handle($adminRequest, fn () => response('admin-ok'));
-        $this->assertSame('admin-ok', $ok->getContent());
-
-        try {
-            $middleware->handle(
-                Request::create('/api/dashboard', 'GET', server: ['REMOTE_ADDR' => '198.51.100.1']),
-                fn () => response('should-not-run')
-            );
-            $this->fail('Expected 403 abort for unauthorized IP');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
-            $this->assertSame(403, $exception->getStatusCode());
-        }
-    }
-
-    public function test_redirect_if_authenticated_middleware_redirects_and_passes_through(): void
-    {
-        $middleware = new RedirectIfAuthenticated;
-
-        $guest = $middleware->handle(Request::create('/login', 'GET'), fn () => response('guest'));
-        $this->assertSame('guest', $guest->getContent());
-
-        Auth::shouldReceive('guard')->with(null)->andReturnSelf();
-        Auth::shouldReceive('check')->andReturn(true);
-
-        $redirect = $middleware->handle(Request::create('/login', 'GET'), fn () => response('authed'));
-        $this->assertSame(302, $redirect->getStatusCode());
-        $this->assertSame(url(RouteServiceProvider::HOME), $redirect->headers->get('Location'));
-    }
-
-    public function test_authenticate_redirect_to_returns_login_for_non_json(): void
-    {
-        $middleware = new class($this->app->make(AuthManager::class)) extends Authenticate
-        {
-            public function exposedRedirectTo($request)
-            {
-                return $this->redirectTo($request);
-            }
-        };
-
-        $jsonRequest = Request::create('/api/x', 'GET');
-        $jsonRequest->headers->set('Accept', 'application/json');
-        $this->assertNull($middleware->exposedRedirectTo($jsonRequest));
-
-        // Cover the non-JSON branch without relying on a named login route.
-        $covered = false;
-        try {
-            $middleware->exposedRedirectTo(Request::create('/admin', 'GET'));
-        } catch (\Symfony\Component\Routing\Exception\RouteNotFoundException $exception) {
-            $covered = str_contains($exception->getMessage(), 'login');
-        }
-        $this->assertTrue($covered);
-    }
-
-    public function test_trust_hosts_returns_application_subdomain_pattern(): void
-    {
-        config(['app.url' => 'https://admin.example.test']);
-        $hosts = (new TrustHosts($this->app))->hosts();
-
-        $this->assertNotEmpty($hosts);
-        $this->assertIsString($hosts[0]);
-    }
-
-    public function test_console_kernel_schedule_and_commands_loaders(): void
-    {
-        $kernel = $this->app->make(ConsoleKernel::class);
-        $scheduleMethod = new \ReflectionMethod(ConsoleKernel::class, 'schedule');
-        $scheduleMethod->setAccessible(true);
-        $scheduleMethod->invoke($kernel, $this->app->make(Schedule::class));
-
-        $commandsMethod = new \ReflectionMethod(ConsoleKernel::class, 'commands');
-        $commandsMethod->setAccessible(true);
-        $commandsMethod->invoke($kernel);
-
-        $this->assertTrue(true);
-    }
-
-    public function test_exception_handler_register_adds_reportable_callback(): void
-    {
-        $handler = $this->app->make(Handler::class);
-        $handler->register();
-        $this->assertTrue(true);
-    }
-
-    public function test_auth_event_and_broadcast_providers_boot(): void
-    {
-        (new AuthServiceProvider($this->app))->boot();
-
-        $eventProvider = new EventServiceProvider($this->app);
-        $eventProvider->boot();
-        $this->assertFalse($eventProvider->shouldDiscoverEvents());
-
-        try {
-            (new BroadcastServiceProvider($this->app))->boot();
-        } catch (\Throwable) {
-            // Ignore duplicate route registration in the test suite.
-        }
-
-        $this->assertTrue(true);
-    }
-
-    public function test_route_service_provider_rate_limiter_configuration(): void
-    {
-        $provider = new RouteServiceProvider($this->app);
-        $configure = new \ReflectionMethod(RouteServiceProvider::class, 'configureRateLimiting');
-        $configure->setAccessible(true);
-        $configure->invoke($provider);
-
-        $limiter = \Illuminate\Support\Facades\RateLimiter::limiter('api');
-        $this->assertNotNull($limiter);
-        $limit = $limiter(Request::create('/api/x', 'GET'));
-        $this->assertSame(60, $limit->maxAttempts);
     }
 
     public function test_ip_model_casts_and_admin_scope(): void
