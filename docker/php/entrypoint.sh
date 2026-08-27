@@ -3,7 +3,8 @@ set -e
 
 cd /var/www/html
 
-# Host bind-mounts (/opt/metarang/...) or named volumes may start empty — recreate dirs.
+# Dokploy ../files bind-mounts or local paths may start empty — recreate dirs.
+# Bind mounts obscure image contents at the mount point (Docker docs).
 mkdir -p \
     storage/app/public \
     storage/framework/cache/data \

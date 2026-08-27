@@ -32,10 +32,14 @@ x-php-service: &php-service
   build:
     context: .
     dockerfile: docker/php/Dockerfile
+    args:
+      PHP_INI_FILE: local.ini
   restart: unless-stopped
   init: true
   volumes:
-    - .:/var/www/html
+    - type: bind
+      source: .
+      target: /var/www/html
   environment:
     <<: *app-environment
   networks:
@@ -76,7 +80,9 @@ services:
       MYSQL_DATABASE: ${DB_DATABASE:-admin_panel}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
     volumes:
-      - mysql-data:/var/lib/mysql
+      - type: volume
+        source: mysql-data
+        target: /var/lib/mysql
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -96,7 +102,9 @@ services:
       - "${FORWARD_REDIS_PORT:-6379}:6379"
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
-      - redis-data:/data
+      - type: volume
+        source: redis-data
+        target: /data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -110,9 +118,13 @@ services:
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
-      - .:/var/www/html
+      - type: bind
+        source: .
+        target: /var/www/html
       # Linux-native deps (host Windows node_modules cannot run Rolldown/Vite in Alpine).
-      - node_modules:/var/www/html/node_modules
+      - type: volume
+        source: node_modules
+        target: /var/www/html/node_modules
     # --ignore-scripts: simple-line-icons postinstall needs `less` (not required for Vite).
     command: sh -c "npm ci --ignore-scripts && npm run dev -- --host 0.0.0.0 --port 5173"
     ports:
