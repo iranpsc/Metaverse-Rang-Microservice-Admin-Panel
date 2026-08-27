@@ -13,6 +13,15 @@ export default defineConfig({
             },
             output: {
                 manualChunks(id) {
+                    if (id.includes('resources/js/components/ui')) {
+                        return 'ui';
+                    }
+                    if (
+                        id.includes('resources/js/composables')
+                        || id.includes('resources/js/utils')
+                    ) {
+                        return 'app-shared';
+                    }
                     if (!id.includes('node_modules')) {
                         return;
                     }
