@@ -287,6 +287,7 @@ import { Button, Card, Checkbox, Input, LoadingState, ErrorState, FileInput, Fil
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import ExistingFileHint from '../../components/levels/ExistingFileHint.vue'
 import { useToast } from '../../composables/useToast'
+import { stripRichText } from '../../utils/sanitize'
 
 const { showToast } = useToast()
 
@@ -414,14 +415,7 @@ const setFormValues = (data) => {
   resetErrors()
 }
 
-const sanitizeRichText = (value) => {
-  if (!value) return ''
-  return value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
+const sanitizeRichText = (value) => stripRichText(value)
 
 const validateString = (field, label, { max = null, required = true, richText = false } = {}) => {
   const rawValue = (form[field] ?? '').toString()

@@ -26,6 +26,7 @@
         "autoprefixer": "^10.4.21",
         "axios": "^1.20.0",
         "ckeditor5": "46.1.1",
+        "dompurify": "^3.4.14",
         "flatpickr": "^4.6.13",
         "jquery": "^3.7.1",
         "pinia": "^3.0.4",

@@ -404,6 +404,7 @@ import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import ExistingFileHint from '../../components/levels/ExistingFileHint.vue'
 import { useToast } from '../../composables/useToast'
 import { useLevelGift } from '../../composables/useLevelGift'
+import { stripRichText } from '../../utils/sanitize'
 
 const { showToast } = useToast()
 const { fetchLevelGift, saveLevelGift } = useLevelGift()
@@ -561,14 +562,7 @@ const setFormValues = (data) => {
   resetErrors()
 }
 
-const sanitizeRichText = (value) => {
-  if (!value) return ''
-  return value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
+const sanitizeRichText = (value) => stripRichText(value)
 
 const validateString = (field, label, { max = null, required = true, richText = false } = {}) => {
   const rawValue = (form[field] ?? '').toString()

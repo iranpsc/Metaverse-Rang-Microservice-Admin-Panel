@@ -141,7 +141,7 @@ import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { formatPersianDate } from '../../utils/dateFormatter'
-import { stripHtml } from '../../utils/sanitize'
+import { stripRichText, hasRichTextContent } from '../../utils/sanitize'
 
 const { showToast } = useToast()
 
@@ -219,12 +219,10 @@ const resetCreateErrors = () => {
 
 const extractExcerpt = (html, limit = 80) => {
   if (!html) return ''
-  const text = stripHtml(html).replace(/\s+/g, ' ').trim()
+  const text = stripRichText(html)
 
   return text.length > limit ? `${text.slice(0, limit)}…` : text
 }
-
-const hasRichTextContent = (value) => stripHtml(value).replace(/\s+/g, '').length > 0
 
 const assignValidationErrors = (target, errors) => {
   Object.keys(target).forEach((key) => {

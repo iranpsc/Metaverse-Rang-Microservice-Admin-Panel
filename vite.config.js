@@ -104,10 +104,6 @@ export default defineConfig({
             // Do not alias @primeuix/themes into /dist — that breaks package "exports"
             // and leaves bare imports in the primevue chunk (blank SPA in the browser).
             {
-                find: 'dompurify',
-                replacement: path.resolve(__dirname, 'resources/js/utils/dompurify-lite.js'),
-            },
-            {
                 find: 'pinia',
                 replacement: path.resolve(__dirname, 'resources/js/utils/pinia-lite.js'),
             },
