@@ -382,6 +382,7 @@ import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
+import { stripHtml } from '../../utils/sanitize'
 
 const { showToast } = useToast()
 
@@ -434,17 +435,7 @@ function defaultEventForm() {
   }
 }
 
-const stripHtml = (value) => {
-  if (!value) return ''
-  return value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-const hasRichTextContent = (value) => stripHtml(value).length > 0
+const hasRichTextContent = (value) => stripHtml(value).replace(/\s+/g, '').length > 0
 
 const persianDigitMap = {
   '۰': '0',

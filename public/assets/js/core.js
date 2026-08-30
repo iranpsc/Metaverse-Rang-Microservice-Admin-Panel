@@ -410,21 +410,14 @@
 
 
 function escapeHtml(text) {
-    if (text == null) return;
-    
-    var html = text
-        .replace(/<!--/g, "")
-        .replace(/-->/g, "")
+    if (text == null) return '';
+
+    return String(text)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;")
-        .replace(/^\s*/g, "")
-        .replace(/\s*$/g, "");
-
-    return html;
-        
+        .replace(/'/g, "&#039;");
 }
 (function($) {
     $(document).ready(function() {

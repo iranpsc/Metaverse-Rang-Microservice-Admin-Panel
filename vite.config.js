@@ -70,7 +70,6 @@ export default defineConfig({
             '@': path.resolve(__dirname, 'resources/js'),
             // Do not alias @primeuix/themes into /dist — that breaks package "exports"
             // and leaves bare imports in the primevue chunk (blank SPA in the browser).
-            dompurify: path.resolve(__dirname, 'resources/js/utils/dompurify-lite.js'),
             pinia: path.resolve(__dirname, 'resources/js/utils/pinia-lite.js'),
             vue: 'vue/dist/vue.esm-bundler.js',
         },
