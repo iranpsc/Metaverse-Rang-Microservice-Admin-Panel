@@ -6,12 +6,12 @@
     },
     "devDependencies": {
         "@popperjs/core": "^2.11.6",
-        "@vitejs/plugin-vue": "^6.0.6",
-        "baseline-browser-mapping": "^2.10.24",
-        "laravel-vite-plugin": "^3.1.0",
+        "@vitejs/plugin-vue": "^6.0.8",
+        "baseline-browser-mapping": "^2.11.20",
+        "laravel-vite-plugin": "^3.2.0",
         "lodash": "^4.18.1",
         "postcss": "^8.5.26",
-        "sass": "^1.56.1",
+        "sass": "^1.103.1",
         "vite": "^8.2.2"
     },
     "overrides": {
