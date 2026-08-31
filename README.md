@@ -31,7 +31,7 @@ docker compose up -d --build
 docker compose exec app php artisan migrate --force
 ```
 
-**Local** (same stack; use project paths so `/opt/metarang` is not required):
+**Local** (same stack; override Dokploy `../files/` defaults to project paths):
 
 ```bash
 cp .env.example .env
@@ -48,8 +48,8 @@ docker compose exec app php artisan migrate
 # In .env:
 #   HOST_STORAGE_PATH=.
 #   HOST_STORAGE_TARGET=/var/www/html
-#   HOST_STORAGE_OPTIONS=:cached
 #   HOST_DATABASE_PATH=./database
+#   HOST_APP_PATH=.
 #   COMPOSE_PROFILES=dev
 docker compose up -d --build
 docker compose exec app php artisan migrate

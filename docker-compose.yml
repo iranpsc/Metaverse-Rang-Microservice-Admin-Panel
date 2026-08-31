@@ -2,14 +2,35 @@ name: ${COMPOSE_PROJECT_NAME:-admin-panel}
 
 # Production Compose for Dokploy.
 # App source, Composer vendor, and Vite assets are baked by docker/php/Dockerfile.
-# Persist only Laravel storage and the SQLite database used by translations.
+# Persist Laravel storage and the SQLite database via Dokploy-safe bind mounts.
+#
+# Dokploy bind mounts MUST use ../files/ (not absolute /opt/... or ./repo paths):
+# https://docs.dokploy.com/docs/core/docker-compose
+# https://docs.dokploy.com/docs/core/troubleshooting/volumes-mounts
+#
+# Docker bind-mount reference:
+# https://docs.docker.com/engine/storage/bind-mounts/
+#
+# MySQL lives in the microservices stack; reach it as metarang-mysql on metarang-shared.
+# Redis here is Laravel-only (sessions/cache/queue) — do not point REDIS_HOST at the Go Redis.
 
 x-php-image: &php-image ${PHP_IMAGE:-admin-panel-php:production}
 
+# Long-form bind mounts (preferred over short -v syntax per Docker docs).
+# Defaults match Dokploy: compose lives in <app>/code, files in <app>/files.
+# Local smoke test overrides:
+#   HOST_STORAGE_PATH=./storage HOST_DATABASE_PATH=./database
 x-app-volumes: &app-volumes
-  - ${HOST_STORAGE_PATH:-/opt/metarang/storage}:${HOST_STORAGE_TARGET:-/var/www/html/storage}${HOST_STORAGE_OPTIONS:-}
-  - ${HOST_DATABASE_PATH:-/opt/metarang/database}:${HOST_DATABASE_TARGET:-/var/www/html/database}${HOST_DATABASE_OPTIONS:-}
-  - ./docker/php/production.ini:/usr/local/etc/php/conf.d/99-production.ini:ro
+  - type: bind
+    source: ${HOST_STORAGE_PATH:-../files/storage}
+    target: ${HOST_STORAGE_TARGET:-/var/www/html/storage}
+    bind:
+      create_host_path: true
+  - type: bind
+    source: ${HOST_DATABASE_PATH:-../files/database}
+    target: ${HOST_DATABASE_TARGET:-/var/www/html/database}
+    bind:
+      create_host_path: true
 
 x-php-environment: &php-environment
   COMPOSER_CACHE_DIR: /tmp/composer-cache
@@ -20,18 +41,25 @@ x-php-environment: &php-environment
   LOG_CHANNEL: ${LOG_CHANNEL:-stderr}
   LOG_LEVEL: ${LOG_LEVEL:-error}
   DB_CONNECTION: ${DB_CONNECTION:-mysql}
-  DB_HOST: ${DB_HOST:-}
+  DB_HOST: ${DB_HOST:-metarang-mysql}
   DB_PORT: ${DB_PORT:-3306}
-  DB_DATABASE: ${DB_DATABASE:-}
-  DB_USERNAME: ${DB_USERNAME:-}
+  DB_DATABASE: ${DB_DATABASE:-metarang_db}
+  DB_USERNAME: ${DB_USERNAME:-metarang_user}
   DB_PASSWORD: ${DB_PASSWORD:-}
+  # Translation models use sqlite; must not inherit MySQL DB_DATABASE.
+  DB_SQLITE_DATABASE: ${DB_SQLITE_DATABASE:-/var/www/html/database/database.sqlite}
   CACHE_DRIVER: ${CACHE_DRIVER:-redis}
   CACHE_STORE: ${CACHE_STORE:-redis}
   SESSION_DRIVER: ${SESSION_DRIVER:-redis}
   QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+  QUEUE_FAILED_DRIVER: ${QUEUE_FAILED_DRIVER:-database-uuids}
   REDIS_HOST: ${REDIS_HOST:-redis}
   REDIS_PORT: ${REDIS_PORT:-6379}
   FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
+  SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN:-}
+  SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0.1}
+  SENTRY_ENABLE_LOGS: ${SENTRY_ENABLE_LOGS:-false}
+  SENTRY_SEND_DEFAULT_PII: ${SENTRY_SEND_DEFAULT_PII:-false}
 
 x-app-common: &app-common
   image: *php-image
@@ -45,6 +73,7 @@ x-app-common: &app-common
   init: true
   networks:
     - admin-panel-private
+    - metarang-shared
 
 services:
   app:
@@ -54,19 +83,24 @@ services:
       dockerfile: docker/php/Dockerfile
       args:
         GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+        PHP_INI_FILE: production.ini
     pull_policy: build
     ports:
       - "${APP_PORT:-8088}:8080"
     environment:
       <<: *php-environment
       PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
-    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080", "--no-reload"]
+    command:
+      - sh
+      - -c
+      - php artisan storage:link && exec php artisan serve --host=0.0.0.0 --port=8080 --no-reload
     depends_on:
       redis:
         condition: service_healthy
     networks:
       - dokploy-network
       - admin-panel-private
+      - metarang-shared
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/ >/dev/null || exit 1"]
       interval: 30s
@@ -75,15 +109,23 @@ services:
       start_period: 30s
 
   # One-shot Vite build against the bind-mounted tree (profile: dev).
+  # Uses a repo-relative path — only for local profile:dev, not Dokploy AutoDeploy.
   node:
     image: node:22-alpine
     pull_policy: if_not_present
     restart: "no"
     working_dir: /var/www/html
     volumes:
-      - ${HOST_STORAGE_PATH:-.}:/var/www/html:cached
-      - node-modules:/var/www/html/node_modules
-      - npm-cache:/root/.npm
+      - type: bind
+        source: ${HOST_APP_PATH:-.}
+        target: /var/www/html
+        consistency: cached
+      - type: volume
+        source: node-modules
+        target: /var/www/html/node_modules
+      - type: volume
+        source: npm-cache
+        target: /root/.npm
     command: ["sh", "docker/scripts/build-assets.sh"]
     profiles:
       - dev
@@ -96,7 +138,9 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
-      - redis-data:/data
+      - type: volume
+        source: redis-data
+        target: /data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -107,30 +151,35 @@ services:
 
   queue:
     <<: *app-common
+    # Reuse the image built by `app` (same tag); do not pull a registry image by this name.
     pull_policy: never
-    command: ["php", "artisan", "queue:work", "redis", "--sleep=3", "--tries=3", "--max-time=3600"]
-    environment:
-      <<: *php-environment
+    # Use default QUEUE_CONNECTION (redis). --max-time recycles the worker hourly; restart policy brings it back.
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600", "--timeout=90"]
+    stop_grace_period: 60s
     depends_on:
       app:
         condition: service_healthy
       redis:
         condition: service_healthy
-    profiles:
-      - queue
 
   scheduler:
     <<: *app-common
     pull_policy: never
-    command: ["sh", "-c", "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"]
+    # schedule:work keeps a single long-lived process (better signal handling than sleep loops).
+    # Redis is required for schedule mutexes when CACHE_STORE=redis.
+    command: ["php", "artisan", "schedule:work", "--verbose", "--no-interaction"]
+    stop_grace_period: 30s
     depends_on:
       app:
         condition: service_healthy
-    profiles:
-      - queue
+      redis:
+        condition: service_healthy
 
 networks:
   dokploy-network:
+    external: true
+  metarang-shared:
+    name: metarang-shared
     external: true
   admin-panel-private:
     driver: bridge

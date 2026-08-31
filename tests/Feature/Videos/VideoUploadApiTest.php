@@ -191,6 +191,17 @@ class VideoUploadApiTest extends TestCase
             ->assertJsonValidationErrors(['file']);
     }
 
+    public function test_upload_rejects_disallowed_extension(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $this->post(self::CHUNK_PATH, [
+            'file' => UploadedFile::fake()->create('malware.exe', 100, 'application/octet-stream'),
+        ], ['Accept' => 'application/json'])
+            ->assertStatus(422)
+            ->assertJsonPath('success', false);
+    }
+
     public function test_upload_rejects_file_larger_than_max(): void
     {
         $this->actingAsSuperAdmin();

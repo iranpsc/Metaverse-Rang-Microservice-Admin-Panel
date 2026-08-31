@@ -3,15 +3,12 @@
 namespace Tests\Unit\Translations;
 
 use App\Models\Translations\Field;
-use App\Models\Translations\Modal;
-use App\Models\Translations\Tab;
 use App\Models\Translations\Translation;
 use App\Services\Translations\TranslationService;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use ReflectionMethod;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -160,72 +157,7 @@ class TranslationServiceTest extends TestCase
 
         $translation->refresh();
         $this->assertSame(2, (int) $translation->version);
-        $this->assertSame('https://metarang.com/lang/fr.json', $translation->file_url);
-    }
-
-    public function test_export_translation_uploads_to_ftp_outside_local_environment(): void
-    {
-        $this->app['env'] = 'production';
-        Storage::fake('ftp');
-
-        $translation = Translation::create([
-            'code' => 'sq',
-            'name' => 'Albanian',
-            'native_name' => 'Shqip',
-            'direction' => 'ltr',
-            'status' => true,
-            'version' => 0,
-        ]);
-
-        $modal = $translation->modals()->create(['name' => 'home']);
-        $tab = $modal->tabs()->create(['name' => 'main']);
-        $tab->fields()->create(['unique_id' => 1, 'translation' => 'Pershendetje']);
-
-        $service = new TranslationService(new Filesystem);
-        $result = $service->exportTranslation($translation);
-
-        $filePath = public_path('lang/sq.json');
-        $this->createdLangFiles[] = $filePath;
-
-        $this->assertSame('Translation exported successfully.', $result);
-        Storage::disk('ftp')->assertExists('sq.json');
-        $this->assertSame(
-            [1 => 'Pershendetje'],
-            json_decode((string) Storage::disk('ftp')->get('sq.json'), true)
-        );
-    }
-
-    public function test_export_translation_throws_validation_exception_when_ftp_upload_fails(): void
-    {
-        $this->app['env'] = 'production';
-
-        $disk = \Mockery::mock();
-        $disk->shouldReceive('put')->once()->andReturn(false);
-        Storage::shouldReceive('disk')->with('ftp')->andReturn($disk);
-
-        $translation = Translation::create([
-            'code' => 'ak',
-            'name' => 'Akan',
-            'native_name' => 'Akan',
-            'direction' => 'ltr',
-            'status' => true,
-            'version' => 0,
-        ]);
-
-        $modal = $translation->modals()->create(['name' => 'home']);
-        $tab = $modal->tabs()->create(['name' => 'main']);
-        $tab->fields()->create(['unique_id' => 1, 'translation' => 'Hi']);
-
-        $service = new TranslationService(new Filesystem);
-
-        try {
-            $service->exportTranslation($translation);
-            $this->fail('Expected ValidationException was not thrown.');
-        } catch (ValidationException $exception) {
-            $this->assertArrayHasKey('export', $exception->errors());
-        } finally {
-            $this->createdLangFiles[] = public_path('lang/ak.json');
-        }
+        $this->assertSame(sprintf('%s/lang/fr.json', config('app.url')), $translation->file_url);
     }
 
     public function test_available_languages_throws_when_definition_file_is_missing(): void

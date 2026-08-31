@@ -92,37 +92,21 @@
           </div>
 
           <div class="grid grid-cols-1 gap-6">
-            <div>
-              <label class="block text-sm font-medium text-[var(--theme-text-primary)] mb-2">
-                توضیحات
-                <span class="text-error">*</span>
-              </label>
-              <div :class="['rich-editor-container', errors.description && 'has-error']">
-                <Editor
-                  v-model="form.description"
-                  editorStyle="height: 220px"
-                  :editorOptions="editorOptions"
-                  placeholder="توضیحات کامل هدیه را وارد کنید"
-                />
-              </div>
-              <p v-if="errors.description" class="mt-1.5 text-xs text-error">{{ errors.description }}</p>
-            </div>
+            <RichTextEditor
+              v-model="form.description"
+              label="توضیحات"
+              placeholder="توضیحات کامل هدیه را وارد کنید"
+              :error="errors.description"
+              required
+            />
 
-            <div>
-              <label class="block text-sm font-medium text-[var(--theme-text-primary)] mb-2">
-                ویژگی‌ها
-                <span class="text-error">*</span>
-              </label>
-              <div :class="['rich-editor-container', errors.features && 'has-error']">
-                <Editor
-                  v-model="form.features"
-                  editorStyle="height: 220px"
-                  :editorOptions="editorOptions"
-                  placeholder="ویژگی‌ها و مزایای هدیه را وارد کنید"
-                />
-              </div>
-              <p v-if="errors.features" class="mt-1.5 text-xs text-error">{{ errors.features }}</p>
-            </div>
+            <RichTextEditor
+              v-model="form.features"
+              label="ویژگی‌ها"
+              placeholder="ویژگی‌ها و مزایای هدیه را وارد کنید"
+              :error="errors.features"
+              required
+            />
           </div>
         </Card>
 
@@ -416,10 +400,11 @@
 import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Button, Card, Checkbox, Input, LoadingState, ErrorState, FileInput, FileUploadModal } from '../../components/ui'
-import Editor from 'primevue/editor'
+import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import ExistingFileHint from '../../components/levels/ExistingFileHint.vue'
 import { useToast } from '../../composables/useToast'
 import { useLevelGift } from '../../composables/useLevelGift'
+import { stripRichText } from '../../utils/sanitize'
 
 const { showToast } = useToast()
 const { fetchLevelGift, saveLevelGift } = useLevelGift()
@@ -522,27 +507,6 @@ const submitButtonLabel = computed(() => {
   return 'ثبت اطلاعات'
 })
 
-const editorOptions = Object.freeze({
-  modules: {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      [{ font: [] }],
-      [{ size: [] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{ color: [] }, { background: [] }],
-      [{ script: 'sub' }, { script: 'super' }],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ indent: '-1' }, { indent: '+1' }],
-      [{ direction: 'rtl' }],
-      [{ align: [] }],
-      ['link'],
-      ['clean']
-    ]
-  },
-  theme: 'snow',
-  formats: ['direction']
-})
-
 const resetErrors = () => {
   Object.keys(errors).forEach((key) => {
     errors[key] = ''
@@ -598,14 +562,7 @@ const setFormValues = (data) => {
   resetErrors()
 }
 
-const sanitizeRichText = (value) => {
-  if (!value) return ''
-  return value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
+const sanitizeRichText = (value) => stripRichText(value)
 
 const validateString = (field, label, { max = null, required = true, richText = false } = {}) => {
   const rawValue = (form[field] ?? '').toString()
@@ -1017,52 +974,6 @@ onMounted(() => {
 <style scoped>
 .text-error {
   color: var(--color-error, #EF4444);
-}
-
-.rich-editor-container {
-  border-radius: 12px;
-  border: 1px solid var(--theme-border);
-  background: rgba(30, 41, 59, 0.75);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.rich-editor-container.has-error {
-  border-color: var(--color-error, #EF4444);
-  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
-}
-
-.rich-editor-container :deep(.p-editor-container) {
-  border: none;
-  background: transparent;
-  color: var(--theme-text-primary);
-  direction: rtl;
-  font-family: 'Inter', sans-serif;
-}
-
-.rich-editor-container :deep(.p-editor-toolbar) {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(18px);
-}
-
-.rich-editor-container :deep(.p-editor-toolbar button) {
-  color: var(--theme-text-secondary);
-}
-
-.rich-editor-container :deep(.p-editor-toolbar button.p-highlight) {
-  color: var(--theme-primary-500, #7C3AED);
-}
-
-.rich-editor-container :deep(.ql-editor) {
-  min-height: 180px;
-  color: var(--theme-text-primary);
-  font-size: 0.95rem;
-  direction: rtl;
-  text-align: right;
-}
-
-.rich-editor-container :deep(.ql-editor::placeholder) {
-  color: var(--theme-text-muted);
 }
 </style>
 

@@ -20,6 +20,7 @@
         :editor="ClassicEditor"
         :model-value="modelValue"
         :config="mergedConfig"
+        :disabled="disabled"
         @update:model-value="onUpdate"
         @ready="onReady"
       />
@@ -37,8 +38,7 @@
 <script setup>
 import { computed } from 'vue'
 import { Ckeditor } from '@ckeditor/ckeditor5-vue'
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
-import '@ckeditor/ckeditor5-build-classic/build/translations/fa.js'
+import ClassicEditor from '../../lib/classicEditor.js'
 
 const props = defineProps({
   modelValue: {
@@ -78,6 +78,10 @@ const props = defineProps({
     type: Boolean,
     default: true
   },
+  disabled: {
+    type: Boolean,
+    default: false
+  },
   editorClass: {
     type: String,
     default: ''
@@ -104,9 +108,12 @@ function normalizeEmpty(html) {
 
 const mergedConfig = computed(() => {
   const base = {
+    licenseKey: 'GPL',
     placeholder: props.placeholder,
-    contentsLangDirection: props.rtl ? 'rtl' : 'ltr',
-    language: props.rtl ? 'fa' : 'en'
+    language: {
+      ui: props.rtl ? 'fa' : 'en',
+      content: props.rtl ? 'fa' : 'en'
+    }
   }
   return { ...base, ...props.editorConfig }
 })

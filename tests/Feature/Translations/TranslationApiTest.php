@@ -7,10 +7,8 @@ use App\Models\Translations\Translation;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
-use Mockery;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Tests\Concerns\CreatesAuthApiSchema;
 use Tests\TestCase;
@@ -517,7 +515,7 @@ class TranslationApiTest extends TestCase
 
         $translation->refresh();
         $this->assertSame(2, (int) $translation->version);
-        $this->assertSame('https://metarang.com/lang/fr.json', $translation->file_url);
+        $this->assertSame(sprintf('%s/lang/fr.json', config('app.url')), $translation->file_url);
     }
 
     public function test_export_includes_fields_from_multiple_modals_and_tabs(): void
@@ -550,12 +548,11 @@ class TranslationApiTest extends TestCase
         ], $payload);
     }
 
-    public function test_export_in_non_local_env_uploads_via_ftp_and_returns_json_success(): void
+    public function test_export_in_non_local_env_downloads_file_and_updates_model(): void
     {
         $this->actingAsAdmin();
-        // Non-local (not "local") so export uses FTP; avoid "production" which enables phone-verification middleware.
+        // Avoid "production" which enables phone-verification middleware.
         $this->app['env'] = 'staging';
-        Storage::fake('ftp');
 
         $translation = $this->createTranslation([
             'code' => 'sq',
@@ -567,61 +564,51 @@ class TranslationApiTest extends TestCase
             ['unique_id' => 1, 'translation' => 'Pershendetje', 'modal' => 'home', 'tab' => 'main'],
         ]);
 
-        $response = $this->postJson($this->exportPath($translation));
+        $response = $this->post($this->exportPath($translation));
 
         $filePath = public_path('lang/sq.json');
         $this->trackLangFile($filePath);
 
-        $response->assertOk()
-            ->assertJson([
-                'success' => true,
-                'data' => [
-                    'message' => 'Translation exported successfully.',
-                ],
-                'message' => 'Translation exported successfully.',
-            ]);
-
-        Storage::disk('ftp')->assertExists('sq.json');
+        $response->assertOk();
+        $this->assertInstanceOf(BinaryFileResponse::class, $response->baseResponse);
+        $this->assertFileExists($filePath);
         $this->assertSame(
             [1 => 'Pershendetje'],
-            json_decode((string) Storage::disk('ftp')->get('sq.json'), true)
+            json_decode((string) file_get_contents($filePath), true, flags: JSON_THROW_ON_ERROR)
         );
 
         $translation->refresh();
         $this->assertSame(5, (int) $translation->version);
-        $this->assertSame('https://metarang.com/lang/sq.json', $translation->file_url);
+        $this->assertSame(sprintf('%s/lang/sq.json', config('app.url')), $translation->file_url);
     }
 
-    public function test_export_in_non_local_env_returns_validation_error_when_ftp_upload_fails(): void
+    public function test_export_uses_configured_app_url_for_file_url(): void
     {
         $this->actingAsAdmin();
-        $this->app['env'] = 'staging';
-
-        $disk = Mockery::mock();
-        $disk->shouldReceive('put')->once()->andReturn(false);
-        Storage::shouldReceive('disk')->with('ftp')->andReturn($disk);
+        config(['app.url' => 'https://cdn.example.test']);
 
         $translation = $this->createTranslation([
             'code' => 'ak',
             'name' => 'Akan',
             'version' => 0,
+            'file_url' => null,
         ]);
 
         $this->seedTranslationFields($translation, [
             ['unique_id' => 1, 'translation' => 'Hi', 'modal' => 'home', 'tab' => 'main'],
         ]);
 
-        $response = $this->postJson($this->exportPath($translation));
+        $response = $this->post($this->exportPath($translation));
 
         $filePath = public_path('lang/ak.json');
         $this->trackLangFile($filePath);
 
-        $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['export']);
+        $response->assertOk();
+        $this->assertInstanceOf(BinaryFileResponse::class, $response->baseResponse);
 
         $translation->refresh();
         $this->assertSame(1, (int) $translation->version);
-        $this->assertSame('https://metarang.com/lang/ak.json', $translation->file_url);
+        $this->assertSame('https://cdn.example.test/lang/ak.json', $translation->file_url);
     }
 
     public function test_export_returns_not_found_for_missing_translation(): void

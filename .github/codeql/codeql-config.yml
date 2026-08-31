@@ -1,4 +1,6 @@
-# Vendored third-party assets in public/assets/plugins are not maintained here.
-# Security fixes are applied via npm dependencies and Vite bundles instead.
+name: "Metaverse Admin CodeQL config"
+
+# Static assets under public/assets (fonts, images, Persian datepicker) are not
+# application source and are excluded from CodeQL analysis.
 paths-ignore:
-  - public/assets/plugins
+  - public/assets

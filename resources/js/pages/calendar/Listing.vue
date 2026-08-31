@@ -382,7 +382,7 @@ import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
-import { stripHtml } from '../../utils/sanitize'
+import { stripRichText, hasRichTextContent } from '../../utils/sanitize'
 
 const { showToast } = useToast()
 
@@ -435,7 +435,11 @@ function defaultEventForm() {
   }
 }
 
-const hasRichTextContent = (value) => stripHtml(value).replace(/\s+/g, '').length > 0
+const truncateText = (text, length = 60) => {
+  const plain = stripRichText(text)
+  if (!plain) return '-'
+  return plain.length > length ? `${plain.slice(0, length)}…` : plain
+}
 
 const persianDigitMap = {
   '۰': '0',
@@ -478,12 +482,6 @@ const isoToJalaliDate = (isoString) => {
   }
 
   return `${year.padStart(4, '0')}/${month.padStart(2, '0')}/${day.padStart(2, '0')}`
-}
-
-const truncateText = (text, length = 60) => {
-  const plain = stripHtml(text)
-  if (!plain) return '-'
-  return plain.length > length ? `${plain.slice(0, length)}…` : plain
 }
 
 const resetErrors = (target) => {

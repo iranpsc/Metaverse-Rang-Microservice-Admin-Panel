@@ -8,6 +8,9 @@ use App\Models\Map;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\Response;
 
 class MapsController extends Controller
 {
@@ -52,20 +55,23 @@ class MapsController extends Controller
         ]);
 
         try {
-            // Get the original file names
-            $mapFileName = $request->file('map_file')->getClientOriginalName();
-            $borderFileName = $request->file('border_file')->getClientOriginalName();
-            $pointFileName = $request->file('point_file')->getClientOriginalName();
+            $mapFileName = $this->sanitizeUploadFileName(
+                $request->file('map_file')->getClientOriginalName()
+            );
+            $borderFileName = $this->sanitizeUploadFileName(
+                $request->file('border_file')->getClientOriginalName()
+            );
+            $pointFileName = $this->sanitizeUploadFileName(
+                $request->file('point_file')->getClientOriginalName()
+            );
 
-            // Store the files in the public storage
             $request->file('map_file')->storePubliclyAs('maps', $mapFileName, 'public');
             $request->file('border_file')->storePubliclyAs('maps', $borderFileName, 'public');
             $request->file('point_file')->storePubliclyAs('maps', $pointFileName, 'public');
 
-            // Read the file contents
-            $fileContents = file_get_contents(public_path('uploads/maps/'.$mapFileName));
-            $borderFileContents = file_get_contents(public_path('uploads/maps/'.$borderFileName));
-            $pointFileContents = file_get_contents(public_path('uploads/maps/'.$pointFileName));
+            $fileContents = file_get_contents($this->mapUploadPath($mapFileName));
+            $borderFileContents = file_get_contents($this->mapUploadPath($borderFileName));
+            $pointFileContents = file_get_contents($this->mapUploadPath($pointFileName));
 
             // Extract the relevant data from the file contents
             $fileContents = explode('=', $fileContents)[1];
@@ -113,11 +119,20 @@ class MapsController extends Controller
                 'success' => true,
                 'message' => 'فایل با موفقیت بارگذاری شد',
             ]);
-        } catch (\Exception $e) {
+        } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'خطا در بارگذاری فایل: '.$e->getMessage(),
-            ], 500);
+                'message' => 'نام فایل بارگذاری‌شده نامعتبر است.',
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Exception $e) {
+            Log::error('Map upload failed.', [
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در بارگذاری فایل: خطای داخلی سرور.',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -134,14 +149,18 @@ class MapsController extends Controller
         ]);
 
         try {
-            $borderFileName = $request->file('border_file')->getClientOriginalName();
-            $pointFileName = $request->file('point_file')->getClientOriginalName();
+            $borderFileName = $this->sanitizeUploadFileName(
+                $request->file('border_file')->getClientOriginalName()
+            );
+            $pointFileName = $this->sanitizeUploadFileName(
+                $request->file('point_file')->getClientOriginalName()
+            );
 
             $request->file('border_file')->storePubliclyAs('maps', $borderFileName, 'public');
             $request->file('point_file')->storePubliclyAs('maps', $pointFileName, 'public');
 
-            $borderFileContents = file_get_contents(public_path('uploads/maps/'.$borderFileName));
-            $pointFileContents = file_get_contents(public_path('uploads/maps/'.$pointFileName));
+            $borderFileContents = file_get_contents($this->mapUploadPath($borderFileName));
+            $pointFileContents = file_get_contents($this->mapUploadPath($pointFileName));
 
             $borderFileContents = explode('=', $borderFileContents)[1];
             $pointFileContents = explode('=', $pointFileContents)[1];
@@ -162,11 +181,21 @@ class MapsController extends Controller
                 'success' => true,
                 'message' => 'اطلاعات با موفقیت ویرایش شد',
             ]);
-        } catch (\Exception $e) {
+        } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'خطا در ویرایش اطلاعات: '.$e->getMessage(),
-            ], 500);
+                'message' => 'نام فایل بارگذاری‌شده نامعتبر است.',
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Exception $e) {
+            Log::error('Map update failed.', [
+                'exception' => $e,
+                'map_id' => $map->id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'خطا در ویرایش اطلاعات: خطای داخلی سرور.',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -176,9 +205,10 @@ class MapsController extends Controller
     public function destroy(Map $map): JsonResponse
     {
         try {
-            // Delete the map file from storage
-            if (file_exists(public_path('uploads/maps/'.$map->fileName))) {
-                unlink(public_path('uploads/maps/'.$map->fileName));
+            $storedFileName = $this->sanitizeStoredFileName((string) $map->fileName);
+
+            if ($storedFileName !== null && file_exists($this->mapUploadPath($storedFileName))) {
+                unlink($this->mapUploadPath($storedFileName));
             }
 
             $map->delete();
@@ -188,10 +218,15 @@ class MapsController extends Controller
                 'message' => 'نقشه با موفقیت حذف شد',
             ]);
         } catch (\Exception $e) {
+            Log::error('Map delete failed.', [
+                'exception' => $e,
+                'map_id' => $map->id,
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'خطا در حذف نقشه: '.$e->getMessage(),
-            ], 500);
+                'message' => 'خطا در حذف نقشه: خطای داخلی سرور.',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -210,11 +245,45 @@ class MapsController extends Controller
                 'message' => 'اطلاعات با موفقیت وارد دیتابیس شد',
             ]);
         } catch (\Exception $e) {
+            Log::error('Map import dispatch failed.', [
+                'exception' => $e,
+                'map_id' => $map->id,
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'خطا در وارد کردن اطلاعات: '.$e->getMessage(),
-            ], 500);
+                'message' => 'خطا در وارد کردن اطلاعات: خطای داخلی سرور.',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    protected function sanitizeUploadFileName(string $fileName): string
+    {
+        $fileName = basename(str_replace('\\', '/', $fileName));
+
+        if ($fileName === '' || $fileName === '.' || $fileName === '..') {
+            throw new \InvalidArgumentException('Invalid upload file name.');
+        }
+
+        if (preg_match('/[\x00-\x1f\x7f]/', $fileName)) {
+            throw new \InvalidArgumentException('Invalid upload file name.');
+        }
+
+        return $fileName;
+    }
+
+    protected function sanitizeStoredFileName(string $fileName): ?string
+    {
+        try {
+            return $this->sanitizeUploadFileName($fileName);
+        } catch (\InvalidArgumentException) {
+            return null;
+        }
+    }
+
+    protected function mapUploadPath(string $fileName): string
+    {
+        return Storage::disk('public')->path('maps/'.$this->sanitizeUploadFileName($fileName));
     }
 
     /**

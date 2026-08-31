@@ -437,6 +437,7 @@ import { ensureCsrfCookie, getSanctumStatefulHeaders } from '../../utils/api'
 import { useVideos } from '../../composables/useVideos'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
+import { stripRichText } from '../../utils/sanitize'
 import {
   Button,
   ErrorState,
@@ -489,17 +490,7 @@ const selectedVideoDescription = computed(() => {
     return ''
   }
 
-  try {
-    if (typeof window !== 'undefined' && window.DOMParser) {
-      const parser = new window.DOMParser()
-      const doc = parser.parseFromString(rawDescription, 'text/html')
-      return doc.body.textContent?.trim() || ''
-    }
-  } catch (err) {
-    console.error('Description parse error:', err)
-  }
-
-  return rawDescription.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  return stripRichText(rawDescription)
 })
 
 const createForm = reactive({

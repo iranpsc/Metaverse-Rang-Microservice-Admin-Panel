@@ -18,5 +18,6 @@ if [ "$needs_build" -eq 0 ]; then
 fi
 
 echo "Building frontend assets..."
-npm ci --prefer-offline --no-audit --no-fund
+# --ignore-scripts: simple-line-icons postinstall needs `less` (not required for Vite).
+npm ci --prefer-offline --no-audit --no-fund --ignore-scripts
 npm run build

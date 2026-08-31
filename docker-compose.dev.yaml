@@ -10,28 +10,38 @@ x-app-environment: &app-environment
   DB_DATABASE: ${DB_DATABASE:-admin_panel}
   DB_USERNAME: ${DB_USERNAME:-root}
   DB_PASSWORD: ${DB_PASSWORD:-secret}
+  # Translation models use sqlite; must not inherit MySQL DB_DATABASE.
+  DB_SQLITE_DATABASE: ${DB_SQLITE_DATABASE:-/var/www/html/database/database.sqlite}
   REDIS_HOST: redis
   REDIS_PORT: 6379
   MAIL_MAILER: smtp
   MAIL_HOST: mailpit
   MAIL_PORT: 1025
   CACHE_DRIVER: redis
+  CACHE_STORE: redis
   SESSION_DRIVER: redis
   QUEUE_CONNECTION: redis
+  QUEUE_FAILED_DRIVER: ${QUEUE_FAILED_DRIVER:-database-uuids}
+  SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN:-https://fbc0bb81b6fbcc6b8dcead79e099eca2@sentry.irpsc.com/11}
+  SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-1.0}
+  SENTRY_ENABLE_LOGS: ${SENTRY_ENABLE_LOGS:-false}
+  SENTRY_SEND_DEFAULT_PII: ${SENTRY_SEND_DEFAULT_PII:-false}
 
 x-php-service: &php-service
   image: ${PHP_IMAGE:-admin-panel-php:dev}
   build:
     context: .
     dockerfile: docker/php/Dockerfile
+    args:
+      PHP_INI_FILE: local.ini
   restart: unless-stopped
   init: true
   volumes:
-    - .:/var/www/html
+    - type: bind
+      source: .
+      target: /var/www/html
   environment:
     <<: *app-environment
-    # Parallel workers for PHP built-in server (asset requests no longer serialize).
-    PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
   networks:
     - admin-panel
   depends_on:
@@ -45,8 +55,15 @@ services:
     <<: *php-service
     ports:
       - "${APP_PORT:-8080}:8000"
-    # --no-reload is required for PHP_CLI_SERVER_WORKERS to take effect.
-    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]
+    environment:
+      <<: *app-environment
+      # Parallel workers for PHP built-in server (asset requests no longer serialize).
+      # --no-reload is required for PHP_CLI_SERVER_WORKERS to take effect.
+      PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
+    command:
+      - sh
+      - -c
+      - php artisan storage:link --force && exec php artisan serve --host=0.0.0.0 --port=8000 --no-reload
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS --max-time 30 http://127.0.0.1:8000/ >/dev/null || exit 1"]
       interval: 20s
@@ -63,7 +80,9 @@ services:
       MYSQL_DATABASE: ${DB_DATABASE:-admin_panel}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
     volumes:
-      - mysql-data:/var/lib/mysql
+      - type: volume
+        source: mysql-data
+        target: /var/lib/mysql
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -83,7 +102,9 @@ services:
       - "${FORWARD_REDIS_PORT:-6379}:6379"
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
-      - redis-data:/data
+      - type: volume
+        source: redis-data
+        target: /data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -97,10 +118,15 @@ services:
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
-      - .:/var/www/html
+      - type: bind
+        source: .
+        target: /var/www/html
       # Linux-native deps (host Windows node_modules cannot run Rolldown/Vite in Alpine).
-      - node_modules:/var/www/html/node_modules
-    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+      - type: volume
+        source: node_modules
+        target: /var/www/html/node_modules
+    # --ignore-scripts: simple-line-icons postinstall needs `less` (not required for Vite).
+    command: sh -c "npm ci --ignore-scripts && npm run dev -- --host 0.0.0.0 --port 5173"
     ports:
       - "${VITE_PORT:-5173}:5173"
     environment:
@@ -127,7 +153,9 @@ services:
 
   queue:
     <<: *php-service
-    command: ["php", "artisan", "queue:work", "redis", "--sleep=3", "--tries=3", "--max-time=3600"]
+    # Use default QUEUE_CONNECTION (redis). --max-time recycles the worker hourly; restart policy brings it back.
+    command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600", "--timeout=90"]
+    stop_grace_period: 60s
     depends_on:
       mysql:
         condition: service_healthy
@@ -135,19 +163,19 @@ services:
         condition: service_healthy
       app:
         condition: service_healthy
-    profiles:
-      - queue
 
   scheduler:
     <<: *php-service
-    command: ["sh", "-c", "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"]
+    # schedule:work keeps a single long-lived process (better signal handling than sleep loops).
+    command: ["php", "artisan", "schedule:work", "--verbose", "--no-interaction"]
+    stop_grace_period: 30s
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       app:
         condition: service_healthy
-    profiles:
-      - queue
 
 volumes:
   mysql-data:

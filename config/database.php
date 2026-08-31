@@ -38,8 +38,10 @@ return [
 
         'sqlite' => [
             'driver' => 'sqlite',
-            'url' => env('DATABASE_URL'),
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            // Dedicated env vars — do not reuse DB_DATABASE/DATABASE_URL (those are MySQL).
+            // Translation models use this connection at database/database.sqlite.
+            'url' => env('DB_SQLITE_URL'),
+            'database' => env('DB_SQLITE_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
         ],

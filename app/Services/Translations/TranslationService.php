@@ -11,7 +11,6 @@ use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use JsonException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -102,7 +101,7 @@ class TranslationService
         return $translation->refresh();
     }
 
-    public function exportTranslation(Translation $translation): BinaryFileResponse|string
+    public function exportTranslation(Translation $translation): BinaryFileResponse
     {
         $payload = Field::query()
             ->whereHas('tab.modal', function ($query) use ($translation) {
@@ -123,20 +122,10 @@ class TranslationService
         $this->filesystem->put($filePath, $encodedPayload);
 
         $translation->increment('version');
-        $absoluteUrl = sprintf('https://metarang.com/lang/%s', $fileName);
+        $absoluteUrl = sprintf('%s/lang/%s', rtrim((string) config('app.url'), '/'), $fileName);
         $translation->update(['file_url' => $absoluteUrl]);
 
-        if (app()->environment('local')) {
-            return response()->download($filePath, $fileName);
-        }
-
-        if (! Storage::disk('ftp')->put($fileName, $encodedPayload)) {
-            throw ValidationException::withMessages([
-                'export' => __('Translation export failed.'),
-            ]);
-        }
-
-        return __('Translation exported successfully.');
+        return response()->download($filePath, $fileName);
     }
 
     public function getModalsForTranslation(Translation $translation, int $perPage = 10)

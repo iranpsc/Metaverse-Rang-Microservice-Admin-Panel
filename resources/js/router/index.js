@@ -6,6 +6,7 @@ import App from '../components/App.vue'
 import NotFound from '../components/errors/NotFound.vue'
 import { navigationProgress } from '../composables/useNavigationProgress'
 import { useAuth } from '../composables/useAuth'
+import { isChunkLoadError, reloadForStaleChunk } from '../utils/chunkLoadRecovery'
 const Dashboard = () => import('../pages/Dashboard.vue')
 const RegistrationInfo = () => import('../pages/citizens/RegistrationInfo.vue')
 const KycList = () => import('../pages/citizens/KycList.vue')
@@ -15,16 +16,16 @@ const Deposits = () => import('../pages/citizens/Deposits.vue')
 const ProfileDetails = () => import('../pages/citizens/ProfileDetails.vue')
 const Withdraws = () => import('../pages/citizens/Withdraws.vue')
 const ConnectedWallets = () => import('../pages/citizens/ConnectedWallets.vue')
-const LandsListing = () => import('../pages/lands/Listing.vue')
+const LandsListing = () => import(/* webpackChunkName: "lands-listing" */ '../pages/lands/Listing.vue')
 const FeatureLimits = () => import('../pages/lands/FeatureLimits.vue')
 const FeaturePricingLimits = () => import('../pages/lands/FeaturePricingLimits.vue')
 const Prices = () => import('../pages/lands/Prices.vue')
 const Pricing = () => import('../pages/lands/Pricing.vue')
 const Sold = () => import('../pages/lands/Sold.vue')
 const Traded = () => import('../pages/lands/Traded.vue')
-const LevelsListing = () => import('../pages/levels/Listing.vue')
+const LevelsListing = () => import(/* webpackChunkName: "levels-listing" */ '../pages/levels/Listing.vue')
 const UserLevelsListing = () => import('../pages/levels/UserLevels.vue')
-const CalendarListing = () => import('../pages/calendar/Listing.vue')
+const CalendarListing = () => import(/* webpackChunkName: "calendar-listing" */ '../pages/calendar/Listing.vue')
 const Versions = () => import('../pages/calendar/Versions.vue')
 const LevelPrize = () => import('../pages/levels/Prize.vue')
 const LevelLicenses = () => import('../pages/levels/Licenses.vue')
@@ -41,18 +42,18 @@ const SystemVariables = () => import('../pages/variables/SystemVariables.vue')
 const ChallengeQuestions = () => import('../pages/challenge/Questions.vue')
 const VideoCategories = () => import('../pages/videos/Categories.vue')
 const VideoSubCategories = () => import('../pages/videos/SubCategories.vue')
-const VideoListing = () => import('../pages/videos/Listing.vue')
+const VideoListing = () => import(/* webpackChunkName: "videos-listing" */ '../pages/videos/Listing.vue')
 const DynastyMessages = () => import('../pages/dynasty/DynastyMessages.vue')
 const DynastyPermissions = () => import('../pages/dynasty/DynastyPermissions.vue')
 const DynastyPrizes = () => import('../pages/dynasty/DynastyPrizes.vue')
 const MapsListing = () => import('../pages/maps/MapsListing.vue')
-const ReportsListing = () => import('../pages/reports/Listing.vue')
+const ReportsListing = () => import(/* webpackChunkName: "reports-listing" */ '../pages/reports/Listing.vue')
 const TranslationsIndex = () => import('../pages/translations/TranslationsIndex.vue')
 const TranslationModals = () => import('../pages/translations/TranslationModals.vue')
 const ModalTabs = () => import('../pages/translations/ModalTabs.vue')
 const TabFields = () => import('../pages/translations/TabFields.vue')
-const IsicCodes = () => import('../pages/isic-codes/Listing.vue')
-const ActivityLogs = () => import('../pages/activity-logs/Listing.vue')
+const IsicCodes = () => import(/* webpackChunkName: "isic-listing" */ '../pages/isic-codes/Listing.vue')
+const ActivityLogs = () => import(/* webpackChunkName: "activity-logs-listing" */ '../pages/activity-logs/Listing.vue')
 const BulkMessages = () => import('../pages/messaging/BulkMessages.vue')
 const Profile = () => import('../pages/profile/Profile.vue')
 
@@ -621,6 +622,14 @@ router.beforeEach(async (to, from, next) => {
   } else {
     next()
   }
+})
+
+router.onError((error, to) => {
+  if (isChunkLoadError(error) && reloadForStaleChunk(to.fullPath)) {
+    return
+  }
+
+  throw error
 })
 
 // Update page title on route change and finish progress
