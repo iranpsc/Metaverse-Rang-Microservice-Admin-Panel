@@ -1,9 +1,39 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">دارایی های شهروندان</h1>
-      <p class="text-[var(--theme-text-secondary)]">مشاهده و مدیریت دارایی‌های کاربران</p>
+    <PageHeader
+      title="دارایی های شهروندان"
+      subtitle="مشاهده و مدیریت دارایی‌های کاربران"
+    />
+
+    <!-- Filters -->
+    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end mb-6">
+      <div class="w-full sm:flex-1 sm:max-w-md">
+        <SearchBox
+          v-model="searchTerm"
+          placeholder="جستجو بر اساس کد شهروندی..."
+          :debounce-ms="500"
+          @search="handleSearch"
+          @clear="handleClear"
+        />
+      </div>
+      <div class="w-full sm:w-56">
+        <Select
+          v-model="assetFilter"
+          label="نوع دارایی"
+          placeholder=""
+          :options="assetOptions"
+          @change="handleFilterChange"
+        />
+      </div>
+      <div class="w-full sm:w-48">
+        <Select
+          v-model="sortDirection"
+          label="ترتیب"
+          placeholder=""
+          :options="sortOptions"
+          @change="handleFilterChange"
+        />
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -30,7 +60,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
   </div>
 </template>
@@ -38,19 +68,50 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Pagination, LoadingState, ErrorState } from '../../components/ui'
+import { Table, Pagination, SearchBox, LoadingState, ErrorState, Select, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams,
+  resetToFirstPage
+} = usePaginatedList()
+
 const assets = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
+const assetFilter = ref('psc')
+const sortDirection = ref('desc')
+
+const assetOptions = [
+  { value: 'psc', label: 'دارایی های PSC' },
+  { value: 'blue', label: 'دارایی های رنگ آبی' },
+  { value: 'red', label: 'دارایی های رنگ قرمز' },
+  { value: 'yellow', label: 'دارایی های رنگ زرد' },
+  { value: 'irr', label: 'دارایی های ریال' },
+  { value: 'features_count', label: 'تعداد املاک' },
+]
+
+const sortOptions = [
+  { value: 'desc', label: 'نزولی' },
+  { value: 'asc', label: 'صعودی' },
+]
 
 // Table columns configuration
 const tableColumns = [
   {
     key: 'user_name',
     label: 'نام کاربر'
+  },
+  {
+    key: 'citizen_code',
+    label: 'کد شهروندی',
+    defaultValue: '-'
   },
   {
     key: 'psc',
@@ -78,49 +139,40 @@ const tableColumns = [
   }
 ]
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchAssets()
-  }
+const handleFilterChange = () => {
+  resetToFirstPage()
+  fetchAssets()
 }
 
-const fetchAssets = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const handleSearch = () => search(fetchAssets)
+const handleClear = () => clear(fetchAssets)
+const onPageChange = (page) => goToPage(page, fetchAssets)
 
-    const params = {
-      page: currentPage.value,
-      per_page: 10,
-    }
-
-    const response = await apiClient.get('/assets', { params })
-
-    if (response.data.success) {
-      assets.value = response.data.data.assets
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات دارایی‌ها'
-    }
-  } catch (err) {
-    console.error('Assets fetch error:', err)
-
-    // If 401/403, don't set error message - axios interceptor will handle redirect
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      assets.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    assets.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
-  }
+const clearAssets = () => {
+  assets.value = []
+  pagination.value = null
 }
+
+const fetchAssets = () => execute(async () => {
+  const response = await apiClient.get('/assets', {
+    params: buildParams({
+      asset: assetFilter.value,
+      sort: sortDirection.value
+    })
+  })
+
+  if (response.data.success) {
+    assets.value = response.data.data.assets
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات دارایی‌ها'
+    clearAssets()
+  }
+}, {
+  onClear: clearAssets,
+  logLabel: 'Assets fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
 onMounted(() => {
   fetchAssets()

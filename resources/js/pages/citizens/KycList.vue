@@ -1,17 +1,16 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">احراز هویت</h1>
-      <p class="text-[var(--theme-text-secondary)]">مدیریت و بررسی درخواست‌های احراز هویت کاربران</p>
-    </div>
+    <PageHeader
+      title="احراز هویت"
+      subtitle="مدیریت و بررسی درخواست‌های احراز هویت کاربران"
+    />
 
     <!-- Search and Actions Row -->
     <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
       <div class="flex-1 max-w-md">
         <SearchBox
           v-model="searchTerm"
-          placeholder="کد ملی را وارد کنید"
+          placeholder="جستجو با نام کامل، نام، کد ملی یا کد شهروندی"
           :debounce-ms="500"
           @search="handleSearch"
           @clear="handleClear"
@@ -75,7 +74,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
 
     <!-- KYC Details Modal -->
@@ -98,18 +97,26 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Pagination, SearchBox, LoadingState, ErrorState, Button, Badge } from '../../components/ui'
+import { Table, Pagination, SearchBox, LoadingState, ErrorState, Button, Badge, PageHeader } from '../../components/ui'
 import KycDetailsModal from '../../components/citizens/KycDetailsModal.vue'
 import KycVideoTextModal from '../../components/citizens/KycVideoTextModal.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { stripHtml } from '../../utils/sanitize'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const kycs = ref([])
-const pagination = ref(null)
-const searchTerm = ref('')
-const currentPage = ref(1)
 const selectedKycId = ref(null)
 const showDetailsModal = ref(false)
 const showVideoTextModal = ref(false)
@@ -117,8 +124,9 @@ const showVideoTextModal = ref(false)
 // Table columns configuration
 const tableColumns = [
   {
-    key: 'id',
-    label: 'شناسه'
+    key: 'citizen_code',
+    label: 'کد شهروندی',
+    defaultValue: '-'
   },
   {
     key: 'fname',
@@ -161,22 +169,9 @@ const getStatusVariant = (status) => {
 
 const getStatusLabel = (badgeHtml) => stripHtml(badgeHtml) || '-'
 
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchKycs()
-}
-
-const handleClear = () => {
-  currentPage.value = 1
-  fetchKycs()
-}
-
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchKycs()
-  }
-}
+const handleSearch = () => search(fetchKycs)
+const handleClear = () => clear(fetchKycs)
+const onPageChange = (page) => goToPage(page, fetchKycs)
 
 const openDetailsModal = (id) => {
   selectedKycId.value = id
@@ -193,48 +188,34 @@ const handleKycUpdated = () => {
   fetchKycs()
 }
 
-const fetchKycs = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: 10,
-    }
-
-    if (searchTerm.value) {
-      params.search = searchTerm.value.trim()
-    }
-
-    const response = await apiClient.get('/kycs', { params })
-
-    if (response.data.success) {
-      kycs.value = response.data.data.kycs
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات احراز هویت'
-    }
-  } catch (err) {
-    console.error('KYC fetch error:', err)
-
-    // If 401/403, don't set error message - axios interceptor will handle redirect
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      // Auth failed - let the interceptor handle redirect
-      // Don't set error message as redirect will happen
-      kycs.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    kycs.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
-  }
+const clearKycs = () => {
+  kycs.value = []
+  pagination.value = null
 }
+
+const fetchKycs = () => execute(async () => {
+  const params = buildParams()
+  const normalizedSearch = searchTerm.value.trim().replace(/\s+/g, ' ')
+  if (normalizedSearch) {
+    params.search = normalizedSearch
+  } else {
+    delete params.search
+  }
+
+  const response = await apiClient.get('/kycs', { params })
+
+  if (response.data.success) {
+    kycs.value = response.data.data.kycs
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات احراز هویت'
+    clearKycs()
+  }
+}, {
+  onClear: clearKycs,
+  logLabel: 'KYC fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
 onMounted(() => {
   fetchKycs()

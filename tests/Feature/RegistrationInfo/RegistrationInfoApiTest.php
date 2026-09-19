@@ -96,6 +96,7 @@ class RegistrationInfoApiTest extends TestCase
                         [
                             'id',
                             'name',
+                            'code',
                             'email',
                             'email_verified_at',
                             'ip',

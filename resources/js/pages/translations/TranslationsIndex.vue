@@ -2,12 +2,10 @@
   <div class="p-6 space-y-6" dir="rtl">
     <Breadcrumb :items="breadcrumbItems" />
 
-    <header class="space-y-2">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">مدیریت ترجمه‌ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">
-        افزودن زبان‌های جدید، مدیریت وضعیت و صادرات فایل‌های ترجمه در محیط متاورس
-      </p>
-    </header>
+    <PageHeader
+      title="مدیریت ترجمه‌ها"
+      subtitle="افزودن زبان‌های جدید، مدیریت وضعیت و صادرات فایل‌های ترجمه در محیط متاورس"
+    />
 
     <section
       class="space-y-4 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-bg-elevated)] p-6 backdrop-blur-md"
@@ -138,7 +136,7 @@
         v-if="pagination?.total"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </section>
   </div>
@@ -158,9 +156,11 @@ import Alert from '../../components/ui/Alert.vue'
 import LoadingState from '../../components/ui/LoadingState.vue'
 import ErrorState from '../../components/ui/ErrorState.vue'
 import Breadcrumb from '../../components/ui/Breadcrumb.vue'
+import PageHeader from '../../components/ui/PageHeader.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
 const { showToast } = useToast()
 
@@ -172,13 +172,19 @@ setTitle('مدیریت ترجمه‌ها')
 
 const router = useRouter()
 
-const loading = ref(false)
+const {
+  loading,
+  error,
+  pagination,
+  execute,
+  goToPage,
+  buildParams,
+  resetToFirstPage
+} = usePaginatedList()
+
 const creating = ref(false)
 const exportingId = ref(null)
-const error = ref('')
 const translations = ref([])
-const pagination = ref(null)
-const page = ref(1)
 
 const languagesLoading = ref(false)
 const languagesError = ref('')
@@ -232,32 +238,28 @@ const normalizeTranslationRow = (row) => ({
   status: translationStatus(row)
 })
 
-const fetchTranslations = async (requestedPage = page.value) => {
-  loading.value = true
-  error.value = ''
-  try {
-    page.value = requestedPage
-    const payload = await translationApi.getTranslations({
-      page: requestedPage
-    })
-    // Index: `{ data: [ ... ] }` → Axios `response.data.data` is an array (see translationApi).
-    if (Array.isArray(payload)) {
-      translations.value = payload.map(normalizeTranslationRow)
-      pagination.value = null
-    } else {
-      translations.value = (payload?.translations ?? []).map(normalizeTranslationRow)
-      pagination.value = payload?.pagination ?? null
-    }
-  } catch (err) {
-    error.value = err?.response?.data?.message || 'خطا در دریافت ترجمه‌ها'
-  } finally {
-    loading.value = false
-  }
+const clearTranslations = () => {
+  translations.value = []
+  pagination.value = null
 }
 
-const goToPage = (nextPage) => {
-  fetchTranslations(nextPage)
-}
+const fetchTranslations = () => execute(async () => {
+  const payload = await translationApi.getTranslations(buildParams())
+  // Index: `{ data: [ ... ] }` → Axios `response.data.data` is an array (see translationApi).
+  if (Array.isArray(payload)) {
+    translations.value = payload.map(normalizeTranslationRow)
+    pagination.value = null
+  } else {
+    translations.value = (payload?.translations ?? []).map(normalizeTranslationRow)
+    pagination.value = payload?.pagination ?? null
+  }
+}, {
+  onClear: clearTranslations,
+  logLabel: 'Translations fetch error:',
+  fallbackMessage: 'خطا در دریافت ترجمه‌ها'
+})
+
+const onPageChange = (page) => goToPage(page, fetchTranslations)
 
 const submitCreateTranslation = async () => {
   creating.value = true
@@ -267,7 +269,8 @@ const submitCreateTranslation = async () => {
     )
     showToast('ساختار ترجمه بر اساس زبان انتخابی ایجاد شد.', 'success')
     selectedLanguageCode.value = ''
-    await fetchTranslations(1)
+    resetToFirstPage()
+    await fetchTranslations()
   } catch (err) {
     const messages = err?.response?.data?.errors?.code
     showToast(Array.isArray(messages) ? messages[0] : (err?.response?.data?.message || 'امکان افزودن ترجمه وجود ندارد.'), 'error')
@@ -293,15 +296,15 @@ const handleDelete = async (row) => {
   try {
         await translationApi.deleteTranslation(row.id)
         showToast('ترجمه انتخابی حذف شد.', 'success')
-        await fetchTranslations(page.value)
+        await fetchTranslations()
       } catch (err) {
         showToast(err?.response?.data?.message || 'حذف ترجمه امکان‌پذیر نبود.', 'error')
       }
 }
 
-const handleToggleStatus = async () => {
+const handleToggleStatus = async (row) => {
   try {
-    const response = await translationApi.toggleTranslationStatus(translation.id)
+    const response = await translationApi.toggleTranslationStatus(row.id)
     const updated = response.data.translation
     translations.value = translations.value.map((item) =>
       item.id === updated.id ? normalizeTranslationRow(updated) : item

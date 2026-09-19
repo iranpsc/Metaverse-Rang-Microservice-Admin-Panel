@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">مدیریت دسترسی کارمندان</h1>
-      <p class="text-[var(--theme-text-secondary)]">ایجاد و مدیریت دسترسی‌های کارمندان</p>
-    </div>
+    <PageHeader
+      title="مدیریت دسترسی کارمندان"
+      subtitle="ایجاد و مدیریت دسترسی‌های کارمندان"
+    />
 
     <!-- Create Button -->
     <div class="mb-6">
@@ -98,7 +97,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, LoadingState, ErrorState, Button, Badge } from '../../components/ui'
+import { Table, LoadingState, ErrorState, Button, Badge, PageHeader } from '../../components/ui'
 import CreateAdminModal from '../../components/access-management/CreateAdminModal.vue'
 import UpdateAdminModal from '../../components/access-management/UpdateAdminModal.vue'
 import { useToast } from '../../composables/useToast'

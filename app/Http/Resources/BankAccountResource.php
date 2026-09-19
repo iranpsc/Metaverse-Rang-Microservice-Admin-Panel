@@ -32,6 +32,7 @@ class BankAccountResource extends JsonResource
                 $result = [
                     'id' => $bankable->id,
                     'name' => $bankable->name ?? null,
+                    'code' => $bankable->code ?? null,
                 ];
 
                 // Check if kyc relationship is loaded and available

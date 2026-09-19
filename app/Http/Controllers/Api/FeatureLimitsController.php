@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreFeatureLimitsRequest;
 use App\Services\Lands\FeatureLimitService;
+use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,7 +22,8 @@ class FeatureLimitsController extends Controller
     {
         $data = $this->featureLimitService->getPaginated(
             (int) $request->input('per_page', 10),
-            (int) $request->input('page', 1)
+            (int) $request->input('page', 1),
+            $request->input('search')
         );
 
         return response()->json([
@@ -63,6 +65,11 @@ class FeatureLimitsController extends Controller
                 'success' => true,
                 'message' => 'محدودیت املاک با موفقیت حذف شد',
             ]);
+        } catch (DomainException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

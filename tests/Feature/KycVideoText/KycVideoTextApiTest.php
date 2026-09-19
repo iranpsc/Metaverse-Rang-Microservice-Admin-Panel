@@ -548,6 +548,29 @@ class KycVideoTextApiTest extends TestCase
         $this->assertDatabaseMissing('kyc_verify_texts', ['id' => $videoText->id]);
     }
 
+    public function test_destroy_rejects_text_already_used_in_kyc(): void
+    {
+        $this->actingAsSuperAdmin();
+        $this->createKycsTableForVideoTextProtection();
+
+        $videoText = $this->createVideoText(['text' => 'Used text']);
+
+        \Illuminate\Support\Facades\DB::table('kycs')->insert([
+            'user_id' => 1,
+            'verify_text_id' => $videoText->id,
+            'status' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->deleteJson($this->videoTextPath($videoText))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'این متن در احراز هویت استفاده شده و قابل حذف نیست.');
+
+        $this->assertDatabaseHas('kyc_verify_texts', ['id' => $videoText->id]);
+    }
+
     public function test_destroy_nonexistent_returns_not_found(): void
     {
         $this->actingAsSuperAdmin();
@@ -610,5 +633,20 @@ class KycVideoTextApiTest extends TestCase
     private function createVideoText(array $overrides = []): KycVerifyText
     {
         return KycVerifyText::factory()->create($overrides);
+    }
+
+    private function createKycsTableForVideoTextProtection(): void
+    {
+        if (\Illuminate\Support\Facades\Schema::hasTable('kycs')) {
+            return;
+        }
+
+        \Illuminate\Support\Facades\Schema::create('kycs', function (\Illuminate\Database\Schema\Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('verify_text_id')->nullable();
+            $table->integer('status')->default(0);
+            $table->timestamps();
+        });
     }
 }

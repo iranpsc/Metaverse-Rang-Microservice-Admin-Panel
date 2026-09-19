@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">جوایز سلسله</h1>
-      <p class="text-[var(--theme-text-secondary)]">مدیریت جوایز سلسله خانوادگی</p>
-    </div>
+    <PageHeader
+      title="جوایز سلسله"
+      subtitle="مدیریت جوایز سلسله خانوادگی"
+    />
 
     <!-- Create Button -->
     <div class="mb-6">
@@ -81,7 +80,7 @@
       v-if="pagination && pagination.total > 0 && !loading && !error"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
 
     <!-- Create Modal -->
@@ -321,21 +320,30 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Modal, Button, Input, Select, LoadingState, ErrorState, Pagination } from '../../components/ui'
+import { Table, Modal, Button, Input, Select, LoadingState, ErrorState, Pagination, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import { formatPersianNumber } from '../../utils/numberFormatter'
+
+const formatNumber = formatPersianNumber
 
 const { showToast } = useToast()
 
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  execute,
+  goToPage,
+  buildParams
+} = usePaginatedList({ perPage: 10 })
+
 const prizes = ref([])
-const pagination = ref(null)
 const saving = ref(false)
 const updating = ref(false)
-const currentPage = ref(1)
 
 // Modal states
 const showCreateModal = ref(false)
@@ -399,10 +407,6 @@ const formatPercentage = (value) => {
   return `${(value * 100).toFixed(2)}%`
 }
 
-const formatNumber = (value) => {
-  if (value === null || value === undefined) return '-'
-  return new Intl.NumberFormat('fa-IR').format(value)
-}
 
 const openCreateModal = () => {
   showCreateModal.value = true
@@ -649,57 +653,35 @@ const handleDelete = async (row) => {
       }
 }
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchPrizes()
-  }
+const clearPrizes = () => {
+  prizes.value = []
+  pagination.value = null
 }
 
-const fetchPrizes = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const fetchPrizes = () => execute(async () => {
+  const response = await apiClient.get('/dynasty/prizes', { params: buildParams() })
 
-    const response = await apiClient.get('/dynasty/prizes', {
-      params: {
-        page: currentPage.value,
-        per_page: 10
+  if (response.data.success) {
+    prizes.value = response.data.data.prizes.map((prize, index) => {
+      const perPage = response.data.data.pagination?.per_page || 10
+      const currentPageNum = response.data.data.pagination?.current_page || 1
+      return {
+        ...prize,
+        rowId: (currentPageNum - 1) * perPage + index + 1
       }
     })
-
-    if (response.data.success) {
-      prizes.value = response.data.data.prizes.map((prize, index) => {
-        const perPage = response.data.data.pagination?.per_page || 10
-        const currentPageNum = response.data.data.pagination?.current_page || 1
-        return {
-          ...prize,
-          rowId: (currentPageNum - 1) * perPage + index + 1
-        }
-      })
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات جوایز'
-      prizes.value = []
-      pagination.value = null
-    }
-  } catch (err) {
-    console.error('Fetch prizes error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      prizes.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    prizes.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات جوایز'
+    clearPrizes()
   }
-}
+}, {
+  onClear: clearPrizes,
+  logLabel: 'Fetch prizes error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
+
+const onPageChange = (page) => goToPage(page, fetchPrizes)
 
 onMounted(() => {
   fetchPrizes()

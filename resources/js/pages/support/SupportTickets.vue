@@ -1,10 +1,9 @@
 <template>
     <div class="p-6 space-y-6">
-        <!-- Page Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">{{ pageTitle }}</h1>
-            <p class="text-[var(--theme-text-secondary)]">مدیریت و مشاهده تیکت‌های پشتیبانی</p>
-        </div>
+        <PageHeader
+            :title="pageTitle"
+            subtitle="مدیریت و مشاهده تیکت‌های پشتیبانی"
+        />
 
         <!-- Search Box -->
         <div class="mb-6">
@@ -157,7 +156,7 @@
 
             <!-- Pagination -->
             <Pagination v-if="pagination && pagination.last_page > 1" :pagination="pagination" :disabled="loading"
-                @page-change="goToPage" />
+                @page-change="onPageChange" />
         </div>
 
         <!-- Empty State -->
@@ -206,7 +205,7 @@
                                     <span class="text-primary">{{ response.responser_name || (response.responser && response.responser.name) || '----' }}</span>
                                 </span>
                                 <span class="text-xs ml-auto text-[var(--theme-text-muted)]">
-                                    {{ response.created_at ? new Date(response.created_at).toLocaleString('fa-IR') : '' }}
+                                    {{ response.created_at ? formatDateTime(response.created_at) : '' }}
                                 </span>
                             </div>
                             <div class="text-[var(--theme-text-secondary)] whitespace-pre-wrap mb-2">
@@ -290,8 +289,10 @@ import { ref, computed, onMounted, watch } from 'vue'
 import apiClient from '../../utils/api'
 import { useTickets } from '../../composables/useTickets'
 import { useToast } from '../../composables/useToast'
-import { Table, Pagination, SearchBox, LoadingState, ErrorState, Badge, Card, Modal, Button, Input, Select, Alert, FileInput } from '../../components/ui'
+import { Table, Pagination, SearchBox, LoadingState, ErrorState, Badge, Card, Modal, Button, Input, Select, Alert, FileInput, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import { formatDateTime } from '../../utils/dateFormatter'
 
 const props = defineProps({
     department: {
@@ -312,12 +313,20 @@ const {
     formatDate
 } = useTickets()
 
-const loading = ref(true)
-const error = ref(null)
+const {
+    loading,
+    error,
+    pagination,
+    searchTerm,
+    execute,
+    search,
+    clear,
+    goToPage,
+    buildParams,
+    resetToFirstPage
+} = usePaginatedList()
+
 const tickets = ref([])
-const pagination = ref(null)
-const searchTerm = ref('')
-const currentPage = ref(1)
 const departments = ref([])
 
 // Modal states
@@ -398,66 +407,32 @@ const tableColumns = computed(() => [
 ])
 
 // Search handler (called by SearchBox with debounce)
-const handleSearch = () => {
-    currentPage.value = 1
-    fetchTickets()
+const clearTickets = () => {
+    tickets.value = []
+    pagination.value = null
 }
 
-const handleClear = () => {
-    currentPage.value = 1
-    fetchTickets()
-}
+const fetchTickets = () => execute(async () => {
+    const response = await apiClient.get('/tickets', {
+        params: buildParams({ department: props.department })
+    })
 
-const goToPage = (page) => {
-    if (page >= 1 && page <= pagination.value?.last_page) {
-        currentPage.value = page
-        fetchTickets()
+    if (response.data.success) {
+        tickets.value = response.data.data.tickets
+        pagination.value = response.data.data.pagination
+    } else {
+        error.value = 'خطا در دریافت تیکت‌ها'
+        clearTickets()
     }
-}
+}, {
+    onClear: clearTickets,
+    logLabel: 'Tickets fetch error:',
+    fallbackMessage: 'خطا در بارگذاری تیکت‌ها'
+})
 
-const fetchTickets = async () => {
-    try {
-        loading.value = true
-        error.value = null
-
-        const params = {
-            department: props.department,
-            page: currentPage.value,
-            per_page: 10
-        }
-
-        if (searchTerm.value && searchTerm.value.trim()) {
-            params.search = searchTerm.value.trim()
-        }
-
-        const response = await apiClient.get('/tickets', { params })
-
-        if (response.data.success) {
-            tickets.value = response.data.data.tickets
-            pagination.value = response.data.data.pagination
-        } else {
-            error.value = 'خطا در دریافت تیکت‌ها'
-        }
-    } catch (err) {
-        console.error('Tickets fetch error:', err)
-
-        // If 401/403, don't set error message - axios interceptor will handle redirect
-        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-            // Auth failed - let the interceptor handle redirect
-            // Don't set error message as redirect will happen
-            tickets.value = []
-            pagination.value = null
-            loading.value = false
-            return
-        }
-
-        error.value = err.response?.data?.message || 'خطا در بارگذاری تیکت‌ها'
-        tickets.value = []
-        pagination.value = null
-    } finally {
-        loading.value = false
-    }
-}
+const handleSearch = () => search(fetchTickets)
+const handleClear = () => clear(fetchTickets)
+const onPageChange = (page) => goToPage(page, fetchTickets)
 
 
 const loadDepartments = async () => {
@@ -478,10 +453,9 @@ watch(
     async () => {
         // Route param changes keep this component instance alive;
         // reset list state so each department loads via SPA navigation.
-        currentPage.value = 1
+        resetToFirstPage()
         searchTerm.value = ''
-        tickets.value = []
-        pagination.value = null
+        clearTickets()
         error.value = null
         await fetchTickets()
     }

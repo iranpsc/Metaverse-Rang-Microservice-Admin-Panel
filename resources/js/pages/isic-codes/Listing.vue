@@ -1,12 +1,9 @@
 <template>
   <div class="p-6 space-y-6" dir="rtl">
-    <!-- Page Header -->
-    <div class="space-y-3">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">مدیریت کدهای ISIC</h1>
-      <p class="text-[var(--theme-text-secondary)] max-w-2xl leading-6">
-        ایجاد، جستجو و مدیریت وضعیت تایید کدهای ISIC با تجربه‌ای یکپارچه و مدرن در محیط متاورس.
-      </p>
-    </div>
+    <PageHeader
+      title="مدیریت کدهای ISIC"
+      subtitle="ایجاد، جستجو و مدیریت وضعیت تایید کدهای ISIC با تجربه‌ای یکپارچه و مدرن در محیط متاورس."
+    />
 
     <!-- Toolbar -->
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -103,7 +100,7 @@
         v-if="pagination && pagination.total > 0"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </div>
 
@@ -200,7 +197,8 @@
 <script setup>
 import { onMounted, reactive, ref, computed } from 'vue'
 import apiClient from '../../utils/api'
-import { Badge, Button, ErrorState, FileInput, Input, LoadingState, Modal, Pagination, SearchBox, Table } from '../../components/ui'
+import { Badge, Button, ErrorState, FileInput, Input, LoadingState, Modal, Pagination, SearchBox, Table, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
@@ -208,13 +206,21 @@ import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 const { showToast } = useToast()
 
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  currentPage,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams,
+  resetToFirstPage
+} = usePaginatedList({ perPage: 10 })
+
 const isicCodes = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
-const searchTerm = ref('')
-const perPage = 10
 
 const createModalOpen = ref(false)
 const importModalOpen = ref(false)
@@ -262,37 +268,26 @@ const tableColumns = [
   }
 ]
 
-const fetchIsicCodes = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: perPage
-    }
-
-    if (searchTerm.value.trim()) {
-      params.search = searchTerm.value.trim()
-    }
-
-    const { data } = await apiClient.get('/isic-codes', { params })
-
-    if (data?.success) {
-      isicCodes.value = data.data?.isic_codes ?? []
-      pagination.value = data.data?.pagination ?? null
-    } else {
-      throw new Error(data?.message || 'خطا در دریافت کدهای ISIC')
-    }
-  } catch (err) {
-    console.error('ISIC codes fetch error:', err)
-    error.value = err.response?.data?.message || err.message || 'خطا در بارگذاری کدهای ISIC'
-    isicCodes.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
-  }
+const clearIsicCodes = () => {
+  isicCodes.value = []
+  pagination.value = null
 }
+
+const fetchIsicCodes = () => execute(async () => {
+  const { data } = await apiClient.get('/isic-codes', { params: buildParams() })
+
+  if (data?.success) {
+    isicCodes.value = data.data?.isic_codes ?? []
+    pagination.value = data.data?.pagination ?? null
+  } else {
+    error.value = data?.message || 'خطا در دریافت کدهای ISIC'
+    clearIsicCodes()
+  }
+}, {
+  onClear: clearIsicCodes,
+  logLabel: 'ISIC codes fetch error:',
+  fallbackMessage: 'خطا در بارگذاری کدهای ISIC'
+})
 
 const resetForm = () => {
   form.name = ''
@@ -342,7 +337,7 @@ const submitCreateRequest = async () => {
     if (data?.success) {
       showToast(data.message || 'کد ISIC با موفقیت ایجاد شد.', 'success')
       closeCreateModal()
-      currentPage.value = 1
+      resetToFirstPage()
       await fetchIsicCodes()
     } else {
       throw new Error(data?.message || 'خطا در ایجاد کد ISIC')
@@ -520,26 +515,11 @@ const handleDelete = async (row) => {
       }
 }
 
-const goToPage = (page) => {
-  if (!pagination.value) {
-    return
-  }
-
-  if (page >= 1 && page <= pagination.value.last_page) {
-    currentPage.value = page
-    fetchIsicCodes()
-  }
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchIsicCodes()
-}
-
+const onPageChange = (page) => goToPage(page, fetchIsicCodes)
+const handleSearch = () => search(fetchIsicCodes)
 const handleClear = () => {
   searchTerm.value = ''
-  currentPage.value = 1
-  fetchIsicCodes()
+  clear(fetchIsicCodes)
 }
 
 onMounted(() => {

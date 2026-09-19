@@ -295,11 +295,12 @@ const handleUpdate = async () => {
 const handleDeleteFromDialog = async () => {
   if (!selectedText.value) return
 
-  await handleDelete(selectedText.value.id)
+  const deleted = await handleDelete(selectedText.value.id)
 
-  // Close dialog after deletion
-  showTextDialog.value = false
-  selectedText.value = null
+  if (deleted) {
+    showTextDialog.value = false
+    selectedText.value = null
+  }
 }
 
 const submitCreate = async () => {
@@ -344,34 +345,40 @@ const handleSave = async () => {
   await submitCreate()
 }
 
-const handleDelete = async () => {
+const handleDelete = async (id) => {
   const result = await confirm(
     'آیا از حذف این متن اطمینان دارید؟',
     'آیا مطمئن هستید؟',
     { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
   )
-  if (!result.isConfirmed) return
+  if (!result.isConfirmed) return false
 
   try {
-        deletingId.value = id
+    deletingId.value = id
 
-        const response = await apiClient.delete(`/kyc-video-texts/${id}`)
+    const response = await apiClient.delete(`/kyc-video-texts/${id}`)
 
-        if (response.data.success) {
-          showToast('متن احراز ویدیویی با موفقیت حذف شد.', 'success')
-          texts.value = texts.value.filter(item => item.id !== id)
+    if (response.data.success) {
+      showToast('متن احراز ویدیویی با موفقیت حذف شد.', 'success')
+      texts.value = texts.value.filter(item => item.id !== id)
 
-          if (texts.value.length < perPage.value && hasMorePages.value) {
-            await fetchTexts(currentPage.value + 1, true)
-          }
-        }
-      } catch (err) {
-        console.error('KYC video text delete error:', err)
-
-        await notifyError(err.response?.data?.message || 'خطا در حذف متن')
-      } finally {
-        deletingId.value = null
+      if (texts.value.length < perPage.value && hasMorePages.value) {
+        await fetchTexts(currentPage.value + 1, true)
       }
+
+      return true
+    }
+
+    await notifyError(response.data?.message || 'خطا در حذف متن')
+    return false
+  } catch (err) {
+    console.error('KYC video text delete error:', err)
+
+    await notifyError(err.response?.data?.message || 'خطا در حذف متن')
+    return false
+  } finally {
+    deletingId.value = null
+  }
 }
 
 const fetchTexts = async (page = 1, append = false) => {

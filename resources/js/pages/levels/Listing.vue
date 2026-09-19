@@ -1,11 +1,10 @@
 <template>
   <div class="p-6 space-y-6" dir="rtl">
-    <!-- Page Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">مدیریت سطوح</h1>
-        <p class="text-[var(--theme-text-secondary)]">ایجاد، ویرایش و مدیریت سطوح متاورس</p>
-      </div>
+    <PageHeader
+      title="مدیریت سطوح"
+      subtitle="ایجاد، ویرایش و مدیریت سطوح متاورس"
+    />
+    <div>
       <Button
         variant="primary"
         rounded="full"
@@ -119,7 +118,7 @@
         v-if="pagination && pagination.total > 0"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </template>
 
@@ -420,7 +419,8 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Table, Pagination, Button, Modal, Input, LoadingState, ErrorState, FileInput } from '../../components/ui'
+import { Table, Pagination, Button, Modal, Input, LoadingState, ErrorState, FileInput, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import { useLevels } from '../../composables/useLevels'
@@ -436,12 +436,16 @@ const {
 
 const router = useRouter()
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  execute,
+  goToPage,
+  buildParams
+} = usePaginatedList({ perPage: 10 })
+
 const levels = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
-const perPage = 10
 
 const isCreateModalOpen = ref(false)
 const isUpdateModalOpen = ref(false)
@@ -523,62 +527,48 @@ const resolveImageUrl = (value) => {
   return `/uploads/${value.replace(/^\/+/g, '')}`
 }
 
-const fetchLevels = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const clearLevels = () => {
+  levels.value = []
+  pagination.value = null
+}
 
-    const params = {
-      page: currentPage.value,
-      per_page: perPage
-    }
+const fetchLevels = () => execute(async () => {
+  const response = await fetchLevelsApi(buildParams())
 
-    const response = await fetchLevelsApi(params)
+  if (response.data?.success) {
+    const payload = response.data.data || {}
+    const rawLevels = Array.isArray(payload.levels?.data)
+      ? payload.levels.data
+      : Array.isArray(payload.levels)
+        ? payload.levels
+        : []
 
-    if (response.data?.success) {
-      const payload = response.data.data || {}
-      const rawLevels = Array.isArray(payload.levels?.data)
-        ? payload.levels.data
-        : Array.isArray(payload.levels)
-          ? payload.levels
-          : []
+    levels.value = rawLevels.map(mapLevel)
 
-      levels.value = rawLevels.map(mapLevel)
-
-      if (payload.pagination) {
-        pagination.value = payload.pagination
-      } else if (payload.levels?.meta) {
-        const meta = payload.levels.meta
-        pagination.value = {
-          total: meta.total,
-          per_page: meta.per_page,
-          current_page: meta.current_page,
-          last_page: meta.last_page
-        }
-      } else {
-        pagination.value = null
+    if (payload.pagination) {
+      pagination.value = payload.pagination
+    } else if (payload.levels?.meta) {
+      const meta = payload.levels.meta
+      pagination.value = {
+        total: meta.total,
+        per_page: meta.per_page,
+        current_page: meta.current_page,
+        last_page: meta.last_page
       }
     } else {
-      error.value = response.data?.message || 'خطا در دریافت اطلاعات سطوح'
-      levels.value = []
       pagination.value = null
     }
-  } catch (err) {
-    console.error('Levels fetch error:', err)
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    levels.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+  } else {
+    error.value = response.data?.message || 'خطا در دریافت اطلاعات سطوح'
+    clearLevels()
   }
-}
+}, {
+  onClear: clearLevels,
+  logLabel: 'Levels fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
-const goToPage = (page) => {
-  if (!pagination.value) return
-  if (page < 1 || page > pagination.value.last_page) return
-  currentPage.value = page
-  fetchLevels()
-}
+const onPageChange = (page) => goToPage(page, fetchLevels)
 
 const resetCreateForm = () => {
   createForm.name = ''

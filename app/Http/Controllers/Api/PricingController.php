@@ -9,6 +9,11 @@ use Illuminate\Http\Request;
 
 class PricingController extends Controller
 {
+    private const SORTABLE_COLUMNS = [
+        'price_irr',
+        'price_psc',
+    ];
+
     /**
      * Get paginated pricing requests
      */
@@ -17,6 +22,8 @@ class PricingController extends Controller
         $searchTerm = $request->input('search', '');
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortDirection = strtolower((string) $request->input('sort', 'desc')) === 'asc' ? 'asc' : 'desc';
 
         $query = SellFeatureRequest::with('feature.properties')
             ->where('status', 0);
@@ -27,8 +34,13 @@ class PricingController extends Controller
             });
         }
 
-        $pricings = $query->orderBy('created_at', 'desc')
-            ->paginate($perPage, ['*'], 'page', $page);
+        if (in_array($sortBy, self::SORTABLE_COLUMNS, true)) {
+            $query->orderBy($sortBy, $sortDirection);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $pricings = $query->paginate($perPage, ['*'], 'page', $page);
 
         return response()->json([
             'success' => true,

@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">قیمت زمین ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">مشاهده قیمت‌های زمین‌ها</p>
-    </div>
+    <PageHeader
+      title="قیمت زمین ها"
+      subtitle="مشاهده قیمت‌های زمین‌ها"
+    />
 
     <!-- Search Box -->
     <div class="mb-6">
@@ -50,7 +49,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
   </div>
 </template>
@@ -58,14 +57,24 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Pagination, SearchBox, LoadingState, ErrorState, Alert } from '../../components/ui'
+import { Table, Pagination, SearchBox, LoadingState, ErrorState, Alert, PageHeader } from '../../components/ui'
+import { gregorianToShamsiSync } from '../../utils/dateConverter'
+import { getKarbariLabel } from '../../utils/lands/karbariLabels'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const features = ref([])
-const pagination = ref(null)
-const searchTerm = ref('')
-const currentPage = ref(1)
 
 // Table columns configuration
 const tableColumns = [
@@ -82,86 +91,57 @@ const tableColumns = [
     label: 'قیمت اولیه'
   },
   {
+    key: 'price_psc',
+    label: 'مبلغ قیمت گذاری psc'
+  },
+  {
+    key: 'price_irr',
+    label: 'مبلغ قیمت گذاری ریال'
+  },
+  {
     key: 'minimum_price_percentage',
-    label: 'درصد پیشنهادی'
+    label: 'کف قیمت ثبت شده'
   },
   {
     key: 'updated_at',
-    label: 'تاریخ ثبت پیشنهاد قیمت'
+    label: 'تاریخ ثبت قیمت'
   }
 ]
 
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchFeatures()
+const clearFeatures = () => {
+  features.value = []
+  pagination.value = null
 }
 
-const handleClear = () => {
-  currentPage.value = 1
-  fetchFeatures()
-}
+const fetchFeatures = () => execute(async () => {
+  const response = await apiClient.get('/lands/prices', { params: buildParams() })
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchFeatures()
+  if (response.data.success) {
+    features.value = response.data.data.features.map(feature => ({
+      property_id: feature.properties?.id || '-',
+      application_title: getKarbariLabel(feature.properties?.karbari),
+      stability: feature.properties?.stability || 0,
+      price_psc: feature.properties?.price_psc ?? 0,
+      price_irr: feature.properties?.price_irr ?? 0,
+      minimum_price_percentage: feature.properties?.minimum_price_percentage || '-',
+      updated_at: feature.properties?.updated_at
+        ? (gregorianToShamsiSync(feature.properties.updated_at) || '-')
+        : '-'
+    }))
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات قیمت‌ها'
+    clearFeatures()
   }
-}
+}, {
+  onClear: clearFeatures,
+  logLabel: 'Features prices fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
-const fetchFeatures = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: 10
-    }
-
-    if (searchTerm.value) {
-      params.search = searchTerm.value
-    }
-
-    const response = await apiClient.get('/lands/prices', { params })
-
-    if (response.data.success) {
-      features.value = response.data.data.features.map(feature => ({
-        property_id: feature.properties?.id || '-',
-        application_title: feature.properties?.getApplicationTitle || feature.properties?.application_title || '-',
-        stability: feature.properties?.stability || 0,
-        minimum_price_percentage: feature.properties?.minimum_price_percentage || '-',
-        updated_at: feature.properties?.updated_at ? formatDate(feature.properties.updated_at) : '-'
-      }))
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات قیمت‌ها'
-    }
-  } catch (err) {
-    console.error('Features prices fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      features.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    features.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
-  }
-}
-
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}/${month}/${day}`
-}
+const handleSearch = () => search(fetchFeatures)
+const handleClear = () => clear(fetchFeatures)
+const onPageChange = (page) => goToPage(page, fetchFeatures)
 
 onMounted(() => {
   fetchFeatures()
@@ -171,4 +151,3 @@ onMounted(() => {
 <style scoped>
 /* Additional styles if needed */
 </style>
-

@@ -1,12 +1,9 @@
 <template>
   <div class="p-6 space-y-6" dir="rtl">
-    <!-- Page Header -->
-    <div class="flex flex-col gap-2">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">گزارشات کاربران</h1>
-      <p class="text-[var(--theme-text-secondary)]">
-        بررسی و مدیریت گزارش‌های ثبت‌شده توسط کاربران در بخش‌های مختلف متاورس
-      </p>
-    </div>
+    <PageHeader
+      title="گزارشات کاربران"
+      subtitle="بررسی و مدیریت گزارش‌های ثبت‌شده توسط کاربران در بخش‌های مختلف متاورس"
+    />
 
     <!-- Search -->
     <div class="w-full md:max-w-xl">
@@ -90,7 +87,7 @@
         v-if="pagination && pagination.total > 0"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </template>
 
@@ -201,8 +198,10 @@ import {
   SearchBox,
   LoadingState,
   ErrorState,
-  Modal
+  Modal,
+  PageHeader
 } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const subjectTabs = [
@@ -279,16 +278,23 @@ const tableColumns = [
   }
 ]
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams,
+  resetToFirstPage
+} = usePaginatedList({ perPage: 10 })
+
 const reports = ref([])
-const pagination = ref(null)
-const searchTerm = ref('')
-const currentPage = ref(1)
 const activeSubject = ref(subjectTabs[0].id)
 const isReportModalOpen = ref(false)
 const selectedReport = ref(null)
-const perPage = 10
 
 const subjectLabelMap = computed(() => {
   return subjectTabs.reduce((acc, tab) => {
@@ -297,71 +303,42 @@ const subjectLabelMap = computed(() => {
   }, {})
 })
 
-const fetchReports = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const clearReports = () => {
+  reports.value = []
+  pagination.value = null
+}
 
-    const params = {
-      subject: activeSubject.value,
-      page: currentPage.value,
-      per_page: perPage
-    }
+const fetchReports = () => execute(async () => {
+  const response = await apiClient.get('/reports', {
+    params: buildParams({ subject: activeSubject.value })
+  })
 
-    if (searchTerm.value) {
-      params.search = searchTerm.value
-    }
-
-    const response = await apiClient.get('/reports', { params })
-
-    if (response.data.success) {
-      reports.value = response.data.data.reports
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = response.data.message || 'خطا در دریافت گزارش‌ها'
-      reports.value = []
-      pagination.value = null
-    }
-  } catch (err) {
-    console.error('Reports fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      reports.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری گزارش‌ها'
-    reports.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+  if (response.data.success) {
+    reports.value = response.data.data.reports
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = response.data.message || 'خطا در دریافت گزارش‌ها'
+    clearReports()
   }
-}
+}, {
+  onClear: clearReports,
+  logLabel: 'Reports fetch error:',
+  fallbackMessage: 'خطا در بارگذاری گزارش‌ها'
+})
 
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchReports()
-}
+const handleSearch = () => search(fetchReports)
 
 const handleClear = () => {
   searchTerm.value = ''
-  currentPage.value = 1
-  fetchReports()
+  clear(fetchReports)
 }
 
-const goToPage = (page) => {
-  if (page >= 1 && (!pagination.value || page <= pagination.value.last_page)) {
-    currentPage.value = page
-    fetchReports()
-  }
-}
+const onPageChange = (page) => goToPage(page, fetchReports)
 
 const handleTabChange = (subjectId) => {
   if (activeSubject.value !== subjectId) {
     activeSubject.value = subjectId
-    currentPage.value = 1
+    resetToFirstPage()
     fetchReports()
   }
 }

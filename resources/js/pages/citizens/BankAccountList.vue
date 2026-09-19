@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">حساب های بانکی</h1>
-      <p class="text-[var(--theme-text-secondary)]">مدیریت و بررسی درخواست‌های حساب بانکی کاربران</p>
-    </div>
+    <PageHeader
+      title="حساب های بانکی"
+      subtitle="مدیریت و بررسی درخواست‌های حساب بانکی کاربران"
+    />
 
     <!-- Search and Actions Row -->
     <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
@@ -67,7 +66,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
 
     <!-- Bank Account Details Modal -->
@@ -84,25 +83,39 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Pagination, SearchBox, LoadingState, ErrorState, Button, Badge } from '../../components/ui'
+import { Table, Pagination, SearchBox, LoadingState, ErrorState, Button, Badge, PageHeader } from '../../components/ui'
 import BankAccountDetailsModal from '../../components/citizens/BankAccountDetailsModal.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { stripHtml } from '../../utils/sanitize'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const bankAccounts = ref([])
-const pagination = ref(null)
-const searchTerm = ref('')
-const currentPage = ref(1)
 const selectedBankAccountId = ref(null)
 const showDetailsModal = ref(false)
 
 // Table columns configuration
 const tableColumns = [
   {
-    key: 'id',
-    label: 'شناسه'
+    key: 'bankable.code',
+    label: 'کد شهروندی',
+    defaultValue: '-'
+  },
+  {
+    key: 'bankable.name',
+    label: 'نام کاربر',
+    defaultValue: '-'
   },
   {
     key: 'bank_name',
@@ -145,22 +158,9 @@ const getStatusVariant = (status) => {
 
 const getStatusLabel = (badgeHtml) => stripHtml(badgeHtml) || '-'
 
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchBankAccounts()
-}
-
-const handleClear = () => {
-  currentPage.value = 1
-  fetchBankAccounts()
-}
-
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchBankAccounts()
-  }
-}
+const handleSearch = () => search(fetchBankAccounts)
+const handleClear = () => clear(fetchBankAccounts)
+const onPageChange = (page) => goToPage(page, fetchBankAccounts)
 
 const openDetailsModal = (id) => {
   selectedBankAccountId.value = id
@@ -177,48 +177,26 @@ const handleBankAccountUpdated = () => {
   fetchBankAccounts()
 }
 
-const fetchBankAccounts = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: 10,
-    }
-
-    if (searchTerm.value) {
-      params.search = searchTerm.value.trim()
-    }
-
-    const response = await apiClient.get('/bank-accounts', { params })
-
-    if (response.data.success) {
-      bankAccounts.value = response.data.data.bankAccounts
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات حساب بانکی'
-    }
-  } catch (err) {
-    console.error('Bank Account fetch error:', err)
-
-    // If 401/403, don't set error message - axios interceptor will handle redirect
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      // Auth failed - let the interceptor handle redirect
-      // Don't set error message as redirect will happen
-      bankAccounts.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    bankAccounts.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
-  }
+const clearBankAccounts = () => {
+  bankAccounts.value = []
+  pagination.value = null
 }
+
+const fetchBankAccounts = () => execute(async () => {
+  const response = await apiClient.get('/bank-accounts', { params: buildParams() })
+
+  if (response.data.success) {
+    bankAccounts.value = response.data.data.bankAccounts
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات حساب بانکی'
+    clearBankAccounts()
+  }
+}, {
+  onClear: clearBankAccounts,
+  logLabel: 'Bank Account fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
 onMounted(() => {
   fetchBankAccounts()

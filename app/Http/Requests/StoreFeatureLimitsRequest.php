@@ -20,6 +20,24 @@ class StoreFeatureLimitsRequest extends FormRequest
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    protected function prepareForValidation(): void
+    {
+        $normalized = [];
+
+        foreach (['start_date', 'end_date'] as $field) {
+            if ($this->has($field) && is_string($this->input($field))) {
+                $normalized[$field] = $this->normalizeJalaliDateString($this->input($field));
+            }
+        }
+
+        if ($normalized !== []) {
+            $this->merge($normalized);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
@@ -37,34 +55,14 @@ class StoreFeatureLimitsRequest extends FormRequest
             'start_date' => [
                 'required',
                 'string',
-                'date:Y/m/d',
-                function (string $attribute, string $value, Closure $fail) {
-                    try {
-                        $carbonDate = Jalalian::fromFormat('Y/m/d', $value)->toCarbon();
-                        if (FeatureLimit::where('start_date', '<=', $carbonDate->toDateString())
-                            ->where('end_date', '>=', $carbonDate->toDateString())->exists()) {
-                            $fail('تاریخ شروع تداخل دارد');
-                        }
-                    } catch (\Exception $e) {
-                        $fail('فرمت تاریخ شروع صحیح نیست');
-                    }
-                },
+                'regex:/^\d{4}\/\d{2}\/\d{2}$/',
+                $this->jalaliDateRule('تاریخ شروع'),
             ],
             'end_date' => [
                 'required',
                 'string',
-                'date:Y/m/d',
-                function (string $attribute, string $value, Closure $fail) {
-                    try {
-                        $carbonDate = Jalalian::fromFormat('Y/m/d', $value)->toCarbon();
-                        if (FeatureLimit::where('start_date', '<=', $carbonDate->toDateString())
-                            ->where('end_date', '>=', $carbonDate->toDateString())->exists()) {
-                            $fail('تاریخ پایان تداخل دارد');
-                        }
-                    } catch (\Exception $e) {
-                        $fail('فرمت تاریخ پایان صحیح نیست');
-                    }
-                },
+                'regex:/^\d{4}\/\d{2}\/\d{2}$/',
+                $this->jalaliDateRule('تاریخ پایان'),
             ],
             'start_id' => ['required', 'string', 'exists:feature_properties,id'],
             'end_id' => ['required', 'string', 'exists:feature_properties,id'],
@@ -92,5 +90,63 @@ class StoreFeatureLimitsRequest extends FormRequest
                 $validator->errors()->add('end_id', 'پیشوند شناسه های شروع و پایان باید یکسان باشند');
             }
         });
+    }
+
+    /**
+     * Accept only plausible Jalali dates (rejects Gregorian years like 2026/09/19).
+     */
+    private function jalaliDateRule(string $label): Closure
+    {
+        return function (string $attribute, string $value, Closure $fail) use ($label) {
+            try {
+                [$year] = array_map('intval', explode('/', $value));
+
+                // Jalali years in use for this app; Gregorian years (~1900+) must be rejected
+                if ($year < 1200 || $year > 1600) {
+                    $fail("{$label} باید به صورت شمسی وارد شود");
+
+                    return;
+                }
+
+                $jalalian = Jalalian::fromFormat('Y/m/d', $value);
+
+                // Reject overflowed/normalized invalid dates (e.g. 1400/99/99)
+                if ($jalalian->format('Y/m/d') !== $value) {
+                    $fail("فرمت {$label} صحیح نیست");
+
+                    return;
+                }
+
+                $carbonDate = $jalalian
+                    ->toCarbon()
+                    ->timezone(config('app.timezone'))
+                    ->startOfDay();
+
+                $overlapMessage = $attribute === 'end_date' ? 'تاریخ پایان تداخل دارد' : 'تاریخ شروع تداخل دارد';
+
+                if (FeatureLimit::where('start_date', '<=', $carbonDate->toDateString())
+                    ->where('end_date', '>=', $carbonDate->toDateString())
+                    ->exists()) {
+                    $fail($overlapMessage);
+                }
+            } catch (\Throwable $e) {
+                $fail("فرمت {$label} صحیح نیست");
+            }
+        };
+    }
+
+    private function normalizeJalaliDateString(string $value): string
+    {
+        $persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+        $english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+        $normalized = str_replace($persian, $english, trim($value));
+        $normalized = str_replace('-', '/', $normalized);
+
+        if (preg_match('/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/', $normalized, $matches)) {
+            return sprintf('%04d/%02d/%02d', (int) $matches[1], (int) $matches[2], (int) $matches[3]);
+        }
+
+        return $normalized;
     }
 }

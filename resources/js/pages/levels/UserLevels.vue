@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6" dir="rtl">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">سطوح کاربران</h1>
-      <p class="text-[var(--theme-text-secondary)]">مشاهده سطوح کاربران و ارتقاء امتیاز</p>
-    </div>
+    <PageHeader
+      title="سطوح کاربران"
+      subtitle="مشاهده سطوح کاربران و ارتقاء امتیاز"
+    />
 
     <!-- Search and Actions Row -->
     <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -78,7 +77,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
 
     <PromoteUserLevelModal
@@ -90,18 +89,27 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Table, Pagination, SearchBox, LoadingState, ErrorState, Alert, Button } from '../../components/ui'
+import { Table, Pagination, SearchBox, LoadingState, ErrorState, Alert, Button, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import PromoteUserLevelModal from '../../components/levels/PromoteUserLevelModal.vue'
 import { useUserLevels } from '../../composables/useUserLevels'
+import { formatPersianNumber } from '../../utils/numberFormatter'
 
 const { fetchUsers: fetchUsersApi } = useUserLevels()
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const users = ref([])
-const pagination = ref(null)
-const searchTerm = ref('')
-const currentPage = ref(1)
 const showPromoteModal = ref(false)
 
 const tableColumns = [
@@ -115,58 +123,36 @@ const tableColumns = [
 const sortAchievedLevels = (levels) =>
   [...levels].sort((a, b) => a.score - b.score)
 
-const formatScore = (score) => Number(score ?? 0).toLocaleString('fa-IR')
+const formatScore = (score) => formatPersianNumber(score ?? 0, { empty: '0' })
 
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchUsers()
-}
-
-const handleClear = () => {
-  currentPage.value = 1
-  fetchUsers()
-}
-
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchUsers()
-  }
-}
+const handleSearch = () => search(fetchUsers)
+const handleClear = () => clear(fetchUsers)
+const onPageChange = (page) => goToPage(page, fetchUsers)
 
 const openPromoteModal = () => {
   showPromoteModal.value = true
 }
 
-const fetchUsers = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: 10
-    }
-
-    if (searchTerm.value) {
-      params.search = searchTerm.value
-    }
-
-    const response = await fetchUsersApi(params)
-
-    if (response.data.success) {
-      users.value = response.data.data.users
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = response.data.message || 'خطا در دریافت لیست کاربران'
-    }
-  } catch (err) {
-    console.error('Fetch user levels error:', err)
-    error.value = err.response?.data?.message || 'خطا در دریافت لیست کاربران'
-  } finally {
-    loading.value = false
-  }
+const clearUsers = () => {
+  users.value = []
+  pagination.value = null
 }
+
+const fetchUsers = () => execute(async () => {
+  const response = await fetchUsersApi(buildParams())
+
+  if (response.data.success) {
+    users.value = response.data.data.users
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = response.data.message || 'خطا در دریافت لیست کاربران'
+    clearUsers()
+  }
+}, {
+  onClear: clearUsers,
+  logLabel: 'Fetch user levels error:',
+  fallbackMessage: 'خطا در دریافت لیست کاربران'
+})
 
 onMounted(() => {
   fetchUsers()

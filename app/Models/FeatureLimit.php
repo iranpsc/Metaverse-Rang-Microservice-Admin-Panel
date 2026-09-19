@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -27,5 +28,23 @@ class FeatureLimit extends Model
             'price_limit' => 'boolean',
             'individual_buy_limit' => 'boolean',
         ];
+    }
+
+    public function isExpired(): bool
+    {
+        if (! $this->end_date) {
+            return false;
+        }
+
+        $endDate = $this->end_date instanceof Carbon
+            ? $this->end_date
+            : Carbon::parse($this->end_date);
+
+        return now()->isAfter($endDate);
+    }
+
+    public function isDeletable(): bool
+    {
+        return ! $this->isExpired();
     }
 }

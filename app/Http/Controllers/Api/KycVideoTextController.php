@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\KycVideoTextResource;
+use App\Models\Kyc;
 use App\Models\KycVerifyText;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class KycVideoTextController extends Controller
 {
@@ -83,11 +85,28 @@ class KycVideoTextController extends Controller
     public function destroy(int $id): JsonResponse
     {
         $text = KycVerifyText::findOrFail($id);
+
+        if ($this->isVerifyTextInUse($text)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'این متن در احراز هویت استفاده شده و قابل حذف نیست.',
+            ], 422);
+        }
+
         $text->delete();
 
         return response()->json([
             'success' => true,
             'message' => 'متن احراز ویدیویی با موفقیت حذف شد.',
         ]);
+    }
+
+    private function isVerifyTextInUse(KycVerifyText $text): bool
+    {
+        if (! Schema::hasTable('kycs')) {
+            return false;
+        }
+
+        return Kyc::query()->where('verify_text_id', $text->id)->exists();
     }
 }

@@ -1,12 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8 space-y-2">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">ورژن‌ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">
-        مدیریت نسخه‌های منتشر شده و ثبت نسخه‌های جدید سیستم
-      </p>
-    </div>
+    <PageHeader
+      title="ورژن‌ها"
+      subtitle="مدیریت نسخه‌های منتشر شده و ثبت نسخه‌های جدید سیستم"
+    />
 
     <!-- Actions -->
     <div class="flex justify-end">
@@ -63,7 +60,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
 
     <!-- Create Version Modal -->
@@ -133,8 +130,10 @@ import {
   Modal,
   Input,
   LoadingState,
-  ErrorState
+  ErrorState,
+  PageHeader
 } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import { useToast } from '../../composables/useToast'
@@ -146,12 +145,18 @@ import { stripRichText, hasRichTextContent } from '../../utils/sanitize'
 const { showToast } = useToast()
 
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  currentPage,
+  execute,
+  goToPage,
+  buildParams,
+  resetToFirstPage
+} = usePaginatedList({ perPage: 10 })
+
 const versions = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
-const perPage = 10
 
 const showCreateModal = ref(false)
 const saving = ref(false)
@@ -280,7 +285,7 @@ const submitCreate = async () => {
     if (response.data.success) {
       showToast(response.data.message || 'ورژن جدید با موفقیت ایجاد شد', 'success')
       handleCreateModalClose()
-      currentPage.value = 1
+      resetToFirstPage()
       await fetchVersions()
     } else {
       showToast(response.data.message || 'خطا در ثبت ورژن', 'error')
@@ -339,62 +344,39 @@ const handleDelete = async (row) => {
       }
 }
 
-const fetchVersions = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const clearVersions = () => {
+  versions.value = []
+  pagination.value = null
+}
 
-    const response = await apiClient.get('/versions', {
-      params: {
-        page: currentPage.value,
-        per_page: perPage
+const fetchVersions = () => execute(async () => {
+  const response = await apiClient.get('/versions', { params: buildParams() })
+
+  if (response.data.success) {
+    const rawVersions = response.data.data?.versions || []
+
+    versions.value = rawVersions.map((item) => {
+      const startDate = item.start_date || formatPersianDate(item.starts_at)
+
+      return {
+        ...item,
+        content_excerpt: extractExcerpt(item.content),
+        start_date_display: startDate
       }
     })
 
-    if (response.data.success) {
-      const rawVersions = response.data.data?.versions || []
-
-      versions.value = rawVersions.map((item) => {
-        const startDate = item.start_date || formatPersianDate(item.starts_at)
-
-        return {
-          ...item,
-          content_excerpt: extractExcerpt(item.content),
-          start_date_display: startDate
-        }
-      })
-
-      pagination.value = response.data.data?.pagination || null
-    } else {
-      error.value = response.data.message || 'خطا در دریافت لیست ورژن‌ها'
-      versions.value = []
-      pagination.value = null
-    }
-  } catch (err) {
-    console.error('Versions fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      versions.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    versions.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+    pagination.value = response.data.data?.pagination || null
+  } else {
+    error.value = response.data.message || 'خطا در دریافت لیست ورژن‌ها'
+    clearVersions()
   }
-}
+}, {
+  onClear: clearVersions,
+  logLabel: 'Versions fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
-const goToPage = (page) => {
-  if (page < 1) return
-  if (pagination.value && page > pagination.value.last_page) return
-
-  currentPage.value = page
-  fetchVersions()
-}
+const onPageChange = (page) => goToPage(page, fetchVersions)
 
 onMounted(() => {
   fetchVersions()

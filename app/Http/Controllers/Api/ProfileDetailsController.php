@@ -19,6 +19,7 @@ class ProfileDetailsController extends Controller
         $page = $request->input('page', 1);
 
         $query = User::withSum('activities', 'total')
+            ->withSum('payments', 'amount')
             ->withCount([
                 'followers',
                 'payments',
@@ -28,14 +29,12 @@ class ProfileDetailsController extends Controller
             ]);
 
         if ($searchTerm) {
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', '%'.$searchTerm.'%')
-                    ->orWhere('email', 'like', '%'.$searchTerm.'%')
-                    ->orWhere('code', 'like', '%'.$searchTerm.'%');
-            });
+            $query->where('code', 'like', '%'.$searchTerm.'%');
         }
 
-        $users = $query->paginate($perPage, ['*'], 'page', $page);
+        $users = $query
+            ->orderBy('score', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
 
         $formattedUsers = $users->map(function ($user) {
             return [
@@ -46,6 +45,7 @@ class ProfileDetailsController extends Controller
                 'followers_count' => $user->followers_count ?? 0,
                 'payments_count' => $user->payments_count ?? 0,
                 'more_than_a_million_payment' => $user->more_than_a_million_payment ?? 0,
+                'total_deposit_amount' => $this->formatCompactTomans($user->payments_sum_amount ?? 0),
                 'score' => number_format($user->score ?? 0),
             ];
         });
@@ -65,5 +65,30 @@ class ProfileDetailsController extends Controller
             ],
             'message' => 'Profile details retrieved successfully.',
         ]);
+    }
+
+    /**
+     * Convert a Rial amount to Tomans and compact it with K/M suffixes.
+     */
+    private function formatCompactTomans(int|float $amountInRials): string
+    {
+        $tomans = (int) round($amountInRials / 10);
+
+        if ($tomans >= 1_000_000) {
+            return $this->compactWithSuffix($tomans / 1_000_000, 'M');
+        }
+
+        if ($tomans >= 1_000) {
+            return $this->compactWithSuffix($tomans / 1_000, 'K');
+        }
+
+        return (string) $tomans;
+    }
+
+    private function compactWithSuffix(float $value, string $suffix): string
+    {
+        $formatted = rtrim(rtrim(number_format($value, 1, '.', ''), '0'), '.');
+
+        return $formatted.$suffix;
     }
 }

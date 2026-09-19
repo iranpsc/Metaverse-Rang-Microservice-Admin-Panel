@@ -1,15 +1,14 @@
 <template>
   <div class="p-6 space-y-6">
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">مدیریت زیر دسته های ویدیو</h1>
-        <p class="text-[var(--theme-text-secondary)]">ساخت و ویرایش زیر دسته های مرتبط با دسته بندی های آموزشی</p>
-      </div>
+    <PageHeader
+      title="مدیریت زیر دسته های ویدیو"
+      subtitle="ساخت و ویرایش زیر دسته های مرتبط با دسته بندی های آموزشی"
+    />
+    <div>
       <Button
         variant="primary"
         size="lg"
         rounded="full"
-        class="self-start md:self-auto"
         @click="openCreateModal"
       >
         ایجاد زیر دسته جدید
@@ -109,7 +108,7 @@
         v-if="pagination && pagination.total > 0"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </div>
 
@@ -314,8 +313,10 @@ import {
   Modal,
   Input,
   FileInput,
-  Select
+  Select,
+  PageHeader
 } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import MediaCellButton from '../../components/ui/MediaCellButton.vue'
@@ -323,18 +324,24 @@ import MediaCellButton from '../../components/ui/MediaCellButton.vue'
 const { showToast } = useToast()
 
 
-const loading = ref(true)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams,
+  resetToFirstPage
+} = usePaginatedList({ perPage: 10 })
+
 const creating = ref(false)
 const updating = ref(false)
 const deletingId = ref(null)
-const error = ref(null)
 
 const subCategories = ref([])
-const pagination = ref(null)
-
-const searchTerm = ref('')
-const currentPage = ref(1)
-const perPage = 10
 const selectedCategoryFilter = ref('')
 
 const createModalOpen = ref(false)
@@ -500,66 +507,42 @@ const fetchCategoryOptions = async () => {
   }
 }
 
-const fetchSubCategories = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: perPage
-    }
-
-    if (searchTerm.value.trim()) {
-      params.search = searchTerm.value.trim()
-    }
-
-    if (selectedCategoryFilter.value) {
-      params.video_category_id = selectedCategoryFilter.value
-    }
-
-    const response = await apiClient.get('/video-sub-categories', { params })
-
-    if (response.data.success) {
-      subCategories.value = response.data.data.sub_categories || []
-      pagination.value = response.data.data.pagination || null
-    } else {
-      subCategories.value = []
-      pagination.value = null
-      error.value = response.data.message || 'خطا در دریافت زیر دسته ها'
-    }
-  } catch (err) {
-    console.error('Video sub categories fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری زیر دسته ها'
-    subCategories.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+const subCategoryListParams = () => {
+  const extra = {}
+  if (selectedCategoryFilter.value) {
+    extra.video_category_id = selectedCategoryFilter.value
   }
+  return buildParams(extra)
 }
 
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchSubCategories()
+const clearSubCategories = () => {
+  subCategories.value = []
+  pagination.value = null
 }
 
+const fetchSubCategories = () => execute(async () => {
+  const response = await apiClient.get('/video-sub-categories', {
+    params: subCategoryListParams()
+  })
+
+  if (response.data.success) {
+    subCategories.value = response.data.data.sub_categories || []
+    pagination.value = response.data.data.pagination || null
+  } else {
+    error.value = response.data.message || 'خطا در دریافت زیر دسته ها'
+    clearSubCategories()
+  }
+}, {
+  onClear: clearSubCategories,
+  logLabel: 'Video sub categories fetch error:',
+  fallbackMessage: 'خطا در بارگذاری زیر دسته ها'
+})
+
+const onPageChange = (page) => goToPage(page, fetchSubCategories)
+const handleSearch = () => search(fetchSubCategories)
 const handleClear = () => {
   searchTerm.value = ''
-  currentPage.value = 1
-  fetchSubCategories()
-}
-
-const goToPage = (page) => {
-  if (page >= 1 && (!pagination.value || page <= pagination.value.last_page)) {
-    currentPage.value = page
-    fetchSubCategories()
-  }
+  clear(fetchSubCategories)
 }
 
 const buildFormData = (form, includeSlug = true) => {
@@ -708,7 +691,7 @@ const openMedia = (url) => {
 }
 
 watch(selectedCategoryFilter, () => {
-  currentPage.value = 1
+  resetToFirstPage()
   fetchSubCategories()
 })
 

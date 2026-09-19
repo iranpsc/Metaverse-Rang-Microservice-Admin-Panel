@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">مدیریت دسترسی ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">ایجاد و مدیریت دسترسی‌های سیستم</p>
-    </div>
+    <PageHeader
+      title="مدیریت دسترسی ها"
+      subtitle="ایجاد و مدیریت دسترسی‌های سیستم"
+    />
 
     <!-- Create Button -->
     <div class="mb-6">
@@ -71,7 +70,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
 
     <!-- Create Permission Modal -->
@@ -96,7 +95,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Pagination, LoadingState, ErrorState, Button } from '../../components/ui'
+import { Table, Pagination, LoadingState, ErrorState, Button, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import CreatePermissionModal from '../../components/access-management/CreatePermissionModal.vue'
 import UpdatePermissionModal from '../../components/access-management/UpdatePermissionModal.vue'
 import { useToast } from '../../composables/useToast'
@@ -105,11 +105,16 @@ import { confirm } from '../../utils/notifications'
 
 const { showToast } = useToast()
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  execute,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const permissions = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
 const showCreateModal = ref(false)
 const showUpdateModal = ref(false)
 const selectedPermissionId = ref(null)
@@ -142,12 +147,7 @@ const tableColumns = [
   }
 ]
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchPermissions()
-  }
-}
+const onPageChange = (page) => goToPage(page, fetchPermissions)
 
 const openUpdateModal = (id) => {
   selectedPermissionId.value = id
@@ -187,41 +187,26 @@ const handleDelete = async (id) => {
   }
 }
 
-const fetchPermissions = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: 10,
-    }
-
-    const response = await apiClient.get('/permissions', { params })
-
-    if (response.data.success) {
-      permissions.value = response.data.data.permissions
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات'
-    }
-  } catch (err) {
-    console.error('Permissions fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      permissions.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    permissions.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
-  }
+const clearPermissions = () => {
+  permissions.value = []
+  pagination.value = null
 }
+
+const fetchPermissions = () => execute(async () => {
+  const response = await apiClient.get('/permissions', { params: buildParams() })
+
+  if (response.data.success) {
+    permissions.value = response.data.data.permissions
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات'
+    clearPermissions()
+  }
+}, {
+  onClear: clearPermissions,
+  logLabel: 'Permissions fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
 onMounted(() => {
   fetchPermissions()

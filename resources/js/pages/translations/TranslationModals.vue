@@ -2,12 +2,11 @@
   <div class="p-6 space-y-6" dir="rtl">
     <header class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">
-          بخش‌های ترجمه {{ translation?.name ? `- ${translation.name}` : '' }}
-        </h1>
-        <p class="text-[var(--theme-text-secondary)]">
-          مدیریت ساختار بخش‌ها برای زبان انتخابی و همگام‌سازی با سایر زبان‌ها
-        </p>
+        <PageHeader
+          dense
+          :title="`بخش‌های ترجمه${translation?.name ? ` - ${translation.name}` : ''}`"
+          subtitle="مدیریت ساختار بخش‌ها برای زبان انتخابی و همگام‌سازی با سایر زبان‌ها"
+        />
       </div>
       <div class="flex items-center gap-3">
         <Badge v-if="translation" :variant="translation.status ? 'success' : 'warning'">
@@ -111,7 +110,7 @@
       <Pagination
         v-if="pagination?.total"
         :pagination="pagination"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </section>
 
@@ -188,6 +187,7 @@ import { useRoute, useRouter } from 'vue-router'
 import Table from '../../components/ui/Table.vue'
 import Button from '../../components/ui/Button.vue'
 import Badge from '../../components/ui/Badge.vue'
+import PageHeader from '../../components/ui/PageHeader.vue'
 import Pagination from '../../components/ui/Pagination.vue'
 import Modal from '../../components/ui/Modal.vue'
 import Input from '../../components/ui/Input.vue'
@@ -197,6 +197,7 @@ import { translationApi } from '../../api/translations'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
 const { showToast } = useToast()
 
@@ -210,12 +211,17 @@ const setTitle = (title) => {
 }
 setTitle('بخش‌های ترجمه')
 
-const loading = ref(false)
-const error = ref('')
+const {
+  loading,
+  error,
+  pagination,
+  execute,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const translation = ref(null)
 const modals = ref([])
-const pagination = ref(null)
-const page = ref(1)
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -252,26 +258,25 @@ const fetchTranslation = async () => {
   }
 }
 
-const fetchModals = async (requestedPage = 1) => {
-  loading.value = true
-  error.value = ''
-  try {
-    page.value = requestedPage
-    const { modals: items, pagination: meta } = await translationApi.getModals(translationId, {
-      page: requestedPage
-    })
-    modals.value = items
-    pagination.value = meta
-  } catch (err) {
-    error.value = err?.response?.data?.message || 'خطا در دریافت لیست بخش‌ها.'
-  } finally {
-    loading.value = false
-  }
+const clearModals = () => {
+  modals.value = []
+  pagination.value = null
 }
 
-const goToPage = (nextPage) => {
-  fetchModals(nextPage)
-}
+const fetchModals = () => execute(async () => {
+  const { modals: items, pagination: meta } = await translationApi.getModals(
+    translationId,
+    buildParams()
+  )
+  modals.value = items
+  pagination.value = meta
+}, {
+  onClear: clearModals,
+  logLabel: 'Translation modals fetch error:',
+  fallbackMessage: 'خطا در دریافت لیست بخش‌ها.'
+})
+
+const onPageChange = (page) => goToPage(page, fetchModals)
 
 const resetCreateForm = () => {
   createForm.name = ''
@@ -294,7 +299,7 @@ const submitCreate = async () => {
     showToast('بخش جدید برای تمامی زبان‌ها ثبت شد.', 'success')
     showCreateModal.value = false
     resetCreateForm()
-    await fetchModals(page.value)
+    await fetchModals()
   } catch (err) {
     const message = err?.response?.data?.errors?.name?.[0] || err?.response?.data?.message || 'ایجاد بخش امکان‌پذیر نبود.'
     createErrors.name = message
@@ -364,7 +369,7 @@ const handleDelete = async (modal) => {
   try {
         await translationApi.deleteModal(translationId, modal.id)
         showToast('تمامی نسخه‌های این بخش حذف گردید.', 'success')
-        await fetchModals(page.value)
+        await fetchModals()
       } catch (err) {
         showToast(err?.response?.data?.message || 'حذف بخش امکان‌پذیر نبود.', 'error')
       }

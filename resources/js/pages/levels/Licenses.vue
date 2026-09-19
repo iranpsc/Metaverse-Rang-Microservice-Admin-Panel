@@ -3,12 +3,11 @@
     <!-- Page Header -->
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">
-          مجوزهای سطح
-        </h1>
-        <p class="text-[var(--theme-text-secondary)]">
-          مدیریت مجوزها و دسترسی‌های اختصاص‌یافته به سطح انتخاب‌شده در متاورس
-        </p>
+        <PageHeader
+          dense
+          title="مجوزهای سطح"
+          subtitle="مدیریت مجوزها و دسترسی‌های اختصاص‌یافته به سطح انتخاب‌شده در متاورس"
+        />
         <p v-if="levelLabel" class="mt-1 text-sm text-[var(--theme-text-muted)]">
           نام سطح:
           <span class="text-[var(--theme-text-primary)] font-medium">{{ levelLabel }}</span>
@@ -108,7 +107,7 @@
 import { reactive, ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import apiClient from '../../utils/api'
-import { Button, Card, Checkbox, LoadingState, ErrorState } from '../../components/ui'
+import { Button, Card, Checkbox, LoadingState, ErrorState, PageHeader } from '../../components/ui'
 import { useToast } from '../../composables/useToast'
 
 const { showToast } = useToast()

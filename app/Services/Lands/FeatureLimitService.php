@@ -4,7 +4,9 @@ namespace App\Services\Lands;
 
 use App\Models\FeatureLimit;
 use App\Models\FeatureProperties;
+use App\Policies\FeatureLimitPolicy;
 use Carbon\Carbon;
+use DomainException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Morilog\Jalali\Jalalian;
@@ -16,22 +18,21 @@ class FeatureLimitService
     /**
      * @return array{feature_limits: array<int, mixed>, pagination: array<string, mixed|null>}
      */
-    public function getPaginated(int $perPage, int $page): array
+    public function getPaginated(int $perPage, int $page, ?string $search = null): array
     {
-        $featureLimits = FeatureLimit::orderBy('created_at', 'desc')
-            ->paginate($perPage, ['*'], 'page', $page);
+        $query = FeatureLimit::query()->orderBy('created_at', 'desc');
+
+        if ($search !== null && trim($search) !== '') {
+            $query->where('title', 'like', '%'.trim($search).'%');
+        }
+
+        $featureLimits = $query->paginate($perPage, ['*'], 'page', $page);
 
         $featureLimits->getCollection()->transform(function ($limit) {
-            $startDate = is_string($limit->start_date)
-                ? Carbon::parse($limit->start_date)
-                : ($limit->start_date instanceof Carbon ? $limit->start_date : null);
-            $endDate = is_string($limit->end_date)
-                ? Carbon::parse($limit->end_date)
-                : ($limit->end_date instanceof Carbon ? $limit->end_date : null);
-
-            $limit->expired = $endDate ? now()->isAfter($endDate) : false;
-            $limit->start_date_shamsi = $startDate ? Jalalian::fromCarbon($startDate)->format('Y/m/d') : null;
-            $limit->end_date_shamsi = $endDate ? Jalalian::fromCarbon($endDate)->format('Y/m/d') : null;
+            $limit->expired = $limit->isExpired();
+            // Convert from raw Y-m-d (not UTC ISO) to avoid timezone day-shift
+            $limit->start_date_shamsi = $this->toShamsiDate($limit->getRawOriginal('start_date') ?? $limit->start_date);
+            $limit->end_date_shamsi = $this->toShamsiDate($limit->getRawOriginal('end_date') ?? $limit->end_date);
 
             return $limit;
         });
@@ -48,9 +49,6 @@ class FeatureLimitService
     public function create(array $validated): FeatureLimit
     {
         return DB::transaction(function () use ($validated) {
-            $startDateCarbon = Jalalian::fromFormat('Y/m/d', $validated['start_date'])->toCarbon();
-            $endDateCarbon = Jalalian::fromFormat('Y/m/d', $validated['end_date'])->toCarbon();
-
             $featureLimit = FeatureLimit::create([
                 'verified_kyc_limit' => $validated['verified_kyc_limit'],
                 'verified_bank_account_limit' => $validated['verified_bank_account_limit'],
@@ -61,8 +59,8 @@ class FeatureLimitService
                 'title' => $validated['title'],
                 'start_id' => $validated['start_id'],
                 'end_id' => $validated['end_id'],
-                'start_date' => $startDateCarbon->toDateString(),
-                'end_date' => $endDateCarbon->toDateString(),
+                'start_date' => $this->jalaliToGregorianDateString($validated['start_date']),
+                'end_date' => $this->jalaliToGregorianDateString($validated['end_date']),
                 'price_limit' => $validated['price_limit'],
                 'price' => $validated['price_limit'] ? $validated['price'] : 0,
                 'individual_buy_limit' => $validated['individual_buy_limit'],
@@ -75,10 +73,61 @@ class FeatureLimitService
         });
     }
 
+    /**
+     * Convert a Jalali Y/m/d string to a Gregorian Y-m-d date string in app timezone.
+     */
+    private function jalaliToGregorianDateString(string $jalaliDate): string
+    {
+        return Jalalian::fromFormat('Y/m/d', $jalaliDate)
+            ->toCarbon()
+            ->timezone(config('app.timezone'))
+            ->startOfDay()
+            ->toDateString();
+    }
+
+    /**
+     * Convert a stored Gregorian date to Jalali Y/m/d using the date portion only.
+     */
+    private function toShamsiDate(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($value instanceof \DateTimeInterface) {
+            $carbon = Carbon::instance(\DateTime::createFromInterface($value))
+                ->timezone(config('app.timezone'))
+                ->startOfDay();
+
+            return Jalalian::fromCarbon($carbon)->format('Y/m/d');
+        }
+
+        if (is_string($value)) {
+            // Use Y-m-d only — datetime/ISO strings can shift the calendar day in UTC
+            $dateOnly = substr($value, 0, 10);
+            $carbon = Carbon::createFromFormat('Y-m-d', $dateOnly, config('app.timezone'));
+
+            if ($carbon === false) {
+                return null;
+            }
+
+            return Jalalian::fromCarbon($carbon->startOfDay())->format('Y/m/d');
+        }
+
+        return null;
+    }
+
     public function delete(int $id): void
     {
         DB::transaction(function () use ($id) {
             $featureLimit = FeatureLimit::findOrFail($id);
+
+            // Invoke policy directly so the expired rule applies to all roles
+            // (Gate::before would otherwise allow super-admins through).
+            $policy = app(FeatureLimitPolicy::class);
+            if (! $policy->delete(auth()->user(), $featureLimit)) {
+                throw new DomainException('محدودیت منقضی‌شده قابل حذف نیست.');
+            }
 
             $this->removeLimits($featureLimit);
             $featureLimit->delete();

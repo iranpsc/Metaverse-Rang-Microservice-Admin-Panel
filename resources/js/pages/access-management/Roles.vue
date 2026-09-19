@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">مدیریت نقش ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">ایجاد و مدیریت نقش‌های دسترسی</p>
-    </div>
+    <PageHeader
+      title="مدیریت نقش ها"
+      subtitle="ایجاد و مدیریت نقش‌های دسترسی"
+    />
 
     <!-- Create Button -->
     <div class="mb-6">
@@ -71,7 +70,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
 
     <!-- Create Role Modal -->
@@ -96,7 +95,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Pagination, LoadingState, ErrorState, Button } from '../../components/ui'
+import { Table, Pagination, LoadingState, ErrorState, Button, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import CreateRoleModal from '../../components/access-management/CreateRoleModal.vue'
 import UpdateRoleModal from '../../components/access-management/UpdateRoleModal.vue'
 import { useToast } from '../../composables/useToast'
@@ -105,11 +105,17 @@ import { confirm } from '../../utils/notifications'
 
 const { showToast } = useToast()
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  currentPage,
+  execute,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const roles = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
 const showCreateModal = ref(false)
 const showUpdateModal = ref(false)
 const selectedRoleId = ref(null)
@@ -142,12 +148,7 @@ const tableColumns = [
   }
 ]
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchRoles()
-  }
-}
+const onPageChange = (page) => goToPage(page, fetchRoles)
 
 const openUpdateModal = (id) => {
   selectedRoleId.value = id
@@ -195,41 +196,26 @@ const handleDelete = async (id) => {
   }
 }
 
-const fetchRoles = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: 10,
-    }
-
-    const response = await apiClient.get('/roles', { params })
-
-    if (response.data.success) {
-      roles.value = response.data.data.roles
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات'
-    }
-  } catch (err) {
-    console.error('Roles fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      roles.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    roles.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
-  }
+const clearRoles = () => {
+  roles.value = []
+  pagination.value = null
 }
+
+const fetchRoles = () => execute(async () => {
+  const response = await apiClient.get('/roles', { params: buildParams() })
+
+  if (response.data.success) {
+    roles.value = response.data.data.roles
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات'
+    clearRoles()
+  }
+}, {
+  onClear: clearRoles,
+  logLabel: 'Roles fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
 onMounted(() => {
   fetchRoles()

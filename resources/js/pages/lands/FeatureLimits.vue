@@ -1,13 +1,21 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">محدودیت املاک</h1>
-      <p class="text-[var(--theme-text-secondary)]">تعریف و مدیریت محدودیت‌های املاک</p>
-    </div>
+    <PageHeader
+      title="محدودیت املاک"
+      subtitle="تعریف و مدیریت محدودیت‌های املاک"
+    />
 
     <!-- Create Limit Button -->
-    <div class="mb-6">
+    <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
+      <div class="flex-1 max-w-md">
+        <SearchBox
+          v-model="searchTerm"
+          placeholder="جستجو بر اساس عنوان..."
+          :debounce-ms="500"
+          @search="handleSearch"
+          @clear="handleClear"
+        />
+      </div>
       <Button variant="primary" @click="showCreateModal = true">
         ایجاد محدودیت
       </Button>
@@ -54,10 +62,10 @@
           size="sm"
           rounded="full"
           class="!p-2 !gap-0 min-w-[2.25rem]"
-          title="حذف"
-          aria-label="حذف"
+          :title="row.expired ? 'محدودیت منقضی‌شده قابل حذف نیست' : 'حذف'"
+          :aria-label="row.expired ? 'محدودیت منقضی‌شده قابل حذف نیست' : 'حذف'"
           :loading="deleting && deletingLimitId === row.id"
-          :disabled="deleting"
+          :disabled="deleting || row.expired"
           @click="handleDelete(row)"
         >
           <template #icon-left>
@@ -80,7 +88,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
 
     <!-- Create Limit Modal -->
@@ -276,13 +284,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, nextTick } from 'vue'
-import { Table, Pagination, Button, LoadingState, ErrorState, Alert, Modal, Input, Badge } from '../../components/ui'
+import { ref, onMounted, computed, watch } from 'vue'
+import { Table, Pagination, Button, LoadingState, ErrorState, Alert, Modal, Input, Badge, SearchBox, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import { useFeatureLimits } from '../../composables/useFeatureLimits'
-import { gregorianToShamsiSync } from '../../utils/dateConverter'
+import { gregorianToShamsiSync, todayInShamsi, addDaysInShamsi } from '../../utils/dateConverter'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
 const { showToast } = useToast()
@@ -292,11 +301,19 @@ const {
   fetchFeatureLimits: fetchFeatureLimitsApi
 } = useFeatureLimits()
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams
+} = usePaginatedList({ perPage: 10 })
+
 const featureLimits = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
 const showCreateModal = ref(false)
 const saving = ref(false)
 const deletingLimitId = ref(null)
@@ -309,16 +326,8 @@ const submitButtonLabel = computed(() => {
 
 const errors = ref({})
 
-// Get today's date in Shamsi format for default values
-const getTodayShamsi = () => {
-  const today = new Date()
-  return gregorianToShamsiSync(today.toISOString().split('T')[0]) || ''
-}
-
-const getFutureDateShamsi = (days) => {
-  const futureDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000)
-  return gregorianToShamsiSync(futureDate.toISOString().split('T')[0]) || ''
-}
+const getTodayShamsi = todayInShamsi
+const getFutureDateShamsi = addDaysInShamsi
 
 const formData = ref({
   verified_kyc_limit: false,
@@ -345,11 +354,11 @@ const tableColumns = [
     label: 'عنوان'
   },
   {
-    key: 'start_date',
+    key: 'start_date_shamsi',
     label: 'تاریخ شروع'
   },
   {
-    key: 'end_date',
+    key: 'end_date_shamsi',
     label: 'تاریخ پایان'
   },
   {
@@ -374,11 +383,11 @@ const tableColumns = [
   }
 ]
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchFeatureLimits()
-  }
+const onPageChange = (page) => goToPage(page, fetchFeatureLimits)
+const handleSearch = () => search(fetchFeatureLimits)
+const handleClear = () => {
+  searchTerm.value = ''
+  clear(fetchFeatureLimits)
 }
 
 const submitFeatureLimitCreate = async () => {
@@ -418,6 +427,8 @@ const handleSave = async () => {
 }
 
 const handleDelete = async (row) => {
+  if (row.expired) return
+
   const result = await confirm(
       `آیا از حذف محدودیت «${row.title}» مطمئن هستید؟ این عمل غیرقابل بازگشت است و تمام محدودیت‌های اعمال شده بر روی املاک حذف خواهد شد.`,
     'تایید حذف محدودیت',
@@ -445,47 +456,34 @@ const handleDelete = async (row) => {
       }
 }
 
-const fetchFeatureLimits = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: 10
-    }
-
-    const response = await fetchFeatureLimitsApi(params)
-
-    if (response.data.success) {
-      featureLimits.value = response.data.data.feature_limits.map(limit => ({
-        ...limit,
-        // Use Shamsi dates from API response (start_date_shamsi, end_date_shamsi)
-        // Backend already converts to Shamsi, so we use those values directly
-        start_date: limit.start_date_shamsi || (limit.start_date ? gregorianToShamsiSync(limit.start_date) : '-'),
-        end_date: limit.end_date_shamsi || (limit.end_date ? gregorianToShamsiSync(limit.end_date) : '-')
-      }))
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات محدودیت‌ها'
-    }
-  } catch (err) {
-    console.error('Feature limits fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      featureLimits.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    featureLimits.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
-  }
+const clearFeatureLimits = () => {
+  featureLimits.value = []
+  pagination.value = null
 }
+
+const fetchFeatureLimits = () => execute(async () => {
+  const response = await fetchFeatureLimitsApi(buildParams())
+
+  if (response.data.success) {
+    featureLimits.value = response.data.data.feature_limits.map(limit => ({
+      ...limit,
+      start_date_shamsi: limit.start_date_shamsi
+        || (limit.start_date ? gregorianToShamsiSync(limit.start_date) : null)
+        || '-',
+      end_date_shamsi: limit.end_date_shamsi
+        || (limit.end_date ? gregorianToShamsiSync(limit.end_date) : null)
+        || '-'
+    }))
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات محدودیت‌ها'
+    clearFeatureLimits()
+  }
+}, {
+  onClear: clearFeatureLimits,
+  logLabel: 'Feature limits fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
 const resetForm = () => {
   formData.value = {
@@ -508,40 +506,10 @@ const resetForm = () => {
   errors.value = {}
 }
 
-watch(() => showCreateModal, async () => {
-  if (!newVal) {
-  } else {
-    // Increment key to force re-mount of date pickers
+watch(showCreateModal, (isOpen) => {
+  if (isOpen) {
+    // Remount date pickers so they re-init after the modal opens
     modalOpenKey.value++
-    // Modal opened - reset form and ensure date pickers are initialized
-    await nextTick()
-    // The key prop on PersianDatePicker will force re-initialization
-    // Wait for modal transition to complete before ensuring date pickers are ready
-    setTimeout(() => {
-      // Double-check that date pickers are initialized after modal animation
-      const datePickers = document.querySelectorAll('[id^="persian-date-"]')
-      datePickers.forEach((picker) => {
-        if (typeof window.kamaDatepicker !== 'undefined' && picker.id && !picker.dataset.initialized) {
-          try {
-            window.kamaDatepicker(picker.id, {
-              placeholder: 'روز / ماه / سال',
-              twodigit: true,
-              closeAfterSelect: true,
-              markToday: true,
-              markHolidays: true,
-              highlightSelectedDay: true,
-              sync: true,
-              buttonsColor: 'gray',
-              forceFarsiDigits: false,
-              gotoToday: true
-            })
-            picker.dataset.initialized = 'true'
-          } catch (e) {
-            // Ignore errors
-          }
-        }
-      })
-    }, 400)
   }
 })
 

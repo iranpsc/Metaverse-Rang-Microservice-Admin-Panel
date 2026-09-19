@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">برداشت ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">مشاهده و مدیریت برداشت‌های کاربران</p>
-    </div>
+    <PageHeader
+      title="برداشت ها"
+      subtitle="مشاهده و مدیریت برداشت‌های کاربران"
+    />
 
     <!-- Loading State -->
     <LoadingState v-if="loading" />
@@ -26,7 +25,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { LoadingState, ErrorState } from '../../components/ui'
+import { LoadingState, ErrorState, PageHeader } from '../../components/ui'
+import { getApiErrorMessage, handleAuthListError } from '../../utils/apiErrors'
 
 const loading = ref(true)
 const error = ref(null)
@@ -46,13 +46,11 @@ const fetchWithdraws = async () => {
   } catch (err) {
     console.error('Withdraws fetch error:', err)
 
-    // If 401/403, don't set error message - axios interceptor will handle redirect
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      loading.value = false
+    if (handleAuthListError(err, { loading })) {
       return
     }
 
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
+    error.value = getApiErrorMessage(err, 'خطا در بارگذاری اطلاعات')
   } finally {
     loading.value = false
   }

@@ -157,6 +157,7 @@ class BankAccountApiTest extends TestCase
                             'bankable' => [
                                 'id',
                                 'name',
+                                'code',
                                 'fname',
                                 'lname',
                             ],
@@ -379,7 +380,7 @@ class BankAccountApiTest extends TestCase
                     'status_badge',
                     'errors',
                     'created_at',
-                    'bankable' => ['id', 'name', 'fname', 'lname'],
+                    'bankable' => ['id', 'name', 'code', 'fname', 'lname'],
                 ],
             ])
             ->assertJsonPath('data.id', $bankAccount->id)

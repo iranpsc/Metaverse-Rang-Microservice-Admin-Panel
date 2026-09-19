@@ -4,6 +4,164 @@
  */
 
 /**
+ * Parse a date-like value into a Date instance.
+ * @param {string|Date|null|undefined} value
+ * @returns {Date|null}
+ */
+export function parseDateValue(value) {
+  if (!value) {
+    return null
+  }
+
+  const date = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  return date
+}
+
+/**
+ * Table/display date using fa-IR locale (Persian calendar).
+ * @param {string|Date|null|undefined} value
+ * @param {string} emptyValue
+ * @returns {string}
+ */
+export function formatDisplayDate(value, emptyValue = '-') {
+  if (!value) {
+    return emptyValue
+  }
+
+  const date = parseDateValue(value)
+  if (!date) {
+    return emptyValue
+  }
+
+  return date.toLocaleDateString('fa-IR')
+}
+
+/**
+ * Gregorian date as YYYY/MM/DD (English digits). Used for some land API fields.
+ * @param {string|Date|null|undefined} value
+ * @param {string} emptyValue
+ * @returns {string}
+ */
+export function formatGregorianSlashDate(value, emptyValue = '-') {
+  if (!value) {
+    return emptyValue
+  }
+
+  const date = parseDateValue(value)
+  if (!date) {
+    return emptyValue
+  }
+
+  return formatGregorianDate(date, 'Y/m/d')
+}
+
+/**
+ * ISO datetime → Jalali YYYY/MM/DD with English digits (for date pickers/forms).
+ * @param {string|null|undefined} isoString
+ * @returns {string}
+ */
+export function formatIsoToJalaliDate(isoString) {
+  if (!isoString) {
+    return ''
+  }
+
+  const date = parseDateValue(isoString)
+  if (!date) {
+    return ''
+  }
+
+  const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
+
+  const parts = formatter.formatToParts(date)
+  const year = persianToEnglishNumbers(parts.find((part) => part.type === 'year')?.value || '')
+  const month = persianToEnglishNumbers(parts.find((part) => part.type === 'month')?.value || '')
+  const day = persianToEnglishNumbers(parts.find((part) => part.type === 'day')?.value || '')
+
+  if (!year || !month || !day) {
+    return ''
+  }
+
+  return `${year.padStart(4, '0')}/${month.padStart(2, '0')}/${day.padStart(2, '0')}`
+}
+
+/**
+ * Format time for tables and detail views.
+ * @param {string|Date|null|undefined} value
+ * @param {object} [options]
+ * @param {string} [options.emptyValue='-']
+ * @param {boolean} [options.includeSeconds=false]
+ * @param {boolean} [options.useLocale=true] - When false, uses padded 24h H:i[:s]
+ * @returns {string}
+ */
+export function formatDisplayTime(value, options = {}) {
+  const { emptyValue = '-', includeSeconds = false, useLocale = true } = options
+
+  if (!value) {
+    return emptyValue
+  }
+
+  const date = parseDateValue(value)
+  if (!date) {
+    return emptyValue
+  }
+
+  if (!useLocale) {
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    if (!includeSeconds) {
+      return `${hours}:${minutes}`
+    }
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${hours}:${minutes}:${seconds}`
+  }
+
+  const timeOptions = {
+    hour: '2-digit',
+    minute: '2-digit',
+    ...(includeSeconds ? { second: '2-digit' } : {})
+  }
+
+  return date.toLocaleTimeString('fa-IR', timeOptions)
+}
+
+/**
+ * Split backend Jalali datetime string into date and time parts.
+ * @param {string|null|undefined} jalaliValue
+ * @param {string|null|undefined} timeValue
+ * @returns {{ date: string, time: string }}
+ */
+export function splitJalaliDateTime(jalaliValue, timeValue) {
+  if (timeValue) {
+    return {
+      date: jalaliValue || '-',
+      time: timeValue
+    }
+  }
+
+  if (!jalaliValue) {
+    return { date: '-', time: '-' }
+  }
+
+  const parts = String(jalaliValue).trim().split(/\s+/)
+  if (parts.length >= 2) {
+    return {
+      date: parts[0],
+      time: parts.slice(1).join(' ')
+    }
+  }
+
+  return { date: jalaliValue, time: '-' }
+}
+
+/**
  * Format date to Persian format
  * @param {string|Date} date - Date to format
  * @param {string} format - Format string (default: 'Y/m/d')

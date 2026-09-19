@@ -55,13 +55,14 @@ class FeaturePricingLimitsApiTest extends TestCase
 
     public function test_regular_admin_can_access_both_endpoints(): void
     {
-        $admin = $this->actingAsRegularAdmin();
+        $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE)
-            ->assertJsonPath('data.price_limits', null);
+            ->assertJsonPath('data.price_limits', null)
+            ->assertJsonPath('data.activity_logs', []);
 
         $this->postJson(self::UPDATE_PATH, $this->validUpdatePayload([
             'public_price_limit' => 3000,
@@ -75,12 +76,12 @@ class FeaturePricingLimitsApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.price_limits.public_price_limit', 3000)
             ->assertJsonPath('data.price_limits.under_eighteen_price_limit', 1500)
-            ->assertJsonPath('data.price_limits.changer_name', $admin->name);
+            ->assertJsonCount(1, 'data.activity_logs');
     }
 
     public function test_super_admin_can_access_both_endpoints(): void
     {
-        $admin = $this->actingAsSuperAdmin();
+        $this->actingAsSuperAdmin();
 
         $this->getJson(self::INDEX_PATH)
             ->assertOk()
@@ -94,7 +95,7 @@ class FeaturePricingLimitsApiTest extends TestCase
 
         $this->getJson(self::INDEX_PATH)
             ->assertOk()
-            ->assertJsonPath('data.price_limits.changer_name', $admin->name);
+            ->assertJsonCount(1, 'data.activity_logs');
     }
 
     // -------------------------------------------------------------------------
@@ -115,6 +116,7 @@ class FeaturePricingLimitsApiTest extends TestCase
                 'message',
                 'data' => [
                     'price_limits',
+                    'activity_logs',
                 ],
             ]);
     }
@@ -141,7 +143,16 @@ class FeaturePricingLimitsApiTest extends TestCase
                         'public_price_limit',
                         'under_eighteen_price_limit',
                         'updated_at',
-                        'changer_name',
+                    ],
+                    'activity_logs' => [
+                        '*' => [
+                            'id',
+                            'description',
+                            'event',
+                            'causer_name',
+                            'created_at_jalali',
+                            'created_at_time',
+                        ],
                     ],
                 ],
             ])
@@ -186,15 +197,46 @@ class FeaturePricingLimitsApiTest extends TestCase
             ->assertJsonPath('data.price_limits.under_eighteen_price_limit', 0);
     }
 
-    public function test_index_includes_authenticated_admin_name_as_changer_name(): void
+    public function test_index_includes_activity_logs_for_authenticated_admin_changes(): void
     {
         $admin = $this->actingAsSuperAdmin();
 
-        $this->createFeaturePricingLimit();
+        $this->postJson(self::UPDATE_PATH, $this->validUpdatePayload([
+            'public_price_limit' => 1111,
+            'under_eighteen_price_limit' => 222,
+        ]))->assertOk();
 
-        $this->getJson(self::INDEX_PATH)
+        $response = $this->getJson(self::INDEX_PATH)->assertOk();
+
+        $logs = $response->json('data.activity_logs');
+        $this->assertIsArray($logs);
+        $this->assertNotEmpty($logs);
+        $this->assertSame('created', $logs[0]['event']);
+        $this->assertSame($admin->name, $logs[0]['causer_name']);
+    }
+
+    public function test_index_orders_activity_logs_newest_to_oldest(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $this->postJson(self::UPDATE_PATH, $this->validUpdatePayload([
+            'public_price_limit' => 100,
+            'under_eighteen_price_limit' => 50,
+        ]))->assertOk();
+
+        $this->postJson(self::UPDATE_PATH, $this->validUpdatePayload([
+            'public_price_limit' => 200,
+            'under_eighteen_price_limit' => 75,
+        ]))->assertOk();
+
+        $logs = $this->getJson(self::INDEX_PATH)
             ->assertOk()
-            ->assertJsonPath('data.price_limits.changer_name', $admin->name);
+            ->json('data.activity_logs');
+
+        $this->assertCount(2, $logs);
+        $this->assertSame('updated', $logs[0]['event']);
+        $this->assertSame('created', $logs[1]['event']);
+        $this->assertGreaterThan($logs[1]['id'], $logs[0]['id']);
     }
 
     public function test_index_includes_updated_at_when_record_exists(): void
@@ -210,6 +252,31 @@ class FeaturePricingLimitsApiTest extends TestCase
             $record->fresh()->updated_at?->toJSON(),
             $response->json('data.price_limits.updated_at')
         );
+    }
+
+    public function test_update_response_includes_activity_logs(): void
+    {
+        $admin = $this->actingAsSuperAdmin();
+
+        $response = $this->postJson(self::UPDATE_PATH, $this->validUpdatePayload())
+            ->assertOk()
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'data' => [
+                    'price_limits' => [
+                        'id',
+                        'public_price_limit',
+                        'under_eighteen_price_limit',
+                        'updated_at',
+                    ],
+                    'activity_logs',
+                ],
+            ]);
+
+        $logs = $response->json('data.activity_logs');
+        $this->assertNotEmpty($logs);
+        $this->assertSame($admin->name, $logs[0]['causer_name']);
     }
 
     // -------------------------------------------------------------------------

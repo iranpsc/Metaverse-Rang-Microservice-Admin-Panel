@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">دسترسی ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">مدیریت دسترسی‌های سلسله خانوادگی</p>
-    </div>
+    <PageHeader
+      title="دسترسی ها"
+      subtitle="مدیریت دسترسی‌های سلسله خانوادگی"
+    />
 
     <!-- Loading State -->
     <LoadingState v-if="loading" />
@@ -108,7 +107,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Button, Checkbox, LoadingState, ErrorState } from '../../components/ui'
+import { Button, Checkbox, LoadingState, ErrorState, PageHeader } from '../../components/ui'
+import { getApiErrorMessage, handleAuthListError } from '../../utils/apiErrors'
 
 const loading = ref(true)
 const error = ref(null)
@@ -156,12 +156,11 @@ const fetchPermissions = async () => {
   } catch (err) {
     console.error('Fetch permissions error:', err)
 
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      loading.value = false
+    if (handleAuthListError(err, { loading })) {
       return
     }
 
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
+    error.value = getApiErrorMessage(err, 'خطا در بارگذاری اطلاعات')
   } finally {
     loading.value = false
   }

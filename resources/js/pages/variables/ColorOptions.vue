@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">پکیج های رنگی</h1>
-      <p class="text-[var(--theme-text-secondary)]">مدیریت پکیج‌های رنگی</p>
-    </div>
+    <PageHeader
+      title="پکیج های رنگی"
+      subtitle="مدیریت پکیج‌های رنگی"
+    />
 
     <!-- Action Bar -->
     <div class="flex flex-col sm:flex-row gap-3 justify-between sm:items-center mb-6">
@@ -99,7 +98,7 @@
         v-if="pagination && pagination.total > 0"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </div>
 
@@ -186,55 +185,41 @@
       </template>
     </Modal>
 
-    <!-- Change History Modal -->
-    <Modal
+    <ChangeHistoryModal
       :model-value="showHistoryModal"
-      @update:model-value="closeHistoryModal"
+      @update:model-value="onHistoryModalVisibility"
       title="تاریخچه تغییرات"
-      size="xl"
-    >
-      <div v-if="selectedOption?.price_change_logs && selectedOption.price_change_logs.length > 0" class="overflow-x-auto" dir="rtl">
-        <Table
-          :columns="historyColumns"
-          :data="selectedOption.price_change_logs"
-          :show-row-number="true"
-          empty-state-message="تاریخچه تغییرات یافت نشد"
-        />
-      </div>
-      <div v-else class="py-8 text-center">
-        <p class="text-[var(--theme-text-secondary)]">تاریخچه تغییرات یافت نشد</p>
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end" dir="rtl">
-          <Button
-            variant="danger"
-            @click="closeHistoryModal"
-          >
-            بستن
-          </Button>
-        </div>
-      </template>
-    </Modal>
+      :columns="optionChangeHistoryColumns"
+      :entries="selectedOption?.price_change_logs || []"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Button, LoadingState, ErrorState, Table, Pagination, Modal, Input, Select, FileInput } from '../../components/ui'
+import { Button, LoadingState, ErrorState, Table, Pagination, Modal, Input, Select, FileInput, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
+import { formatDisplayDate, formatDisplayTime } from '../../utils/dateFormatter'
+import ChangeHistoryModal from '../../components/variables/ChangeHistoryModal.vue'
+import { optionChangeHistoryColumns } from '../../utils/variables/changeHistoryColumns'
 
 const { showToast } = useToast()
 
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  execute,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const options = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
 const showFormModal = ref(false)
 const showHistoryModal = ref(false)
 const isEditMode = ref(false)
@@ -286,11 +271,7 @@ const tableColumns = [
     key: 'updated_at',
     label: 'تاریخ و ساعت بروزرسانی',
     textSecondary: true,
-    formatter: (value) => {
-      if (!value) return '-'
-      const date = new Date(value)
-      return date.toLocaleDateString('fa-IR')
-    }
+    formatter: formatDisplayDate
   },
   {
     key: 'image_url',
@@ -308,80 +289,28 @@ const tableColumns = [
   }
 ]
 
-const historyColumns = [
-  {
-    key: 'changer_name',
-    label: 'تغییر دهنده'
-  },
-  {
-    key: 'previous_value',
-    label: 'وضعیت گذشته'
-  },
-  {
-    key: 'current_value',
-    label: 'وضعیت حال'
-  },
-  {
-    key: 'note',
-    label: 'توضیحات',
-    defaultValue: '-'
-  },
-  {
-    key: 'created_at',
-    label: 'تاریخ تغییر',
-    formatter: (value) => {
-      if (!value) return '-'
-      const date = new Date(value)
-      return date.toLocaleDateString('fa-IR')
-    }
-  },
-  {
-    key: 'created_time',
-    label: 'ساعت تغییر',
-  }
-]
+const formatHistoryTime = (value) => formatDisplayTime(value, { includeSeconds: true })
 
-const formatHistoryTime = (value) => {
-  if (!value) return '-'
-  const date = new Date(value)
-  return date.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+const clearOptions = () => {
+  options.value = []
+  pagination.value = null
 }
 
-const fetchOptions = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const fetchOptions = () => execute(async () => {
+  const response = await apiClient.get('/options', { params: buildParams() })
 
-    const params = {
-      page: currentPage.value,
-      per_page: 10,
-    }
-
-    const response = await apiClient.get('/options', { params })
-
-    if (response.data.success) {
-      options.value = response.data.data.options
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات'
-    }
-  } catch (err) {
-    console.error('Options fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      options.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    options.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+  if (response.data.success) {
+    options.value = response.data.data.options
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات'
+    clearOptions()
   }
-}
+}, {
+  onClear: clearOptions,
+  logLabel: 'Options fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
 const fetchVariables = async () => {
   try {
@@ -402,12 +331,7 @@ const fetchVariables = async () => {
   }
 }
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchOptions()
-  }
-}
+const onPageChange = (page) => goToPage(page, fetchOptions)
 
 const handleOptionImageChange = (file) => {
   if (file) {
@@ -562,6 +486,13 @@ const openHistoryModal = (option) => {
 const closeHistoryModal = () => {
   showHistoryModal.value = false
   selectedOption.value = null
+}
+
+const onHistoryModalVisibility = (value) => {
+  showHistoryModal.value = value
+  if (!value) {
+    selectedOption.value = null
+  }
 }
 
 const handleDelete = async (row) => {

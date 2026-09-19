@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">لیست نقشه ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">مدیریت و مشاهده نقشه‌های بارگذاری شده</p>
-    </div>
+    <PageHeader
+      title="لیست نقشه ها"
+      subtitle="مدیریت و مشاهده نقشه‌های بارگذاری شده"
+    />
 
     <!-- Upload Button -->
     <div class="mb-6">
@@ -82,7 +81,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
 
     <!-- Upload Map Modal -->
@@ -273,7 +272,8 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { Table, Pagination, Button, Badge, LoadingState, ErrorState, Modal, Input, FileInput } from '../../components/ui'
+import { Table, Pagination, Button, Badge, LoadingState, ErrorState, Modal, Input, FileInput, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import { useMaps } from '../../composables/useMaps'
@@ -288,11 +288,16 @@ const {
   deleteMap
 } = useMaps()
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  execute,
+  goToPage,
+  buildParams
+} = usePaginatedList({ perPage: 10 })
+
 const maps = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
 
 const showUploadModal = ref(false)
 const showUpdateModal = ref(false)
@@ -387,48 +392,28 @@ const insertModalTableColumns = [
   }
 ]
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchMaps()
-  }
+const clearMaps = () => {
+  maps.value = []
+  pagination.value = null
 }
 
-const fetchMaps = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const fetchMaps = () => execute(async () => {
+  const response = await fetchMapsApi(buildParams())
 
-    const params = {
-      page: currentPage.value,
-      per_page: 10,
-    }
-
-    const response = await fetchMapsApi(params)
-
-    if (response.data.success) {
-      maps.value = response.data.data.maps
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات نقشه‌ها'
-    }
-  } catch (err) {
-    console.error('Maps fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      maps.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    maps.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+  if (response.data.success) {
+    maps.value = response.data.data.maps
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات نقشه‌ها'
+    clearMaps()
   }
-}
+}, {
+  onClear: clearMaps,
+  logLabel: 'Maps fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
+
+const onPageChange = (page) => goToPage(page, fetchMaps)
 
 const uploadErrorMessage = (val) => {
   if (val == null || val === '') return ''

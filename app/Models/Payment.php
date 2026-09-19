@@ -26,7 +26,20 @@ class Payment extends Model
 
     public function scopeSearch($query, $searchTerm)
     {
-        return $query->where('ref_id', 'like', '%'.$searchTerm.'%');
+        $term = '%'.trim($searchTerm).'%';
+
+        return $query->where(function ($q) use ($term) {
+            $q->where('ref_id', 'like', $term)
+                ->orWhereHas('user', function ($userQuery) use ($term) {
+                    $userQuery->where('name', 'like', $term)
+                        ->orWhere('code', 'like', $term);
+                });
+        });
+    }
+
+    public function scopeOfProduct($query, $product)
+    {
+        return $query->where('product', $product);
     }
 
     public function getTitle()

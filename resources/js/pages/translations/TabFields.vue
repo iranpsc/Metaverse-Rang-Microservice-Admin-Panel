@@ -2,12 +2,11 @@
   <div class="p-6 space-y-6" dir="rtl">
     <header class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">
-          مدیریت عبارات ترجمه
-        </h1>
-        <p class="text-[var(--theme-text-secondary)]">
-          مدیریت عبارت‌های تب {{ tab?.name || '' }} در بخش {{ modal?.name || '' }} برای زبان {{ translation?.name || '' }}
-        </p>
+        <PageHeader
+          dense
+          title="مدیریت عبارات ترجمه"
+          :subtitle="`مدیریت عبارت‌های تب ${tab?.name || ''} در بخش ${modal?.name || ''} برای زبان ${translation?.name || ''}`"
+        />
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <Badge v-if="translation" :variant="translation.status ? 'success' : 'warning'">
@@ -102,7 +101,7 @@
       <Pagination
         v-if="pagination?.total"
         :pagination="pagination"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </section>
 
@@ -182,6 +181,7 @@ import { useRoute, useRouter } from 'vue-router'
 import Table from '../../components/ui/Table.vue'
 import Button from '../../components/ui/Button.vue'
 import Badge from '../../components/ui/Badge.vue'
+import PageHeader from '../../components/ui/PageHeader.vue'
 import Pagination from '../../components/ui/Pagination.vue'
 import Modal from '../../components/ui/Modal.vue'
 import Textarea from '../../components/ui/Textarea.vue'
@@ -191,6 +191,7 @@ import { translationApi } from '../../api/translations'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
 const { showToast } = useToast()
 
@@ -205,14 +206,19 @@ const translationId = Number(route.params.translationId)
 const modalId = Number(route.params.modalId)
 const tabId = Number(route.params.tabId)
 
-const loading = ref(false)
-const error = ref('')
+const {
+  loading,
+  error,
+  pagination,
+  execute,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const translation = ref(null)
 const modal = ref(null)
 const tab = ref(null)
 const fields = ref([])
-const pagination = ref(null)
-const page = ref(1)
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -251,26 +257,27 @@ const fetchMeta = async () => {
   }
 }
 
-const fetchFields = async (requestedPage = 1) => {
-  loading.value = true
-  error.value = ''
-  try {
-    page.value = requestedPage
-    const { fields: items, pagination: meta } = await translationApi.getFields(translationId, modalId, tabId, {
-      page: requestedPage
-    })
-    fields.value = items
-    pagination.value = meta
-  } catch (err) {
-    error.value = err?.response?.data?.message || 'خطا در دریافت عبارات.'
-  } finally {
-    loading.value = false
-  }
+const clearFields = () => {
+  fields.value = []
+  pagination.value = null
 }
 
-const goToPage = (nextPage) => {
-  fetchFields(nextPage)
-}
+const fetchFields = () => execute(async () => {
+  const { fields: items, pagination: meta } = await translationApi.getFields(
+    translationId,
+    modalId,
+    tabId,
+    buildParams()
+  )
+  fields.value = items
+  pagination.value = meta
+}, {
+  onClear: clearFields,
+  logLabel: 'Translation fields fetch error:',
+  fallbackMessage: 'خطا در دریافت عبارات.'
+})
+
+const onPageChange = (page) => goToPage(page, fetchFields)
 
 const resetCreateForm = () => {
   createForm.value = ''
@@ -299,7 +306,7 @@ const submitCreate = async () => {
     showToast('عبارت جدید به ساختار تمام زبان‌ها اضافه شد.', 'success')
     showCreateModal.value = false
     resetCreateForm()
-    await fetchFields(page.value)
+    await fetchFields()
   } catch (err) {
     const message = err?.response?.data?.errors?.value?.[0] || err?.response?.data?.message || 'ایجاد عبارت امکان‌پذیر نبود.'
     createErrors.value = message
@@ -371,7 +378,7 @@ const handleDelete = async (field) => {
   try {
         await translationApi.deleteField(translationId, modalId, tabId, field.id)
         showToast('تمامی نسخه‌های این عبارت حذف گردید.', 'success')
-        await fetchFields(page.value)
+        await fetchFields()
       } catch (err) {
         showToast(err?.response?.data?.message || 'حذف عبارت امکان‌پذیر نبود.', 'error')
       }

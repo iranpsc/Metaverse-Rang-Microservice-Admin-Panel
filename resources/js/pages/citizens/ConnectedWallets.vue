@@ -1,9 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">کیف پول‌های متصل</h1>
-      <p class="text-[var(--theme-text-secondary)]">لیست شهروندانی که کیف پول رمزارزی خود را به حساب متصل کرده‌اند</p>
-    </div>
+    <PageHeader
+      title="کیف پول‌های متصل"
+      subtitle="لیست شهروندانی که کیف پول رمزارزی خود را به حساب متصل کرده‌اند"
+    />
 
     <div class="mb-6">
       <SearchBox
@@ -36,7 +36,7 @@
           class="font-mono text-[var(--theme-text-secondary)]"
           :title="value"
         >
-          {{ truncateWalletAddress(value) }}
+          {{ truncateMiddle(value) }}
         </span>
       </template>
     </Table>
@@ -45,7 +45,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
   </div>
 </template>
@@ -53,14 +53,23 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Pagination, SearchBox, LoadingState, ErrorState } from '../../components/ui'
+import { Table, Pagination, SearchBox, LoadingState, ErrorState, PageHeader } from '../../components/ui'
+import { truncateMiddle } from '../../utils/text'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const users = ref([])
-const pagination = ref(null)
-const searchTerm = ref('')
-const currentPage = ref(1)
 
 const tableColumns = [
   {
@@ -79,76 +88,36 @@ const tableColumns = [
   },
   {
     key: 'registered_at',
-    label: 'تاریخ ثبت نام',
+    label: 'تاریخ اتصال',
     textSecondary: true,
     defaultValue: '-'
   }
 ]
 
-const truncateWalletAddress = (address, start = 6, end = 4) => {
-  if (!address || address.length <= start + end + 3) {
-    return address || '-'
+const clearUsers = () => {
+  users.value = []
+  pagination.value = null
+}
+
+const fetchConnectedWallets = () => execute(async () => {
+  const response = await apiClient.get('/connected-wallets', { params: buildParams() })
+
+  if (response.data.success) {
+    users.value = response.data.data.users
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت لیست کیف پول‌های متصل'
+    clearUsers()
   }
+}, {
+  onClear: clearUsers,
+  logLabel: 'Connected wallets fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
-  return `${address.slice(0, start)}...${address.slice(-end)}`
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchConnectedWallets()
-}
-
-const handleClear = () => {
-  currentPage.value = 1
-  fetchConnectedWallets()
-}
-
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchConnectedWallets()
-  }
-}
-
-const fetchConnectedWallets = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: 10
-    }
-
-    if (searchTerm.value) {
-      params.search = searchTerm.value.trim()
-    }
-
-    const response = await apiClient.get('/connected-wallets', { params })
-
-    if (response.data.success) {
-      users.value = response.data.data.users
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت لیست کیف پول‌های متصل'
-    }
-  } catch (err) {
-    console.error('Connected wallets fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      users.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    users.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
-  }
-}
+const handleSearch = () => search(fetchConnectedWallets)
+const handleClear = () => clear(fetchConnectedWallets)
+const onPageChange = (page) => goToPage(page, fetchConnectedWallets)
 
 onMounted(() => {
   fetchConnectedWallets()

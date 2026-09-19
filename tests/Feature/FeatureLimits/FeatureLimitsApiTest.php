@@ -27,6 +27,8 @@ class FeatureLimitsApiTest extends TestCase
 
     private const DESTROY_ERROR_MESSAGE = 'خطا در حذف محدودیت';
 
+    private const DESTROY_EXPIRED_MESSAGE = 'محدودیت منقضی‌شده قابل حذف نیست.';
+
     /**
      * @var list<string>
      */
@@ -217,6 +219,23 @@ class FeatureLimitsApiTest extends TestCase
             ->assertJsonCount(5, 'data.feature_limits');
     }
 
+    public function test_index_filters_by_title_search(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $this->createFeatureLimit(['title' => 'محدودیت فروش ویژه']);
+        $matching = $this->createFeatureLimit(['title' => 'محدودیت احراز هویت']);
+        $this->createFeatureLimit(['title' => 'قیمت ثابت']);
+
+        $response = $this->getJson(self::INDEX_PATH.'?search='.urlencode('احراز'))
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonCount(1, 'data.feature_limits');
+
+        $this->assertSame($matching->id, $response->json('data.feature_limits.0.id'));
+        $this->assertSame('محدودیت احراز هویت', $response->json('data.feature_limits.0.title'));
+    }
+
     // -------------------------------------------------------------------------
     // Store — happy path
     // -------------------------------------------------------------------------
@@ -343,6 +362,13 @@ class FeatureLimitsApiTest extends TestCase
         ]))
             ->assertStatus(422)
             ->assertJsonValidationErrors(['end_date']);
+
+        // Gregorian dates must not be accepted as Jalali input
+        $this->postJson(self::STORE_PATH, $this->validStorePayload([
+            'start_date' => '2026/09/19',
+        ]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['start_date']);
     }
 
     public function test_store_rejects_nonexistent_feature_property_ids(): void
@@ -557,6 +583,23 @@ class FeatureLimitsApiTest extends TestCase
             ->assertJsonPath('message', self::DESTROY_SUCCESS_MESSAGE);
 
         $this->assertDatabaseMissing('feature_limits', ['id' => $limit->id]);
+    }
+
+    public function test_destroy_rejects_expired_feature_limit(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $limit = $this->createFeatureLimit([
+            'start_date' => now()->subDays(30)->toDateString(),
+            'end_date' => now()->subDay()->toDateString(),
+        ]);
+
+        $this->deleteJson($this->destroyPath($limit->id))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', self::DESTROY_EXPIRED_MESSAGE);
+
+        $this->assertDatabaseHas('feature_limits', ['id' => $limit->id]);
     }
 
     public function test_destroy_returns_error_for_missing_limit(): void

@@ -108,6 +108,7 @@ class ProfileDetailsApiTest extends TestCase
                             'followers_count',
                             'payments_count',
                             'more_than_a_million_payment',
+                            'total_deposit_amount',
                             'score',
                         ],
                     ],
@@ -155,10 +156,10 @@ class ProfileDetailsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $user = $this->createUser(['name' => 'Scored User']);
+        $user = $this->createUser(['name' => 'Scored User', 'code' => 'SCORED-USER-001']);
         $this->setUserScore($user, 1234567);
 
-        $this->getJson(self::INDEX_PATH.'?search=Scored User')
+        $this->getJson(self::INDEX_PATH.'?search=SCORED-USER')
             ->assertOk()
             ->assertJsonPath('data.users.0.id', $user->id)
             ->assertJsonPath('data.users.0.score', '1,234,567');
@@ -168,11 +169,11 @@ class ProfileDetailsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $user = $this->createUser(['name' => 'Active User']);
+        $user = $this->createUser(['name' => 'Active User', 'code' => 'ACTIVE-USER-001']);
         $this->createUserActivity($user, 1500);
         $this->createUserActivity($user, 2500);
 
-        $this->getJson(self::INDEX_PATH.'?search=Active User')
+        $this->getJson(self::INDEX_PATH.'?search=ACTIVE-USER')
             ->assertOk()
             ->assertJsonPath('data.users.0.id', $user->id)
             ->assertJsonPath('data.users.0.activities_sum_total', '4,000');
@@ -185,10 +186,10 @@ class ProfileDetailsApiTest extends TestCase
         $createdAt = Carbon::parse('2024-03-20 14:30:45');
         Carbon::setTestNow($createdAt);
 
-        $user = $this->createUser(['name' => 'Jalali User']);
+        $user = $this->createUser(['name' => 'Jalali User', 'code' => 'JALALI-USER-001']);
         $jalali = Jalalian::fromDateTime($createdAt);
 
-        $this->getJson(self::INDEX_PATH.'?search=Jalali User')
+        $this->getJson(self::INDEX_PATH.'?search=JALALI-USER')
             ->assertOk()
             ->assertJsonPath('data.users.0.id', $user->id)
             ->assertJsonPath('data.users.0.created_at', $jalali->format('Y/m/d H:i:s'));
@@ -201,6 +202,7 @@ class ProfileDetailsApiTest extends TestCase
         $userId = DB::table('users')->insertGetId([
             'name' => 'No Timestamp User',
             'email' => Str::uuid().'@example.com',
+            'code' => 'NO-TIMESTAMP-001',
             'password' => 'secret',
             'ip' => '127.0.0.1',
             'score' => 0,
@@ -208,7 +210,7 @@ class ProfileDetailsApiTest extends TestCase
             'updated_at' => null,
         ]);
 
-        $this->getJson(self::INDEX_PATH.'?search=No Timestamp User')
+        $this->getJson(self::INDEX_PATH.'?search=NO-TIMESTAMP')
             ->assertOk()
             ->assertJsonPath('data.users.0.id', $userId)
             ->assertJsonPath('data.users.0.created_at', '-');
@@ -222,14 +224,14 @@ class ProfileDetailsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $user = $this->createUser(['name' => 'Popular User']);
+        $user = $this->createUser(['name' => 'Popular User', 'code' => 'POPULAR-USER-001']);
         $followerOne = $this->createUser(['name' => 'Follower One']);
         $followerTwo = $this->createUser(['name' => 'Follower Two']);
 
         $this->createFollow($followerOne->id, $user->id);
         $this->createFollow($followerTwo->id, $user->id);
 
-        $this->getJson(self::INDEX_PATH.'?search=Popular User')
+        $this->getJson(self::INDEX_PATH.'?search=POPULAR-USER')
             ->assertOk()
             ->assertJsonPath('data.users.0.id', $user->id)
             ->assertJsonPath('data.users.0.followers_count', 2);
@@ -239,12 +241,12 @@ class ProfileDetailsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $user = $this->createUser(['name' => 'Paying User']);
+        $user = $this->createUser(['name' => 'Paying User', 'code' => 'PAYING-USER-001']);
         $this->createPayment($user, ['amount' => 1000]);
         $this->createPayment($user, ['amount' => 2000]);
         $this->createPayment($user, ['amount' => 3000]);
 
-        $this->getJson(self::INDEX_PATH.'?search=Paying User')
+        $this->getJson(self::INDEX_PATH.'?search=PAYING-USER')
             ->assertOk()
             ->assertJsonPath('data.users.0.id', $user->id)
             ->assertJsonPath('data.users.0.payments_count', 3);
@@ -254,17 +256,56 @@ class ProfileDetailsApiTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $user = $this->createUser(['name' => 'High Roller']);
+        $user = $this->createUser(['name' => 'High Roller', 'code' => 'HIGH-ROLLER-001']);
         $this->createPayment($user, ['amount' => 10000000, 'ref_id' => 'AT-THRESHOLD']);
         $this->createPayment($user, ['amount' => 10000001, 'ref_id' => 'ABOVE-THRESHOLD-1']);
         $this->createPayment($user, ['amount' => 15000000, 'ref_id' => 'ABOVE-THRESHOLD-2']);
         $this->createPayment($user, ['amount' => 5000000, 'ref_id' => 'BELOW-THRESHOLD']);
 
-        $this->getJson(self::INDEX_PATH.'?search=High Roller')
+        $this->getJson(self::INDEX_PATH.'?search=HIGH-ROLLER')
             ->assertOk()
             ->assertJsonPath('data.users.0.id', $user->id)
             ->assertJsonPath('data.users.0.payments_count', 4)
             ->assertJsonPath('data.users.0.more_than_a_million_payment', 2);
+    }
+
+    public function test_total_deposit_amount_is_summed_converted_to_tomans_and_compacted(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $user = $this->createUser(['name' => 'Deposit Sum User', 'code' => 'DEPOSIT-SUM-001']);
+        $this->createPayment($user, ['amount' => 10000000, 'ref_id' => 'SUM-ONE']);
+        $this->createPayment($user, ['amount' => 5000000, 'ref_id' => 'SUM-TWO']);
+
+        $this->getJson(self::INDEX_PATH.'?search=DEPOSIT-SUM')
+            ->assertOk()
+            ->assertJsonPath('data.users.0.id', $user->id)
+            ->assertJsonPath('data.users.0.total_deposit_amount', '1.5M');
+    }
+
+    public function test_total_deposit_amount_uses_k_suffix_for_thousands_of_tomans(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $user = $this->createUser(['name' => 'Thousand Toman User', 'code' => 'THOUSAND-TOMAN-001']);
+        $this->createPayment($user, ['amount' => 15000, 'ref_id' => 'FIFTEEN-K-RIALS']);
+
+        $this->getJson(self::INDEX_PATH.'?search=THOUSAND-TOMAN')
+            ->assertOk()
+            ->assertJsonPath('data.users.0.id', $user->id)
+            ->assertJsonPath('data.users.0.total_deposit_amount', '1.5K');
+    }
+
+    public function test_total_deposit_amount_is_zero_when_user_has_no_payments(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $user = $this->createUser(['name' => 'No Deposit User', 'code' => 'NO-DEPOSIT-001']);
+
+        $this->getJson(self::INDEX_PATH.'?search=NO-DEPOSIT')
+            ->assertOk()
+            ->assertJsonPath('data.users.0.id', $user->id)
+            ->assertJsonPath('data.users.0.total_deposit_amount', '0');
     }
 
     // -------------------------------------------------------------------------
@@ -332,33 +373,17 @@ class ProfileDetailsApiTest extends TestCase
     // Search
     // -------------------------------------------------------------------------
 
-    public function test_search_filters_by_name_partial_match(): void
+    public function test_search_does_not_filter_by_name(): void
     {
         $this->actingAsSuperAdmin();
 
-        $match = $this->createUser(['name' => 'Unique Profile Name']);
-        $this->createUser(['name' => 'Other Person']);
+        $this->createUser(['name' => 'Unique Profile Name', 'code' => 'NAME-SEARCH-001']);
+        $this->createUser(['name' => 'Other Person', 'code' => 'OTHER-PERSON-001']);
 
         $this->getJson(self::INDEX_PATH.'?search=Unique Profile')
             ->assertOk()
-            ->assertJsonPath('data.pagination.total', 1)
-            ->assertJsonCount(1, 'data.users')
-            ->assertJsonPath('data.users.0.id', $match->id);
-    }
-
-    public function test_search_filters_by_email_partial_match(): void
-    {
-        $this->actingAsSuperAdmin();
-
-        $email = 'searchable-email-'.Str::random(6).'@example.com';
-        $match = $this->createUser(['email' => $email]);
-        $this->createUser();
-
-        $this->getJson(self::INDEX_PATH.'?search='.urlencode('searchable-email'))
-            ->assertOk()
-            ->assertJsonPath('data.pagination.total', 1)
-            ->assertJsonCount(1, 'data.users')
-            ->assertJsonPath('data.users.0.id', $match->id);
+            ->assertJsonPath('data.pagination.total', 0)
+            ->assertJsonCount(0, 'data.users');
     }
 
     public function test_search_filters_by_code_partial_match(): void

@@ -140,15 +140,33 @@ const formatUnixToString = (unixDate) => {
     console.warn('Failed to format persian date:', error)
   }
 
-  const date = new Date(unixDate)
-  if (Number.isNaN(date.getTime())) {
+  // Never fall back to Gregorian Y/M/D — backend treats values as Jalali.
+  try {
+    const ms = unixDate < 1e12 ? unixDate * 1000 : unixDate
+    const date = new Date(ms)
+    if (Number.isNaN(date.getTime())) {
+      return ''
+    }
+
+    const formatter = new Intl.DateTimeFormat('en-u-ca-persian', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    const parts = formatter.formatToParts(date)
+    const year = toEnglishDigits(parts.find((part) => part.type === 'year')?.value || '')
+    const month = toEnglishDigits(parts.find((part) => part.type === 'month')?.value || '')
+    const day = toEnglishDigits(parts.find((part) => part.type === 'day')?.value || '')
+
+    if (!year || !month || !day) {
+      return ''
+    }
+
+    return `${year.padStart(4, '0')}/${month.padStart(2, '0')}/${day.padStart(2, '0')}`
+  } catch (error) {
+    console.warn('Failed to format persian date via Intl:', error)
     return ''
   }
-
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}/${month}/${day}`
 }
 
 const inputId = computed(() => (props.id ? props.id : stableInputId))

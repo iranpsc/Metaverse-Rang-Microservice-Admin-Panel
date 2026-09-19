@@ -1,15 +1,14 @@
 <template>
   <div class="p-6 space-y-6">
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">مدیریت ویدیوها</h1>
-        <p class="text-[var(--theme-text-secondary)]">بارگذاری، ویرایش و مشاهده ویدیوهای آموزشی</p>
-      </div>
+    <PageHeader
+      title="مدیریت ویدیوها"
+      subtitle="بارگذاری، ویرایش و مشاهده ویدیوهای آموزشی"
+    />
+    <div>
       <Button
         variant="primary"
         size="lg"
         rounded="full"
-        class="self-start md:self-auto"
         @click="openCreateModal"
       >
         بارگذاری ویدیو جدید
@@ -99,7 +98,7 @@
         v-if="pagination && pagination.total > 0"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </div>
 
@@ -448,8 +447,10 @@ import {
   Pagination,
   SearchBox,
   Select,
-  Table
+  Table,
+  PageHeader
 } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 
@@ -464,13 +465,21 @@ const {
   deleteVideo
 } = useVideos()
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  currentPage,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams,
+  resetToFirstPage
+} = usePaginatedList({ perPage: 10 })
+
 const videos = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
-const perPage = 10
-const searchTerm = ref('')
 
 const deletingId = ref(null)
 const creating = ref(false)
@@ -828,66 +837,36 @@ const fetchMeta = async () => {
   }
 }
 
-const fetchVideos = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const clearVideos = () => {
+  videos.value = []
+  pagination.value = null
+}
 
-    const params = {
-      page: currentPage.value,
-      per_page: perPage
-    }
+const fetchVideos = () => execute(async () => {
+  const response = await fetchVideosApi(buildParams())
 
-    if (searchTerm.value.trim()) {
-      params.search = searchTerm.value.trim()
-    }
-
-    const response = await fetchVideosApi(params)
-
-    if (response.data.success) {
-      const items = response.data.data.videos || []
-      videos.value = items.map((video) => ({
-        ...video,
-        category_display: formatCategoryDisplay(video)
-      }))
-      pagination.value = response.data.data.pagination || null
-    } else {
-      videos.value = []
-      pagination.value = null
-      error.value = response.data.message || 'خطا در دریافت ویدیوها'
-    }
-  } catch (err) {
-    console.error('Videos fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری ویدیوها'
-    videos.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+  if (response.data.success) {
+    const items = response.data.data.videos || []
+    videos.value = items.map((video) => ({
+      ...video,
+      category_display: formatCategoryDisplay(video)
+    }))
+    pagination.value = response.data.data.pagination || null
+  } else {
+    error.value = response.data.message || 'خطا در دریافت ویدیوها'
+    clearVideos()
   }
-}
+}, {
+  onClear: clearVideos,
+  logLabel: 'Videos fetch error:',
+  fallbackMessage: 'خطا در بارگذاری ویدیوها'
+})
 
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchVideos()
-}
-
+const onPageChange = (page) => goToPage(page, fetchVideos)
+const handleSearch = () => search(fetchVideos)
 const handleClear = () => {
   searchTerm.value = ''
-  currentPage.value = 1
-  fetchVideos()
-}
-
-const goToPage = (page) => {
-  if (page >= 1 && (!pagination.value || page <= pagination.value.last_page)) {
-    currentPage.value = page
-    fetchVideos()
-  }
+  clear(fetchVideos)
 }
 
 const resetCreateForm = () => {
@@ -1011,7 +990,7 @@ const performCreate = async () => {
     if (response.data.success) {
       showToast('ویدیو با موفقیت ایجاد شد.', 'success')
       closeCreateModal()
-      currentPage.value = 1
+      resetToFirstPage()
       await fetchVideos()
     }
   } catch (err) {

@@ -72,5 +72,9 @@ class ActivityLogCategoryResolverTest extends TestCase
             'other',
             ActivityLogCategoryResolver::resolveForModel(new \App\Models\BulkMessageLog)
         );
+        $this->assertSame(
+            'features',
+            ActivityLogCategoryResolver::resolveForModel(new \App\Models\Feature\FeaturePricingLimit)
+        );
     }
 }

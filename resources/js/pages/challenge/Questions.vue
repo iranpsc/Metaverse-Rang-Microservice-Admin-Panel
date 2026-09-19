@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">چالش پرسش و پاسخ</h1>
-      <p class="text-[var(--theme-text-secondary)]">مدیریت سوالات چالش و مدیریت پاسخ‌ها</p>
-    </div>
+    <PageHeader
+      title="چالش پرسش و پاسخ"
+      subtitle="مدیریت سوالات چالش و مدیریت پاسخ‌ها"
+    />
 
     <!-- Actions -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -90,7 +89,7 @@
         v-if="pagination && pagination.total > 0"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </div>
 
@@ -182,19 +181,28 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import apiClient from '../../utils/api'
-import { Button, ErrorState, FileInput, LoadingState, Modal, Pagination, SearchBox, Table } from '../../components/ui'
+import { Button, ErrorState, FileInput, LoadingState, Modal, Pagination, SearchBox, Table, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import { formatDisplayDate, formatDisplayTime } from '../../utils/dateFormatter'
 
 const { showToast } = useToast()
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const questions = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
-const searchTerm = ref('')
 
 const answersModalOpen = ref(false)
 const selectedQuestion = ref(null)
@@ -254,67 +262,33 @@ const answersModalTitle = computed(() => {
   return `پاسخ‌ها - ${selectedQuestion.value.title || ''}`
 })
 
-const fetchQuestions = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const clearQuestions = () => {
+  questions.value = []
+  pagination.value = null
+}
 
-    const params = {
-      page: currentPage.value,
-      per_page: 10
-    }
+const fetchQuestions = () => execute(async () => {
+  const response = await apiClient.get('/challenge/questions', { params: buildParams() })
 
-    if (searchTerm.value) {
-      params.search = searchTerm.value
-    }
-
-    const response = await apiClient.get('/challenge/questions', { params })
-
-    if (response.data?.success) {
-      questions.value = response.data.data.questions
-      pagination.value = response.data.data.pagination
-    } else {
-      throw new Error(response.data?.message || 'خطا در دریافت سوالات')
-    }
-  } catch (err) {
-    console.error('Challenge questions fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      questions.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || err.message || 'خطا در بارگذاری سوالات'
-    questions.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+  if (response.data?.success) {
+    questions.value = response.data.data.questions
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = response.data?.message || 'خطا در دریافت سوالات'
+    clearQuestions()
   }
-}
+}, {
+  onClear: clearQuestions,
+  logLabel: 'Challenge questions fetch error:',
+  fallbackMessage: 'خطا در بارگذاری سوالات'
+})
 
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchQuestions()
-}
-
+const handleSearch = () => search(fetchQuestions)
 const handleClear = () => {
   searchTerm.value = ''
-  currentPage.value = 1
-  fetchQuestions()
+  clear(fetchQuestions)
 }
-
-const goToPage = (page) => {
-  if (!pagination.value) {
-    return
-  }
-
-  if (page >= 1 && page <= pagination.value.last_page) {
-    currentPage.value = page
-    fetchQuestions()
-  }
-}
+const onPageChange = (page) => goToPage(page, fetchQuestions)
 
 const openAnswersModal = (question) => {
   selectedQuestion.value = question
@@ -416,34 +390,8 @@ const handleDelete = async (row) => {
       }
 }
 
-const formatDate = (value) => {
-  if (!value) {
-    return '-'
-  }
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return '-'
-  }
-
-  return date.toLocaleDateString('fa-IR')
-}
-
-const formatTime = (value) => {
-  if (!value) {
-    return '-'
-  }
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return '-'
-  }
-
-  return date.toLocaleTimeString('fa-IR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+const formatDate = formatDisplayDate
+const formatTime = formatDisplayTime
 
 onMounted(() => {
   fetchQuestions()

@@ -186,6 +186,50 @@ class SoldControllerTest extends TestCase
             ->assertJsonPath('data.trades.0.id', $matchingTrade->id);
     }
 
+    public function test_search_by_buyer_name(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $matchingBuyer = $this->createCitizenUser(['name' => 'Ali Rezaei', 'code' => 'BUY-A']);
+        $otherBuyer = $this->createCitizenUser(['name' => 'Sara Ahmadi', 'code' => 'BUY-B']);
+
+        $matchingTrade = $this->createTrade([
+            'buyer_id' => $matchingBuyer->id,
+            'seller_id' => 1,
+        ]);
+        $this->createTrade([
+            'buyer_id' => $otherBuyer->id,
+            'seller_id' => 1,
+        ]);
+
+        $this->getJson(self::INDEX_PATH.'?search=Rezaei')
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.trades.0.id', $matchingTrade->id);
+    }
+
+    public function test_search_by_buyer_code(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $matchingBuyer = $this->createCitizenUser(['name' => 'Buyer One', 'code' => 'CODE-NEEDLE']);
+        $otherBuyer = $this->createCitizenUser(['name' => 'Buyer Two', 'code' => 'CODE-OTHER']);
+
+        $matchingTrade = $this->createTrade([
+            'buyer_id' => $matchingBuyer->id,
+            'seller_id' => 1,
+        ]);
+        $this->createTrade([
+            'buyer_id' => $otherBuyer->id,
+            'seller_id' => 1,
+        ]);
+
+        $this->getJson(self::INDEX_PATH.'?search=NEEDLE')
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.trades.0.id', $matchingTrade->id);
+    }
+
     public function test_empty_search_behaves_like_no_filter(): void
     {
         $this->actingAsSuperAdmin();

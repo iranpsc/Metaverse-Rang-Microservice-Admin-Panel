@@ -12,6 +12,7 @@ use App\Models\Crs;
 use App\Models\CrsProperty;
 use App\Models\Dislike;
 use App\Models\Feature;
+use App\Models\Feature\FeaturePricingLimit;
 use App\Models\FeatureImage;
 use App\Models\FeatureLimit;
 use App\Models\FeatureProperties;
@@ -112,6 +113,7 @@ class ActivityLogCategoryResolver
         Land::class => 'features',
         Feature::class => 'features',
         FeatureLimit::class => 'features',
+        FeaturePricingLimit::class => 'features',
         FeatureProperties::class => 'features',
         FeatureImage::class => 'features',
         BuyFeatureRequest::class => 'features',

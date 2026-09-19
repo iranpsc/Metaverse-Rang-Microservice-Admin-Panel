@@ -17,13 +17,18 @@ class DepositController extends Controller
     public function index(Request $request): JsonResponse
     {
         $searchTerm = $request->input('search', '');
+        $product = $request->input('product', '');
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
 
-        $query = Payment::with('user:id,name');
+        $query = Payment::with('user:id,name,code');
 
         if ($searchTerm) {
             $query->search($searchTerm);
+        }
+
+        if ($product && $product !== 'all') {
+            $query->ofProduct($product);
         }
 
         $payments = $query->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
@@ -32,7 +37,8 @@ class DepositController extends Controller
             return [
                 'id' => $payment->id,
                 'user_id' => $payment->user_id,
-                'user_name' => $payment->user->name ?? '-',
+                'user_name' => $payment->user?->name ?? '-',
+                'citizen_code' => $payment->user?->code ?? '-',
                 'amount' => number_format($payment->amount ?? 0),
                 'ref_id' => $payment->ref_id ?? '-',
                 'card_pan' => $payment->card_pan ?? '-',
