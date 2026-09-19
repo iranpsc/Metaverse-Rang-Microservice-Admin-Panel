@@ -4,6 +4,7 @@ namespace Tests\Feature\AccessManagement;
 
 use App\Models\Admin;
 use App\Notifications\AccountCreatedNotification;
+use Illuminate\Contracts\Notifications\Dispatcher;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
@@ -18,13 +19,13 @@ class AdminsControllerTest extends TestCase
 
     private const INDEX_PATH = '/api/admins';
 
-    private const EMPLOYEES_PATH = '/api/admins/employees';
+    private const USERS_PATH = '/api/admins/users';
 
     private const ROLES_PATH = '/api/admins/roles';
 
     private const INDEX_SUCCESS_MESSAGE = 'Admins retrieved successfully.';
 
-    private const EMPLOYEES_SUCCESS_MESSAGE = 'Employees retrieved successfully.';
+    private const USERS_SUCCESS_MESSAGE = 'Users retrieved successfully.';
 
     private const ROLES_SUCCESS_MESSAGE = 'Roles retrieved successfully.';
 
@@ -60,7 +61,7 @@ class AdminsControllerTest extends TestCase
     public function test_unauthenticated_store_returns_unauthorized(): void
     {
         $this->postJson(self::INDEX_PATH, [
-            'employee' => 1,
+            'user_id' => 1,
             'roles' => [1],
         ])->assertUnauthorized();
     }
@@ -91,17 +92,17 @@ class AdminsControllerTest extends TestCase
         $this->actingAsSuperAdmin();
 
         $this->getJson(self::INDEX_PATH)->assertOk()->assertJsonPath('success', true);
-        $this->getJson(self::EMPLOYEES_PATH)->assertOk()->assertJsonPath('success', true);
+        $this->getJson(self::USERS_PATH)->assertOk()->assertJsonPath('success', true);
         $this->getJson(self::ROLES_PATH)->assertOk()->assertJsonPath('success', true);
 
         $admin = $this->createRegularAdminRecord();
         $this->getJson($this->adminPath($admin))->assertOk()->assertJsonPath('success', true);
 
-        $employee = $this->createEmployee(['email' => Str::uuid().'@new-admin.test']);
+        $user = $this->createUser(['email' => Str::uuid().'@new-admin.test']);
         $role = $this->createAdminAssignableRole(['name' => 'creator-role-'.Str::uuid()]);
 
         $this->postJson(self::INDEX_PATH, [
-            'employee' => $employee->id,
+            'user_id' => $user->id,
             'roles' => [$role->id],
         ])->assertOk()->assertJsonPath('success', true);
 
@@ -135,6 +136,11 @@ class AdminsControllerTest extends TestCase
         $role = $this->createAdminAssignableRole(['name' => 'viewer-role-'.Str::uuid(), 'title' => 'Viewer']);
         $visibleAdmin->assignRole($role);
 
+        $this->createUser([
+            'email' => $visibleAdmin->email,
+            'code' => 'hm-2000999',
+        ]);
+
         $superAdminRecord = $this->createSuperAdminRecord(['name' => 'Hidden Super Admin']);
 
         $response = $this->getJson(self::INDEX_PATH);
@@ -147,6 +153,7 @@ class AdminsControllerTest extends TestCase
                     'admins' => [
                         '*' => [
                             'id',
+                            'code',
                             'name',
                             'email',
                             'phone',
@@ -165,32 +172,99 @@ class AdminsControllerTest extends TestCase
         $this->assertTrue($adminIds->contains($visibleAdmin->id));
         $this->assertFalse($adminIds->contains($currentAdmin->id));
         $this->assertFalse($adminIds->contains($superAdminRecord->id));
+
+        $visiblePayload = collect($response->json('data.admins'))->firstWhere('id', $visibleAdmin->id);
+        $this->assertSame('hm-2000999', $visiblePayload['code']);
+        $this->assertSame($visibleAdmin->phone, $visiblePayload['phone']);
     }
 
     // -------------------------------------------------------------------------
-    // getEmployees
+    // searchUsers
     // -------------------------------------------------------------------------
 
-    public function test_get_employees_returns_all_employees(): void
+    public function test_search_users_returns_default_five_users_and_matches_code(): void
     {
         $this->actingAsSuperAdmin();
 
-        $employee = $this->createEmployee([
-            'fname' => 'Sara',
-            'lname' => 'Ahmadi',
-            'email' => 'sara.ahmadi@employee.test',
+        $matchingUser = $this->createUser([
+            'name' => 'Sara Ahmadi',
+            'email' => 'sara.ahmadi@user.test',
+            'code' => '88001',
         ]);
 
-        $response = $this->getJson(self::EMPLOYEES_PATH);
+        for ($i = 0; $i < 6; $i++) {
+            $this->createUser([
+                'name' => 'Extra User '.$i,
+                'email' => "extra{$i}@user.test",
+                'code' => '99'.str_pad((string) $i, 3, '0', STR_PAD_LEFT),
+            ]);
+        }
+
+        $defaultResponse = $this->getJson(self::USERS_PATH);
+
+        $defaultResponse->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', self::USERS_SUCCESS_MESSAGE);
+
+        $this->assertCount(5, $defaultResponse->json('data.options'));
+        $this->assertTrue($defaultResponse->json('data.pagination.more'));
+
+        $searchResponse = $this->getJson(self::USERS_PATH.'?search=88001');
+
+        $searchResponse->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonFragment([
+                'value' => $matchingUser->id,
+                'label' => 'Sara Ahmadi (88001)',
+            ]);
+
+        $this->assertCount(1, $searchResponse->json('data.options'));
+    }
+
+    public function test_search_users_excludes_users_that_already_have_an_admin(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $availableUser = $this->createUser([
+            'name' => 'Available User',
+            'email' => 'available@user.test',
+            'code' => '77001',
+        ]);
+        $existingUser = $this->createUser([
+            'name' => 'Existing Admin User',
+            'email' => 'existing-admin@user.test',
+            'code' => '77002',
+        ]);
+        $this->createRegularAdminRecord(['email' => $existingUser->email]);
+
+        $response = $this->getJson(self::USERS_PATH);
+
+        $response->assertOk();
+
+        $values = collect($response->json('data.options'))->pluck('value');
+        $this->assertTrue($values->contains($availableUser->id));
+        $this->assertFalse($values->contains($existingUser->id));
+    }
+
+    public function test_search_users_returns_existing_admin_as_disabled_when_searching_by_code(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $existingUser = $this->createUser([
+            'name' => 'Existing Admin User',
+            'email' => 'existing-admin-search@user.test',
+            'code' => 'hm-2000005',
+        ]);
+        $this->createRegularAdminRecord(['email' => $existingUser->email]);
+
+        $response = $this->getJson(self::USERS_PATH.'?search=hm-2000005');
 
         $response->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::EMPLOYEES_SUCCESS_MESSAGE)
             ->assertJsonFragment([
-                'id' => $employee->id,
-                'name' => 'Sara Ahmadi',
-                'fname' => 'Sara',
-                'lname' => 'Ahmadi',
+                'value' => $existingUser->id,
+                'label' => 'Existing Admin User (hm-2000005) — مدیر است',
+                'disabled' => true,
             ]);
     }
 
@@ -286,20 +360,20 @@ class AdminsControllerTest extends TestCase
     // Store
     // -------------------------------------------------------------------------
 
-    public function test_store_creates_admin_from_employee_and_assigns_roles(): void
+    public function test_store_creates_admin_from_user_and_assigns_roles(): void
     {
         $this->actingAsSuperAdmin();
 
-        $employee = $this->createEmployee([
-            'fname' => 'Reza',
-            'lname' => 'Moradi',
-            'email' => 'reza.moradi@employee.test',
+        $user = $this->createUser([
+            'name' => 'Reza Moradi',
+            'email' => 'reza.moradi@user.test',
             'phone' => '09123456789',
+            'code' => '55001',
         ]);
         $role = $this->createAdminAssignableRole(['name' => 'new-admin-role-'.Str::uuid(), 'title' => 'New Admin Role']);
 
         $response = $this->postJson(self::INDEX_PATH, [
-            'employee' => $employee->id,
+            'user_id' => $user->id,
             'roles' => [$role->id],
         ]);
 
@@ -307,13 +381,44 @@ class AdminsControllerTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', self::STORE_SUCCESS_MESSAGE)
             ->assertJsonPath('data.admin.name', 'Reza Moradi')
-            ->assertJsonPath('data.admin.email', 'reza.moradi@employee.test');
+            ->assertJsonPath('data.admin.email', 'reza.moradi@user.test');
 
-        $admin = Admin::where('email', 'reza.moradi@employee.test')->first();
+        $admin = Admin::where('email', 'reza.moradi@user.test')->first();
         $this->assertNotNull($admin);
         $this->assertTrue($admin->hasRole($role));
 
         Notification::assertSentTo($admin, AccountCreatedNotification::class);
+    }
+
+    public function test_store_succeeds_when_account_created_notification_fails(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $dispatcher = \Mockery::mock(Dispatcher::class);
+        $dispatcher->shouldReceive('send')
+            ->once()
+            ->andThrow(new \RuntimeException('متد نامشخص است'));
+        $this->app->instance(Dispatcher::class, $dispatcher);
+
+        $user = $this->createUser([
+            'name' => 'Notification Failure Admin',
+            'email' => 'notify.fail@user.test',
+            'phone' => '09120000000',
+        ]);
+        $role = $this->createAdminAssignableRole(['name' => 'notify-fail-role-'.Str::uuid()]);
+
+        $response = $this->postJson(self::INDEX_PATH, [
+            'user_id' => $user->id,
+            'roles' => [$role->id],
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', self::STORE_SUCCESS_MESSAGE);
+
+        $admin = Admin::where('email', 'notify.fail@user.test')->first();
+        $this->assertNotNull($admin);
+        $this->assertTrue($admin->hasRole($role));
     }
 
     public function test_store_validation_fails_for_missing_required_fields(): void
@@ -325,32 +430,32 @@ class AdminsControllerTest extends TestCase
         $response->assertUnprocessable()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'Validation failed')
-            ->assertJsonValidationErrors(['employee', 'roles']);
+            ->assertJsonValidationErrors(['user_id', 'roles']);
     }
 
-    public function test_store_validation_fails_for_invalid_employee(): void
+    public function test_store_validation_fails_for_invalid_user(): void
     {
         $this->actingAsSuperAdmin();
 
         $role = $this->createAdminAssignableRole();
 
         $response = $this->postJson(self::INDEX_PATH, [
-            'employee' => 99999,
+            'user_id' => 99999,
             'roles' => [$role->id],
         ]);
 
         $response->assertUnprocessable()
-            ->assertJsonValidationErrors(['employee']);
+            ->assertJsonValidationErrors(['user_id']);
     }
 
     public function test_store_validation_fails_for_empty_roles_array(): void
     {
         $this->actingAsSuperAdmin();
 
-        $employee = $this->createEmployee();
+        $user = $this->createUser();
 
         $response = $this->postJson(self::INDEX_PATH, [
-            'employee' => $employee->id,
+            'user_id' => $user->id,
             'roles' => [],
         ]);
 
@@ -362,10 +467,10 @@ class AdminsControllerTest extends TestCase
     {
         $this->actingAsSuperAdmin();
 
-        $employee = $this->createEmployee();
+        $user = $this->createUser();
 
         $response = $this->postJson(self::INDEX_PATH, [
-            'employee' => $employee->id,
+            'user_id' => $user->id,
             'roles' => [99999],
         ]);
 
@@ -373,29 +478,29 @@ class AdminsControllerTest extends TestCase
             ->assertJsonValidationErrors(['roles.0']);
     }
 
-    public function test_store_returns_error_when_admin_already_exists_for_employee(): void
+    public function test_store_returns_error_when_admin_already_exists_for_user(): void
     {
         $this->actingAsSuperAdmin();
 
-        $employee = $this->createEmployee(['email' => 'duplicate@employee.test']);
-        $this->createRegularAdminRecord(['email' => 'duplicate@employee.test']);
+        $user = $this->createUser(['email' => 'duplicate@user.test']);
+        $this->createRegularAdminRecord(['email' => 'duplicate@user.test']);
         $role = $this->createAdminAssignableRole();
 
         $response = $this->postJson(self::INDEX_PATH, [
-            'employee' => $employee->id,
+            'user_id' => $user->id,
             'roles' => [$role->id],
         ]);
 
         $response->assertUnprocessable()
             ->assertJsonPath('success', false)
-            ->assertJsonPath('message', 'Admin already exists for this employee');
+            ->assertJsonPath('message', 'Admin already exists for this user');
     }
 
     public function test_store_returns_error_when_no_valid_roles_for_guard(): void
     {
         $this->actingAsSuperAdmin();
 
-        $employee = $this->createEmployee(['email' => Str::uuid().'@guard.test']);
+        $user = $this->createUser(['email' => Str::uuid().'@guard.test']);
         $invalidRole = Role::create([
             'name' => 'sanctum-only-'.Str::uuid(),
             'title' => 'Sanctum Only',
@@ -403,13 +508,47 @@ class AdminsControllerTest extends TestCase
         ]);
 
         $response = $this->postJson(self::INDEX_PATH, [
-            'employee' => $employee->id,
+            'user_id' => $user->id,
             'roles' => [$invalidRole->id],
         ]);
 
         $response->assertUnprocessable()
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', 'No valid roles found for the specified guard');
+    }
+
+    public function test_store_returns_error_when_user_has_no_email(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $user = $this->createUser(['email' => '']);
+        $role = $this->createAdminAssignableRole();
+
+        $response = $this->postJson(self::INDEX_PATH, [
+            'user_id' => $user->id,
+            'roles' => [$role->id],
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'User does not have an email address');
+    }
+
+    public function test_store_returns_error_when_user_has_no_phone(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $user = $this->createUser(['phone' => null]);
+        $role = $this->createAdminAssignableRole();
+
+        $response = $this->postJson(self::INDEX_PATH, [
+            'user_id' => $user->id,
+            'roles' => [$role->id],
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'User does not have a phone number');
     }
 
     // -------------------------------------------------------------------------

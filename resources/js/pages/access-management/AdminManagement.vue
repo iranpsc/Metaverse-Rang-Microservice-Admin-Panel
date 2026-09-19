@@ -1,17 +1,17 @@
 <template>
   <div class="p-6 space-y-6">
     <PageHeader
-      title="مدیریت دسترسی کارمندان"
-      subtitle="ایجاد و مدیریت دسترسی‌های کارمندان"
+      title="مدیریت مدیران"
+      subtitle="ایجاد و مدیریت مدیران سیستم"
     />
 
     <!-- Create Button -->
     <div class="mb-6">
       <Button
         variant="primary"
-        @click="showCreateModal = true"
+        @click="openCreateModal"
       >
-        ایجاد کاربر
+        ایجاد مدیر
       </Button>
     </div>
 
@@ -30,7 +30,7 @@
       v-else
       :columns="tableColumns"
       :data="admins"
-      empty-state-message="کاربری تعریف نشده است"
+      empty-state-message="مدیری تعریف نشده است"
     >
       <template #cell-roles="{ row }">
         <div class="flex flex-wrap gap-2">
@@ -76,20 +76,11 @@
       </template>
     </Table>
 
-    <!-- Create Admin Modal -->
-    <CreateAdminModal
-      :show="showCreateModal"
-      @close="showCreateModal = false"
-      @created="handleAdminCreated"
-    />
-
-    <!-- Update Admin Modal -->
-    <UpdateAdminModal
-      v-if="selectedAdminId"
-      :show="showUpdateModal"
+    <AdminModal
+      :show="showModal"
       :admin-id="selectedAdminId"
-      @close="closeUpdateModal"
-      @updated="handleAdminUpdated"
+      @close="closeModal"
+      @saved="handleAdminSaved"
     />
   </div>
 </template>
@@ -98,8 +89,7 @@
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Table, LoadingState, ErrorState, Button, Badge, PageHeader } from '../../components/ui'
-import CreateAdminModal from '../../components/access-management/CreateAdminModal.vue'
-import UpdateAdminModal from '../../components/access-management/UpdateAdminModal.vue'
+import AdminModal from '../../components/access-management/AdminModal.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
@@ -109,15 +99,19 @@ const { showToast } = useToast()
 const loading = ref(true)
 const error = ref(null)
 const admins = ref([])
-const showCreateModal = ref(false)
-const showUpdateModal = ref(false)
+const showModal = ref(false)
 const selectedAdminId = ref(null)
 
-// Table columns configuration
 const tableColumns = [
   {
-    key: 'id',
-    label: 'شناسه'
+    key: 'code',
+    label: 'کد شهروندی',
+    defaultValue: '-'
+  },
+  {
+    key: 'phone',
+    label: 'تلفن',
+    defaultValue: '-'
   },
   {
     key: 'name',
@@ -141,43 +135,43 @@ const tableColumns = [
   }
 ]
 
-const openUpdateModal = (id) => {
-  selectedAdminId.value = id
-  showUpdateModal.value = true
+const openCreateModal = () => {
+  selectedAdminId.value = null
+  showModal.value = true
 }
 
-const closeUpdateModal = () => {
-  showUpdateModal.value = false
+const openUpdateModal = (id) => {
+  selectedAdminId.value = id
+  showModal.value = true
+}
+
+const closeModal = () => {
+  showModal.value = false
   selectedAdminId.value = null
 }
 
-const handleAdminCreated = () => {
-  showCreateModal.value = false
-  fetchAdmins()
-}
-
-const handleAdminUpdated = () => {
-  closeUpdateModal()
+const handleAdminSaved = () => {
+  closeModal()
   fetchAdmins()
 }
 
 const handleDelete = async (id) => {
   const result = await confirm(
-    'آیا می خواهید این کاربر را حذف کنید؟',
+    'آیا می خواهید این مدیر را حذف کنید؟',
     'تایید حذف',
     { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
   )
   if (!result.isConfirmed) return
 
   try {
-        await apiClient.delete(`/admins/${id}`)
-        showToast('کاربر با موفقیت حذف شد', 'success')
-        fetchAdmins()
-      } catch (err) {
-        console.error('Delete admin error:', err)
+    await apiClient.delete(`/admins/${id}`)
+    showToast('مدیر با موفقیت حذف شد', 'success')
+    fetchAdmins()
+  } catch (err) {
+    console.error('Delete admin error:', err)
 
-        showToast(err.response?.data?.message || 'خطا در حذف کاربر', 'error')
-      }
+    showToast(err.response?.data?.message || 'خطا در حذف مدیر', 'error')
+  }
 }
 
 const fetchAdmins = async () => {
@@ -212,8 +206,3 @@ onMounted(() => {
   fetchAdmins()
 })
 </script>
-
-<style scoped>
-/* Additional styles if needed */
-</style>
-

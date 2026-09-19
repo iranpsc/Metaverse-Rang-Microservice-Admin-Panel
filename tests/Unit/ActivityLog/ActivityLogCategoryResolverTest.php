@@ -3,6 +3,12 @@
 namespace Tests\Unit\ActivityLog;
 
 use App\Models\Admin;
+use App\Models\BulkMessageLog;
+use App\Models\Challenge\Question;
+use App\Models\Dynasty\DynastyMessage;
+use App\Models\Feature\FeaturePricingLimit;
+use App\Models\Level\Level;
+use App\Models\Translations\Translation;
 use App\Models\User;
 use App\Services\ActivityLogCategoryResolver;
 use Tests\TestCase;
@@ -42,7 +48,7 @@ class ActivityLogCategoryResolverTest extends TestCase
         $admin = new Admin;
 
         $this->assertSame('citizens', ActivityLogCategoryResolver::resolveForModel($user));
-        $this->assertSame('access-management', ActivityLogCategoryResolver::resolveForModel($admin));
+        $this->assertSame('admins', ActivityLogCategoryResolver::resolveForModel($admin));
     }
 
     public function test_resolve_for_model_returns_other_for_null(): void
@@ -54,27 +60,27 @@ class ActivityLogCategoryResolverTest extends TestCase
     {
         $this->assertSame(
             'dynasty',
-            ActivityLogCategoryResolver::resolveForModel(new \App\Models\Dynasty\DynastyMessage)
+            ActivityLogCategoryResolver::resolveForModel(new DynastyMessage)
         );
         $this->assertSame(
             'levels',
-            ActivityLogCategoryResolver::resolveForModel(new \App\Models\Level\Level)
+            ActivityLogCategoryResolver::resolveForModel(new Level)
         );
         $this->assertSame(
             'translations',
-            ActivityLogCategoryResolver::resolveForModel(new \App\Models\Translations\Translation)
+            ActivityLogCategoryResolver::resolveForModel(new Translation)
         );
         $this->assertSame(
             'challenge',
-            ActivityLogCategoryResolver::resolveForModel(new \App\Models\Challenge\Question)
+            ActivityLogCategoryResolver::resolveForModel(new Question)
         );
         $this->assertSame(
             'other',
-            ActivityLogCategoryResolver::resolveForModel(new \App\Models\BulkMessageLog)
+            ActivityLogCategoryResolver::resolveForModel(new BulkMessageLog)
         );
         $this->assertSame(
             'features',
-            ActivityLogCategoryResolver::resolveForModel(new \App\Models\Feature\FeaturePricingLimit)
+            ActivityLogCategoryResolver::resolveForModel(new FeaturePricingLimit)
         );
     }
 }

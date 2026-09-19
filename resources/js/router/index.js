@@ -32,9 +32,7 @@ const LevelLicenses = () => import('../pages/levels/Licenses.vue')
 const LevelGift = () => import('../pages/levels/Gift.vue')
 const LevelGeneralInfo = () => import('../pages/levels/GeneralInfo.vue')
 const LevelGem = () => import('../pages/levels/Gem.vue')
-const Roles = () => import('../pages/access-management/Roles.vue')
-const Permissions = () => import('../pages/access-management/Permissions.vue')
-const EmployeeRolePermission = () => import('../pages/access-management/EmployeeRolePermission.vue')
+const AdminManagement = () => import('../pages/access-management/AdminManagement.vue')
 const SupportTickets = () => import('../pages/support/SupportTickets.vue')
 const ColorsPrice = () => import('../pages/variables/ColorsPrice.vue')
 const ColorOptions = () => import('../pages/variables/ColorOptions.vue')
@@ -353,27 +351,11 @@ const routes = [
         }
       },
       {
-        path: 'access-management/roles',
-        name: 'roles',
-        component: Roles,
+        path: 'admins',
+        name: 'admins',
+        component: AdminManagement,
         meta: {
-          title: 'مدیریت نقش ها'
-        }
-      },
-      {
-        path: 'access-management/permissions',
-        name: 'permissions',
-        component: Permissions,
-        meta: {
-          title: 'مدیریت دسترسی ها'
-        }
-      },
-      {
-        path: 'access-management/employees',
-        name: 'employee-role-permission',
-        component: EmployeeRolePermission,
-        meta: {
-          title: 'مدیریت دسترسی کارمندان'
+          title: 'مدیریت مدیران'
         }
       },
       {

@@ -31,14 +31,7 @@ export default [
       { id: 'features-trades', label: 'مبادله زمین', route: '/features/trades', icon: 'cube', color: 'primary', permissions: ['view-features-trades'] }
     ]
   },
-  {
-    id: 'access-management', label: 'مدیریت دسترسی ها', route: '#', icon: 'key', color: 'primary', roles: [], permissions: ['access-management'],
-    children: [
-      { id: 'access-employees', label: 'مدیران', route: '/access-management/employees', icon: 'user', color: 'primary', permissions: [] },
-      { id: 'access-roles', label: 'مسئولیت ها', route: '/access-management/roles', icon: 'key', color: 'primary', permissions: [] },
-      { id: 'access-permissions', label: 'دسترسی ها', route: '/access-management/permissions', icon: 'key', color: 'primary', permissions: [] }
-    ]
-  },
+  { id: 'admins', label: 'مدیران', route: '/admins', icon: 'user', color: 'primary', roles: [], permissions: ['access-management'] },
   {
     id: 'support', label: 'پشتیبانی', route: '#', icon: 'phone', color: 'rose', roles: ['support-management', 'super-admin'], permissions: [],
     children: [
