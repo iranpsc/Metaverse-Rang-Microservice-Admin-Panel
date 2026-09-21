@@ -94,14 +94,14 @@
       size="lg"
     >
       <div class="space-y-4" dir="rtl">
-        <!-- Asset Selection (Only for Create) -->
+        <!-- Asset Name (Only for Create) -->
         <div v-if="!isEditMode">
-          <Select
-            v-model="formData.asset"
+          <Input
+            :model-value="formData.asset"
             label="نام ارز"
-            :options="assetOptions"
-            placeholder="نام ارز را به انگلیسی انتخاب کنید"
+            placeholder="نام ارز را به انگلیسی وارد کنید"
             :error="errors.asset"
+            @update:model-value="onAssetInput"
           />
         </div>
 
@@ -156,6 +156,7 @@
           </Button>
           <Button
             variant="danger"
+            rounded="full"
             @click="closeFormModal"
             :disabled="saving"
           >
@@ -178,7 +179,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Button, LoadingState, ErrorState, Table, Modal, Input, Select, FileInput, PageHeader } from '../../components/ui'
+import { Button, LoadingState, ErrorState, Table, Modal, Input, FileInput, PageHeader } from '../../components/ui'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
@@ -219,15 +220,13 @@ const fieldError = (val) => {
   return Array.isArray(val) ? val[0] : String(val)
 }
 
-const assetOptions = [
-  { value: 'red', label: 'قرمز' },
-  { value: 'blue', label: 'آبی' },
-  { value: 'yellow', label: 'زرد' },
-  { value: 'irr', label: 'ریال' },
-  { value: 'psc', label: 'psc' },
-  { value: 'satisfaction', label: 'رضایت' },
-  { value: 'effect', label: 'حد تاثیر' }
-]
+const onAssetInput = (value) => {
+  formData.value.asset = String(value ?? '').replace(/[^a-zA-Z\s]/g, '')
+}
+
+const normalizeAssetName = (value) => {
+  return String(value ?? '').trim().replace(/\s+/g, '-')
+}
 
 const tableColumns = [
   {
@@ -304,7 +303,7 @@ const handleCurrencyImageChange = (file) => {
 const validateForm = () => {
   errors.value = {}
 
-  if (!isEditMode.value && !formData.value.asset) {
+  if (!isEditMode.value && !normalizeAssetName(formData.value.asset)) {
     errors.value.asset = 'نام ارز الزامی است'
   }
 
@@ -327,7 +326,7 @@ const submitForm = async () => {
     const formDataToSend = new FormData()
 
     if (!isEditMode.value) {
-      formDataToSend.append('asset', formData.value.asset)
+      formDataToSend.append('asset', normalizeAssetName(formData.value.asset))
     }
 
     formDataToSend.append('price', formData.value.price)

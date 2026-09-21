@@ -5,6 +5,7 @@ namespace Tests\Concerns;
 use App\Models\Dynasty\DynastyMessage;
 use App\Models\Dynasty\DynastyPermission;
 use App\Models\Dynasty\DynastyPrize;
+use App\Models\Dynasty\ReceivedPrize;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
@@ -17,6 +18,7 @@ trait CreatesDynastyApiSchema
         $this->setUpCitizensApiSchema();
         $this->createDynastyMessagesTable();
         $this->createDynastyPrizesTable();
+        $this->createReceivedPrizesTable();
         $this->createDynastyPermissionsTable();
     }
 
@@ -48,6 +50,21 @@ trait CreatesDynastyApiSchema
             $table->float('accumulated_capital_reserve');
             $table->float('data_storage');
             $table->integer('psc');
+            $table->timestamps();
+        });
+    }
+
+    private function createReceivedPrizesTable(): void
+    {
+        if (Schema::hasTable('received_prizes')) {
+            return;
+        }
+
+        Schema::create('received_prizes', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('prize_id');
+            $table->longText('message');
             $table->timestamps();
         });
     }
@@ -92,6 +109,15 @@ trait CreatesDynastyApiSchema
             'accumulated_capital_reserve' => 0.10,
             'data_storage' => 0.05,
             'psc' => 100,
+        ], $overrides));
+    }
+
+    protected function createReceivedPrize(array $overrides = []): ReceivedPrize
+    {
+        return ReceivedPrize::create(array_merge([
+            'user_id' => 1,
+            'prize_id' => 1,
+            'message' => 'Test received dynasty prize',
         ], $overrides));
     }
 

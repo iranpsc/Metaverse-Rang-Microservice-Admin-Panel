@@ -47,6 +47,7 @@ class Variable extends Model
             'irr' => 'ریال',
             'satisfaction' => 'رضایت',
             'effect' => 'حد تاثیر',
+            default => $this->asset,
         };
     }
 

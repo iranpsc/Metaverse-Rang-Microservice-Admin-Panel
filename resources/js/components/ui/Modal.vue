@@ -86,7 +86,9 @@
               v-if="$slots.footer"
               class="flex items-center justify-end gap-3 p-6 border-t border-border flex-shrink-0"
             >
-              <slot name="footer" />
+              <ModalFooterProvider>
+                <slot name="footer" />
+              </ModalFooterProvider>
             </div>
           </div>
         </Transition>
@@ -96,7 +98,16 @@
 </template>
 
 <script setup>
-import { computed, watch, onMounted, onUnmounted } from 'vue'
+import { computed, watch, onMounted, onUnmounted, defineComponent, provide } from 'vue'
+import { BUTTON_ROUNDED_CONTEXT_KEY } from './buttonRoundedContext'
+
+const ModalFooterProvider = defineComponent({
+  name: 'ModalFooterProvider',
+  setup(_, { slots }) {
+    provide(BUTTON_ROUNDED_CONTEXT_KEY, 'full')
+    return () => slots.default?.()
+  }
+})
 
 const props = defineProps({
   modelValue: {

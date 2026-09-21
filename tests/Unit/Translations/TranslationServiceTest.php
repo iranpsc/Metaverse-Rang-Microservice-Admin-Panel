@@ -251,4 +251,391 @@ class TranslationServiceTest extends TestCase
         $this->assertSame(1, $german->modals()->where('name', 'profile')->count());
         $this->assertSame(2, $german->modals()->count());
     }
+
+    public function test_build_persian_hierarchy_map_groups_unique_ids_by_modal_and_tab(): void
+    {
+        Cache::forget('translations.persian_hierarchy_map');
+
+        $persian = Translation::create([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'native_name' => 'فارسی',
+            'direction' => 'rtl',
+            'status' => true,
+        ]);
+
+        $notification = $persian->modals()->create(['name' => 'notification']);
+        $notificationTab = $notification->tabs()->create(['name' => 'notification']);
+        $notificationTab->fields()->create(['unique_id' => 238, 'translation' => 'آگهی ها']);
+
+        $central = $persian->modals()->create(['name' => 'central-page']);
+        $centralTab = $central->tabs()->create(['name' => 'central-page']);
+        $centralTab->fields()->create(['unique_id' => 238, 'translation' => 'اعلان ها']);
+
+        $store = $persian->modals()->create(['name' => 'store']);
+        $tools = $store->tabs()->create(['name' => 'tools']);
+        $tools->fields()->create(['unique_id' => 14, 'translation' => 'عدد']);
+
+        $service = new TranslationService(new Filesystem);
+        $map = $service->buildPersianHierarchyMap();
+
+        $this->assertSame([
+            ['modal' => 'notification', 'tab' => 'notification'],
+            ['modal' => 'central-page', 'tab' => 'central-page'],
+        ], $map[238]);
+        $this->assertSame([
+            ['modal' => 'store', 'tab' => 'tools'],
+        ], $map[14]);
+    }
+
+    public function test_import_translation_uses_persian_hierarchy_to_place_fields(): void
+    {
+        Cache::forget('translations.persian_hierarchy_map');
+
+        $persian = Translation::create([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'native_name' => 'فارسی',
+            'direction' => 'rtl',
+            'status' => true,
+        ]);
+
+        $notification = $persian->modals()->create(['name' => 'notification']);
+        $notification->tabs()->create(['name' => 'notification'])->fields()->create([
+            'unique_id' => 238,
+            'translation' => 'آگهی ها',
+        ]);
+
+        $store = $persian->modals()->create(['name' => 'store']);
+        $store->tabs()->create(['name' => 'tools'])->fields()->create([
+            'unique_id' => 14,
+            'translation' => 'عدد',
+        ]);
+        $store->tabs()->create(['name' => 'currencies'])->fields()->create([
+            'unique_id' => 14,
+            'translation' => 'عدد',
+        ]);
+
+        $english = Translation::create([
+            'code' => 'en',
+            'name' => 'English',
+            'native_name' => 'English',
+            'direction' => 'ltr',
+            'status' => true,
+            'version' => 1,
+        ]);
+
+        $service = new TranslationService(new Filesystem);
+        $result = $service->importTranslation($english, [
+            '14' => 'Number',
+            '238' => 'Notifications',
+            '99999' => 'Unknown',
+            '' => 'ignored',
+        ]);
+
+        $this->assertSame(0, $result['updated']);
+        $this->assertSame(3, $result['created']);
+        $this->assertSame(2, $result['skipped']);
+        $this->assertContains(99999, $result['unknown_ids']);
+
+        $this->assertDatabaseHas('fields', [
+            'unique_id' => 238,
+            'translation' => 'Notifications',
+        ], 'sqlite');
+        $this->assertDatabaseHas('fields', [
+            'unique_id' => 14,
+            'translation' => 'Number',
+        ], 'sqlite');
+        $this->assertSame(2, Field::query()
+            ->where('unique_id', 14)
+            ->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $english->id))
+            ->count());
+        $this->assertSame(1, Field::query()
+            ->where('unique_id', 238)
+            ->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $english->id))
+            ->count());
+
+        $notificationModal = $english->modals()->where('name', 'notification')->first();
+        $this->assertNotNull($notificationModal);
+        $this->assertTrue(
+            $notificationModal->tabs()->where('name', 'notification')->exists()
+        );
+
+        $filePath = public_path('lang/en.json');
+        $this->createdLangFiles[] = $filePath;
+        $this->assertFileExists($filePath);
+
+        $english->refresh();
+        $this->assertSame(2, (int) $english->version);
+    }
+
+    public function test_import_translation_updates_existing_fields_in_matching_tabs(): void
+    {
+        Cache::forget('translations.persian_hierarchy_map');
+
+        $persian = Translation::create([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'native_name' => 'فارسی',
+            'direction' => 'rtl',
+            'status' => true,
+        ]);
+        $persianModal = $persian->modals()->create(['name' => 'notification']);
+        $persianModal->tabs()->create(['name' => 'notification'])->fields()->create([
+            'unique_id' => 238,
+            'translation' => 'آگهی ها',
+        ]);
+
+        $english = Translation::create([
+            'code' => 'en',
+            'name' => 'English',
+            'native_name' => 'English',
+            'direction' => 'ltr',
+            'status' => true,
+            'version' => 3,
+        ]);
+        $englishModal = $english->modals()->create(['name' => 'notification']);
+        $englishModal->tabs()->create(['name' => 'notification'])->fields()->create([
+            'unique_id' => 238,
+            'translation' => 'Old notifications',
+        ]);
+
+        $service = new TranslationService(new Filesystem);
+        $result = $service->importTranslation($english, [
+            238 => 'Notifications',
+        ]);
+
+        $this->assertSame(1, $result['updated']);
+        $this->assertSame(0, $result['created']);
+        $this->assertDatabaseHas('fields', [
+            'unique_id' => 238,
+            'translation' => 'Notifications',
+        ], 'sqlite');
+
+        $this->createdLangFiles[] = public_path('lang/en.json');
+        $english->refresh();
+        $this->assertSame(4, (int) $english->version);
+    }
+
+    public function test_create_and_import_translation_creates_language_then_fills_from_json(): void
+    {
+        Cache::forget('translations.persian_hierarchy_map');
+        Cache::forget('translations.available_languages');
+
+        $persian = Translation::create([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'native_name' => 'فارسی',
+            'direction' => 'rtl',
+            'status' => true,
+        ]);
+        $persian->modals()->create(['name' => 'notification'])
+            ->tabs()->create(['name' => 'notification'])
+            ->fields()->create([
+                'unique_id' => 238,
+                'translation' => 'آگهی ها',
+            ]);
+
+        $service = new TranslationService(new Filesystem);
+        $result = $service->createAndImportTranslation('de', [
+            '238' => 'Benachrichtigungen',
+        ]);
+
+        $this->assertSame('de', $result['translation']->code);
+        $this->assertDatabaseHas('translations', [
+            'code' => 'de',
+            'name' => 'German',
+        ], 'sqlite');
+        $this->assertDatabaseHas('fields', [
+            'unique_id' => 238,
+            'translation' => 'Benachrichtigungen',
+        ], 'sqlite');
+
+        $this->createdLangFiles[] = public_path('lang/de.json');
+    }
+
+    public function test_import_translation_updates_all_duplicate_unique_ids_in_same_tab(): void
+    {
+        Cache::forget('translations.persian_hierarchy_map');
+
+        $persian = Translation::create([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'native_name' => 'فارسی',
+            'direction' => 'rtl',
+            'status' => true,
+        ]);
+        $persianModal = $persian->modals()->create(['name' => 'Citizenship-profile']);
+        $persianTab = $persianModal->tabs()->create(['name' => 'home']);
+        $persianTab->fields()->create(['unique_id' => 97, 'translation' => 'ساز و موسیقی']);
+        $persianTab->fields()->create(['unique_id' => 97, 'translation' => 'ساز و موسیقی']);
+
+        $english = Translation::create([
+            'code' => 'en',
+            'name' => 'English',
+            'native_name' => 'English',
+            'direction' => 'ltr',
+            'status' => true,
+            'version' => 1,
+        ]);
+        $englishModal = $english->modals()->create(['name' => 'Citizenship-profile']);
+        $englishTab = $englishModal->tabs()->create(['name' => 'home']);
+        $englishTab->fields()->create(['unique_id' => 97, 'translation' => null]);
+        $englishTab->fields()->create(['unique_id' => 97, 'translation' => null]);
+
+        $service = new TranslationService(new Filesystem);
+        $result = $service->importTranslation($english, [
+            '97' => 'Music',
+        ]);
+
+        $this->assertSame(2, $result['updated']);
+        $this->assertSame(0, $result['created']);
+        $this->assertSame(2, Field::query()
+            ->where('unique_id', 97)
+            ->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $english->id))
+            ->where('translation', 'Music')
+            ->count());
+
+        $filePath = public_path('lang/en.json');
+        $this->createdLangFiles[] = $filePath;
+        $payload = json_decode((string) file_get_contents($filePath), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame('Music', $payload[97] ?? $payload['97'] ?? null);
+    }
+
+    public function test_export_prefers_non_null_when_duplicate_unique_ids_exist(): void
+    {
+        $this->app['env'] = 'local';
+
+        $translation = Translation::create([
+            'code' => 'fr',
+            'name' => 'French',
+            'native_name' => 'Français',
+            'direction' => 'ltr',
+            'status' => true,
+            'version' => 1,
+        ]);
+        $modal = $translation->modals()->create(['name' => 'profile']);
+        $tab = $modal->tabs()->create(['name' => 'home']);
+        $tab->fields()->create(['unique_id' => 97, 'translation' => 'Musique']);
+        $tab->fields()->create(['unique_id' => 97, 'translation' => null]);
+
+        $service = new TranslationService(new Filesystem);
+        $service->exportTranslation($translation);
+
+        $filePath = public_path('lang/fr.json');
+        $this->createdLangFiles[] = $filePath;
+        $payload = json_decode((string) file_get_contents($filePath), true, flags: JSON_THROW_ON_ERROR);
+
+        $this->assertSame('Musique', $payload[97] ?? $payload['97'] ?? null);
+    }
+
+    public function test_import_translation_fills_empty_unique_id_from_blank_json_key(): void
+    {
+        Cache::forget('translations.persian_hierarchy_map');
+
+        $persian = Translation::create([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'native_name' => 'فارسی',
+            'direction' => 'rtl',
+            'status' => true,
+        ]);
+        $persian->modals()->create(['name' => 'home'])
+            ->tabs()->create(['name' => 'main'])
+            ->fields()->create(['unique_id' => 1, 'translation' => 'یک']);
+
+        $english = Translation::create([
+            'code' => 'en',
+            'name' => 'English',
+            'native_name' => 'English',
+            'direction' => 'ltr',
+            'status' => true,
+            'version' => 1,
+        ]);
+        $english->modals()->create(['name' => 'misc'])
+            ->tabs()->create(['name' => 'iranian-cities'])
+            ->fields()->create(['unique_id' => null, 'translation' => null]);
+
+        $service = new TranslationService(new Filesystem);
+        $result = $service->importTranslation($english, [
+            '' => 'choose',
+            '1' => 'One',
+        ]);
+
+        $this->assertGreaterThanOrEqual(1, $result['updated']);
+        $this->assertDatabaseHas('fields', [
+            'unique_id' => null,
+            'translation' => 'choose',
+        ], 'sqlite');
+
+        $filePath = public_path('lang/en.json');
+        $this->createdLangFiles[] = $filePath;
+        $payload = json_decode((string) file_get_contents($filePath), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame('choose', $payload[''] ?? null);
+        $this->assertSame('One', $payload[1] ?? $payload['1'] ?? null);
+    }
+
+    public function test_replicate_structure_dedupes_same_tab_unique_ids(): void
+    {
+        $english = Translation::create([
+            'code' => 'en',
+            'name' => 'English',
+            'native_name' => 'English',
+            'direction' => 'ltr',
+            'status' => true,
+        ]);
+        $modal = $english->modals()->create(['name' => 'Citizenship-profile']);
+        $tab = $modal->tabs()->create(['name' => 'home']);
+        $tab->fields()->create(['unique_id' => 97, 'translation' => 'Music']);
+        $tab->fields()->create(['unique_id' => 97, 'translation' => 'Music']);
+
+        $german = Translation::create([
+            'code' => 'de',
+            'name' => 'German',
+            'native_name' => 'Deutsch',
+            'direction' => 'ltr',
+            'status' => true,
+        ]);
+
+        $service = new TranslationService(new Filesystem);
+        $method = new ReflectionMethod(TranslationService::class, 'replicateStructureForTranslation');
+        $method->setAccessible(true);
+        $method->invoke($service, $german);
+
+        $germanTab = $german->modals()->where('name', 'Citizenship-profile')->firstOrFail()
+            ->tabs()->where('name', 'home')->firstOrFail();
+
+        $this->assertSame(1, $germanTab->fields()->where('unique_id', 97)->count());
+    }
+
+    public function test_import_translation_rejects_payload_that_does_not_match_fa_json_shape(): void
+    {
+        Cache::forget('translations.persian_hierarchy_map');
+
+        $persian = Translation::create([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'native_name' => 'فارسی',
+            'direction' => 'rtl',
+            'status' => true,
+        ]);
+        $persian->modals()->create(['name' => 'home'])
+            ->tabs()->create(['name' => 'main'])
+            ->fields()->create(['unique_id' => 1, 'translation' => 'یک']);
+
+        $english = Translation::create([
+            'code' => 'en',
+            'name' => 'English',
+            'native_name' => 'English',
+            'direction' => 'ltr',
+            'status' => true,
+        ]);
+
+        $service = new TranslationService(new Filesystem);
+
+        $this->expectException(ValidationException::class);
+        $service->importTranslation($english, [
+            'home' => ['main' => 'Hello'],
+        ]);
+    }
 }

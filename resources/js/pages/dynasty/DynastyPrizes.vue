@@ -5,8 +5,15 @@
       subtitle="مدیریت جوایز سلسله خانوادگی"
     />
 
-    <!-- Create Button -->
-    <div class="mb-6">
+    <!-- Action bar: total paid (left) + create (right) -->
+    <div class="mb-6 flex items-center justify-between gap-4" dir="ltr">
+      <div class="text-sm text-[var(--theme-text-secondary)]" dir="rtl">
+        مجموع جوایز پرداخت‌شده به کاربران:
+        <span class="ms-1 text-base font-semibold text-[var(--theme-text-primary)]">
+          {{ formatNumber(totalPaidAmount) }}
+        </span>
+        <span class="ms-1 text-xs text-[var(--theme-text-muted)]">ریال</span>
+      </div>
       <Button variant="primary" @click="openCreateModal">
         تعریف جوایز
       </Button>
@@ -83,17 +90,17 @@
       @page-change="onPageChange"
     />
 
-    <!-- Create Modal -->
+    <!-- Create / Edit Modal -->
     <Modal
-      v-model="showCreateModal"
-      title="تعریف جوایز سلسله خانوادگی"
+      v-model="showFormModal"
+      :title="formModalTitle"
       size="xl"
-      @close="resetCreateForm"
+      @close="resetForm"
     >
       <div class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Member Relation -->
           <Select
+            v-if="!isEditMode"
             v-model="form.member"
             label="نسبت خانوادگی"
             placeholder="انتخاب کنید"
@@ -102,7 +109,6 @@
             required
           />
 
-          <!-- Introduction Profit Increase -->
           <Input
             v-model.number="form.introduction_profit_increase"
             type="number"
@@ -113,7 +119,6 @@
             required
           />
 
-          <!-- Accumulated Capital Reserve -->
           <Input
             v-model.number="form.accumulated_capital_reserve"
             type="number"
@@ -124,7 +129,6 @@
             required
           />
 
-          <!-- Data Storage -->
           <Input
             v-model.number="form.data_storage"
             type="number"
@@ -135,7 +139,6 @@
             required
           />
 
-          <!-- PSC -->
           <Input
             v-model.number="form.psc"
             type="number"
@@ -146,7 +149,6 @@
             required
           />
 
-          <!-- Satisfaction -->
           <Input
             v-model.number="form.satisfaction"
             type="number"
@@ -163,11 +165,11 @@
         <Button
           variant="primary"
           :loading="saving"
-          @click="handleCreate"
+          @click="handleSubmit"
         >
-          ثبت
+          {{ submitButtonLabel }}
         </Button>
-        <Button variant="danger" @click="closeCreateModal">
+        <Button variant="danger" @click="closeFormModal">
           بستن
         </Button>
       </template>
@@ -201,6 +203,12 @@
               <th class="px-6 py-4 text-right text-sm font-semibold text-[var(--theme-text-primary)]">
                 رضایت
               </th>
+              <th class="px-6 py-4 text-right text-sm font-semibold text-[var(--theme-text-primary)]">
+                تعداد دریافت‌کنندگان
+              </th>
+              <th class="px-6 py-4 text-right text-sm font-semibold text-[var(--theme-text-primary)]">
+                مجموع پرداختی
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-[var(--theme-border)]">
@@ -223,6 +231,12 @@
               <td class="px-6 py-4 text-sm text-[var(--theme-text-primary)]">
                 {{ formatNumber(viewingPrize?.satisfaction) }}
               </td>
+              <td class="px-6 py-4 text-sm text-[var(--theme-text-primary)]">
+                {{ formatNumber(viewingPrize?.recipients_count ?? 0) }}
+              </td>
+              <td class="px-6 py-4 text-sm text-[var(--theme-text-primary)]">
+                {{ formatNumber(viewingPrize?.total_paid_amount ?? 0) }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -230,86 +244,6 @@
 
       <template #footer>
         <Button variant="danger" @click="showViewModal = false">
-          بستن
-        </Button>
-      </template>
-    </Modal>
-
-    <!-- Edit Modal -->
-    <Modal
-      v-model="showEditModal"
-      :title="`ویرایش پاداشهای معرفی ${getMemberTitle(editingPrize?.member)}`"
-      size="xl"
-      @close="resetEditForm"
-    >
-      <div class="space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Introduction Profit Increase -->
-          <Input
-            v-model.number="editForm.introduction_profit_increase"
-            type="number"
-            label="افزایش سود پاداش معرفی(%)"
-            :error="errors.introduction_profit_increase"
-            :min="0"
-            step="0.01"
-            required
-          />
-
-          <!-- Accumulated Capital Reserve -->
-          <Input
-            v-model.number="editForm.accumulated_capital_reserve"
-            type="number"
-            label="ذخیره سرمایه انباشته(%)"
-            :error="errors.accumulated_capital_reserve"
-            :min="0"
-            step="0.01"
-            required
-          />
-
-          <!-- Data Storage -->
-          <Input
-            v-model.number="editForm.data_storage"
-            type="number"
-            label="ذخیره دیتا(%)"
-            :error="errors.data_storage"
-            :min="0"
-            step="0.01"
-            required
-          />
-
-          <!-- PSC -->
-          <Input
-            v-model.number="editForm.psc"
-            type="number"
-            label="پاداش معرفی PSC (ریال)"
-            :error="errors.psc"
-            :min="0"
-            step="1"
-            required
-          />
-
-          <!-- Satisfaction -->
-          <Input
-            v-model.number="editForm.satisfaction"
-            type="number"
-            label="رضایت"
-            :error="errors.satisfaction"
-            :min="0"
-            step="0.01"
-            required
-          />
-        </div>
-      </div>
-
-      <template #footer>
-        <Button
-          variant="primary"
-          :loading="updating"
-          @click="handleUpdate"
-        >
-          ذخیره تغییرات
-        </Button>
-        <Button variant="danger" @click="closeEditModal">
           بستن
         </Button>
       </template>
@@ -331,7 +265,6 @@ const formatNumber = formatPersianNumber
 
 const { showToast } = useToast()
 
-
 const {
   loading,
   error,
@@ -342,18 +275,16 @@ const {
 } = usePaginatedList({ perPage: 10 })
 
 const prizes = ref([])
+const totalPaidAmount = ref(0)
 const saving = ref(false)
-const updating = ref(false)
 
-// Modal states
-const showCreateModal = ref(false)
+const showFormModal = ref(false)
 const showViewModal = ref(false)
-const showEditModal = ref(false)
+const isEditMode = ref(false)
 const viewingPrize = ref(null)
 const editingPrize = ref(null)
 
-// Form data
-const form = ref({
+const emptyForm = () => ({
   member: '',
   satisfaction: 0,
   introduction_profit_increase: 0,
@@ -362,17 +293,9 @@ const form = ref({
   psc: 0
 })
 
-const editForm = ref({
-  satisfaction: 0,
-  introduction_profit_increase: 0,
-  accumulated_capital_reserve: 0,
-  data_storage: 0,
-  psc: 0
-})
-
+const form = ref(emptyForm())
 const errors = ref({})
 
-// Member options
 const memberOptions = [
   { value: 'father', label: 'پدر' },
   { value: 'mother', label: 'مادر' },
@@ -383,7 +306,16 @@ const memberOptions = [
   { value: 'offspring', label: 'فرزند' }
 ]
 
-// Table columns
+const formModalTitle = computed(() => {
+  if (!isEditMode.value) {
+    return 'تعریف جوایز سلسله خانوادگی'
+  }
+
+  return `ویرایش پاداشهای معرفی ${getMemberTitle(editingPrize.value?.member)}`
+})
+
+const submitButtonLabel = computed(() => (isEditMode.value ? 'ذخیره تغییرات' : 'ثبت'))
+
 const tableColumns = [
   {
     key: 'member',
@@ -391,12 +323,21 @@ const tableColumns = [
     formatter: (value) => getMemberTitle(value)
   },
   {
+    key: 'recipients_count',
+    label: 'تعداد دریافت‌کنندگان',
+    formatter: (value) => formatNumber(value ?? 0)
+  },
+  {
+    key: 'total_paid_amount',
+    label: 'مجموع پرداختی (ریال)',
+    formatter: (value) => formatNumber(value ?? 0)
+  },
+  {
     key: 'actions',
     label: 'مدیریت'
   }
 ]
 
-// Helper functions
 const getMemberTitle = (member) => {
   const option = memberOptions.find(opt => opt.value === member)
   return option ? option.label : member
@@ -407,25 +348,47 @@ const formatPercentage = (value) => {
   return `${(value * 100).toFixed(2)}%`
 }
 
+const fieldError = (val) => {
+  if (val == null || val === '') return ''
+  return Array.isArray(val) ? val[0] : String(val)
+}
 
 const openCreateModal = () => {
-  showCreateModal.value = true
+  isEditMode.value = false
+  editingPrize.value = null
+  form.value = emptyForm()
+  errors.value = {}
+  showFormModal.value = true
 }
 
-const closeCreateModal = () => {
-  showCreateModal.value = false
-  resetCreateForm()
-}
-
-const resetCreateForm = () => {
+const openEditModal = (prize) => {
+  isEditMode.value = true
+  editingPrize.value = prize
   form.value = {
-    member: '',
-    satisfaction: 0,
-    introduction_profit_increase: 0,
-    accumulated_capital_reserve: 0,
-    data_storage: 0,
-    psc: 0
+    member: prize.member || '',
+    satisfaction: prize.satisfaction || 0,
+    introduction_profit_increase: prize.introduction_profit_increase
+      ? (prize.introduction_profit_increase * 100)
+      : 0,
+    accumulated_capital_reserve: prize.accumulated_capital_reserve
+      ? (prize.accumulated_capital_reserve * 100)
+      : 0,
+    data_storage: prize.data_storage ? (prize.data_storage * 100) : 0,
+    psc: prize.psc || 0
   }
+  errors.value = {}
+  showFormModal.value = true
+}
+
+const closeFormModal = () => {
+  showFormModal.value = false
+  resetForm()
+}
+
+const resetForm = () => {
+  isEditMode.value = false
+  editingPrize.value = null
+  form.value = emptyForm()
   errors.value = {}
 }
 
@@ -434,40 +397,11 @@ const openViewModal = (prize) => {
   showViewModal.value = true
 }
 
-const openEditModal = (prize) => {
-  editingPrize.value = prize
-  editForm.value = {
-    satisfaction: prize.satisfaction || 0,
-    introduction_profit_increase: prize.introduction_profit_increase ? (prize.introduction_profit_increase * 100) : 0,
-    accumulated_capital_reserve: prize.accumulated_capital_reserve ? (prize.accumulated_capital_reserve * 100) : 0,
-    data_storage: prize.data_storage ? (prize.data_storage * 100) : 0,
-    psc: prize.psc || 0
-  }
-  showEditModal.value = true
-}
-
-const closeEditModal = () => {
-  showEditModal.value = false
-  resetEditForm()
-}
-
-const resetEditForm = () => {
-  editingPrize.value = null
-  editForm.value = {
-    satisfaction: 0,
-    introduction_profit_increase: 0,
-    accumulated_capital_reserve: 0,
-    data_storage: 0,
-    psc: 0
-  }
-  errors.value = {}
-}
-
 const validateForm = () => {
   errors.value = {}
   let isValid = true
 
-  if (!form.value.member) {
+  if (!isEditMode.value && !form.value.member) {
     errors.value.member = 'نسبت خانوادگی الزامی است'
     isValid = false
   }
@@ -500,133 +434,65 @@ const validateForm = () => {
   return isValid
 }
 
-const validateEditForm = () => {
-  errors.value = {}
-  let isValid = true
-
-  if (editForm.value.satisfaction === null || editForm.value.satisfaction < 0) {
-    errors.value.satisfaction = 'رضایت باید عددی مثبت باشد'
-    isValid = false
+const buildPayload = () => {
+  const payload = {
+    satisfaction: form.value.satisfaction,
+    introduction_profit_increase: form.value.introduction_profit_increase,
+    accumulated_capital_reserve: form.value.accumulated_capital_reserve,
+    data_storage: form.value.data_storage,
+    psc: form.value.psc
   }
 
-  if (editForm.value.introduction_profit_increase === null || editForm.value.introduction_profit_increase < 0) {
-    errors.value.introduction_profit_increase = 'افزایش سود پاداش معرفی باید عددی مثبت باشد'
-    isValid = false
+  if (!isEditMode.value) {
+    payload.member = form.value.member
   }
 
-  if (editForm.value.accumulated_capital_reserve === null || editForm.value.accumulated_capital_reserve < 0) {
-    errors.value.accumulated_capital_reserve = 'ذخیره سرمایه انباشته باید عددی مثبت باشد'
-    isValid = false
-  }
-
-  if (editForm.value.data_storage === null || editForm.value.data_storage < 0) {
-    errors.value.data_storage = 'ذخیره دیتا باید عددی مثبت باشد'
-    isValid = false
-  }
-
-  if (editForm.value.psc === null || editForm.value.psc < 0) {
-    errors.value.psc = 'پاداش معرفی PSC باید عددی مثبت باشد'
-    isValid = false
-  }
-
-  return isValid
+  return payload
 }
 
-const buildCreatePayload = () => ({
-  member: form.value.member,
-  satisfaction: form.value.satisfaction,
-  introduction_profit_increase: form.value.introduction_profit_increase,
-  accumulated_capital_reserve: form.value.accumulated_capital_reserve,
-  data_storage: form.value.data_storage,
-  psc: form.value.psc
-})
+const normalizeValidationErrors = (apiErrors) => {
+  const normalized = {}
+  Object.entries(apiErrors || {}).forEach(([key, value]) => {
+    normalized[key] = fieldError(value)
+  })
+  return normalized
+}
 
-const buildUpdatePayload = () => ({
-  satisfaction: editForm.value.satisfaction,
-  introduction_profit_increase: editForm.value.introduction_profit_increase,
-  accumulated_capital_reserve: editForm.value.accumulated_capital_reserve,
-  data_storage: editForm.value.data_storage,
-  psc: editForm.value.psc
-})
+const handleSubmit = async () => {
+  if (!validateForm()) {
+    return
+  }
 
-const submitCreate = async () => {
+  if (isEditMode.value && !editingPrize.value) {
+    return
+  }
+
   try {
     saving.value = true
     errors.value = {}
 
-    const response = await apiClient.post(
-      '/dynasty/prizes',
-      buildCreatePayload()
-    )
+    const response = isEditMode.value
+      ? await apiClient.put(`/dynasty/prizes/${editingPrize.value.id}`, buildPayload())
+      : await apiClient.post('/dynasty/prizes', buildPayload())
 
     if (response.data.success) {
       await fetchPrizes()
-      closeCreateModal()
+      closeFormModal()
       showToast('اطلاعات با موفقیت ثبت شد', 'success')
     } else {
       showToast(response.data.message || 'خطا در ثبت اطلاعات', 'error')
     }
   } catch (err) {
-    console.error('Create prize error:', err)
+    console.error('Submit prize error:', err)
 
     if (err.response?.data?.errors) {
-      errors.value = err.response.data.errors
+      errors.value = normalizeValidationErrors(err.response.data.errors)
     } else {
       showToast(err.response?.data?.message || 'خطا در ثبت اطلاعات', 'error')
     }
   } finally {
     saving.value = false
   }
-}
-
-const handleCreate = async () => {
-  if (!validateForm()) {
-    return
-  }
-
-  await submitCreate()
-}
-
-const submitUpdate = async () => {
-  if (!editingPrize.value) {
-    return
-  }
-
-  try {
-    updating.value = true
-    errors.value = {}
-
-    const response = await apiClient.put(
-      `/dynasty/prizes/${editingPrize.value.id}`,
-      buildUpdatePayload()
-    )
-
-    if (response.data.success) {
-      await fetchPrizes()
-      closeEditModal()
-      showToast('اطلاعات با موفقیت ثبت شد', 'success')
-    } else {
-      showToast(response.data.message || 'خطا در به‌روزرسانی اطلاعات', 'error')
-    }
-  } catch (err) {
-    console.error('Update prize error:', err)
-
-    if (err.response?.data?.errors) {
-      errors.value = err.response.data.errors
-    } else {
-      showToast(err.response?.data?.message || 'خطا در به‌روزرسانی اطلاعات', 'error')
-    }
-  } finally {
-    updating.value = false
-  }
-}
-
-const handleUpdate = async () => {
-  if (!editingPrize.value || !validateEditForm()) {
-    return
-  }
-
-  await submitUpdate()
 }
 
 const handleDelete = async (row) => {
@@ -638,23 +504,23 @@ const handleDelete = async (row) => {
   if (!result.isConfirmed) return
 
   try {
-        const response = await apiClient.delete(`/dynasty/prizes/${prize.id}`)
+    const response = await apiClient.delete(`/dynasty/prizes/${row.id}`)
 
-        if (response.data.success) {
-          await fetchPrizes()
-          showToast('پاداش با موفقیت حذف شد', 'success')
-        } else {
-          showToast(response.data.message || 'خطا در حذف پاداش', 'error')
-        }
-      } catch (err) {
-        console.error('Delete prize error:', err)
-
-        showToast(err.response?.data?.message || 'خطا در حذف پاداش', 'error')
-      }
+    if (response.data.success) {
+      await fetchPrizes()
+      showToast('پاداش با موفقیت حذف شد', 'success')
+    } else {
+      showToast(response.data.message || 'خطا در حذف پاداش', 'error')
+    }
+  } catch (err) {
+    console.error('Delete prize error:', err)
+    showToast(err.response?.data?.message || 'خطا در حذف پاداش', 'error')
+  }
 }
 
 const clearPrizes = () => {
   prizes.value = []
+  totalPaidAmount.value = 0
   pagination.value = null
 }
 
@@ -670,6 +536,7 @@ const fetchPrizes = () => execute(async () => {
         rowId: (currentPageNum - 1) * perPage + index + 1
       }
     })
+    totalPaidAmount.value = response.data.data.total_paid_amount ?? 0
     pagination.value = response.data.data.pagination
   } else {
     error.value = 'خطا در دریافت اطلاعات جوایز'
@@ -687,8 +554,3 @@ onMounted(() => {
   fetchPrizes()
 })
 </script>
-
-<style scoped>
-/* Additional styles if needed */
-</style>
-

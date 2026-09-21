@@ -359,11 +359,13 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
         Route::controller(TranslationController::class)->group(function () {
             Route::get('languages', 'languages');
             Route::get('/', 'index')->withoutMiddleware('auth:sanctum');
-            Route::get('{translation}', 'show');
             Route::post('/', 'store');
+            Route::post('import', 'importNew');
+            Route::get('{translation}', 'show');
             Route::delete('{translation}', 'destroy');
             Route::patch('{translation}/status', 'toggleStatus');
             Route::post('{translation}/export', 'export');
+            Route::post('{translation}/import', 'import');
         });
 
         Route::prefix('{translation}/modals')->controller(TranslationModalController::class)->group(function () {
