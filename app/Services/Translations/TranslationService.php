@@ -50,7 +50,7 @@ class TranslationService
                 $languages = json_decode($langFile, true, flags: JSON_THROW_ON_ERROR);
             } catch (JsonException $exception) {
                 throw ValidationException::withMessages([
-                    'languages' => 'Invalid language definition file.',
+                    'languages' => __('translations.invalid_language_definition'),
                 ]);
             }
 
@@ -78,7 +78,7 @@ class TranslationService
 
         if (! $language) {
             throw ValidationException::withMessages([
-                'code' => "The provided language code [{$languageCode}] is not supported.",
+                'code' => __('translations.unsupported_language_code', ['code' => $languageCode]),
             ]);
         }
 
@@ -664,7 +664,7 @@ class TranslationService
 
         if ($hierarchy === []) {
             throw ValidationException::withMessages([
-                'file' => 'Persian reference translation hierarchy is empty or missing.',
+                'file' => __('translations.persian_hierarchy_missing'),
             ]);
         }
 
@@ -690,21 +690,21 @@ class TranslationService
                 $payload = json_decode($raw, true, flags: JSON_THROW_ON_ERROR);
             } catch (JsonException $exception) {
                 throw ValidationException::withMessages([
-                    'file' => 'The uploaded translation file is not valid JSON.',
+                    'file' => __('translations.invalid_json_file'),
                 ]);
             }
         }
 
         if (! is_array($payload)) {
             throw ValidationException::withMessages([
-                'file' => 'Translation import file must match the fa.json structure (flat unique_id to text object).',
+                'file' => __('translations.invalid_structure_flat_object'),
             ]);
         }
 
         // json_decode('{}') becomes [] — allow empty; reject true JSON arrays.
         if ($payload !== [] && array_is_list($payload)) {
             throw ValidationException::withMessages([
-                'file' => 'Translation import file must match the fa.json structure (flat unique_id to text object).',
+                'file' => __('translations.invalid_structure_flat_object'),
             ]);
         }
 
@@ -715,13 +715,13 @@ class TranslationService
 
             if (! is_numeric($rawUniqueId) || (string) (int) $rawUniqueId !== (string) $rawUniqueId) {
                 throw ValidationException::withMessages([
-                    'file' => 'Translation import file must match the fa.json structure (numeric unique_id keys only).',
+                    'file' => __('translations.invalid_structure_numeric_keys'),
                 ]);
             }
 
             if (is_bool($value) || is_array($value) || is_object($value)) {
                 throw ValidationException::withMessages([
-                    'file' => 'Translation import file must match the fa.json structure (string or null values only).',
+                    'file' => __('translations.invalid_structure_string_values'),
                 ]);
             }
         }
@@ -737,7 +737,7 @@ class TranslationService
 
         if (is_bool($value) || is_array($value) || is_object($value)) {
             throw ValidationException::withMessages([
-                'file' => 'Translation values must be strings or null.',
+                'file' => __('translations.invalid_value_type'),
             ]);
         }
 

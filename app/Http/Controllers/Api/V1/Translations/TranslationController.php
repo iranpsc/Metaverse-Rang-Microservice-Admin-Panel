@@ -19,7 +19,7 @@ class TranslationController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = Translation::query()->withCount('modals');
+        $query = Translation::query()->withCount('modals')->orderBy('name');
         $loadActiveTranslations = $request->query('active', false) == true;
 
         if ($loadActiveTranslations) {

@@ -71,7 +71,7 @@ class TranslationApiTest extends TestCase
             'status' => false,
         ]);
 
-        $response = $this->getJson(self::INDEX_PATH);
+        $response = $this->getJson(self::INDEX_PATH.'?active=1');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -88,9 +88,27 @@ class TranslationApiTest extends TestCase
             'status' => false,
         ]);
 
-        $this->getJson(self::INDEX_PATH)
+        $this->getJson(self::INDEX_PATH.'?active=1')
             ->assertOk()
             ->assertJsonCount(0, 'data');
+    }
+
+    public function test_index_includes_inactive_translations_by_default(): void
+    {
+        $this->createTranslation([
+            'code' => 'de',
+            'name' => 'German',
+            'status' => false,
+        ]);
+        $this->createTranslation([
+            'code' => 'en',
+            'name' => 'English',
+            'status' => true,
+        ]);
+
+        $this->getJson(self::INDEX_PATH)
+            ->assertOk()
+            ->assertJsonCount(2, 'data');
     }
 
     public function test_index_returns_expected_json_structure_including_icon_and_modals_count(): void

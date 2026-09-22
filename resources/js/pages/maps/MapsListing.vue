@@ -132,13 +132,29 @@
           @change="clearUploadFieldError('border_file')"
         />
 
-        <Input
-          v-model="uploadFormData.color"
-          type="color"
-          label="رنگ محدوده"
-          :error="uploadErrors.color"
-          required
-        />
+        <div class="w-full">
+          <label
+            for="upload-map-color"
+            class="mb-2 block text-sm font-medium text-[var(--theme-text-primary)]"
+            :class="{ 'text-[var(--color-error,#EF4444)]': uploadErrors.color }"
+          >
+            رنگ محدوده
+            <span class="text-[var(--color-error,#EF4444)]">*</span>
+          </label>
+          <input
+            id="upload-map-color"
+            v-model="uploadFormData.color"
+            type="color"
+            required
+            class="h-10 w-full cursor-pointer rounded-lg border border-[var(--theme-border)] bg-transparent p-1"
+          />
+          <p
+            v-if="uploadErrors.color"
+            class="mt-1.5 text-xs text-[var(--color-error,#EF4444)]"
+          >
+            {{ uploadErrorMessage(uploadErrors.color) }}
+          </p>
+        </div>
       </div>
 
       <template #footer>

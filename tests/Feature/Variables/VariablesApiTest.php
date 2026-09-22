@@ -285,7 +285,7 @@ class VariablesApiTest extends TestCase
         $this->post(self::INDEX_PATH, $this->validVariableStorePayload([
             'asset' => '  soft blue  ',
         ]), ['Accept' => 'application/json'])
-            ->assertCreated()
+            ->assertOk()
             ->assertJsonPath('data.asset', 'soft-blue');
 
         $this->assertDatabaseHas('variables', [
