@@ -232,7 +232,7 @@ const targetTypeOptions = [
   { value: 'no_wallet', label: 'ارسال به کاربران بدون کیف پول رمزارز' }
 ]
 
-const GSM_7_REGEX = /^[\x00-\x7F€£¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !"#$%&'()*+,\-./0-9:;<=>?@A-Z\[\\\]^_`a-z{|}~]*$/
+const GSM_7_REGEX = /^[\x00-\x7F€£¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !"#$%&'()*+,\-./0-9:;<=>?@A-Z\[\\\]^`a-z{|}~]*$/
 
 function calculateSmsStats(text) {
   const charCount = [...text].length

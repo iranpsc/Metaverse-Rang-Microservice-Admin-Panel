@@ -339,8 +339,6 @@ const submitForm = async () => {
       formDataToSend.append('note', formData.value.note)
     }
 
-    formDataToSend
-
     const url = isEditMode.value ? `/variables/${selectedVariable.value.id}` : '/variables'
 
     let response

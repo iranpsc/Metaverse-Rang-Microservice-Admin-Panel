@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Dokploy/Traefik terminates TLS. Without this, asset() and @vite emit http:// URLs.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             SecurityHeaders::class,
         ]);

@@ -552,9 +552,8 @@ router.beforeEach(async (to, from, next) => {
       return
     }
 
-    // Only verify with server immediately after login
-    // On page refresh, trust localStorage; API calls will enforce auth
-    const isPageRefresh = !from.name || from.name === null
+    // Only verify with server immediately after login.
+    // On page refresh, trust localStorage; API calls will enforce auth.
     const isFromLogin = from.name === 'login'
 
     if (isFromLogin) {

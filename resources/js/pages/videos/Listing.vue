@@ -647,7 +647,7 @@ const extractUploadInfo = (response) => {
 
   let payload = response
 
-  if (typeof payload === 'object' && payload !== null && typeof payload.response === 'string') {
+  if (typeof payload === 'object' && typeof payload.response === 'string') {
     payload = payload.response
   }
 

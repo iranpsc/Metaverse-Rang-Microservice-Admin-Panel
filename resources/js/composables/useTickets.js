@@ -47,25 +47,6 @@ export function useTickets() {
   }
 
   /**
-   * Fetch a ticket by id
-   */
-  const fetchTicket = async (ticketId) => {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await apiClient.get(`/tickets/${ticketId}`)
-      if (response.data.success) {
-        ticket.value = response.data.data
-        return response.data
-      }
-    } catch (err) {
-      error.value = err.response?.data?.message || 'خطا در دریافت تیکت'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-  /**
    * Send response to a ticket
    */
   const sendResponse = async (ticketId, responseData) => {
