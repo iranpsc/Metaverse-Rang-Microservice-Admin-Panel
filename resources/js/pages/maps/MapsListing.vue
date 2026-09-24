@@ -486,8 +486,6 @@ const submitUploadForm = async () => {
     formDataToSend.append('border_file', borderFile.value)
     formDataToSend.append('color', uploadFormData.value.color)
 
-    formDataToSend
-
     const response = await createMap(formDataToSend)
 
     if (response.data.success) {
@@ -558,8 +556,6 @@ const submitUpdateForm = async () => {
     formDataToSend.append('color', updateFormData.value.color)
     formDataToSend.append('_method', 'PUT')
 
-    formDataToSend
-
     const response = await updateMap(selectedMap.value.id, formDataToSend)
 
     if (response.data.success) {
@@ -595,7 +591,6 @@ const submitInsertForm = async () => {
     insertSaving.value = true
 
     const formDataToSend = new FormData()
-    formDataToSend
 
     const response = await insertMapIntoDatabase(selectedMap.value.id, formDataToSend)
 
