@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
-use App\Models\Employee\Employee;
+use App\Models\User;
 use App\Notifications\AccountCreatedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +15,7 @@ use Illuminate\Support\Str;
 use Morilog\Jalali\Jalalian;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Throwable;
 
 class AdminsController extends Controller
 {
@@ -31,32 +32,38 @@ class AdminsController extends Controller
             ->filter(function ($admin) {
                 // Filter out super-admin
                 return ! $admin->hasRole('super-admin');
-            })
-            ->map(function ($admin) {
-                return [
-                    'id' => $admin->id,
-                    'name' => $admin->name,
-                    'email' => $admin->email,
-                    'phone' => $admin->phone,
-                    'created_at' => $admin->created_at,
-                    'created_at_shamsi' => Jalalian::fromCarbon($admin->created_at)->format('Y/m/d'),
-                    'created_at_time' => Jalalian::fromCarbon($admin->created_at)->format('H:i:s'),
-                    'roles' => $admin->roles->map(function ($role) {
-                        return [
-                            'id' => $role->id,
-                            'title' => $role->title,
-                            'name' => $role->name,
-                        ];
-                    }),
-                    'permissions' => $admin->getDirectPermissions()->map(function ($permission) {
-                        return [
-                            'id' => $permission->id,
-                            'title' => $permission->title,
-                            'name' => $permission->name,
-                        ];
-                    }),
-                ];
-            })
+            });
+
+        $userCodesByEmail = User::query()
+            ->whereIn('email', $admins->pluck('email')->filter()->unique())
+            ->pluck('code', 'email');
+
+        $admins = $admins->map(function ($admin) use ($userCodesByEmail) {
+            return [
+                'id' => $admin->id,
+                'code' => $userCodesByEmail->get($admin->email),
+                'name' => $admin->name,
+                'email' => $admin->email,
+                'phone' => $admin->phone,
+                'created_at' => $admin->created_at,
+                'created_at_shamsi' => Jalalian::fromCarbon($admin->created_at)->format('Y/m/d'),
+                'created_at_time' => Jalalian::fromCarbon($admin->created_at)->format('H:i:s'),
+                'roles' => $admin->roles->map(function ($role) {
+                    return [
+                        'id' => $role->id,
+                        'title' => $role->title,
+                        'name' => $role->name,
+                    ];
+                }),
+                'permissions' => $admin->getDirectPermissions()->map(function ($permission) {
+                    return [
+                        'id' => $permission->id,
+                        'title' => $permission->title,
+                        'name' => $permission->name,
+                    ];
+                }),
+            ];
+        })
             ->values();
 
         return response()->json([
@@ -69,25 +76,64 @@ class AdminsController extends Controller
     }
 
     /**
-     * Get all employees
+     * Search users for Select2 dropdown when creating an admin.
      */
-    public function getEmployees(): JsonResponse
+    public function searchUsers(Request $request): JsonResponse
     {
-        $employees = Employee::select(['id', 'fname', 'lname'])->get()->map(function ($employee) {
+        $validated = $request->validate([
+            'search' => 'nullable|string|max:255',
+            'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:50',
+        ]);
+
+        $search = trim($validated['search'] ?? '');
+        $page = (int) ($validated['page'] ?? 1);
+        $perPage = (int) ($validated['per_page'] ?? 5);
+
+        $existingAdminEmails = Admin::query()->select('email');
+
+        $query = User::query()
+            ->select(['id', 'name', 'code', 'email', 'phone'])
+            ->whereNotNull('email')
+            ->where('email', '!=', '')
+            ->latest('id');
+
+        if ($search !== '') {
+            $query->where(function ($builder) use ($search) {
+                $builder->where('code', 'like', '%'.$search.'%')
+                    ->orWhere('name', 'like', '%'.$search.'%');
+            });
+        } else {
+            $query->whereNotIn('email', $existingAdminEmails)
+                ->whereNotNull('phone')
+                ->where('phone', '!=', '');
+        }
+
+        $users = $query->paginate($perPage, ['*'], 'page', $page);
+        $adminEmails = Admin::query()->pluck('email')->flip();
+
+        $options = collect($users->items())->map(function (User $user) use ($adminEmails) {
+            $code = $user->code ? " ({$user->code})" : '';
+            $alreadyAdmin = $adminEmails->has($user->email);
+            $missingPhone = blank($user->phone);
+            $suffix = $alreadyAdmin ? ' — مدیر است' : ($missingPhone ? ' — بدون شماره تماس' : '');
+
             return [
-                'id' => $employee->id,
-                'name' => $employee->fname.' '.$employee->lname,
-                'fname' => $employee->fname,
-                'lname' => $employee->lname,
+                'value' => $user->id,
+                'label' => $user->name.$code.$suffix,
+                'disabled' => $alreadyAdmin || $missingPhone,
             ];
-        });
+        })->values();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'employees' => $employees,
+                'options' => $options,
+                'pagination' => [
+                    'more' => $users->hasMorePages(),
+                ],
             ],
-            'message' => 'Employees retrieved successfully.',
+            'message' => 'Users retrieved successfully.',
         ]);
     }
 
@@ -187,12 +233,12 @@ class AdminsController extends Controller
     }
 
     /**
-     * Create a new admin from employee
+     * Create a new admin from a user
      */
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'employee' => 'required|exists:employees,id',
+            'user_id' => 'required|integer|exists:users,id',
             'roles' => 'required|array|min:1',
             'roles.*' => 'required|integer|exists:roles,id',
         ]);
@@ -205,14 +251,27 @@ class AdminsController extends Controller
             ], 422);
         }
 
-        $employee = Employee::findOrFail($request->employee);
+        $user = User::findOrFail($request->user_id);
 
-        // Check if admin already exists for this employee
-        $existingAdmin = Admin::where('email', $employee->email)->first();
+        if (blank($user->email)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User does not have an email address',
+            ], 422);
+        }
+
+        if (blank($user->phone)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User does not have a phone number',
+            ], 422);
+        }
+
+        $existingAdmin = Admin::where('email', $user->email)->first();
         if ($existingAdmin) {
             return response()->json([
                 'success' => false,
-                'message' => 'Admin already exists for this employee',
+                'message' => 'Admin already exists for this user',
             ], 422);
         }
 
@@ -220,9 +279,9 @@ class AdminsController extends Controller
         $access_password = random_int(100000, 999999);
 
         $admin = Admin::create([
-            'name' => $employee->fname.' '.$employee->lname,
-            'email' => $employee->email,
-            'phone' => $employee->phone,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
             'password' => Hash::make($password),
         ]);
 
@@ -240,7 +299,11 @@ class AdminsController extends Controller
 
         $admin->assignRole($roles);
 
-        $admin->notify(new AccountCreatedNotification($employee->email, $password, $access_password));
+        try {
+            $admin->notify(new AccountCreatedNotification($user->email, $password, $access_password));
+        } catch (Throwable $exception) {
+            report($exception);
+        }
 
         return response()->json([
             'success' => true,

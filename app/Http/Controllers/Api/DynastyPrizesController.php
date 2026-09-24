@@ -3,44 +3,32 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Dynasty\DynastyPrize;
+use App\Http\Requests\Dynasty\StoreDynastyPrizeRequest;
+use App\Http\Requests\Dynasty\UpdateDynastyPrizeRequest;
+use App\Http\Resources\Dynasty\DynastyPrizeResource;
+use App\Services\Dynasty\DynastyPrizeService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class DynastyPrizesController extends Controller
 {
+    public function __construct(private readonly DynastyPrizeService $service) {}
+
     /**
      * Get paginated dynasty prizes
      */
     public function index(Request $request): JsonResponse
     {
         try {
-            $perPage = (int) $request->input('per_page', 10);
-
-            $prizes = DynastyPrize::paginate($perPage);
-
-            $transformedPrizes = $prizes->map(function (DynastyPrize $prize) {
-                return [
-                    'id' => $prize->id,
-                    'member' => $prize->member,
-                    'member_title' => $prize->getRelationTitle(),
-                    'satisfaction' => $prize->satisfaction,
-                    'introduction_profit_increase' => $prize->introduction_profit_increase,
-                    'introduction_profit_increase_percent' => $prize->introduction_profit_increase * 100,
-                    'accumulated_capital_reserve' => $prize->accumulated_capital_reserve,
-                    'accumulated_capital_reserve_percent' => $prize->accumulated_capital_reserve * 100,
-                    'data_storage' => $prize->data_storage,
-                    'data_storage_percent' => $prize->data_storage * 100,
-                    'psc' => $prize->psc,
-                    'created_at' => $prize->created_at,
-                    'updated_at' => $prize->updated_at,
-                ];
-            });
+            $result = $this->service->list((int) $request->input('per_page', 10));
+            $prizes = $result['prizes'];
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'prizes' => $transformedPrizes,
+                    'prizes' => DynastyPrizeResource::collection(collect($prizes->items()))->resolve($request),
+                    'total_paid_amount' => $result['total_paid_amount'],
                     'pagination' => [
                         'current_page' => $prizes->currentPage(),
                         'last_page' => $prizes->lastPage(),
@@ -64,45 +52,15 @@ class DynastyPrizesController extends Controller
     /**
      * Store a new dynasty prize
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreDynastyPrizeRequest $request): JsonResponse
     {
-        $request->validate([
-            'member' => 'required|in:father,mother,brother,offspring,sister,husband,wife|unique:dynasty_prizes,member',
-            'satisfaction' => 'required|numeric|min:0',
-            'introduction_profit_increase' => 'required|numeric|min:0',
-            'accumulated_capital_reserve' => 'required|numeric|min:0',
-            'data_storage' => 'required|numeric|min:0',
-            'psc' => 'required|numeric|min:0',
-        ]);
-
         try {
-            $prize = DynastyPrize::create([
-                'member' => $request->input('member'),
-                'satisfaction' => $request->input('satisfaction'),
-                'introduction_profit_increase' => $request->input('introduction_profit_increase') / 100,
-                'accumulated_capital_reserve' => $request->input('accumulated_capital_reserve') / 100,
-                'data_storage' => $request->input('data_storage') / 100,
-                'psc' => $request->input('psc'),
-            ]);
+            $prize = $this->service->create($request->validated());
 
             return response()->json([
                 'success' => true,
                 'message' => 'اطلاعات با موفقیت ثبت شد',
-                'data' => [
-                    'id' => $prize->id,
-                    'member' => $prize->member,
-                    'member_title' => $prize->getRelationTitle(),
-                    'satisfaction' => $prize->satisfaction,
-                    'introduction_profit_increase' => $prize->introduction_profit_increase,
-                    'introduction_profit_increase_percent' => $prize->introduction_profit_increase * 100,
-                    'accumulated_capital_reserve' => $prize->accumulated_capital_reserve,
-                    'accumulated_capital_reserve_percent' => $prize->accumulated_capital_reserve * 100,
-                    'data_storage' => $prize->data_storage,
-                    'data_storage_percent' => $prize->data_storage * 100,
-                    'psc' => $prize->psc,
-                    'created_at' => $prize->created_at,
-                    'updated_at' => $prize->updated_at,
-                ],
+                'data' => (new DynastyPrizeResource($prize))->toArray($request),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -116,52 +74,24 @@ class DynastyPrizesController extends Controller
     /**
      * Update an existing dynasty prize
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateDynastyPrizeRequest $request, int $id): JsonResponse
     {
-        $prize = DynastyPrize::find($id);
-
-        if (! $prize) {
+        try {
+            $prize = $this->service->findOrFail($id);
+        } catch (ModelNotFoundException) {
             return response()->json([
                 'success' => false,
                 'message' => 'پاداش یافت نشد',
             ], 404);
         }
 
-        $request->validate([
-            'satisfaction' => 'required|numeric|min:0',
-            'introduction_profit_increase' => 'required|numeric|min:0',
-            'accumulated_capital_reserve' => 'required|numeric|min:0',
-            'data_storage' => 'required|numeric|min:0',
-            'psc' => 'required|numeric|min:0',
-        ]);
-
         try {
-            $prize->update([
-                'satisfaction' => $request->input('satisfaction'),
-                'introduction_profit_increase' => $request->input('introduction_profit_increase') / 100,
-                'accumulated_capital_reserve' => $request->input('accumulated_capital_reserve') / 100,
-                'data_storage' => $request->input('data_storage') / 100,
-                'psc' => $request->input('psc'),
-            ]);
+            $prize = $this->service->update($prize, $request->validated());
 
             return response()->json([
                 'success' => true,
                 'message' => 'اطلاعات با موفقیت ثبت شد',
-                'data' => [
-                    'id' => $prize->id,
-                    'member' => $prize->member,
-                    'member_title' => $prize->getRelationTitle(),
-                    'satisfaction' => $prize->satisfaction,
-                    'introduction_profit_increase' => $prize->introduction_profit_increase,
-                    'introduction_profit_increase_percent' => $prize->introduction_profit_increase * 100,
-                    'accumulated_capital_reserve' => $prize->accumulated_capital_reserve,
-                    'accumulated_capital_reserve_percent' => $prize->accumulated_capital_reserve * 100,
-                    'data_storage' => $prize->data_storage,
-                    'data_storage_percent' => $prize->data_storage * 100,
-                    'psc' => $prize->psc,
-                    'created_at' => $prize->created_at,
-                    'updated_at' => $prize->updated_at,
-                ],
+                'data' => (new DynastyPrizeResource($prize))->toArray($request),
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -177,9 +107,9 @@ class DynastyPrizesController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        $prize = DynastyPrize::find($id);
-
-        if (! $prize) {
+        try {
+            $prize = $this->service->findOrFail($id);
+        } catch (ModelNotFoundException) {
             return response()->json([
                 'success' => false,
                 'message' => 'پاداش یافت نشد',
@@ -187,7 +117,7 @@ class DynastyPrizesController extends Controller
         }
 
         try {
-            $prize->delete();
+            $this->service->delete($prize);
 
             return response()->json([
                 'success' => true,

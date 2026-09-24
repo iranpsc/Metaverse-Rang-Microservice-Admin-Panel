@@ -8,6 +8,8 @@ class FeatureProperties extends Model
 {
     public $incrementing = false;
 
+    protected $keyType = 'string';
+
     protected $casts = [
         'feature_id' => 'int',
         'id' => 'string',

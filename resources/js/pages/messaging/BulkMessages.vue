@@ -1,9 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <div class="mb-4">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">ارسال پیام به کاربران</h1>
-      <p class="text-[var(--theme-text-secondary)]">ارسال گروهی ایمیل یا پیامک به کاربران</p>
-    </div>
+    <PageHeader
+      title="ارسال پیام به کاربران"
+      subtitle="ارسال گروهی ایمیل یا پیامک به کاربران"
+    />
 
     <!-- Channel selector -->
     <div class="flex flex-wrap gap-4">
@@ -194,7 +194,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import {
-  Card, Button, Textarea, Input, Select2, Alert
+  Card, Button, Textarea, Input, Select2, Alert, PageHeader
 } from '../../components/ui'
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import { useToast } from '../../composables/useToast'

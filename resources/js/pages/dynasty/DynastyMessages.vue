@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">پیام های سلسله</h1>
-      <p class="text-[var(--theme-text-secondary)]">مدیریت پیام‌های سلسله خانوادگی</p>
-    </div>
+    <PageHeader
+      title="پیام های سلسله"
+      subtitle="مدیریت پیام‌های سلسله خانوادگی"
+    />
 
     <!-- Create Button -->
     <div class="mb-6">
@@ -185,7 +184,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Modal, Button, Select, Alert, LoadingState, ErrorState } from '../../components/ui'
+import { Table, Modal, Button, Select, Alert, LoadingState, ErrorState, PageHeader } from '../../components/ui'
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'

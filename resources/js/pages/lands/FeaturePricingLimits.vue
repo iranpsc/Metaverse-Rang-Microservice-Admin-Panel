@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6" dir="rtl">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">محدودیت‌های قیمت</h1>
-      <p class="text-[var(--theme-text-secondary)]">تنظیم محدودیت‌های قیمت گذاری</p>
-    </div>
+    <PageHeader
+      title="محدودیت‌های قیمت"
+      subtitle="تنظیم محدودیت‌های قیمت گذاری"
+    />
 
     <!-- Loading State -->
     <LoadingState v-if="loading" />
@@ -18,24 +17,6 @@
 
     <!-- Main Content -->
     <div v-else class="space-y-6">
-      <!-- Price Limits History Table -->
-      <Table
-        v-if="priceLimits"
-        :columns="priceLimitsColumns"
-        :data="priceLimitsTableData"
-        container-class="mb-6"
-        row-number-header-class="text-center"
-        row-number-cell-class="text-center"
-      />
-
-      <!-- No Price Limits Alert -->
-      <Alert
-        v-else-if="!loading && !priceLimits"
-        variant="error"
-        message="محدودیت قیمت گذاری برای این زمین ثبت نشده است."
-        :dismissible="false"
-      />
-
       <!-- Form -->
       <div class="bg-[var(--theme-bg-elevated)] rounded-lg border border-[var(--theme-border)] p-6">
         <div class="grid grid-cols-2 gap-6 mb-6">
@@ -62,7 +43,7 @@
         </div>
 
         <div class="flex justify-end">
-        <Button
+          <Button
             variant="primary"
             :loading="saving"
             @click="handleSave"
@@ -72,14 +53,43 @@
           </Button>
         </div>
       </div>
+
+      <!-- Activity Logs -->
+      <div>
+        <h2 class="text-lg font-semibold text-[var(--theme-text-primary)] mb-3">
+          گزارش فعالیت‌ها
+        </h2>
+
+        <Table
+          v-if="activityLogs.length"
+          :columns="activityColumns"
+          :data="activityLogs"
+          container-class="mb-6"
+          row-number-header-class="text-center"
+          row-number-cell-class="text-center"
+          empty-state-message="فعالیتی ثبت نشده است"
+        >
+          <template #cell-event="{ value }">
+            <span :class="eventBadgeClass(value)">{{ eventLabel(value) }}</span>
+          </template>
+        </Table>
+
+        <Alert
+          v-else
+          variant="info"
+          message="فعالیتی برای محدودیت‌های قیمت ثبت نشده است."
+          :dismissible="false"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Input, Button, Alert, LoadingState, ErrorState, Table } from '../../components/ui'
+import { Input, Button, Alert, LoadingState, ErrorState, Table, PageHeader } from '../../components/ui'
+import { getApiErrorMessage, handleAuthListError } from '../../utils/apiErrors'
 import { useToast } from '../../composables/useToast'
 
 const { showToast } = useToast()
@@ -87,34 +97,57 @@ const { showToast } = useToast()
 const loading = ref(true)
 const error = ref(null)
 const priceLimits = ref(null)
+const activityLogs = ref([])
 const saving = ref(false)
 const errors = ref({})
 
-const priceLimitsColumns = [
+const activityColumns = [
   {
-    key: 'updated_at_date',
+    key: 'created_at_jalali',
     label: 'تاریخ تغییر',
     textSecondary: true,
     cellClass: 'text-right',
     headerClass: 'text-right'
   },
   {
-    key: 'updated_at_time',
+    key: 'created_at_time',
     label: 'ساعت تغییر',
     textSecondary: true,
     cellClass: 'text-right',
     headerClass: 'text-right'
   },
   {
-    key: 'changer_name',
+    key: 'causer_name',
     label: 'نام تغییر دهنده',
     textSecondary: true,
+    cellClass: 'text-right',
+    headerClass: 'text-right'
+  },
+  {
+    key: 'event',
+    label: 'رویداد',
     cellClass: 'text-right',
     headerClass: 'text-right'
   }
 ]
 
-const priceLimitsTableData = computed(() => (priceLimits.value ? [priceLimits.value] : []))
+const eventLabels = {
+  created: 'ایجاد',
+  updated: 'ویرایش',
+  deleted: 'حذف'
+}
+
+const eventLabel = (event) => eventLabels[event] || event || '-'
+
+const eventBadgeClass = (event) => {
+  const base = 'inline-flex px-2.5 py-1 rounded-full text-xs font-medium border '
+  const map = {
+    created: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+    updated: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
+    deleted: 'bg-rose-500/10 text-rose-300 border-rose-500/20'
+  }
+  return base + (map[event] || 'bg-[var(--theme-bg-glass)] text-[var(--theme-text-secondary)] border-[var(--theme-border)]')
+}
 
 const formData = ref({
   public_price_limit: 0,
@@ -125,17 +158,29 @@ const validateForm = () => {
   errors.value = {}
   error.value = null
 
-  if (!formData.value.public_price_limit || formData.value.public_price_limit === '') {
+  if (formData.value.public_price_limit === '' || formData.value.public_price_limit === null || formData.value.public_price_limit === undefined) {
     errors.value.public_price_limit = 'محدودیت قیمت گذاری عموم الزامی است'
     return false
   }
 
-  if (!formData.value.under_eighteen_price_limit || formData.value.under_eighteen_price_limit === '') {
+  if (formData.value.under_eighteen_price_limit === '' || formData.value.under_eighteen_price_limit === null || formData.value.under_eighteen_price_limit === undefined) {
     errors.value.under_eighteen_price_limit = 'محدودیت قیمت گذاری زیر ۱۸ سال الزامی است'
     return false
   }
 
   return true
+}
+
+const applyResponseData = (payload) => {
+  priceLimits.value = payload?.price_limits ?? null
+  activityLogs.value = payload?.activity_logs ?? []
+
+  if (priceLimits.value) {
+    formData.value = {
+      public_price_limit: priceLimits.value.public_price_limit || 0,
+      under_eighteen_price_limit: priceLimits.value.under_eighteen_price_limit || 0
+    }
+  }
 }
 
 const submitPricingLimitsUpdate = async () => {
@@ -150,7 +195,11 @@ const submitPricingLimitsUpdate = async () => {
 
     if (response.data.success) {
       showToast('محدودیت‌های قیمت با موفقیت به‌روزرسانی شدند', 'success')
-      await fetchPriceLimits()
+      if (response.data.data) {
+        applyResponseData(response.data.data)
+      } else {
+        await fetchPriceLimits()
+      }
     } else {
       error.value = 'خطا در ثبت اطلاعات'
     }
@@ -183,53 +232,27 @@ const fetchPriceLimits = async () => {
     const response = await apiClient.get('/lands/feature-pricing-limits')
 
     if (response.data.success) {
-      priceLimits.value = response.data.data.price_limits
-
-      if (priceLimits.value) {
-        formData.value = {
-          public_price_limit: priceLimits.value.public_price_limit || 0,
-          under_eighteen_price_limit: priceLimits.value.under_eighteen_price_limit || 0
-        }
-
-        priceLimits.value.updated_at_date = formatDate(priceLimits.value.updated_at)
-        priceLimits.value.updated_at_time = formatTime(priceLimits.value.updated_at)
-        priceLimits.value.changer_name = priceLimits.value.changer_name || '-'
-      }
+      applyResponseData(response.data.data)
     } else {
       error.value = 'خطا در دریافت اطلاعات محدودیت قیمت'
     }
   } catch (err) {
     console.error('Pricing limits fetch error:', err)
 
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+    const clearPricingData = () => {
       priceLimits.value = null
-      loading.value = false
+      activityLogs.value = []
+    }
+
+    if (handleAuthListError(err, { onClear: clearPricingData, loading })) {
       return
     }
 
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    priceLimits.value = null
+    error.value = getApiErrorMessage(err, 'خطا در بارگذاری اطلاعات')
+    clearPricingData()
   } finally {
     loading.value = false
   }
-}
-
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}/${month}/${day}`
-}
-
-const formatTime = (dateString) => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  return `${hours}:${minutes}:${seconds}`
 }
 
 onMounted(() => {

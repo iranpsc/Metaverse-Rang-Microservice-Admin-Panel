@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">متغیرهای سیستم</h1>
-      <p class="text-[var(--theme-text-secondary)]">مدیریت، ایجاد و ویرایش متغیرهای سیستمی</p>
-    </div>
+    <PageHeader
+      title="متغیرهای سیستم"
+      subtitle="مدیریت، ایجاد و ویرایش متغیرهای سیستمی"
+    />
 
     <!-- Actions -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -101,7 +100,7 @@
         v-if="pagination && pagination.total > 0"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </div>
 
@@ -227,66 +226,62 @@
       </template>
     </Modal>
 
-    <!-- History Modal -->
-    <Modal
+    <ChangeHistoryModal
       :model-value="showHistoryModal"
-      @update:model-value="closeHistoryModal"
+      @update:model-value="onHistoryModalVisibility"
       :title="historyModalTitle"
-      size="xl"
+      :columns="systemVariableHistoryColumns"
+      :entries="selectedVariable?.change_logs || []"
+      empty-message="تاریخچه ای برای این متغیر ثبت نشده است"
+      empty-table-message="تاریخچه ای یافت نشد"
     >
-      <div v-if="selectedVariable?.change_logs?.length" class="space-y-4" dir="rtl">
-        <Table
-          :columns="historyColumns"
-          :data="selectedVariable.change_logs"
-          :show-row-number="true"
-          empty-state-message="تاریخچه ای یافت نشد"
-        >
-          <template #cell-previous_value="{ value }">
-            <span class="font-mono">{{ formatNumber(value) }}</span>
-          </template>
-          <template #cell-current_value="{ value }">
-            <span class="font-mono">{{ formatNumber(value) }}</span>
-          </template>
-          <template #cell-created_at="{ value }">
-            <div class="flex flex-col">
-              <span>{{ formatDate(value) }}</span>
-              <span class="text-[var(--theme-text-secondary)] text-xs">{{ formatTime(value) }}</span>
-            </div>
-          </template>
-        </Table>
-      </div>
-      <div v-else class="py-8 text-center text-[var(--theme-text-secondary)]">
-        تاریخچه ای برای این متغیر ثبت نشده است
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end" dir="rtl">
-          <Button variant="danger" @click="closeHistoryModal">
-            بستن
-          </Button>
+      <template #cell-previous_value="{ value }">
+        <span class="font-mono">{{ formatNumber(value) }}</span>
+      </template>
+      <template #cell-current_value="{ value }">
+        <span class="font-mono">{{ formatNumber(value) }}</span>
+      </template>
+      <template #cell-created_at="{ value }">
+        <div class="flex flex-col">
+          <span>{{ formatDate(value) }}</span>
+          <span class="text-[var(--theme-text-secondary)] text-xs">{{ formatTime(value) }}</span>
         </div>
       </template>
-    </Modal>
+    </ChangeHistoryModal>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import apiClient from '../../utils/api'
-import { Button, ErrorState, Input, LoadingState, Modal, Pagination, SearchBox, Table } from '../../components/ui'
+import { Button, ErrorState, Input, LoadingState, Modal, Pagination, SearchBox, Table, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
+import { normalizePagination } from '../../utils/pagination'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import { formatDisplayDate, formatDisplayTime } from '../../utils/dateFormatter'
+import { formatPersianNumber } from '../../utils/numberFormatter'
+import ChangeHistoryModal from '../../components/variables/ChangeHistoryModal.vue'
+import { systemVariableHistoryColumns } from '../../utils/variables/changeHistoryColumns'
 
 const { showToast } = useToast()
 
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams,
+  resetToFirstPage
+} = usePaginatedList()
+
 const variables = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
-const searchTerm = ref('')
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -339,31 +334,6 @@ const tableColumns = [
   }
 ]
 
-const historyColumns = [
-  {
-    key: 'changer_name',
-    label: 'تغییر دهنده'
-  },
-  {
-    key: 'previous_value',
-    label: 'مقدار قبلی'
-  },
-  {
-    key: 'current_value',
-    label: 'مقدار فعلی'
-  },
-  {
-    key: 'note',
-    label: 'یادداشت',
-    defaultValue: '-'
-  },
-  {
-    key: 'created_at',
-    label: 'زمان تغییر',
-    textSecondary: true
-  }
-]
-
 const historyModalTitle = computed(() => {
   if (!selectedVariable.value) {
     return 'تاریخچه تغییرات'
@@ -372,48 +342,10 @@ const historyModalTitle = computed(() => {
   return `تاریخچه تغییرات - ${selectedVariable.value.name}`
 })
 
-const formatNumber = (value) => {
-  if (value === null || value === undefined || value === '') {
-    return '-'
-  }
+const formatNumber = (value) => formatPersianNumber(value, { passthroughInvalid: true })
 
-  const parsed = Number(value)
-  if (Number.isNaN(parsed)) {
-    return value
-  }
-
-  return parsed.toLocaleString('fa-IR')
-}
-
-const formatDate = (value) => {
-  if (!value) {
-    return '-'
-  }
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return '-'
-  }
-
-  return date.toLocaleDateString('fa-IR')
-}
-
-const formatTime = (value) => {
-  if (!value) {
-    return '-'
-  }
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return '-'
-  }
-
-  return date.toLocaleTimeString('fa-IR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  })
-}
+const formatDate = formatDisplayDate
+const formatTime = (value) => formatDisplayTime(value, { includeSeconds: true })
 
 const resetCreateForm = () => {
   createForm.name = ''
@@ -435,90 +367,40 @@ const resetEditForm = () => {
   })
 }
 
-const buildPagination = (payload) => {
-  if (!payload) {
-    return null
-  }
-
-  return {
-    current_page: payload.current_page,
-    last_page: payload.last_page,
-    per_page: payload.per_page,
-    total: payload.total,
-    from: payload.from,
-    to: payload.to
-  }
+const clearVariables = () => {
+  variables.value = []
+  pagination.value = null
 }
 
-const fetchVariables = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const fetchVariables = () => execute(async () => {
+  const response = await apiClient.get('/system-variables', { params: buildParams() })
 
-    const params = {
-      page: currentPage.value,
-      per_page: 10
-    }
-
-    if (searchTerm.value) {
-      params.search = searchTerm.value
-    }
-
-    const response = await apiClient.get('/system-variables', { params })
-
-    if (!response.data.success) {
-      error.value = response.data.message || 'خطا در دریافت اطلاعات'
-      variables.value = []
-      pagination.value = null
-      return
-    }
-
-    variables.value = response.data.data.variables || []
-    pagination.value = buildPagination(response.data.data.pagination)
-  } catch (err) {
-    console.error('System variables fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      variables.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    variables.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+  if (!response.data.success) {
+    error.value = response.data.message || 'خطا در دریافت اطلاعات'
+    clearVariables()
+    return
   }
-}
 
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchVariables()
-}
+  variables.value = response.data.data.variables || []
+  pagination.value = normalizePagination(response.data.data.pagination)
+}, {
+  onClear: clearVariables,
+  logLabel: 'System variables fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
+
+const handleSearch = () => search(fetchVariables)
 
 const handleClear = () => {
   if (!searchTerm.value) {
     return
   }
   searchTerm.value = ''
-  currentPage.value = 1
+  resetToFirstPage()
   fetchVariables()
 }
 
-const goToPage = (page) => {
-  if (!pagination.value) {
-    return
-  }
-
-  if (page < 1 || page > pagination.value.last_page) {
-    return
-  }
-
-  currentPage.value = page
-  fetchVariables()
-}
+const onPageChange = (page) => goToPage(page, fetchVariables)
 
 const openCreateModal = () => {
   resetCreateForm()
@@ -555,6 +437,13 @@ const openHistoryModal = (variable) => {
 const closeHistoryModal = () => {
   showHistoryModal.value = false
   selectedVariable.value = null
+}
+
+const onHistoryModalVisibility = (value) => {
+  showHistoryModal.value = value
+  if (!value) {
+    selectedVariable.value = null
+  }
 }
 
 const handleValidationErrors = (errors, target) => {

@@ -265,4 +265,66 @@ class PricingControllerTest extends TestCase
 
         $this->assertSame([$newest->id, $middle->id, $oldest->id], $ids);
     }
+
+    public function test_pricing_requests_can_be_sorted_by_price_irr_desc(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $low = $this->createSellFeatureRequest(['status' => 0, 'price_irr' => 1000]);
+        $high = $this->createSellFeatureRequest(['status' => 0, 'price_irr' => 9000]);
+        $mid = $this->createSellFeatureRequest(['status' => 0, 'price_irr' => 5000]);
+
+        $response = $this->getJson(self::INDEX_PATH.'?'.http_build_query([
+            'sort_by' => 'price_irr',
+            'sort' => 'desc',
+        ]))->assertOk();
+
+        $ids = collect($response->json('data.pricings'))->pluck('id')->all();
+
+        $this->assertSame([$high->id, $mid->id, $low->id], $ids);
+    }
+
+    public function test_pricing_requests_can_be_sorted_by_price_psc_asc(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $low = $this->createSellFeatureRequest(['status' => 0, 'price_psc' => 10]);
+        $high = $this->createSellFeatureRequest(['status' => 0, 'price_psc' => 90]);
+        $mid = $this->createSellFeatureRequest(['status' => 0, 'price_psc' => 50]);
+
+        $response = $this->getJson(self::INDEX_PATH.'?'.http_build_query([
+            'sort_by' => 'price_psc',
+            'sort' => 'asc',
+        ]))->assertOk();
+
+        $ids = collect($response->json('data.pricings'))->pluck('id')->all();
+
+        $this->assertSame([$low->id, $mid->id, $high->id], $ids);
+    }
+
+    public function test_invalid_sort_by_falls_back_to_created_at_desc(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $oldest = $this->createSellFeatureRequest(['status' => 0]);
+        $oldest->forceFill([
+            'created_at' => now()->subDays(2),
+            'updated_at' => now()->subDays(2),
+        ])->save();
+
+        $newest = $this->createSellFeatureRequest(['status' => 0]);
+        $newest->forceFill([
+            'created_at' => now(),
+            'updated_at' => now(),
+        ])->save();
+
+        $response = $this->getJson(self::INDEX_PATH.'?'.http_build_query([
+            'sort_by' => 'invalid_column',
+            'sort' => 'asc',
+        ]))->assertOk();
+
+        $ids = collect($response->json('data.pricings'))->pluck('id')->all();
+
+        $this->assertSame([$newest->id, $oldest->id], $ids);
+    }
 }

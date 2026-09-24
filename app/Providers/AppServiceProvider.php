@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Feature\FeaturePricingLimit;
 use App\Observers\ModelActivityObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -80,5 +81,8 @@ class AppServiceProvider extends ServiceProvider
 
             $class::observe(ModelActivityObserver::class);
         }
+
+        // Nested model directories are not covered by the glob above.
+        FeaturePricingLimit::observe(ModelActivityObserver::class);
     }
 }

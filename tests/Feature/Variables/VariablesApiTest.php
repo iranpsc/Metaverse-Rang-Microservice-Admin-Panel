@@ -267,15 +267,30 @@ class VariablesApiTest extends TestCase
             ->assertJsonValidationErrors(['price', 'asset', 'image']);
     }
 
-    public function test_store_rejects_invalid_asset_enum(): void
+    public function test_store_rejects_invalid_asset_format(): void
     {
         $this->actingAsSuperAdmin();
 
         $this->post(self::INDEX_PATH, $this->validVariableStorePayload([
-            'asset' => 'green',
+            'asset' => 'green123',
         ]), ['Accept' => 'application/json'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['asset']);
+    }
+
+    public function test_store_normalizes_asset_spaces_to_hyphens(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $this->post(self::INDEX_PATH, $this->validVariableStorePayload([
+            'asset' => '  soft blue  ',
+        ]), ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('data.asset', 'soft-blue');
+
+        $this->assertDatabaseHas('variables', [
+            'asset' => 'soft-blue',
+        ]);
     }
 
     public function test_store_rejects_duplicate_asset(): void

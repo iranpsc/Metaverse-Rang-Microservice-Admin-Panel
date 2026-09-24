@@ -1,21 +1,29 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">واریزی ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">مشاهده و مدیریت تراکنش‌های واریزی کاربران</p>
-    </div>
+    <PageHeader
+      title="واریزی ها"
+      subtitle="مشاهده و مدیریت تراکنش‌های واریزی کاربران"
+    />
 
     <!-- Search and Actions Row -->
     <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6">
-      <div class="flex-1 max-w-md">
-        <SearchBox
-          v-model="searchTerm"
-          placeholder="شماره مرجع بانک را وارد کنید"
-          :debounce-ms="500"
-          @search="handleSearch"
-          @clear="handleClear"
-        />
+      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center flex-1 w-full">
+        <div class="flex-1 max-w-md">
+          <SearchBox
+            v-model="searchTerm"
+            placeholder="جستجو بر اساس نام کاربر، کد شهروندی یا شماره مرجع"
+            :debounce-ms="500"
+            @search="handleSearch"
+            @clear="handleClear"
+          />
+        </div>
+        <div class="w-full sm:w-48">
+          <Select
+            v-model="productFilter"
+            :options="productOptions"
+            @change="handleProductFilterChange"
+          />
+        </div>
       </div>
       <div class="flex gap-2">
         <Button
@@ -52,7 +60,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
   </div>
 </template>
@@ -60,25 +68,45 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Pagination, SearchBox, LoadingState, ErrorState, Button } from '../../components/ui'
+import { Table, Pagination, SearchBox, LoadingState, ErrorState, Button, Select, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams,
+  resetToFirstPage
+} = usePaginatedList()
+
 const payments = ref([])
-const pagination = ref(null)
-const searchTerm = ref('')
-const currentPage = ref(1)
+const productFilter = ref('all')
 const exporting = ref(false)
+
+const productOptions = [
+  { value: 'all', label: 'همه دارایی‌ها' },
+  { value: 'irr', label: 'ریال' },
+  { value: 'psc', label: 'PSC' },
+  { value: 'red', label: 'رنگ قرمز' },
+  { value: 'blue', label: 'رنگ آبی' },
+  { value: 'yellow', label: 'رنگ زرد' },
+]
 
 // Table columns configuration
 const tableColumns = [
   {
-    key: 'id',
-    label: 'شناسه'
-  },
-  {
     key: 'user_name',
     label: 'نام کاربر'
+  },
+  {
+    key: 'citizen_code',
+    label: 'کد شهروندی',
+    defaultValue: '-'
   },
   {
     key: 'amount',
@@ -110,22 +138,13 @@ const tableColumns = [
   }
 ]
 
-const handleSearch = () => {
-  currentPage.value = 1
+const handleSearch = () => search(fetchDeposits)
+const handleClear = () => clear(fetchDeposits)
+const handleProductFilterChange = () => {
+  resetToFirstPage()
   fetchDeposits()
 }
-
-const handleClear = () => {
-  currentPage.value = 1
-  fetchDeposits()
-}
-
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchDeposits()
-  }
-}
+const onPageChange = (page) => goToPage(page, fetchDeposits)
 
 const handleExport = async () => {
   try {
@@ -151,46 +170,31 @@ const handleExport = async () => {
   }
 }
 
-const fetchDeposits = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: 10,
-    }
-
-    if (searchTerm.value) {
-      params.search = searchTerm.value.trim()
-    }
-
-    const response = await apiClient.get('/deposits', { params })
-
-    if (response.data.success) {
-      payments.value = response.data.data.payments
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات واریزی‌ها'
-    }
-  } catch (err) {
-    console.error('Deposits fetch error:', err)
-
-    // If 401/403, don't set error message - axios interceptor will handle redirect
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      payments.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    payments.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
-  }
+const clearPayments = () => {
+  payments.value = []
+  pagination.value = null
 }
+
+const fetchDeposits = () => execute(async () => {
+  const params = buildParams()
+  if (productFilter.value && productFilter.value !== 'all') {
+    params.product = productFilter.value
+  }
+
+  const response = await apiClient.get('/deposits', { params })
+
+  if (response.data.success) {
+    payments.value = response.data.data.payments
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات واریزی‌ها'
+    clearPayments()
+  }
+}, {
+  onClear: clearPayments,
+  logLabel: 'Deposits fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
 onMounted(() => {
   fetchDeposits()
@@ -200,4 +204,3 @@ onMounted(() => {
 <style scoped>
 /* Additional styles if needed */
 </style>
-

@@ -22,6 +22,7 @@
               <th class="px-4 py-3 text-sm font-semibold text-[var(--theme-text-primary)] border border-[var(--theme-border)] text-right">عنوان</th>
               <th class="px-4 py-3 text-sm font-semibold text-[var(--theme-text-primary)] border border-[var(--theme-border)] text-right">مقدار</th>
               <th v-if="kyc.status === 0" class="px-4 py-3 text-sm font-semibold text-[var(--theme-text-primary)] border border-[var(--theme-border)] text-right">بررسی</th>
+              <th v-if="kyc.status === -1" class="px-4 py-3 text-sm font-semibold text-[var(--theme-text-primary)] border border-[var(--theme-border)] text-right">خطای رد</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-[var(--theme-border)]">
@@ -36,6 +37,9 @@
                   @save-error="handleSaveError"
                 />
               </td>
+              <td v-if="kyc.status === -1" class="px-4 py-3 text-sm text-error border border-[var(--theme-border)] text-right">
+                {{ getExistingError('fname_err') || '-' }}
+              </td>
             </tr>
 
             <!-- Last Name -->
@@ -48,6 +52,9 @@
                   :existing-error="getExistingError('lname_err')"
                   @save-error="handleSaveError"
                 />
+              </td>
+              <td v-if="kyc.status === -1" class="px-4 py-3 text-sm text-error border border-[var(--theme-border)] text-right">
+                {{ getExistingError('lname_err') || '-' }}
               </td>
             </tr>
 
@@ -62,6 +69,9 @@
                   @save-error="handleSaveError"
                 />
               </td>
+              <td v-if="kyc.status === -1" class="px-4 py-3 text-sm text-error border border-[var(--theme-border)] text-right">
+                {{ getExistingError('melli_code_err') || '-' }}
+              </td>
             </tr>
 
             <!-- Birthdate -->
@@ -75,6 +85,9 @@
                   @save-error="handleSaveError"
                 />
               </td>
+              <td v-if="kyc.status === -1" class="px-4 py-3 text-sm text-error border border-[var(--theme-border)] text-right">
+                {{ getExistingError('birthdate_err') || '-' }}
+              </td>
             </tr>
 
             <!-- Province -->
@@ -87,6 +100,9 @@
                   :existing-error="getExistingError('province_err')"
                   @save-error="handleSaveError"
                 />
+              </td>
+              <td v-if="kyc.status === -1" class="px-4 py-3 text-sm text-error border border-[var(--theme-border)] text-right">
+                {{ getExistingError('province_err') || '-' }}
               </td>
             </tr>
 
@@ -117,6 +133,9 @@
                   @save-error="handleSaveError"
                 />
               </td>
+              <td v-if="kyc.status === -1" class="px-4 py-3 text-sm text-error border border-[var(--theme-border)] text-right">
+                {{ getExistingError('melli_card_err') || '-' }}
+              </td>
             </tr>
 
             <!-- Video -->
@@ -144,6 +163,9 @@
                   @save-error="handleSaveError"
                 />
               </td>
+              <td v-if="kyc.status === -1" class="px-4 py-3 text-sm text-error border border-[var(--theme-border)] text-right">
+                {{ getExistingError('video_err') || '-' }}
+              </td>
             </tr>
 
             <!-- Gender -->
@@ -157,11 +179,19 @@
                   @save-error="handleSaveError"
                 />
               </td>
+              <td v-if="kyc.status === -1" class="px-4 py-3 text-sm text-error border border-[var(--theme-border)] text-right">
+                {{ getExistingError('gender_err') || '-' }}
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
+      <Alert
+        v-if="kyc.status === -1 && rejectedByName"
+        variant="info"
+        :message="`این احراز هویت توسط «${rejectedByName}» بررسی و رد شده است.`"
+      />
     </div>
 
     <template #footer>
@@ -267,6 +297,7 @@ const showMelliCardModalRef = ref(false)
 const showVideoModalRef = ref(false)
 
 const showSubmitButton = computed(() => kyc.value?.status === 0)
+const rejectedByName = computed(() => kyc.value?.rejected_by?.name || null)
 
 const getGenderLabel = (gender) => {
   if (!gender) return gender
@@ -379,4 +410,3 @@ onMounted(() => {
 <style scoped>
 /* Additional styles if needed */
 </style>
-

@@ -2,12 +2,11 @@
   <div class="p-6 space-y-6" dir="rtl">
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">
-          اطلاعات کلی سطح
-        </h1>
-        <p class="text-[var(--theme-text-secondary)]">
-          مدیریت مشخصات عمومی، طراحان و فایل‌های پایه سطح انتخاب‌شده در متاورس
-        </p>
+        <PageHeader
+          dense
+          title="اطلاعات کلی سطح"
+          subtitle="مدیریت مشخصات عمومی، طراحان و فایل‌های پایه سطح انتخاب‌شده در متاورس"
+        />
         <p v-if="levelLabel" class="mt-1 text-sm text-[var(--theme-text-muted)]">
           نام سطح:
           <span class="text-[var(--theme-text-primary)] font-medium">{{ levelLabel }}</span>
@@ -359,7 +358,7 @@
 import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import apiClient from '../../utils/api'
-import { Button, Card, Checkbox, Input, LoadingState, ErrorState, FileInput, FileUploadModal } from '../../components/ui'
+import { Button, Card, Checkbox, Input, LoadingState, ErrorState, FileInput, FileUploadModal, PageHeader } from '../../components/ui'
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import ExistingFileHint from '../../components/levels/ExistingFileHint.vue'
 import { useToast } from '../../composables/useToast'

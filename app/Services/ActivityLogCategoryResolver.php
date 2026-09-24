@@ -12,6 +12,7 @@ use App\Models\Crs;
 use App\Models\CrsProperty;
 use App\Models\Dislike;
 use App\Models\Feature;
+use App\Models\Feature\FeaturePricingLimit;
 use App\Models\FeatureImage;
 use App\Models\FeatureLimit;
 use App\Models\FeatureProperties;
@@ -72,7 +73,8 @@ class ActivityLogCategoryResolver
             'dashboard' => 'داشبورد',
             'citizens' => 'شهروندان',
             'features' => 'زمین ها',
-            'access-management' => 'مدیریت دسترسی ها',
+            'admins' => 'مدیران',
+            'access-management' => 'مدیران',
             'support' => 'پشتیبانی',
             'store' => 'فروشگاه',
             'dynasty' => 'سلسله',
@@ -112,6 +114,7 @@ class ActivityLogCategoryResolver
         Land::class => 'features',
         Feature::class => 'features',
         FeatureLimit::class => 'features',
+        FeaturePricingLimit::class => 'features',
         FeatureProperties::class => 'features',
         FeatureImage::class => 'features',
         BuyFeatureRequest::class => 'features',
@@ -122,9 +125,9 @@ class ActivityLogCategoryResolver
         Geometry::class => 'features',
         Image::class => 'features',
 
-        Admin::class => 'access-management',
-        Role::class => 'access-management',
-        Permission::class => 'access-management',
+        Admin::class => 'admins',
+        Role::class => 'admins',
+        Permission::class => 'admins',
 
         Ticket::class => 'support',
         TicketResponse::class => 'support',

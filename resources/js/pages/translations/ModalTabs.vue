@@ -2,12 +2,11 @@
   <div class="p-6 space-y-6" dir="rtl">
     <header class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">
-          مدیریت تب‌ها
-        </h1>
-        <p class="text-[var(--theme-text-secondary)]">
-          ساختار تب‌های مربوط به بخش {{ modal?.name || '' }} برای زبان {{ translation?.name || '' }}
-        </p>
+        <PageHeader
+          dense
+          title="مدیریت تب‌ها"
+          :subtitle="`ساختار تب‌های مربوط به بخش ${modal?.name || ''} برای زبان ${translation?.name || ''}`"
+        />
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <Badge v-if="translation" :variant="translation.status ? 'success' : 'warning'">
@@ -118,7 +117,7 @@
       <Pagination
         v-if="pagination?.total"
         :pagination="pagination"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </section>
 
@@ -195,6 +194,7 @@ import { useRoute, useRouter } from 'vue-router'
 import Table from '../../components/ui/Table.vue'
 import Button from '../../components/ui/Button.vue'
 import Badge from '../../components/ui/Badge.vue'
+import PageHeader from '../../components/ui/PageHeader.vue'
 import Pagination from '../../components/ui/Pagination.vue'
 import Modal from '../../components/ui/Modal.vue'
 import Input from '../../components/ui/Input.vue'
@@ -204,6 +204,7 @@ import { translationApi } from '../../api/translations'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
 const { showToast } = useToast()
 
@@ -217,13 +218,18 @@ const setTitle = (title) => {
 const translationId = Number(route.params.translationId)
 const modalId = Number(route.params.modalId)
 
-const loading = ref(false)
-const error = ref('')
+const {
+  loading,
+  error,
+  pagination,
+  execute,
+  goToPage,
+  buildParams
+} = usePaginatedList()
+
 const translation = ref(null)
 const modal = ref(null)
 const tabs = ref([])
-const pagination = ref(null)
-const page = ref(1)
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -263,26 +269,26 @@ const fetchMeta = async () => {
   }
 }
 
-const fetchTabs = async (requestedPage = 1) => {
-  loading.value = true
-  error.value = ''
-  try {
-    page.value = requestedPage
-    const { tabs: items, pagination: meta } = await translationApi.getTabs(translationId, modalId, {
-      page: requestedPage
-    })
-    tabs.value = items
-    pagination.value = meta
-  } catch (err) {
-    error.value = err?.response?.data?.message || 'خطا در دریافت تب‌ها.'
-  } finally {
-    loading.value = false
-  }
+const clearTabs = () => {
+  tabs.value = []
+  pagination.value = null
 }
 
-const goToPage = (nextPage) => {
-  fetchTabs(nextPage)
-}
+const fetchTabs = () => execute(async () => {
+  const { tabs: items, pagination: meta } = await translationApi.getTabs(
+    translationId,
+    modalId,
+    buildParams()
+  )
+  tabs.value = items
+  pagination.value = meta
+}, {
+  onClear: clearTabs,
+  logLabel: 'Translation tabs fetch error:',
+  fallbackMessage: 'خطا در دریافت تب‌ها.'
+})
+
+const onPageChange = (page) => goToPage(page, fetchTabs)
 
 const resetCreateForm = () => {
   createForm.name = ''
@@ -310,7 +316,7 @@ const submitCreate = async () => {
     showToast('تب جدید برای تمامی زبان‌ها ثبت شد.', 'success')
     showCreateModal.value = false
     resetCreateForm()
-    await fetchTabs(page.value)
+    await fetchTabs()
   } catch (err) {
     const message = err?.response?.data?.errors?.name?.[0] || err?.response?.data?.message || 'امکان ایجاد تب وجود ندارد.'
     createErrors.name = message
@@ -381,7 +387,7 @@ const handleDelete = async (tab) => {
   try {
         await translationApi.deleteTab(translationId, modalId, tab.id)
         showToast('تب و تمامی نگاشت‌های زبان حذف گردید.', 'success')
-        await fetchTabs(page.value)
+        await fetchTabs()
       } catch (err) {
         showToast(err?.response?.data?.message || 'حذف تب امکان‌پذیر نبود.', 'error')
       }

@@ -146,6 +146,7 @@ class KycApiTest extends TestCase
                     'kycs' => [
                         [
                             'id',
+                            'citizen_code',
                             'fname',
                             'lname',
                             'melli_code',
@@ -189,6 +190,67 @@ class KycApiTest extends TestCase
             ->assertJsonPath('data.pagination.total', 1)
             ->assertJsonPath('data.kycs.0.fname', 'Match')
             ->assertJsonPath('data.kycs.0.melli_code', '0012345678');
+    }
+
+    public function test_search_filters_by_user_name(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $matchUser = $this->createUser(['name' => 'Unique Citizen Name']);
+        $otherUser = $this->createUser(['name' => 'Someone Else']);
+        $this->createKyc($matchUser, ['fname' => 'Match', 'melli_code' => '1111111111']);
+        $this->createKyc($otherUser, ['fname' => 'Miss', 'melli_code' => '2222222222']);
+
+        $this->getJson(self::INDEX_PATH.'?search=Unique Citizen')
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.kycs.0.fname', 'Match');
+    }
+
+    public function test_search_filters_by_full_kyc_name(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $user = $this->createUser();
+        $this->createKyc($user, ['fname' => 'Hossein', 'lname' => 'Karimi', 'melli_code' => '3333333333']);
+        $this->createKyc($user, ['fname' => 'Other', 'lname' => 'Person', 'melli_code' => '4444444444']);
+
+        $this->getJson(self::INDEX_PATH.'?search='.urlencode('Hossein Karimi'))
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.kycs.0.fname', 'Hossein')
+            ->assertJsonPath('data.kycs.0.lname', 'Karimi');
+    }
+
+    public function test_search_normalizes_whitespace_in_full_kyc_name(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $user = $this->createUser();
+        $this->createKyc($user, ['fname' => 'Hossein', 'lname' => 'Karimi', 'melli_code' => '3333333333']);
+        $this->createKyc($user, ['fname' => 'Other', 'lname' => 'Person', 'melli_code' => '4444444444']);
+
+        $this->getJson(self::INDEX_PATH.'?search='.urlencode('  Hossein   Karimi  '))
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.kycs.0.fname', 'Hossein')
+            ->assertJsonPath('data.kycs.0.lname', 'Karimi');
+    }
+
+    public function test_search_filters_by_citizen_code(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $matchUser = $this->createUser(['code' => '998877']);
+        $otherUser = $this->createUser(['code' => '112233']);
+        $this->createKyc($matchUser, ['fname' => 'CodeMatch', 'melli_code' => '5555555555']);
+        $this->createKyc($otherUser, ['fname' => 'CodeMiss', 'melli_code' => '6666666666']);
+
+        $this->getJson(self::INDEX_PATH.'?search=998877')
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.kycs.0.fname', 'CodeMatch')
+            ->assertJsonPath('data.kycs.0.citizen_code', '998877');
     }
 
     public function test_search_trims_whitespace_around_melli_code(): void

@@ -136,6 +136,7 @@ class DynastyPrizesApiTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE)
             ->assertJsonPath('data.prizes', [])
+            ->assertJsonPath('data.total_paid_amount', 0)
             ->assertJsonPath('data.pagination.current_page', 1)
             ->assertJsonPath('data.pagination.last_page', 1)
             ->assertJsonPath('data.pagination.per_page', 10)
@@ -178,10 +179,13 @@ class DynastyPrizesApiTest extends TestCase
                             'data_storage',
                             'data_storage_percent',
                             'psc',
+                            'recipients_count',
+                            'total_paid_amount',
                             'created_at',
                             'updated_at',
                         ],
                     ],
+                    'total_paid_amount',
                     'pagination' => [
                         'current_page',
                         'last_page',
@@ -204,9 +208,70 @@ class DynastyPrizesApiTest extends TestCase
         $this->assertEquals(0.05, $response->json('data.prizes.0.data_storage'));
         $this->assertEquals(5, $response->json('data.prizes.0.data_storage_percent'));
         $this->assertEquals(100, $response->json('data.prizes.0.psc'));
+        $this->assertSame(0, $response->json('data.prizes.0.recipients_count'));
+        $this->assertSame(0, $response->json('data.prizes.0.total_paid_amount'));
+        $this->assertSame(0, $response->json('data.total_paid_amount'));
         $this->assertSame(1, $response->json('data.pagination.total'));
         $this->assertSame(1, $response->json('data.pagination.from'));
         $this->assertSame(1, $response->json('data.pagination.to'));
+    }
+
+    public function test_index_includes_recipients_count_and_paid_amounts_per_relationship(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $father = $this->createDynastyPrize([
+            'member' => 'father',
+            'psc' => 1000,
+        ]);
+        $mother = $this->createDynastyPrize([
+            'member' => 'mother',
+            'psc' => 500,
+        ]);
+        $this->createDynastyPrize([
+            'member' => 'brother',
+            'psc' => 250,
+        ]);
+
+        $this->createReceivedPrize([
+            'user_id' => 11,
+            'prize_id' => $father->id,
+        ]);
+        $this->createReceivedPrize([
+            'user_id' => 12,
+            'prize_id' => $father->id,
+        ]);
+        $this->createReceivedPrize([
+            'user_id' => 13,
+            'prize_id' => $mother->id,
+        ]);
+
+        $response = $this->getJson(self::INDEX_PATH.'?per_page=20')->assertOk();
+        $items = collect($response->json('data.prizes'))->keyBy('member');
+
+        $this->assertSame(2, $items['father']['recipients_count']);
+        $this->assertSame(2000, $items['father']['total_paid_amount']);
+        $this->assertSame(1, $items['mother']['recipients_count']);
+        $this->assertSame(500, $items['mother']['total_paid_amount']);
+        $this->assertSame(0, $items['brother']['recipients_count']);
+        $this->assertSame(0, $items['brother']['total_paid_amount']);
+        $this->assertSame(2500, $response->json('data.total_paid_amount'));
+    }
+
+    public function test_index_returns_zero_total_paid_amount_when_no_receipts_exist(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $this->createDynastyPrize([
+            'member' => 'wife',
+            'psc' => 999,
+        ]);
+
+        $this->getJson(self::INDEX_PATH)
+            ->assertOk()
+            ->assertJsonPath('data.total_paid_amount', 0)
+            ->assertJsonPath('data.prizes.0.recipients_count', 0)
+            ->assertJsonPath('data.prizes.0.total_paid_amount', 0);
     }
 
     public function test_index_returns_member_title_for_each_valid_member(): void

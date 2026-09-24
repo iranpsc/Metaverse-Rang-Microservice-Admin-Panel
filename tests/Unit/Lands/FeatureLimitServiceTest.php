@@ -6,6 +6,7 @@ use App\Models\FeatureLimit;
 use App\Models\FeatureProperties;
 use App\Services\Lands\FeatureLimitService;
 use Carbon\Carbon;
+use DomainException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Morilog\Jalali\Jalalian;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -81,6 +82,19 @@ class FeatureLimitServiceTest extends TestCase
         $this->assertSame(2, $pageTwo['pagination']['current_page']);
         $this->assertSame(7, $pageOne['pagination']['total']);
         $this->assertSame(3, $pageOne['pagination']['last_page']);
+    }
+
+    public function test_get_paginated_filters_by_title_search(): void
+    {
+        $this->createFeatureLimit(['title' => 'محدودیت فروش ویژه']);
+        $this->createFeatureLimit(['title' => 'محدودیت احراز هویت']);
+        $this->createFeatureLimit(['title' => 'قیمت ثابت']);
+
+        $result = $this->service->getPaginated(10, 1, 'احراز');
+
+        $this->assertCount(1, $result['feature_limits']);
+        $this->assertSame('محدودیت احراز هویت', $result['feature_limits'][0]->title);
+        $this->assertSame(1, $result['pagination']['total']);
     }
 
     // -------------------------------------------------------------------------
@@ -252,6 +266,23 @@ class FeatureLimitServiceTest extends TestCase
         $this->assertSame($expectedRgb, $property->rgb);
         $this->assertSame(120.0, (float) $property->stability);
         $this->assertDatabaseMissing('feature_limits', ['id' => $limit->id]);
+    }
+
+    public function test_delete_throws_domain_exception_for_expired_limit(): void
+    {
+        $limit = $this->createFeatureLimit([
+            'start_date' => now()->subDays(30)->toDateString(),
+            'end_date' => now()->subDay()->toDateString(),
+        ]);
+
+        try {
+            $this->service->delete($limit->id);
+            $this->fail('Expected DomainException was not thrown.');
+        } catch (DomainException $e) {
+            $this->assertSame('محدودیت منقضی‌شده قابل حذف نیست.', $e->getMessage());
+        }
+
+        $this->assertDatabaseHas('feature_limits', ['id' => $limit->id]);
     }
 
     /**

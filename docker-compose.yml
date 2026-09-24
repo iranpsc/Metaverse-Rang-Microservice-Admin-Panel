@@ -31,6 +31,11 @@ x-app-volumes: &app-volumes
     target: ${HOST_DATABASE_TARGET:-/var/www/html/database}
     bind:
       create_host_path: true
+  - type: bind
+    source: ${HOST_LANG_PATH:-/opt/metarang/lang}
+    target: ${HOST_LANG_TARGET:-/var/www/html/public/lang}
+    bind:
+      create_host_path: true
 
 x-php-environment: &php-environment
   COMPOSER_CACHE_DIR: /tmp/composer-cache

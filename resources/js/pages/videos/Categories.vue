@@ -1,15 +1,14 @@
 <template>
   <div class="p-6 space-y-6">
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">مدیریت دسته بندی ویدیوها</h1>
-        <p class="text-[var(--theme-text-secondary)]">ایجاد، ویرایش و مشاهده دسته بندی های آموزشی</p>
-      </div>
+    <PageHeader
+      title="مدیریت دسته بندی ویدیوها"
+      subtitle="ایجاد، ویرایش و مشاهده دسته بندی های آموزشی"
+    />
+    <div>
       <Button
         variant="primary"
         size="lg"
         rounded="full"
-        class="self-start md:self-auto"
         @click="openCreateModal"
       >
         ایجاد دسته بندی جدید
@@ -95,7 +94,7 @@
         v-if="pagination && pagination.total > 0"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </div>
 
@@ -270,8 +269,10 @@ import {
   Button,
   Modal,
   Input,
-  FileInput
+  FileInput,
+  PageHeader
 } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import MediaCellButton from '../../components/ui/MediaCellButton.vue'
@@ -279,18 +280,23 @@ import MediaCellButton from '../../components/ui/MediaCellButton.vue'
 const { showToast } = useToast()
 
 
-const loading = ref(true)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams
+} = usePaginatedList({ perPage: 10 })
+
 const creating = ref(false)
 const updating = ref(false)
 const deletingId = ref(null)
-const error = ref(null)
 
 const categories = ref([])
-const pagination = ref(null)
-
-const searchTerm = ref('')
-const currentPage = ref(1)
-const perPage = 10
 
 const createModalOpen = ref(false)
 const editModalOpen = ref(false)
@@ -419,62 +425,32 @@ const normalizeErrors = (errors, target) => {
   })
 }
 
-const fetchCategories = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const clearCategories = () => {
+  categories.value = []
+  pagination.value = null
+}
 
-    const params = {
-      page: currentPage.value,
-      per_page: perPage
-    }
+const fetchCategories = () => execute(async () => {
+  const response = await apiClient.get('/video-categories', { params: buildParams() })
 
-    if (searchTerm.value.trim()) {
-      params.search = searchTerm.value.trim()
-    }
-
-    const response = await apiClient.get('/video-categories', { params })
-
-    if (response.data.success) {
-      categories.value = response.data.data.categories || []
-      pagination.value = response.data.data.pagination || null
-    } else {
-      categories.value = []
-      pagination.value = null
-      error.value = response.data.message || 'خطا در دریافت دسته بندی ها'
-    }
-  } catch (err) {
-    console.error('Video categories fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری دسته بندی ها'
-    categories.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+  if (response.data.success) {
+    categories.value = response.data.data.categories || []
+    pagination.value = response.data.data.pagination || null
+  } else {
+    error.value = response.data.message || 'خطا در دریافت دسته بندی ها'
+    clearCategories()
   }
-}
+}, {
+  onClear: clearCategories,
+  logLabel: 'Video categories fetch error:',
+  fallbackMessage: 'خطا در بارگذاری دسته بندی ها'
+})
 
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchCategories()
-}
-
+const onPageChange = (page) => goToPage(page, fetchCategories)
+const handleSearch = () => search(fetchCategories)
 const handleClear = () => {
   searchTerm.value = ''
-  currentPage.value = 1
-  fetchCategories()
-}
-
-const goToPage = (page) => {
-  if (page >= 1 && (!pagination.value || page <= pagination.value.last_page)) {
-    currentPage.value = page
-    fetchCategories()
-  }
+  clear(fetchCategories)
 }
 
 const buildFormData = (form, includeSlug) => {

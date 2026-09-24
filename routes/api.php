@@ -26,14 +26,12 @@ use App\Http\Controllers\Api\LevelPrizeController;
 use App\Http\Controllers\Api\LevelsController;
 use App\Http\Controllers\Api\MapsController;
 use App\Http\Controllers\Api\OptionsController;
-use App\Http\Controllers\Api\PermissionsController;
 use App\Http\Controllers\Api\PricesController;
 use App\Http\Controllers\Api\PricingController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProfileDetailsController;
 use App\Http\Controllers\Api\RegistrationInfoController;
 use App\Http\Controllers\Api\ReportController;
-use App\Http\Controllers\Api\RolesController;
 use App\Http\Controllers\Api\SoldController;
 use App\Http\Controllers\Api\SystemVariablesController;
 use App\Http\Controllers\Api\TicketsController;
@@ -261,32 +259,10 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
         Route::get('users/search', 'searchUsers');
     });
 
-    // Access Management - Roles routes
-    Route::prefix('roles')->controller(RolesController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::get('permissions', 'getPermissions');
-        Route::get('{id}', 'show');
-        Route::post('/', 'store');
-        Route::put('{id}', 'update');
-        Route::delete('{id}', 'destroy');
-        Route::delete('{roleId}/permissions/{permissionId}', 'removePermission');
-    });
-
-    // Access Management - Permissions routes
-    Route::prefix('permissions')->controller(PermissionsController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::get('roles', 'getRoles');
-        Route::get('{id}', 'show');
-        Route::post('/', 'store');
-        Route::put('{id}', 'update');
-        Route::delete('{id}', 'destroy');
-        Route::delete('{permissionId}/roles/{roleId}', 'removeRole');
-    });
-
-    // Access Management - Admins routes
+    // Admins routes
     Route::prefix('admins')->controller(AdminsController::class)->group(function () {
         Route::get('/', 'index');
-        Route::get('employees', 'getEmployees');
+        Route::get('users', 'searchUsers');
         Route::get('roles', 'getRoles');
         Route::get('{id}', 'show');
         Route::post('/', 'store');
@@ -383,11 +359,13 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
         Route::controller(TranslationController::class)->group(function () {
             Route::get('languages', 'languages');
             Route::get('/', 'index')->withoutMiddleware('auth:sanctum');
-            Route::get('{translation}', 'show');
             Route::post('/', 'store');
+            Route::post('import', 'importNew');
+            Route::get('{translation}', 'show');
             Route::delete('{translation}', 'destroy');
             Route::patch('{translation}/status', 'toggleStatus');
             Route::post('{translation}/export', 'export');
+            Route::post('{translation}/import', 'import');
         });
 
         Route::prefix('{translation}/modals')->controller(TranslationModalController::class)->group(function () {

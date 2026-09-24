@@ -2,34 +2,44 @@
   <div class="p-6 space-y-6" dir="rtl">
     <Breadcrumb :items="breadcrumbItems" />
 
-    <header class="space-y-2">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)]">مدیریت ترجمه‌ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">
-        افزودن زبان‌های جدید، مدیریت وضعیت و صادرات فایل‌های ترجمه در محیط متاورس
-      </p>
-    </header>
+    <PageHeader
+      title="مدیریت ترجمه‌ها"
+      subtitle="افزودن زبان‌های جدید، مدیریت وضعیت و صادرات فایل‌های ترجمه در محیط متاورس"
+    />
 
     <section
       class="space-y-4 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-bg-elevated)] p-6 backdrop-blur-md"
     >
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-end">
-        <Select2
-          v-model="selectedLanguageCode"
-          label="انتخاب زبان"
-          placeholder="یک زبان را انتخاب کنید"
-          :options="languageOptions"
-          :disabled="languagesLoading"
-          wrapper-class="lg:flex-1"
-        />
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:flex-1">
+          <Select2
+            v-model="selectedLanguageCode"
+            label="انتخاب زبان"
+            placeholder="یک زبان را انتخاب کنید"
+            :options="languageOptions"
+            :disabled="languagesLoading || creating || importing"
+            wrapper-class="lg:flex-1"
+          />
+          <Button
+            variant="primary"
+            rounded="full"
+            class="w-full lg:w-auto"
+            :loading="creating"
+            :disabled="!selectedLanguageCode || creating || importing"
+            @click="handleCreateTranslation"
+          >
+            ثبت
+          </Button>
+        </div>
+
         <Button
-          variant="primary"
+          variant="secondary"
           rounded="full"
           class="w-full lg:w-auto"
-          :loading="creating"
-          :disabled="!selectedLanguageCode || creating"
-          @click="handleCreateTranslation"
+          :disabled="creating || importing || languagesLoading"
+          @click="openImportModal"
         >
-          ثبت
+          ورود ترجمه
         </Button>
       </div>
       <Alert
@@ -112,7 +122,7 @@
               variant="glass"
               rounded="full"
               :loading="exportingId === row.id"
-              :disabled="exportingId !== null"
+              :disabled="exportingId !== null || importing"
               @click="() => handleExport(row)"
             >
               خروجی JSON
@@ -138,9 +148,73 @@
         v-if="pagination?.total"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </section>
+
+    <Modal
+      v-model="importModalOpen"
+      title="ورود ترجمه جدید"
+      subtitle="انتخاب زبان و بارگذاری فایل JSON مطابق الگوی fa.json"
+      size="md"
+    >
+      <div class="space-y-4" dir="rtl">
+        <Alert variant="info">
+          فایل باید مانند
+          <span class="font-mono text-xs">public/lang/fa.json</span>
+          یک شیء تخت از
+          <span class="font-mono text-xs">unique_id</span>
+          به متن باشد. جایگاه هر کلید بر اساس ساختار فارسی (مدال ← تب ← فیلد) تعیین می‌شود.
+        </Alert>
+
+        <Select2
+          v-model="importLanguageCode"
+          label="انتخاب زبان"
+          placeholder="یک زبان را انتخاب کنید"
+          :options="languageOptions"
+          :disabled="languagesLoading || importing"
+        />
+
+        <FileInput
+          v-model="importFile"
+          label="فایل JSON"
+          accept=".json,application/json"
+          placeholder="انتخاب فایل ترجمه"
+          helper-text="فقط فایل JSON — حداکثر ۱۰ مگابایت"
+          :error="importFileError"
+          :loading="importing"
+          :disabled="importing"
+        />
+
+        <Alert
+          v-if="importResultSummary"
+          variant="success"
+          class="border border-emerald-500/40 bg-emerald-500/10"
+        >
+          {{ importResultSummary }}
+        </Alert>
+      </div>
+
+      <template #footer>
+        <Button
+          variant="secondary"
+          rounded="full"
+          :disabled="importing"
+          @click="closeImportModal"
+        >
+          انصراف
+        </Button>
+        <Button
+          variant="primary"
+          rounded="full"
+          :loading="importing"
+          :disabled="!importLanguageCode || !importFile || importing"
+          @click="handleImport"
+        >
+          شروع ورود
+        </Button>
+      </template>
+    </Modal>
   </div>
 </template>
 
@@ -158,9 +232,13 @@ import Alert from '../../components/ui/Alert.vue'
 import LoadingState from '../../components/ui/LoadingState.vue'
 import ErrorState from '../../components/ui/ErrorState.vue'
 import Breadcrumb from '../../components/ui/Breadcrumb.vue'
+import PageHeader from '../../components/ui/PageHeader.vue'
+import Modal from '../../components/ui/Modal.vue'
+import FileInput from '../../components/ui/FileInput.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
 const { showToast } = useToast()
 
@@ -172,18 +250,31 @@ setTitle('مدیریت ترجمه‌ها')
 
 const router = useRouter()
 
-const loading = ref(false)
+const {
+  loading,
+  error,
+  pagination,
+  execute,
+  goToPage,
+  buildParams,
+  resetToFirstPage
+} = usePaginatedList()
+
 const creating = ref(false)
 const exportingId = ref(null)
-const error = ref('')
+const importing = ref(false)
 const translations = ref([])
-const pagination = ref(null)
-const page = ref(1)
 
 const languagesLoading = ref(false)
 const languagesError = ref('')
 const languages = ref([])
 const selectedLanguageCode = ref('')
+
+const importModalOpen = ref(false)
+const importLanguageCode = ref('')
+const importFile = ref(null)
+const importFileError = ref('')
+const importResultSummary = ref('')
 
 const breadcrumbItems = [
   { label: 'داشبورد', to: { name: 'dashboard' } },
@@ -232,32 +323,28 @@ const normalizeTranslationRow = (row) => ({
   status: translationStatus(row)
 })
 
-const fetchTranslations = async (requestedPage = page.value) => {
-  loading.value = true
-  error.value = ''
-  try {
-    page.value = requestedPage
-    const payload = await translationApi.getTranslations({
-      page: requestedPage
-    })
-    // Index: `{ data: [ ... ] }` → Axios `response.data.data` is an array (see translationApi).
-    if (Array.isArray(payload)) {
-      translations.value = payload.map(normalizeTranslationRow)
-      pagination.value = null
-    } else {
-      translations.value = (payload?.translations ?? []).map(normalizeTranslationRow)
-      pagination.value = payload?.pagination ?? null
-    }
-  } catch (err) {
-    error.value = err?.response?.data?.message || 'خطا در دریافت ترجمه‌ها'
-  } finally {
-    loading.value = false
-  }
+const clearTranslations = () => {
+  translations.value = []
+  pagination.value = null
 }
 
-const goToPage = (nextPage) => {
-  fetchTranslations(nextPage)
-}
+const fetchTranslations = () => execute(async () => {
+  const payload = await translationApi.getTranslations(buildParams())
+  // Index: `{ data: [ ... ] }` → Axios `response.data.data` is an array (see translationApi).
+  if (Array.isArray(payload)) {
+    translations.value = payload.map(normalizeTranslationRow)
+    pagination.value = null
+  } else {
+    translations.value = (payload?.translations ?? []).map(normalizeTranslationRow)
+    pagination.value = payload?.pagination ?? null
+  }
+}, {
+  onClear: clearTranslations,
+  logLabel: 'Translations fetch error:',
+  fallbackMessage: 'خطا در دریافت ترجمه‌ها'
+})
+
+const onPageChange = (page) => goToPage(page, fetchTranslations)
 
 const submitCreateTranslation = async () => {
   creating.value = true
@@ -267,7 +354,8 @@ const submitCreateTranslation = async () => {
     )
     showToast('ساختار ترجمه بر اساس زبان انتخابی ایجاد شد.', 'success')
     selectedLanguageCode.value = ''
-    await fetchTranslations(1)
+    resetToFirstPage()
+    await fetchTranslations()
   } catch (err) {
     const messages = err?.response?.data?.errors?.code
     showToast(Array.isArray(messages) ? messages[0] : (err?.response?.data?.message || 'امکان افزودن ترجمه وجود ندارد.'), 'error')
@@ -293,15 +381,15 @@ const handleDelete = async (row) => {
   try {
         await translationApi.deleteTranslation(row.id)
         showToast('ترجمه انتخابی حذف شد.', 'success')
-        await fetchTranslations(page.value)
+        await fetchTranslations()
       } catch (err) {
         showToast(err?.response?.data?.message || 'حذف ترجمه امکان‌پذیر نبود.', 'error')
       }
 }
 
-const handleToggleStatus = async () => {
+const handleToggleStatus = async (row) => {
   try {
-    const response = await translationApi.toggleTranslationStatus(translation.id)
+    const response = await translationApi.toggleTranslationStatus(row.id)
     const updated = response.data.translation
     translations.value = translations.value.map((item) =>
       item.id === updated.id ? normalizeTranslationRow(updated) : item
@@ -338,6 +426,59 @@ const handleExport = async (row) => {
   }
 }
 
+const openImportModal = () => {
+  importLanguageCode.value = ''
+  importFile.value = null
+  importFileError.value = ''
+  importResultSummary.value = ''
+  importModalOpen.value = true
+}
+
+const closeImportModal = () => {
+  if (importing.value) return
+  importModalOpen.value = false
+  importLanguageCode.value = ''
+  importFile.value = null
+  importFileError.value = ''
+  importResultSummary.value = ''
+}
+
+const handleImport = async () => {
+  if (!importLanguageCode.value || !importFile.value) return
+
+  importing.value = true
+  importFileError.value = ''
+  importResultSummary.value = ''
+
+  try {
+    const response = await translationApi.importTranslation(importFile.value, {
+      code: importLanguageCode.value
+    })
+    const data = response?.data ?? {}
+    const updated = data.updated ?? 0
+    const created = data.created ?? 0
+    const skipped = data.skipped ?? 0
+    const unknownCount = Array.isArray(data.unknown_ids) ? data.unknown_ids.length : 0
+
+    importResultSummary.value = `به‌روزرسانی: ${updated} | ایجاد: ${created} | رد شده: ${skipped}${unknownCount ? ` (ناشناس: ${unknownCount})` : ''}`
+
+    showToast(response?.message || 'ترجمه جدید ایجاد و وارد شد.', 'success')
+    importLanguageCode.value = ''
+    importFile.value = null
+    resetToFirstPage()
+    await fetchTranslations()
+  } catch (err) {
+    const errors = err?.response?.data?.errors ?? {}
+    const messages = errors.file || errors.code
+    importFileError.value = Array.isArray(messages)
+      ? messages[0]
+      : (err?.response?.data?.message || 'امکان ورود فایل ترجمه وجود ندارد.')
+    showToast(importFileError.value, 'error')
+  } finally {
+    importing.value = false
+  }
+}
+
 const navigateToModals = (translation) => {
   router.push({
     name: 'translations-modals',
@@ -361,5 +502,3 @@ onMounted(async () => {
   backdrop-filter: blur(16px);
 }
 </style>
-
-

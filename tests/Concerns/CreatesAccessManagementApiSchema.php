@@ -3,7 +3,7 @@
 namespace Tests\Concerns;
 
 use App\Models\Admin;
-use App\Models\Employee\Employee;
+use App\Models\User;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -17,52 +17,39 @@ trait CreatesAccessManagementApiSchema
     protected function setUpAccessManagementApiSchema(): void
     {
         $this->setUpAuthApiSchema();
-        $this->createEmployeesTable();
+        $this->createUsersTable();
     }
 
-    private function createEmployeesTable(): void
+    private function createUsersTable(): void
     {
-        if (Schema::hasTable('employees')) {
+        if (Schema::hasTable('users')) {
             return;
         }
 
-        Schema::create('employees', function (Blueprint $table) {
+        Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('fname');
-            $table->string('lname');
-            $table->string('melli_code');
-            $table->date('birthdate');
-            $table->string('hometown');
-            $table->string('father_name');
-            $table->enum('gender', ['male', 'female']);
-            $table->enum('marriage_status', ['single', 'married']);
-            $table->string('home_phone');
-            $table->string('phone');
-            $table->string('address');
-            $table->integer('employee_code');
-            $table->date('entry_date');
-            $table->string('email');
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('phone')->nullable();
+            $table->string('code')->nullable();
+            $table->string('wallet_address')->nullable();
+            $table->string('password')->default('secret');
+            $table->string('ip')->default('127.0.0.1');
+            $table->timestamp('email_verified_at')->nullable();
+            $table->rememberToken();
             $table->timestamps();
         });
     }
 
-    protected function createEmployee(array $attributes = []): Employee
+    protected function createUser(array $attributes = []): User
     {
-        return Employee::create(array_merge([
-            'fname' => 'Ali',
-            'lname' => 'Karimi',
-            'melli_code' => (string) random_int(1000000000, 9999999999),
-            'birthdate' => '1990-01-01',
-            'hometown' => 'Tehran',
-            'father_name' => 'Hassan',
-            'gender' => 'male',
-            'marriage_status' => 'single',
-            'home_phone' => '02112345678',
+        return User::create(array_merge([
+            'name' => 'Ali Karimi',
+            'email' => Str::uuid().'@user.test',
             'phone' => '0912'.random_int(1000000, 9999999),
-            'email' => Str::uuid().'@employee.test',
-            'address' => 'Tehran, Iran',
-            'employee_code' => random_int(1000, 9999),
-            'entry_date' => '2020-01-01',
+            'code' => (string) random_int(1000, 9999),
+            'password' => 'secret',
+            'ip' => '127.0.0.1',
         ], $attributes));
     }
 

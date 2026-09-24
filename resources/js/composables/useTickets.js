@@ -180,13 +180,6 @@ export function useTickets() {
     ]
   }
 
-  /**
-   * Format date
-   */
-  const formatDate = (dateString) => {
-    return formatPersianDate(dateString)
-  }
-
   return {
     tickets,
     loading,
@@ -199,7 +192,7 @@ export function useTickets() {
     getStatusBadgeClass,
     getStatusLabel,
     getImportanceOptions,
-    formatDate
+    formatDate: formatPersianDate
   }
 }
 

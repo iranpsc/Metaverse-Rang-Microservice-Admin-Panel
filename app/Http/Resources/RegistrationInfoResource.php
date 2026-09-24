@@ -17,6 +17,7 @@ class RegistrationInfoResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'code' => $this->code,
             'email' => $this->email,
             'email_verified_at' => $this->email_verified_at ? jdate($this->email_verified_at)->format('Y/m/d') : null,
             'ip' => $this->ip,

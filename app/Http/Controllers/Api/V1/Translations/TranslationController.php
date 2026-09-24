@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1\Translations;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Translations\ImportTranslationRequest;
 use App\Http\Requests\Translations\StoreTranslationRequest;
 use App\Http\Resources\Translations\TranslationResource;
 use App\Models\Translations\Translation;
@@ -18,11 +19,14 @@ class TranslationController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $translations = Translation::query()
-            ->active()
-            ->withCount('modals')
-            ->orderBy('name')
-            ->get();
+        $query = Translation::query()->withCount('modals')->orderBy('name');
+        $loadActiveTranslations = $request->query('active', false) == true;
+
+        if ($loadActiveTranslations) {
+            $query->active();
+        }
+
+        $translations = $query->get();
 
         return response()->json([
             'data' => $translations->map(function ($translation) {
@@ -121,6 +125,52 @@ class TranslationController extends Controller
                 'message' => $result,
             ],
             'message' => 'Translation exported successfully.',
+        ]);
+    }
+
+    /**
+     * Create a new translation from a language code and import flat JSON values.
+     */
+    public function importNew(ImportTranslationRequest $request): JsonResponse
+    {
+        $result = $this->translationService->createAndImportTranslation(
+            (string) $request->get('code'),
+            $request->file('file')
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'translation' => new TranslationResource($result['translation']),
+                'updated' => $result['updated'],
+                'created' => $result['created'],
+                'skipped' => $result['skipped'],
+                'unknown_ids' => $result['unknown_ids'],
+            ],
+            'message' => 'Translation created and imported successfully.',
+        ], 201);
+    }
+
+    /**
+     * Import flat JSON values into an existing translation.
+     */
+    public function import(ImportTranslationRequest $request, Translation $translation): JsonResponse
+    {
+        $result = $this->translationService->importTranslation(
+            $translation,
+            $request->file('file')
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'translation' => new TranslationResource($result['translation']),
+                'updated' => $result['updated'],
+                'created' => $result['created'],
+                'skipped' => $result['skipped'],
+                'unknown_ids' => $result['unknown_ids'],
+            ],
+            'message' => 'Translation imported successfully.',
         ]);
     }
 }

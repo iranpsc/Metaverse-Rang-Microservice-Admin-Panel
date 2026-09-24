@@ -8,6 +8,7 @@ use App\Models\Translations\Tab;
 use App\Models\Translations\Translation;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,14 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class TranslationService
 {
     private const LANG_CACHE_KEY = 'translations.available_languages';
+
+    /**
+     * Persian is the canonical hierarchy source for flat JSON imports
+     * (unique_id => modal/tab placement).
+     */
+    public const REFERENCE_LANGUAGE_CODE = 'fa';
+
+    private const REFERENCE_HIERARCHY_CACHE_KEY = 'translations.persian_hierarchy_map';
 
     public function __construct(private readonly Filesystem $filesystem) {}
 
@@ -41,7 +50,7 @@ class TranslationService
                 $languages = json_decode($langFile, true, flags: JSON_THROW_ON_ERROR);
             } catch (JsonException $exception) {
                 throw ValidationException::withMessages([
-                    'languages' => 'Invalid language definition file.',
+                    'languages' => __('translations.invalid_language_definition'),
                 ]);
             }
 
@@ -69,7 +78,7 @@ class TranslationService
 
         if (! $language) {
             throw ValidationException::withMessages([
-                'code' => "The provided language code [{$languageCode}] is not supported.",
+                'code' => __('translations.unsupported_language_code', ['code' => $languageCode]),
             ]);
         }
 
@@ -103,29 +112,220 @@ class TranslationService
 
     public function exportTranslation(Translation $translation): BinaryFileResponse
     {
-        $payload = Field::query()
-            ->whereHas('tab.modal', function ($query) use ($translation) {
-                $query->where('translation_id', $translation->id);
-            })
-            ->orderBy('unique_id')
-            ->pluck('translation', 'unique_id')
-            ->all();
-
-        $fileName = strtolower($translation->code).'.json';
-        $filePath = public_path("lang/{$fileName}");
-        $encodedPayload = json_encode(
-            $payload,
-            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT
-        );
-
-        $this->filesystem->ensureDirectoryExists(dirname($filePath));
-        $this->filesystem->put($filePath, $encodedPayload);
+        $payload = $this->buildFlatPayloadForTranslation($translation);
+        $filePath = $this->writeLangFile($translation, $payload);
 
         $translation->increment('version');
+        $fileName = strtolower($translation->code).'.json';
         $absoluteUrl = sprintf('%s/lang/%s', rtrim((string) config('app.url'), '/'), $fileName);
         $translation->update(['file_url' => $absoluteUrl]);
 
         return response()->download($filePath, $fileName);
+    }
+
+    /**
+     * Create a new translation language and import flat JSON values into it.
+     * Modal/tab placement for each unique_id is resolved from the Persian (fa) hierarchy.
+     *
+     * @return array{
+     *     updated: int,
+     *     created: int,
+     *     skipped: int,
+     *     unknown_ids: list<int|string>,
+     *     translation: Translation
+     * }
+     */
+    public function createAndImportTranslation(string $languageCode, UploadedFile|array|string $source): array
+    {
+        // Validate JSON shape against the fa.json / en.json flat pattern before creating anything.
+        $payload = $this->normalizeImportPayload($source);
+        $this->assertPersianHierarchyAvailable();
+
+        return DB::connection('sqlite')->transaction(function () use ($languageCode, $payload) {
+            $translation = $this->createTranslationByCode($languageCode);
+
+            return $this->importTranslation($translation, $payload);
+        });
+    }
+
+    /**
+     * Import a flat lang JSON file (same shape as public/lang/fa.json) into a translation.
+     * Placement of each unique_id is resolved from the Persian (fa) hierarchy.
+     *
+     * @return array{
+     *     updated: int,
+     *     created: int,
+     *     skipped: int,
+     *     unknown_ids: list<int|string>,
+     *     translation: Translation
+     * }
+     */
+    public function importTranslation(Translation $translation, UploadedFile|array|string $source): array
+    {
+        $payload = $this->normalizeImportPayload($source);
+        $hierarchy = $this->assertPersianHierarchyAvailable();
+
+        $stats = DB::connection('sqlite')->transaction(function () use ($translation, $payload, $hierarchy) {
+            $updated = 0;
+            $created = 0;
+            $skipped = 0;
+            $unknownIds = [];
+
+            $modalCache = [];
+            $tabCache = [];
+
+            foreach ($payload as $rawUniqueId => $value) {
+                $normalizedValue = $this->normalizeImportedValue($value);
+
+                // Flat JSON may include "" for fields whose unique_id is null in the DB.
+                if ($rawUniqueId === '' || $rawUniqueId === null) {
+                    $emptyResult = $this->upsertFieldsByUniqueId(
+                        $translation,
+                        null,
+                        $normalizedValue
+                    );
+                    $updated += $emptyResult['updated'];
+                    $created += $emptyResult['created'];
+
+                    if ($emptyResult['updated'] === 0 && $emptyResult['created'] === 0) {
+                        $skipped++;
+                    }
+
+                    continue;
+                }
+
+                if (! is_numeric($rawUniqueId)) {
+                    $unknownIds[] = $rawUniqueId;
+                    $skipped++;
+
+                    continue;
+                }
+
+                $uniqueId = (int) $rawUniqueId;
+                $locations = $hierarchy[$uniqueId] ?? [];
+
+                if ($locations === []) {
+                    $unknownIds[] = $uniqueId;
+                    $skipped++;
+
+                    continue;
+                }
+
+                foreach ($locations as $location) {
+                    $modalName = $location['modal'];
+                    $tabName = $location['tab'];
+                    $modalKey = $modalName;
+                    $tabKey = $modalName.'|'.$tabName;
+
+                    if (! isset($modalCache[$modalKey])) {
+                        $modalCache[$modalKey] = Modal::query()->firstOrCreate(
+                            [
+                                'translation_id' => $translation->id,
+                                'name' => $modalName,
+                            ]
+                        );
+                    }
+
+                    if (! isset($tabCache[$tabKey])) {
+                        $tabCache[$tabKey] = Tab::query()->firstOrCreate(
+                            [
+                                'modal_id' => $modalCache[$modalKey]->id,
+                                'name' => $tabName,
+                            ]
+                        );
+                    }
+
+                    $result = $this->upsertFieldsInTab(
+                        $tabCache[$tabKey],
+                        $uniqueId,
+                        $normalizedValue
+                    );
+                    $updated += $result['updated'];
+                    $created += $result['created'];
+                }
+            }
+
+            return [
+                'updated' => $updated,
+                'created' => $created,
+                'skipped' => $skipped,
+                'unknown_ids' => array_values(array_unique($unknownIds)),
+            ];
+        });
+
+        $flatPayload = $this->buildFlatPayloadForTranslation($translation);
+        $this->writeLangFile($translation, $flatPayload);
+
+        $translation->increment('version');
+        $fileName = strtolower($translation->code).'.json';
+        $absoluteUrl = sprintf('%s/lang/%s', rtrim((string) config('app.url'), '/'), $fileName);
+        $translation->update(['file_url' => $absoluteUrl]);
+
+        return [
+            ...$stats,
+            'translation' => $translation->refresh()->loadCount('modals'),
+        ];
+    }
+
+    /**
+     * Map each unique_id to its Persian modal/tab locations.
+     *
+     * @return array<int, list<array{modal: string, tab: string}>>
+     */
+    public function buildPersianHierarchyMap(): array
+    {
+        return Cache::rememberForever(self::REFERENCE_HIERARCHY_CACHE_KEY, function () {
+            $persian = Translation::query()
+                ->where('code', self::REFERENCE_LANGUAGE_CODE)
+                ->with([
+                    'modals.tabs.fields' => function ($query) {
+                        $query->orderBy('unique_id');
+                    },
+                ])
+                ->first();
+
+            if (! $persian) {
+                return [];
+            }
+
+            $map = [];
+
+            foreach ($persian->modals as $modal) {
+                foreach ($modal->tabs as $tab) {
+                    foreach ($tab->fields as $field) {
+                        if ($field->unique_id === null) {
+                            continue;
+                        }
+
+                        $uniqueId = (int) $field->unique_id;
+                        $location = [
+                            'modal' => $modal->name,
+                            'tab' => $tab->name,
+                        ];
+
+                        $map[$uniqueId] ??= [];
+
+                        $alreadyMapped = collect($map[$uniqueId])->contains(
+                            fn (array $existing) => $existing['modal'] === $location['modal']
+                                && $existing['tab'] === $location['tab']
+                        );
+
+                        if (! $alreadyMapped) {
+                            $map[$uniqueId][] = $location;
+                        }
+                    }
+                }
+            }
+
+            ksort($map);
+
+            return $map;
+        });
+    }
+
+    public function forgetPersianHierarchyCache(): void
+    {
+        Cache::forget(self::REFERENCE_HIERARCHY_CACHE_KEY);
     }
 
     public function getModalsForTranslation(Translation $translation, int $perPage = 10)
@@ -168,6 +368,8 @@ class TranslationService
                 ]);
             }
         });
+
+        $this->forgetPersianHierarchyCache();
     }
 
     public function updateModal(Modal $modal, string $name): void
@@ -181,6 +383,8 @@ class TranslationService
                 ]);
             }
         });
+
+        $this->forgetPersianHierarchyCache();
     }
 
     public function deleteModal(Modal $modal): void
@@ -188,6 +392,8 @@ class TranslationService
         DB::connection('sqlite')->transaction(function () use ($modal) {
             Modal::where('name', $modal->name)->delete();
         });
+
+        $this->forgetPersianHierarchyCache();
     }
 
     public function createTab(Modal $modal, string $name): void
@@ -201,6 +407,8 @@ class TranslationService
                 ]);
             }
         });
+
+        $this->forgetPersianHierarchyCache();
     }
 
     public function updateTab(Tab $tab, string $name): void
@@ -218,6 +426,8 @@ class TranslationService
                 ]);
             }
         });
+
+        $this->forgetPersianHierarchyCache();
     }
 
     public function deleteTab(Tab $tab): void
@@ -229,11 +439,13 @@ class TranslationService
                 })
                 ->delete();
         });
+
+        $this->forgetPersianHierarchyCache();
     }
 
     public function createField(Tab $tab, string $translationValue): Field
     {
-        return DB::connection('sqlite')->transaction(function () use ($tab, $translationValue) {
+        $field = DB::connection('sqlite')->transaction(function () use ($tab, $translationValue) {
             $tab->loadMissing('modal');
 
             $latestUniqueId = (int) Field::max('unique_id');
@@ -260,6 +472,10 @@ class TranslationService
 
             return $field;
         });
+
+        $this->forgetPersianHierarchyCache();
+
+        return $field;
     }
 
     public function updateField(Field $field, string $value): void
@@ -272,6 +488,7 @@ class TranslationService
     public function deleteField(Field $field): void
     {
         Field::where('unique_id', $field->unique_id)->delete();
+        $this->forgetPersianHierarchyCache();
     }
 
     private function replicateStructureForTranslation(Translation $translation): void
@@ -299,7 +516,21 @@ class TranslationService
                     'name' => $tab->name,
                 ]);
 
+                // Source data can contain duplicate unique_ids in the same tab.
+                // Copy each unique_id only once so imports/exports stay deterministic.
+                $seenUniqueIds = [];
+
                 foreach ($tab->fields as $field) {
+                    $dedupeKey = $field->unique_id === null
+                        ? 'null'
+                        : (string) (int) $field->unique_id;
+
+                    if (isset($seenUniqueIds[$dedupeKey])) {
+                        continue;
+                    }
+
+                    $seenUniqueIds[$dedupeKey] = true;
+
                     $newTab->fields()->create([
                         'unique_id' => $field->unique_id,
                         'translation' => null,
@@ -307,5 +538,209 @@ class TranslationService
                 }
             }
         }
+    }
+
+    /**
+     * Build the flat lang JSON payload. When the same unique_id exists on multiple
+     * rows, prefer a non-null translation so export matches the imported file.
+     *
+     * @return array<int|string, string|null>
+     */
+    private function buildFlatPayloadForTranslation(Translation $translation): array
+    {
+        $fields = Field::query()
+            ->whereHas('tab.modal', function ($query) use ($translation) {
+                $query->where('translation_id', $translation->id);
+            })
+            ->orderBy('unique_id')
+            ->orderBy('id')
+            ->get(['unique_id', 'translation']);
+
+        $payload = [];
+
+        foreach ($fields as $field) {
+            $key = $field->unique_id === null ? '' : (int) $field->unique_id;
+
+            if (! array_key_exists($key, $payload)) {
+                $payload[$key] = $field->translation;
+
+                continue;
+            }
+
+            if ($payload[$key] === null && $field->translation !== null) {
+                $payload[$key] = $field->translation;
+            }
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Update every field with the given unique_id inside a tab, or create one.
+     * Persian source data can contain duplicate unique_ids in the same tab;
+     * firstOrNew alone would leave sibling duplicates as null and break export.
+     *
+     * @return array{updated: int, created: int}
+     */
+    private function upsertFieldsInTab(Tab $tab, int $uniqueId, ?string $value): array
+    {
+        $fields = Field::query()
+            ->where('tab_id', $tab->id)
+            ->where('unique_id', $uniqueId)
+            ->get();
+
+        if ($fields->isEmpty()) {
+            $tab->fields()->create([
+                'unique_id' => $uniqueId,
+                'translation' => $value,
+            ]);
+
+            return ['updated' => 0, 'created' => 1];
+        }
+
+        foreach ($fields as $field) {
+            $field->translation = $value;
+            $field->save();
+        }
+
+        return ['updated' => $fields->count(), 'created' => 0];
+    }
+
+    /**
+     * Update every field with the given unique_id across a translation.
+     * Used for the empty JSON key ("") which maps to unique_id = null.
+     *
+     * @return array{updated: int, created: int}
+     */
+    private function upsertFieldsByUniqueId(Translation $translation, ?int $uniqueId, ?string $value): array
+    {
+        $fields = Field::query()
+            ->whereHas('tab.modal', function ($query) use ($translation) {
+                $query->where('translation_id', $translation->id);
+            })
+            ->when(
+                $uniqueId === null,
+                fn ($query) => $query->whereNull('unique_id'),
+                fn ($query) => $query->where('unique_id', $uniqueId)
+            )
+            ->get();
+
+        if ($fields->isEmpty()) {
+            return ['updated' => 0, 'created' => 0];
+        }
+
+        foreach ($fields as $field) {
+            $field->translation = $value;
+            $field->save();
+        }
+
+        return ['updated' => $fields->count(), 'created' => 0];
+    }
+
+    /**
+     * @param  array<int|string, string|null>  $payload
+     */
+    private function writeLangFile(Translation $translation, array $payload): string
+    {
+        $fileName = strtolower($translation->code).'.json';
+        $filePath = public_path("lang/{$fileName}");
+        $encodedPayload = json_encode(
+            $payload,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT
+        );
+
+        $this->filesystem->ensureDirectoryExists(dirname($filePath));
+        $this->filesystem->put($filePath, $encodedPayload);
+
+        return $filePath;
+    }
+
+    /**
+     * @return array<int, list<array{modal: string, tab: string}>>
+     */
+    private function assertPersianHierarchyAvailable(): array
+    {
+        $hierarchy = $this->buildPersianHierarchyMap();
+
+        if ($hierarchy === []) {
+            throw ValidationException::withMessages([
+                'file' => __('translations.persian_hierarchy_missing'),
+            ]);
+        }
+
+        return $hierarchy;
+    }
+
+    /**
+     * Normalize and validate import payload against the public/lang/fa.json pattern:
+     * a flat JSON object of numeric unique_id keys to string/null values.
+     *
+     * @return array<int|string, mixed>
+     */
+    private function normalizeImportPayload(UploadedFile|array|string $source): array
+    {
+        if (is_array($source)) {
+            $payload = $source;
+        } else {
+            $raw = $source instanceof UploadedFile
+                ? $this->filesystem->get($source->getRealPath())
+                : $source;
+
+            try {
+                $payload = json_decode($raw, true, flags: JSON_THROW_ON_ERROR);
+            } catch (JsonException $exception) {
+                throw ValidationException::withMessages([
+                    'file' => __('translations.invalid_json_file'),
+                ]);
+            }
+        }
+
+        if (! is_array($payload)) {
+            throw ValidationException::withMessages([
+                'file' => __('translations.invalid_structure_flat_object'),
+            ]);
+        }
+
+        // json_decode('{}') becomes [] — allow empty; reject true JSON arrays.
+        if ($payload !== [] && array_is_list($payload)) {
+            throw ValidationException::withMessages([
+                'file' => __('translations.invalid_structure_flat_object'),
+            ]);
+        }
+
+        foreach ($payload as $rawUniqueId => $value) {
+            if ($rawUniqueId === '' || $rawUniqueId === null) {
+                continue;
+            }
+
+            if (! is_numeric($rawUniqueId) || (string) (int) $rawUniqueId !== (string) $rawUniqueId) {
+                throw ValidationException::withMessages([
+                    'file' => __('translations.invalid_structure_numeric_keys'),
+                ]);
+            }
+
+            if (is_bool($value) || is_array($value) || is_object($value)) {
+                throw ValidationException::withMessages([
+                    'file' => __('translations.invalid_structure_string_values'),
+                ]);
+            }
+        }
+
+        return $payload;
+    }
+
+    private function normalizeImportedValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_bool($value) || is_array($value) || is_object($value)) {
+            throw ValidationException::withMessages([
+                'file' => __('translations.invalid_value_type'),
+            ]);
+        }
+
+        return (string) $value;
     }
 }

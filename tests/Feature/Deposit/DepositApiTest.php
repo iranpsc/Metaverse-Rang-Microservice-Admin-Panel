@@ -99,6 +99,7 @@ class DepositApiTest extends TestCase
                             'id',
                             'user_id',
                             'user_name',
+                            'citizen_code',
                             'amount',
                             'ref_id',
                             'card_pan',
@@ -136,6 +137,19 @@ class DepositApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.payments.0.id', $payment->id)
             ->assertJsonPath('data.payments.0.user_name', 'Ali Depositor');
+    }
+
+    public function test_returns_citizen_code_from_related_user(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $user = $this->createUser(['name' => 'Code Depositor', 'code' => '123321']);
+        $payment = $this->createPayment($user);
+
+        $this->getJson(self::INDEX_PATH)
+            ->assertOk()
+            ->assertJsonPath('data.payments.0.id', $payment->id)
+            ->assertJsonPath('data.payments.0.citizen_code', '123321');
     }
 
     public function test_missing_user_relation_returns_dash_for_user_name(): void
@@ -396,6 +410,53 @@ class DepositApiTest extends TestCase
             ->assertJsonPath('data.pagination.total', 1)
             ->assertJsonCount(1, 'data.payments')
             ->assertJsonPath('data.payments.0.id', $match->id);
+    }
+
+    public function test_search_filters_by_user_name(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $matchUser = $this->createUser(['name' => 'Depositor Match']);
+        $otherUser = $this->createUser(['name' => 'Other Person']);
+        $match = $this->createPayment($matchUser, ['ref_id' => 'REF-NAME-MATCH']);
+        $this->createPayment($otherUser, ['ref_id' => 'REF-NAME-MISS']);
+
+        $this->getJson(self::INDEX_PATH.'?search=Depositor Match')
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.payments.0.id', $match->id)
+            ->assertJsonPath('data.payments.0.user_name', 'Depositor Match');
+    }
+
+    public function test_search_filters_by_citizen_code(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $matchUser = $this->createUser(['name' => 'Code Owner', 'code' => '445566']);
+        $otherUser = $this->createUser(['name' => 'Other', 'code' => '778899']);
+        $match = $this->createPayment($matchUser, ['ref_id' => 'REF-CODE-MATCH']);
+        $this->createPayment($otherUser, ['ref_id' => 'REF-CODE-MISS']);
+
+        $this->getJson(self::INDEX_PATH.'?search=445566')
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.payments.0.id', $match->id)
+            ->assertJsonPath('data.payments.0.citizen_code', '445566');
+    }
+
+    public function test_filters_by_product_asset_type(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $user = $this->createUser();
+        $red = $this->createPayment($user, ['ref_id' => 'REF-RED', 'product' => 'red']);
+        $this->createPayment($user, ['ref_id' => 'REF-BLUE', 'product' => 'blue']);
+
+        $this->getJson(self::INDEX_PATH.'?product=red')
+            ->assertOk()
+            ->assertJsonPath('data.pagination.total', 1)
+            ->assertJsonPath('data.payments.0.id', $red->id)
+            ->assertJsonPath('data.payments.0.product', 'red');
     }
 
     public function test_empty_search_returns_all_payments(): void

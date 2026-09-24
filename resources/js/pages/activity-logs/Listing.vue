@@ -197,6 +197,7 @@ import apiClient from '../../utils/api'
 import { Table, Pagination, LoadingState, ErrorState, Button, Modal, SearchBox } from '../../components/ui'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { useToast } from '../../composables/useToast'
+import { splitJalaliDateTime } from '../../utils/dateFormatter'
 
 const { showToast } = useToast()
 
@@ -256,29 +257,6 @@ const hasActiveFilters = computed(() => {
     activeEvent.value !== 'all'
   )
 })
-
-const splitJalaliDateTime = (jalaliValue, timeValue) => {
-  if (timeValue) {
-    return {
-      date: jalaliValue || '-',
-      time: timeValue
-    }
-  }
-
-  if (!jalaliValue) {
-    return { date: '-', time: '-' }
-  }
-
-  const parts = String(jalaliValue).trim().split(/\s+/)
-  if (parts.length >= 2) {
-    return {
-      date: parts[0],
-      time: parts.slice(1).join(' ')
-    }
-  }
-
-  return { date: jalaliValue, time: '-' }
-}
 
 const modalEventDate = computed(() => {
   if (!selectedActivity.value) return '-'

@@ -1,21 +1,39 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">لیست قیمت گذاری ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">مشاهده درخواست‌های قیمت گذاری</p>
-    </div>
+    <PageHeader
+      title="لیست قیمت گذاری ها"
+      subtitle="مشاهده درخواست‌های قیمت گذاری"
+    />
 
-    <!-- Search Box -->
-    <div class="mb-6">
-      <SearchBox
-        v-model="searchTerm"
-        placeholder="جستجو..."
-        :debounce-ms="500"
-        container-class="max-w-md"
-        @search="handleSearch"
-        @clear="handleClear"
-      />
+    <!-- Filters -->
+    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end mb-6">
+      <div class="w-full sm:flex-1 sm:max-w-md">
+        <SearchBox
+          v-model="searchTerm"
+          placeholder="جستجو..."
+          :debounce-ms="500"
+          @search="handleSearch"
+          @clear="handleClear"
+        />
+      </div>
+      <div class="w-full sm:w-56">
+        <Select
+          v-model="sortBy"
+          label="مرتب‌سازی بر اساس"
+          placeholder=""
+          :options="sortByOptions"
+          @change="handleFilterChange"
+        />
+      </div>
+      <div class="w-full sm:w-48">
+        <Select
+          v-model="sortDirection"
+          label="ترتیب"
+          placeholder=""
+          :options="sortDirectionOptions"
+          @change="handleFilterChange"
+        />
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -50,7 +68,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
   </div>
 </template>
@@ -58,14 +76,38 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Table, Pagination, SearchBox, LoadingState, ErrorState, Alert } from '../../components/ui'
+import { Table, Pagination, SearchBox, LoadingState, ErrorState, Alert, Select, PageHeader } from '../../components/ui'
+import { gregorianToShamsiSync } from '../../utils/dateConverter'
+import { formatDisplayTime } from '../../utils/dateFormatter'
+import { formatLatinNumber } from '../../utils/numberFormatter'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 
-const loading = ref(true)
-const error = ref(null)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams,
+  resetToFirstPage
+} = usePaginatedList()
+
 const pricings = ref([])
-const pagination = ref(null)
-const searchTerm = ref('')
-const currentPage = ref(1)
+const sortBy = ref('price_irr')
+const sortDirection = ref('desc')
+
+const sortByOptions = [
+  { value: 'price_irr', label: 'مبلغ قیمت گذاری ریال' },
+  { value: 'price_psc', label: 'مبلغ قیمت گذاری PSC' },
+]
+
+const sortDirectionOptions = [
+  { value: 'desc', label: 'نزولی' },
+  { value: 'asc', label: 'صعودی' },
+]
 
 // Table columns configuration
 const tableColumns = [
@@ -91,86 +133,52 @@ const tableColumns = [
   }
 ]
 
-const handleSearch = () => {
-  currentPage.value = 1
+const formatPrice = (value) => formatLatinNumber(value)
+
+const handleFilterChange = () => {
+  resetToFirstPage()
   fetchPricings()
 }
 
-const handleClear = () => {
-  currentPage.value = 1
-  fetchPricings()
+const handleSearch = () => search(fetchPricings)
+const handleClear = () => clear(fetchPricings)
+const onPageChange = (page) => goToPage(page, fetchPricings)
+
+const clearPricings = () => {
+  pricings.value = []
+  pagination.value = null
 }
 
-const goToPage = (page) => {
-  if (page >= 1 && page <= pagination.value?.last_page) {
-    currentPage.value = page
-    fetchPricings()
+const fetchPricings = () => execute(async () => {
+  const response = await apiClient.get('/lands/pricing', {
+    params: buildParams({
+      sort_by: sortBy.value,
+      sort: sortDirection.value
+    })
+  })
+
+  if (response.data.success) {
+    pricings.value = response.data.data.pricings.map(pricing => ({
+      property_id: pricing.feature?.properties?.id || '-',
+      price_psc: formatPrice(pricing.price_psc),
+      price_irr: formatPrice(pricing.price_irr),
+      created_at_date: pricing.created_at
+        ? (gregorianToShamsiSync(pricing.created_at) || '-')
+        : '-',
+      created_at_time: pricing.created_at
+        ? formatDisplayTime(pricing.created_at, { useLocale: false, includeSeconds: true })
+        : '-'
+    }))
+    pagination.value = response.data.data.pagination
+  } else {
+    error.value = 'خطا در دریافت اطلاعات قیمت گذاری‌ها'
+    clearPricings()
   }
-}
-
-const fetchPricings = async () => {
-  try {
-    loading.value = true
-    error.value = null
-
-    const params = {
-      page: currentPage.value,
-      per_page: 10
-    }
-
-    if (searchTerm.value) {
-      params.search = searchTerm.value
-    }
-
-    const response = await apiClient.get('/lands/pricing', { params })
-
-    if (response.data.success) {
-      pricings.value = response.data.data.pricings.map(pricing => ({
-        property_id: pricing.feature?.properties?.id || '-',
-        price_psc: pricing.price_psc || 0,
-        price_irr: pricing.price_irr || 0,
-        created_at_date: pricing.created_at ? formatDate(pricing.created_at) : '-',
-        created_at_time: pricing.created_at ? formatTime(pricing.created_at) : '-'
-      }))
-      pagination.value = response.data.data.pagination
-    } else {
-      error.value = 'خطا در دریافت اطلاعات قیمت گذاری‌ها'
-    }
-  } catch (err) {
-    console.error('Pricings fetch error:', err)
-
-    if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-      pricings.value = []
-      pagination.value = null
-      loading.value = false
-      return
-    }
-
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    pricings.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
-  }
-}
-
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}/${month}/${day}`
-}
-
-const formatTime = (dateString) => {
-  if (!dateString) return '-'
-  const date = new Date(dateString)
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  const seconds = String(date.getSeconds()).padStart(2, '0')
-  return `${hours}:${minutes}:${seconds}`
-}
+}, {
+  onClear: clearPricings,
+  logLabel: 'Pricings fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
+})
 
 onMounted(() => {
   fetchPricings()
@@ -180,4 +188,3 @@ onMounted(() => {
 <style scoped>
 /* Additional styles if needed */
 </style>
-

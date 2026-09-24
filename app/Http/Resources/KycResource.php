@@ -16,6 +16,7 @@ class KycResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'citizen_code' => $this->whenLoaded('user', fn () => $this->user?->code),
             'fname' => $this->fname,
             'lname' => $this->lname,
             'melli_code' => $this->melli_code,

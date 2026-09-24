@@ -22,8 +22,15 @@ class SoldController extends Controller
             ->where('seller_id', 1);
 
         if ($searchTerm) {
-            $query->whereHas('feature.properties', function ($q) use ($searchTerm) {
-                $q->where('id', 'like', '%'.trim($searchTerm).'%');
+            $term = trim($searchTerm);
+
+            $query->where(function ($q) use ($term) {
+                $q->whereHas('feature.properties', function ($propertiesQuery) use ($term) {
+                    $propertiesQuery->where('id', 'like', '%'.$term.'%');
+                })->orWhereHas('buyer', function ($buyerQuery) use ($term) {
+                    $buyerQuery->where('name', 'like', '%'.$term.'%')
+                        ->orWhere('code', 'like', '%'.$term.'%');
+                });
             });
         }
 

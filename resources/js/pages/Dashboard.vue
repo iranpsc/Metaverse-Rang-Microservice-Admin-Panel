@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">داشبورد</h1>
-      <p class="text-[var(--theme-text-secondary)]">خلاصه آمار و اطلاعات سیستم</p>
-    </div>
+    <PageHeader
+      title="داشبورد"
+      subtitle="خلاصه آمار و اطلاعات سیستم"
+    />
 
     <!-- Loading State -->
     <LoadingState v-if="loading" />
@@ -131,7 +130,7 @@
 import { ref, onMounted } from 'vue'
 import DashboardCard from '../components/DashboardCard.vue'
 import apiClient from '../utils/api'
-import { LoadingState, ErrorState } from '../components/ui'
+import { LoadingState, ErrorState, PageHeader } from '../components/ui'
 
 const loading = ref(true)
 const error = ref(null)

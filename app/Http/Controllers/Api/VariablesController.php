@@ -58,9 +58,13 @@ class VariablesController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $request->merge([
+            'asset' => preg_replace('/\s+/', '-', trim((string) $request->input('asset', ''))),
+        ]);
+
         $rules = [
             'price' => 'required|numeric|min:1',
-            'asset' => 'required|in:red,blue,yellow,irr,psc,satisfaction,effect|unique:variables',
+            'asset' => ['required', 'string', 'regex:/^[a-zA-Z]+(?:-[a-zA-Z]+)*$/', 'unique:variables'],
             'image' => 'required|image|max:1024',
         ];
 

@@ -1,11 +1,10 @@
 <template>
   <div class="p-6 space-y-6" dir="rtl">
-    <!-- Page Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">مدیریت سطوح</h1>
-        <p class="text-[var(--theme-text-secondary)]">ایجاد، ویرایش و مدیریت سطوح متاورس</p>
-      </div>
+    <PageHeader
+      title="مدیریت سطوح"
+      subtitle="ایجاد، ویرایش و مدیریت سطوح متاورس"
+    />
+    <div>
       <Button
         variant="primary"
         rounded="full"
@@ -119,127 +118,54 @@
         v-if="pagination && pagination.total > 0"
         :pagination="pagination"
         :disabled="loading"
-        @page-change="goToPage"
+        @page-change="onPageChange"
       />
     </template>
 
-    <!-- Create Level Modal -->
+    <!-- Create / Update Level Modal -->
     <Modal
-      :model-value="isCreateModalOpen"
-      @update:model-value="handleCreateModalToggle"
-      title="تعریف سطح جدید"
+      :model-value="isFormModalOpen"
+      @update:model-value="handleFormModalToggle"
+      :title="formModalTitle"
       size="xl"
     >
       <div class="space-y-6" dir="rtl">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
-            v-model="createForm.name"
+            v-model="form.name"
             label="نام سطح"
             required
-            :error="createErrors.name"
+            :error="formErrors.name"
           />
           <Input
-            v-model="createForm.slug"
+            v-model="form.slug"
             label="نامک"
             required
-            :error="createErrors.slug"
+            :error="formErrors.slug"
           />
           <Input
-            v-model="createForm.score"
+            v-model="form.score"
             label="امتیاز مورد نیاز"
             type="number"
             min="0"
             required
-            :error="createErrors.score"
-          />
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FileInput
-            v-model="createForm.image"
-            label="تصویر"
-            accept="image/*"
-            :error="createErrors.image"
-            helper-text="فرمت‌های مجاز: jpg، jpeg، png، bmp"
-          />
-
-          <FileInput
-            v-model="createForm.backgroundImage"
-            label="تصویر پس زمینه"
-            accept="image/*"
-            required
-            :error="createErrors.background_image"
-            helper-text="حداکثر حجم 5 مگابایت"
-          />
-        </div>
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-3" dir="rtl">
-          <Button
-            variant="primary"
-            rounded="full"
-            :loading="createSubmitting"
-            @click="handleCreateSubmit"
-          >
-            ثبت
-          </Button>
-          <Button
-            variant="danger"
-            rounded="full"
-            :disabled="createSubmitting"
-            @click="closeCreateModal"
-          >
-            بستن
-          </Button>
-        </div>
-      </template>
-    </Modal>
-
-    <!-- Update Level Modal -->
-    <Modal
-      :model-value="isUpdateModalOpen"
-      @update:model-value="handleUpdateModalToggle"
-      title="ویرایش سطح"
-      size="xl"
-    >
-      <div v-if="selectedLevel" class="space-y-6" dir="rtl">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            v-model="updateForm.name"
-            label="نام سطح"
-            required
-            :error="updateErrors.name"
-          />
-          <Input
-            v-model="updateForm.slug"
-            label="نامک"
-            required
-            :error="updateErrors.slug"
-          />
-          <Input
-            v-model="updateForm.score"
-            label="امتیاز مورد نیاز"
-            type="number"
-            min="0"
-            required
-            :error="updateErrors.score"
+            :error="formErrors.score"
           />
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-3">
             <FileInput
-              v-model="updateForm.image"
+              v-model="form.image"
               label="تصویر"
               accept="image/*"
-              :error="updateErrors.image"
-              helper-text="عدم انتخاب فایل به معنی حفظ تصویر فعلی است"
+              :error="formErrors.image"
+              :helper-text="imageHelperText"
             />
-            <p v-if="updateForm.existingImageUrl" class="text-xs text-[var(--theme-text-secondary)]">
+            <p v-if="isEditMode && form.existingImageUrl" class="text-xs text-[var(--theme-text-secondary)]">
               تصویر فعلی:
               <a
-                :href="updateForm.existingImageUrl"
+                :href="form.existingImageUrl"
                 target="_blank"
                 rel="noopener"
                 class="inline-flex items-center gap-1 text-primary-300 hover:text-primary-200 underline"
@@ -253,16 +179,17 @@
 
           <div class="space-y-3">
             <FileInput
-              v-model="updateForm.backgroundImage"
+              v-model="form.backgroundImage"
               label="تصویر پس زمینه"
               accept="image/*"
-              :error="updateErrors.background_image"
-              helper-text="عدم انتخاب فایل به معنی حفظ تصویر فعلی است"
+              :required="!isEditMode"
+              :error="formErrors.background_image"
+              :helper-text="backgroundHelperText"
             />
-            <p v-if="updateForm.existingBackgroundUrl" class="text-xs text-[var(--theme-text-secondary)]">
+            <p v-if="isEditMode && form.existingBackgroundUrl" class="text-xs text-[var(--theme-text-secondary)]">
               تصویر فعلی:
               <a
-                :href="updateForm.existingBackgroundUrl"
+                :href="form.existingBackgroundUrl"
                 target="_blank"
                 rel="noopener"
                 class="inline-flex items-center gap-1 text-secondary-300 hover:text-secondary-200 underline"
@@ -281,16 +208,16 @@
           <Button
             variant="primary"
             rounded="full"
-            :loading="updateSubmitting"
-            @click="handleUpdateSubmit"
+            :loading="formSubmitting"
+            @click="handleFormSubmit"
           >
-            ثبت تغییرات
+            {{ formSubmitLabel }}
           </Button>
           <Button
             variant="danger"
             rounded="full"
-            :disabled="updateSubmitting"
-            @click="closeUpdateModal"
+            :disabled="formSubmitting"
+            @click="closeFormModal"
           >
             بستن
           </Button>
@@ -418,9 +345,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Table, Pagination, Button, Modal, Input, LoadingState, ErrorState, FileInput } from '../../components/ui'
+import { Table, Pagination, Button, Modal, Input, LoadingState, ErrorState, FileInput, PageHeader } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import { useLevels } from '../../composables/useLevels'
@@ -436,28 +364,38 @@ const {
 
 const router = useRouter()
 
-const loading = ref(true)
-const error = ref(null)
-const levels = ref([])
-const pagination = ref(null)
-const currentPage = ref(1)
-const perPage = 10
+const {
+  loading,
+  error,
+  pagination,
+  execute,
+  goToPage,
+  buildParams
+} = usePaginatedList({ perPage: 10 })
 
-const isCreateModalOpen = ref(false)
-const isUpdateModalOpen = ref(false)
+const levels = ref([])
+
+const isFormModalOpen = ref(false)
 const isInfoModalOpen = ref(false)
 
 const selectedLevel = ref(null)
+const editingLevel = ref(null)
 
-const createForm = reactive({
-  name: '',
-  slug: '',
-  score: '',
-  image: null,
-  backgroundImage: null
-})
+const isEditMode = computed(() => Boolean(editingLevel.value))
+const formModalTitle = computed(() => isEditMode.value ? 'ویرایش سطح' : 'تعریف سطح جدید')
+const formSubmitLabel = computed(() => isEditMode.value ? 'ثبت تغییرات' : 'ثبت')
+const imageHelperText = computed(() => (
+  isEditMode.value
+    ? 'عدم انتخاب فایل به معنی حفظ تصویر فعلی است'
+    : 'فرمت‌های مجاز: jpg، jpeg، png، bmp'
+))
+const backgroundHelperText = computed(() => (
+  isEditMode.value
+    ? 'عدم انتخاب فایل به معنی حفظ تصویر فعلی است'
+    : 'حداکثر حجم 5 مگابایت'
+))
 
-const updateForm = reactive({
+const form = reactive({
   name: '',
   slug: '',
   score: '',
@@ -467,11 +405,8 @@ const updateForm = reactive({
   existingBackgroundUrl: null
 })
 
-const createErrors = reactive({})
-const updateErrors = reactive({})
-
-const createSubmitting = ref(false)
-const updateSubmitting = ref(false)
+const formErrors = reactive({})
+const formSubmitting = ref(false)
 
 const tableColumns = [
   {
@@ -523,174 +458,108 @@ const resolveImageUrl = (value) => {
   return `/uploads/${value.replace(/^\/+/g, '')}`
 }
 
-const fetchLevels = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const clearLevels = () => {
+  levels.value = []
+  pagination.value = null
+}
 
-    const params = {
-      page: currentPage.value,
-      per_page: perPage
-    }
+const fetchLevels = () => execute(async () => {
+  const response = await fetchLevelsApi(buildParams())
 
-    const response = await fetchLevelsApi(params)
+  if (response.data?.success) {
+    const payload = response.data.data || {}
+    const rawLevels = Array.isArray(payload.levels?.data)
+      ? payload.levels.data
+      : Array.isArray(payload.levels)
+        ? payload.levels
+        : []
 
-    if (response.data?.success) {
-      const payload = response.data.data || {}
-      const rawLevels = Array.isArray(payload.levels?.data)
-        ? payload.levels.data
-        : Array.isArray(payload.levels)
-          ? payload.levels
-          : []
+    levels.value = rawLevels.map(mapLevel)
 
-      levels.value = rawLevels.map(mapLevel)
-
-      if (payload.pagination) {
-        pagination.value = payload.pagination
-      } else if (payload.levels?.meta) {
-        const meta = payload.levels.meta
-        pagination.value = {
-          total: meta.total,
-          per_page: meta.per_page,
-          current_page: meta.current_page,
-          last_page: meta.last_page
-        }
-      } else {
-        pagination.value = null
+    if (payload.pagination) {
+      pagination.value = payload.pagination
+    } else if (payload.levels?.meta) {
+      const meta = payload.levels.meta
+      pagination.value = {
+        total: meta.total,
+        per_page: meta.per_page,
+        current_page: meta.current_page,
+        last_page: meta.last_page
       }
     } else {
-      error.value = response.data?.message || 'خطا در دریافت اطلاعات سطوح'
-      levels.value = []
       pagination.value = null
     }
-  } catch (err) {
-    console.error('Levels fetch error:', err)
-    error.value = err.response?.data?.message || 'خطا در بارگذاری اطلاعات'
-    levels.value = []
-    pagination.value = null
-  } finally {
-    loading.value = false
+  } else {
+    error.value = response.data?.message || 'خطا در دریافت اطلاعات سطوح'
+    clearLevels()
   }
-}
-
-const goToPage = (page) => {
-  if (!pagination.value) return
-  if (page < 1 || page > pagination.value.last_page) return
-  currentPage.value = page
-  fetchLevels()
-}
-
-const resetCreateForm = () => {
-  createForm.name = ''
-  createForm.slug = ''
-  createForm.score = ''
-  createForm.image = null
-  createForm.backgroundImage = null
-  Object.keys(createErrors).forEach((key) => delete createErrors[key])
-}
-
-const resetUpdateForm = () => {
-  if (!selectedLevel.value) return
-  updateForm.name = selectedLevel.value.name
-  updateForm.slug = selectedLevel.value.slug
-  updateForm.score = selectedLevel.value.score
-  updateForm.image = null
-  updateForm.backgroundImage = null
-  updateForm.existingImageUrl = selectedLevel.value.image || null
-  updateForm.existingBackgroundUrl = selectedLevel.value.background_image || null
-  Object.keys(updateErrors).forEach((key) => delete updateErrors[key])
-}
-
-const validateCreateForm = () => {
-  Object.keys(createErrors).forEach((key) => delete createErrors[key])
-
-  if (!createForm.name) {
-    createErrors.name = 'نام سطح را وارد کنید'
-  }
-
-  if (!createForm.slug) {
-    createErrors.slug = 'نامک را وارد کنید'
-  }
-
-  if (createForm.score === '' || Number(createForm.score) < 0) {
-    createErrors.score = 'امتیاز معتبر وارد کنید'
-  }
-
-  if (!createForm.backgroundImage) {
-    createErrors.background_image = 'انتخاب تصویر پس زمینه الزامی است'
-  }
-
-  return Object.keys(createErrors).length === 0
-}
-
-const validateUpdateForm = () => {
-  Object.keys(updateErrors).forEach((key) => delete updateErrors[key])
-
-  if (!updateForm.name) {
-    updateErrors.name = 'نام سطح را وارد کنید'
-  }
-
-  if (!updateForm.slug) {
-    updateErrors.slug = 'نامک را وارد کنید'
-  }
-
-  if (updateForm.score === '' || Number(updateForm.score) < 0) {
-    updateErrors.score = 'امتیاز معتبر وارد کنید'
-  }
-
-  return Object.keys(updateErrors).length === 0
-}
-
-watch(
-  () => createForm.image,
-  (file) => {
-    if (file && createErrors.image) {
-      delete createErrors.image
-    }
-  }
-)
-
-watch(
-  () => createForm.backgroundImage,
-  (file) => {
-    if (file && createErrors.background_image) {
-      delete createErrors.background_image
-    }
-  }
-)
-
-watch(
-  () => updateForm.image,
-  (file) => {
-    if (file && updateErrors.image) {
-      delete updateErrors.image
-    }
-  }
-)
-
-watch(
-  () => updateForm.backgroundImage,
-  (file) => {
-    if (file && updateErrors.background_image) {
-      delete updateErrors.background_image
-    }
-  }
-)
-
-const buildCreatePayload = () => ({
-  name: createForm.name,
-  slug: createForm.slug,
-  score: createForm.score,
-  image: createForm.image,
-  backgroundImage: createForm.backgroundImage
+}, {
+  onClear: clearLevels,
+  logLabel: 'Levels fetch error:',
+  fallbackMessage: 'خطا در بارگذاری اطلاعات'
 })
 
-const buildUpdatePayload = () => ({
-  name: updateForm.name,
-  slug: updateForm.slug,
-  score: updateForm.score,
-  image: updateForm.image,
-  backgroundImage: updateForm.backgroundImage
+const onPageChange = (page) => goToPage(page, fetchLevels)
+
+const resetForm = () => {
+  const level = editingLevel.value
+
+  form.name = level?.name || ''
+  form.slug = level?.slug || ''
+  form.score = level?.score ?? ''
+  form.image = null
+  form.backgroundImage = null
+  form.existingImageUrl = level?.image || null
+  form.existingBackgroundUrl = level?.background_image || null
+  Object.keys(formErrors).forEach((key) => delete formErrors[key])
+}
+
+const validateForm = () => {
+  Object.keys(formErrors).forEach((key) => delete formErrors[key])
+
+  if (!form.name) {
+    formErrors.name = 'نام سطح را وارد کنید'
+  }
+
+  if (!form.slug) {
+    formErrors.slug = 'نامک را وارد کنید'
+  }
+
+  if (form.score === '' || Number(form.score) < 0) {
+    formErrors.score = 'امتیاز معتبر وارد کنید'
+  }
+
+  if (!isEditMode.value && !form.backgroundImage) {
+    formErrors.background_image = 'انتخاب تصویر پس زمینه الزامی است'
+  }
+
+  return Object.keys(formErrors).length === 0
+}
+
+watch(
+  () => form.image,
+  (file) => {
+    if (file && formErrors.image) {
+      delete formErrors.image
+    }
+  }
+)
+
+watch(
+  () => form.backgroundImage,
+  (file) => {
+    if (file && formErrors.background_image) {
+      delete formErrors.background_image
+    }
+  }
+)
+
+const buildFormPayload = () => ({
+  name: form.name,
+  slug: form.slug,
+  score: form.score,
+  image: form.image,
+  backgroundImage: form.backgroundImage
 })
 
 const buildLevelFormData = (payload) => {
@@ -710,99 +579,66 @@ const buildLevelFormData = (payload) => {
   return formData
 }
 
-const submitCreateLevel = async () => {
+const submitLevelForm = async () => {
   try {
-    createSubmitting.value = true
-    Object.keys(createErrors).forEach((key) => delete createErrors[key])
+    formSubmitting.value = true
+    Object.keys(formErrors).forEach((key) => delete formErrors[key])
 
-    const payload = buildCreatePayload()
+    const payload = buildFormPayload()
     const formData = buildLevelFormData(payload)
 
-    const response = await createLevel(formData)
+    let response
+
+    if (isEditMode.value) {
+      formData.append('_method', 'PUT')
+      response = await updateLevel(editingLevel.value.id, formData)
+    } else {
+      response = await createLevel(formData)
+    }
 
     if (response.data?.success) {
-      showToast(response.data?.message || 'سطح با موفقیت ایجاد شد', 'success')
-      closeCreateModal()
+      showToast(
+        response.data?.message || (isEditMode.value ? 'سطح با موفقیت بروزرسانی شد' : 'سطح با موفقیت ایجاد شد'),
+        'success'
+      )
+      closeFormModal()
       fetchLevels()
     } else {
-      showToast(response.data?.message || 'خطا در ثبت سطح', 'error')
+      showToast(
+        response.data?.message || (isEditMode.value ? 'خطا در بروزرسانی سطح' : 'خطا در ثبت سطح'),
+        'error'
+      )
     }
   } catch (err) {
-    console.error('Create level error:', err)
+    console.error(isEditMode.value ? 'Update level error:' : 'Create level error:', err)
 
     if (err.response?.status === 422 && err.response?.data?.errors) {
       const errorsBag = err.response.data.errors
 
       Object.keys(errorsBag).forEach((field) => {
         const message = Array.isArray(errorsBag[field]) ? errorsBag[field][0] : errorsBag[field]
-        createErrors[field] = message
+        formErrors[field] = message
       })
     } else {
-      showToast(err.response?.data?.message || 'خطا در ثبت سطح', 'error')
+      showToast(
+        err.response?.data?.message || (isEditMode.value ? 'خطا در بروزرسانی سطح' : 'خطا در ثبت سطح'),
+        'error'
+      )
     }
   } finally {
-    createSubmitting.value = false
+    formSubmitting.value = false
   }
 }
 
-const submitUpdateLevel = async () => {
-  if (!selectedLevel.value) {
+const handleFormSubmit = async () => {
+  if (formSubmitting.value) return
+  if (isEditMode.value && !editingLevel.value) return
+
+  if (!validateForm()) {
     return
   }
 
-  try {
-    updateSubmitting.value = true
-    Object.keys(updateErrors).forEach((key) => delete updateErrors[key])
-
-    const payload = buildUpdatePayload()
-    const formData = buildLevelFormData(payload)
-    formData.append('_method', 'PUT')
-
-    const response = await updateLevel(selectedLevel.value.id, formData)
-
-    if (response.data?.success) {
-      showToast(response.data?.message || 'سطح با موفقیت بروزرسانی شد', 'success')
-      closeUpdateModal()
-      fetchLevels()
-    } else {
-      showToast(response.data?.message || 'خطا در بروزرسانی سطح', 'error')
-    }
-  } catch (err) {
-    console.error('Update level error:', err)
-
-    if (err.response?.status === 422 && err.response?.data?.errors) {
-      const errorsBag = err.response.data.errors
-
-      Object.keys(errorsBag).forEach((field) => {
-        const message = Array.isArray(errorsBag[field]) ? errorsBag[field][0] : errorsBag[field]
-        updateErrors[field] = message
-      })
-    } else {
-      showToast(err.response?.data?.message || 'خطا در بروزرسانی سطح', 'error')
-    }
-  } finally {
-    updateSubmitting.value = false
-  }
-}
-
-const handleCreateSubmit = async () => {
-  if (createSubmitting.value) return
-
-  if (!validateCreateForm()) {
-    return
-  }
-
-  await submitCreateLevel()
-}
-
-const handleUpdateSubmit = async () => {
-  if (updateSubmitting.value || !selectedLevel.value) return
-
-  if (!validateUpdateForm()) {
-    return
-  }
-
-  await submitUpdateLevel()
+  await submitLevelForm()
 }
 
 const handleDelete = async (level) => {
@@ -830,40 +666,28 @@ const handleDelete = async (level) => {
 }
 
 const openCreateModal = () => {
-  resetCreateForm()
-  isCreateModalOpen.value = true
-}
-
-const closeCreateModal = () => {
-  isCreateModalOpen.value = false
-  resetCreateForm()
-}
-
-const handleCreateModalToggle = (value) => {
-  if (!value) {
-    closeCreateModal()
-  } else {
-    isCreateModalOpen.value = true
-  }
+  editingLevel.value = null
+  resetForm()
+  isFormModalOpen.value = true
 }
 
 const openUpdateModal = (level) => {
-  selectedLevel.value = level
-  resetUpdateForm()
-  isUpdateModalOpen.value = true
+  editingLevel.value = level
+  resetForm()
+  isFormModalOpen.value = true
 }
 
-const closeUpdateModal = () => {
-  isUpdateModalOpen.value = false
-  selectedLevel.value = null
+const closeFormModal = () => {
+  isFormModalOpen.value = false
+  editingLevel.value = null
+  resetForm()
 }
 
-const handleUpdateModalToggle = (value) => {
+const handleFormModalToggle = (value) => {
   if (!value) {
-    closeUpdateModal()
+    closeFormModal()
   } else {
-    isUpdateModalOpen.value = true
-    nextTick(() => resetUpdateForm())
+    isFormModalOpen.value = true
   }
 }
 
@@ -929,15 +753,9 @@ const goToGemPage = () => {
   })
 }
 
-watch(isCreateModalOpen, (isOpen) => {
+watch(isFormModalOpen, (isOpen) => {
   if (!isOpen) {
-    resetCreateForm()
-  }
-})
-
-watch(isUpdateModalOpen, (isOpen) => {
-  if (!isOpen) {
-    resetUpdateForm()
+    resetForm()
   }
 })
 

@@ -21,6 +21,8 @@ class TranslationApiTest extends TestCase
 
     private const LANGUAGES_PATH = '/api/translations/languages';
 
+    private const IMPORT_NEW_PATH = '/api/translations/import';
+
     /** @var list<string> */
     private array $createdLangFiles = [];
 
@@ -69,7 +71,7 @@ class TranslationApiTest extends TestCase
             'status' => false,
         ]);
 
-        $response = $this->getJson(self::INDEX_PATH);
+        $response = $this->getJson(self::INDEX_PATH.'?active=1');
 
         $response->assertOk()
             ->assertJsonCount(1, 'data')
@@ -86,9 +88,27 @@ class TranslationApiTest extends TestCase
             'status' => false,
         ]);
 
-        $this->getJson(self::INDEX_PATH)
+        $this->getJson(self::INDEX_PATH.'?active=1')
             ->assertOk()
             ->assertJsonCount(0, 'data');
+    }
+
+    public function test_index_includes_inactive_translations_by_default(): void
+    {
+        $this->createTranslation([
+            'code' => 'de',
+            'name' => 'German',
+            'status' => false,
+        ]);
+        $this->createTranslation([
+            'code' => 'en',
+            'name' => 'English',
+            'status' => true,
+        ]);
+
+        $this->getJson(self::INDEX_PATH)
+            ->assertOk()
+            ->assertJsonCount(2, 'data');
     }
 
     public function test_index_returns_expected_json_structure_including_icon_and_modals_count(): void
@@ -619,6 +639,220 @@ class TranslationApiTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // import
+    // -------------------------------------------------------------------------
+
+    public function test_import_requires_authentication(): void
+    {
+        $translation = $this->createTranslation(['code' => 'en', 'name' => 'English']);
+
+        $this->post($this->importPath($translation), [
+            'file' => $this->makeTranslationUpload(['14' => 'Number']),
+        ])->assertUnauthorized();
+    }
+
+    public function test_import_places_fields_using_persian_hierarchy(): void
+    {
+        $this->actingAsAdmin();
+        Cache::forget('translations.persian_hierarchy_map');
+
+        $persian = $this->createTranslation([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'native_name' => 'فارسی',
+            'direction' => 'rtl',
+            'status' => true,
+        ]);
+        $this->seedTranslationFields($persian, [
+            ['unique_id' => 238, 'translation' => 'آگهی ها', 'modal' => 'notification', 'tab' => 'notification'],
+            ['unique_id' => 14, 'translation' => 'عدد', 'modal' => 'store', 'tab' => 'tools'],
+        ]);
+
+        $english = $this->createTranslation([
+            'code' => 'en',
+            'name' => 'English',
+            'version' => 1,
+            'status' => true,
+        ]);
+
+        $response = $this->post($this->importPath($english), [
+            'file' => $this->makeTranslationUpload([
+                '14' => 'Number',
+                '238' => 'Notifications',
+                '99999' => 'Ghost',
+            ]),
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.created', 2)
+            ->assertJsonPath('data.updated', 0)
+            ->assertJsonPath('data.skipped', 1)
+            ->assertJsonPath('data.translation.code', 'en')
+            ->assertJsonPath('data.translation.version', 2);
+
+        $this->assertDatabaseHas('fields', [
+            'unique_id' => 238,
+            'translation' => 'Notifications',
+        ], 'sqlite');
+        $this->assertDatabaseHas('fields', [
+            'unique_id' => 14,
+            'translation' => 'Number',
+        ], 'sqlite');
+
+        $filePath = public_path('lang/en.json');
+        $this->trackLangFile($filePath);
+        $this->assertFileExists($filePath);
+    }
+
+    public function test_import_requires_json_file(): void
+    {
+        $this->actingAsAdmin();
+
+        $translation = $this->createTranslation(['code' => 'en', 'name' => 'English']);
+
+        $this->postJson($this->importPath($translation), [])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['file']);
+    }
+
+    public function test_import_rejects_invalid_json_content(): void
+    {
+        $this->actingAsAdmin();
+        Cache::forget('translations.persian_hierarchy_map');
+
+        $persian = $this->createTranslation([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'status' => true,
+        ]);
+        $this->seedTranslationFields($persian, [
+            ['unique_id' => 1, 'translation' => 'یک', 'modal' => 'home', 'tab' => 'main'],
+        ]);
+
+        $english = $this->createTranslation(['code' => 'en', 'name' => 'English']);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent(
+            'broken.json',
+            '{not-valid-json'
+        );
+
+        $this->post($this->importPath($english), ['file' => $file])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['file']);
+    }
+
+    public function test_import_rejects_nested_json_that_does_not_match_fa_structure(): void
+    {
+        $this->actingAsAdmin();
+        Cache::forget('translations.persian_hierarchy_map');
+
+        $persian = $this->createTranslation([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'status' => true,
+        ]);
+        $this->seedTranslationFields($persian, [
+            ['unique_id' => 1, 'translation' => 'یک', 'modal' => 'home', 'tab' => 'main'],
+        ]);
+
+        $english = $this->createTranslation(['code' => 'en', 'name' => 'English']);
+
+        $this->post($this->importPath($english), [
+            'file' => $this->makeTranslationUpload([
+                'notifications' => ['title' => 'Hello'],
+            ]),
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['file']);
+    }
+
+    public function test_import_new_creates_translation_and_imports_using_persian_hierarchy(): void
+    {
+        $this->actingAsAdmin();
+        Cache::forget('translations.persian_hierarchy_map');
+
+        $persian = $this->createTranslation([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'native_name' => 'فارسی',
+            'direction' => 'rtl',
+            'status' => true,
+        ]);
+        $this->seedTranslationFields($persian, [
+            ['unique_id' => 238, 'translation' => 'آگهی ها', 'modal' => 'notification', 'tab' => 'notification'],
+            ['unique_id' => 14, 'translation' => 'عدد', 'modal' => 'store', 'tab' => 'tools'],
+        ]);
+
+        $response = $this->post(self::IMPORT_NEW_PATH, [
+            'code' => 'de',
+            'file' => $this->makeTranslationUpload([
+                '14' => 'Nummer',
+                '238' => 'Benachrichtigungen',
+            ]),
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Translation created and imported successfully.')
+            ->assertJsonPath('data.translation.code', 'de')
+            ->assertJsonPath('data.translation.name', 'German');
+
+        $german = Translation::where('code', 'de')->firstOrFail();
+        $this->assertDatabaseHas('fields', [
+            'unique_id' => 238,
+            'translation' => 'Benachrichtigungen',
+        ], 'sqlite');
+        $this->assertDatabaseHas('fields', [
+            'unique_id' => 14,
+            'translation' => 'Nummer',
+        ], 'sqlite');
+
+        $notificationModal = $german->modals()->where('name', 'notification')->first();
+        $this->assertNotNull($notificationModal);
+        $this->assertTrue(
+            $notificationModal->tabs()->where('name', 'notification')->exists()
+        );
+
+        $filePath = public_path('lang/de.json');
+        $this->trackLangFile($filePath);
+        $this->assertFileExists($filePath);
+    }
+
+    public function test_import_new_requires_language_code_and_file(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson(self::IMPORT_NEW_PATH, [])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['code', 'file']);
+    }
+
+    public function test_import_new_rejects_duplicate_language_code(): void
+    {
+        $this->actingAsAdmin();
+        Cache::forget('translations.persian_hierarchy_map');
+
+        $this->createTranslation([
+            'code' => 'fa',
+            'name' => 'Persian',
+            'status' => true,
+        ]);
+        $this->createTranslation([
+            'code' => 'de',
+            'name' => 'German',
+            'status' => true,
+        ]);
+
+        $this->post(self::IMPORT_NEW_PATH, [
+            'code' => 'de',
+            'file' => $this->makeTranslationUpload(['1' => 'Hallo']),
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['code']);
+    }
+
+    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 
@@ -635,6 +869,22 @@ class TranslationApiTest extends TestCase
     private function exportPath(Translation $translation): string
     {
         return $this->translationPath($translation).'/export';
+    }
+
+    private function importPath(Translation $translation): string
+    {
+        return $this->translationPath($translation).'/import';
+    }
+
+    /**
+     * @param  array<int|string, string|null>  $payload
+     */
+    private function makeTranslationUpload(array $payload): \Illuminate\Http\UploadedFile
+    {
+        return \Illuminate\Http\UploadedFile::fake()->createWithContent(
+            'lang.json',
+            json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)
+        );
     }
 
     /**

@@ -91,6 +91,27 @@ export const translationApi = {
     }
   },
 
+  async importTranslation (file, { code, translationId } = {}) {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    if (code) {
+      formData.append('code', code)
+    }
+
+    const url = translationId
+      ? `${baseUrl}/${translationId}/import`
+      : `${baseUrl}/import`
+
+    const response = await apiClient.post(
+      url,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+
+    return response.data
+  },
+
   async getModals (translationId, params = {}) {
     const response = await apiClient.get(`${baseUrl}/${translationId}/modals`, { params })
     return response.data.data

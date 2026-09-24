@@ -114,7 +114,15 @@ export default defineConfig({
         ],
     },
     optimizeDeps: {
-        include: ['ckeditor5'],
+        // Pre-bundle the aliased browser build (46.x OSS). Do not let a stale
+        // `.vite/deps` copy of ckeditor5@47 linger after downgrades — 47.x is
+        // LTS-only, rejects `licenseKey: 'GPL'`, and locks the editor read-only
+        // via Symbol(invalidLicense).
+        include: [
+            'ckeditor5',
+            'ckeditor5/translations/fa.js',
+            '@ckeditor/ckeditor5-vue',
+        ],
     },
     define: {
         __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false,

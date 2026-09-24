@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">قیمت رنگ ها</h1>
-      <p class="text-[var(--theme-text-secondary)]">مدیریت قیمت ارزها و رنگ‌ها</p>
-    </div>
+    <PageHeader
+      title="قیمت رنگ ها"
+      subtitle="مدیریت قیمت ارزها و رنگ‌ها"
+    />
 
     <!-- Action Bar -->
     <div class="flex justify-between items-center mb-6">
@@ -95,14 +94,14 @@
       size="lg"
     >
       <div class="space-y-4" dir="rtl">
-        <!-- Asset Selection (Only for Create) -->
+        <!-- Asset Name (Only for Create) -->
         <div v-if="!isEditMode">
-          <Select
-            v-model="formData.asset"
+          <Input
+            :model-value="formData.asset"
             label="نام ارز"
-            :options="assetOptions"
-            placeholder="نام ارز را به انگلیسی انتخاب کنید"
+            placeholder="نام ارز را به انگلیسی وارد کنید"
             :error="errors.asset"
+            @update:model-value="onAssetInput"
           />
         </div>
 
@@ -157,6 +156,7 @@
           </Button>
           <Button
             variant="danger"
+            rounded="full"
             @click="closeFormModal"
             :disabled="saving"
           >
@@ -166,46 +166,26 @@
       </template>
     </Modal>
 
-    <!-- Change History Modal -->
-    <Modal
+    <ChangeHistoryModal
       :model-value="showHistoryModal"
-      @update:model-value="closeHistoryModal"
+      @update:model-value="onHistoryModalVisibility"
       :title="`تاریخچه تغییرات - ${selectedVariable?.asset_title || ''}`"
-      size="xl"
-    >
-      <div v-if="selectedVariable?.price_change_logs && selectedVariable.price_change_logs.length > 0" class="overflow-x-auto" dir="rtl">
-        <Table
-          :columns="historyColumns"
-          :data="selectedVariable.price_change_logs"
-          :show-row-number="true"
-          empty-state-message="تاریخچه تغییرات یافت نشد"
-        />
-      </div>
-      <div v-else class="py-8 text-center">
-        <p class="text-[var(--theme-text-secondary)]">تاریخچه تغییرات یافت نشد</p>
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end" dir="rtl">
-          <Button
-            variant="danger"
-            @click="closeHistoryModal"
-          >
-            بستن
-          </Button>
-        </div>
-      </template>
-    </Modal>
+      :columns="priceChangeHistoryColumns"
+      :entries="selectedVariable?.price_change_logs || []"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import apiClient from '../../utils/api'
-import { Button, LoadingState, ErrorState, Table, Modal, Input, Select, FileInput } from '../../components/ui'
+import { Button, LoadingState, ErrorState, Table, Modal, Input, FileInput, PageHeader } from '../../components/ui'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
+import { formatDisplayDate } from '../../utils/dateFormatter'
+import ChangeHistoryModal from '../../components/variables/ChangeHistoryModal.vue'
+import { priceChangeHistoryColumns } from '../../utils/variables/changeHistoryColumns'
 
 const { showToast } = useToast()
 
@@ -240,15 +220,13 @@ const fieldError = (val) => {
   return Array.isArray(val) ? val[0] : String(val)
 }
 
-const assetOptions = [
-  { value: 'red', label: 'قرمز' },
-  { value: 'blue', label: 'آبی' },
-  { value: 'yellow', label: 'زرد' },
-  { value: 'irr', label: 'ریال' },
-  { value: 'psc', label: 'psc' },
-  { value: 'satisfaction', label: 'رضایت' },
-  { value: 'effect', label: 'حد تاثیر' }
-]
+const onAssetInput = (value) => {
+  formData.value.asset = String(value ?? '').replace(/[^a-zA-Z\s]/g, '')
+}
+
+const normalizeAssetName = (value) => {
+  return String(value ?? '').trim().replace(/\s+/g, '-')
+}
 
 const tableColumns = [
   {
@@ -267,11 +245,7 @@ const tableColumns = [
     key: 'updated_at',
     label: 'آخرین بروز رسانی',
     textSecondary: true,
-    formatter: (value) => {
-      if (!value) return '-'
-      const date = new Date(value)
-      return date.toLocaleDateString('fa-IR')
-    }
+    formatter: formatDisplayDate
   },
   {
     key: 'note',
@@ -282,44 +256,6 @@ const tableColumns = [
   {
     key: 'actions',
     label: 'مدیریت'
-  }
-]
-
-const historyColumns = [
-  {
-    key: 'changer_name',
-    label: 'تغییر دهنده'
-  },
-  {
-    key: 'previous_value',
-    label: 'وضعیت گذشته'
-  },
-  {
-    key: 'current_value',
-    label: 'وضعیت حال'
-  },
-  {
-    key: 'note',
-    label: 'توضیحات',
-    defaultValue: '-'
-  },
-  {
-    key: 'created_at',
-    label: 'تاریخ تغییر',
-    formatter: (value) => {
-      if (!value) return '-'
-      const date = new Date(value)
-      return date.toLocaleDateString('fa-IR')
-    }
-  },
-  {
-    key: 'created_at',
-    label: 'ساعت تغییر',
-    formatter: (value) => {
-      if (!value) return '-'
-      const date = new Date(value)
-      return date.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    }
   }
 ]
 
@@ -367,7 +303,7 @@ const handleCurrencyImageChange = (file) => {
 const validateForm = () => {
   errors.value = {}
 
-  if (!isEditMode.value && !formData.value.asset) {
+  if (!isEditMode.value && !normalizeAssetName(formData.value.asset)) {
     errors.value.asset = 'نام ارز الزامی است'
   }
 
@@ -390,7 +326,7 @@ const submitForm = async () => {
     const formDataToSend = new FormData()
 
     if (!isEditMode.value) {
-      formDataToSend.append('asset', formData.value.asset)
+      formDataToSend.append('asset', normalizeAssetName(formData.value.asset))
     }
 
     formDataToSend.append('price', formData.value.price)
@@ -495,6 +431,13 @@ const openHistoryModal = (variable) => {
 const closeHistoryModal = () => {
   showHistoryModal.value = false
   selectedVariable.value = null
+}
+
+const onHistoryModalVisibility = (value) => {
+  showHistoryModal.value = value
+  if (!value) {
+    selectedVariable.value = null
+  }
 }
 
 const handleDelete = async (row) => {

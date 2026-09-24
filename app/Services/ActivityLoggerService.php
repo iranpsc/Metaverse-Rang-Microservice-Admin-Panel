@@ -49,9 +49,14 @@ class ActivityLoggerService
         }
 
         $builder = activity($category)
-            ->performedOn($model)
             ->event($event)
             ->withProperties($properties);
+
+        // subject_id is a bigint morph column; skip performedOn for string PKs
+        // (e.g. FeatureProperties id "to11-1000") — model_id remains in properties.
+        if (self::canUseAsMorphSubject($model)) {
+            $builder->performedOn($model);
+        }
 
         $causer = self::causer();
         if ($causer) {
@@ -59,6 +64,24 @@ class ActivityLoggerService
         }
 
         $builder->log($description);
+    }
+
+    /**
+     * activity_log.subject_id is created via nullableMorphs (unsignedBigInteger).
+     */
+    protected static function canUseAsMorphSubject(Model $model): bool
+    {
+        $key = $model->getKey();
+
+        if ($key === null) {
+            return false;
+        }
+
+        if (is_int($key)) {
+            return $key >= 0;
+        }
+
+        return is_string($key) && ctype_digit($key);
     }
 
     protected static function buildModelDescription(Model $model, string $event): string

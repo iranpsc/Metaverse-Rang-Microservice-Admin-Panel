@@ -1,10 +1,9 @@
 <template>
   <div class="p-6 space-y-6">
-    <!-- Page Header -->
-    <div class="mb-8" dir="rtl">
-      <h1 class="text-3xl font-bold text-[var(--theme-text-primary)] mb-2">مدیریت وقایع</h1>
-      <p class="text-[var(--theme-text-secondary)]">ایجاد، مدیریت و مشاهده وقایع تقویم متاورس</p>
-    </div>
+    <PageHeader
+      title="مدیریت وقایع"
+      subtitle="ایجاد، مدیریت و مشاهده وقایع تقویم متاورس"
+    />
 
     <!-- Actions Row -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4" dir="rtl">
@@ -134,7 +133,7 @@
       v-if="pagination && pagination.total > 0"
       :pagination="pagination"
       :disabled="loading"
-      @page-change="goToPage"
+      @page-change="onPageChange"
     />
 
     <!-- Create Event Modal -->
@@ -375,26 +374,36 @@ import {
   Input,
   FileInput,
   Badge,
-  TimePicker
+  TimePicker,
+  PageHeader
 } from '../../components/ui'
+import { usePaginatedList } from '../../composables/usePaginatedList'
 import RichTextEditor from '../../components/ui/RichTextEditor.vue'
 import PersianDatePicker from '../../components/ui/PersianDatePicker.vue'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
 import { stripRichText, hasRichTextContent } from '../../utils/sanitize'
+import { formatIsoToJalaliDate } from '../../utils/dateFormatter'
 
 const { showToast } = useToast()
 
 
-const loading = ref(true)
+const {
+  loading,
+  error,
+  pagination,
+  searchTerm,
+  execute,
+  search,
+  clear,
+  goToPage,
+  buildParams
+} = usePaginatedList({ perPage: 10 })
+
 const saving = ref(false)
 const updating = ref(false)
-const error = ref(null)
 const events = ref([])
-const pagination = ref(null)
-const searchTerm = ref('')
-const currentPage = ref(1)
 
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
@@ -441,49 +450,6 @@ const truncateText = (text, length = 60) => {
   return plain.length > length ? `${plain.slice(0, length)}…` : plain
 }
 
-const persianDigitMap = {
-  '۰': '0',
-  '۱': '1',
-  '۲': '2',
-  '۳': '3',
-  '۴': '4',
-  '۵': '5',
-  '۶': '6',
-  '۷': '7',
-  '۸': '8',
-  '۹': '9'
-}
-
-const toEnglishDigits = (input) => {
-  if (!input) return ''
-  return input.replace(/[۰۱۲۳۴۵۶۷۸۹]/g, (d) => persianDigitMap[d] || d)
-}
-
-const isoToJalaliDate = (isoString) => {
-  if (!isoString) return ''
-  const date = new Date(isoString)
-  if (Number.isNaN(date.getTime())) {
-    return ''
-  }
-
-  const formatter = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  })
-
-  const parts = formatter.formatToParts(date)
-  const year = toEnglishDigits(parts.find((p) => p.type === 'year')?.value || '')
-  const month = toEnglishDigits(parts.find((p) => p.type === 'month')?.value || '')
-  const day = toEnglishDigits(parts.find((p) => p.type === 'day')?.value || '')
-
-  if (!year || !month || !day) {
-    return ''
-  }
-
-  return `${year.padStart(4, '0')}/${month.padStart(2, '0')}/${day.padStart(2, '0')}`
-}
-
 const resetErrors = (target) => {
   Object.keys(target).forEach((key) => delete target[key])
 }
@@ -499,57 +465,32 @@ const assignValidationErrors = (target, source) => {
   })
 }
 
-const fetchEvents = async () => {
-  try {
-    loading.value = true
-    error.value = null
+const clearEvents = () => {
+  events.value = []
+  pagination.value = null
+}
 
-    const params = {
-      page: currentPage.value,
-      per_page: 10
-    }
+const fetchEvents = () => execute(async () => {
+  const response = await apiClient.get('/calendars', { params: buildParams() })
 
-    if (searchTerm.value) {
-      params.search = searchTerm.value
-    }
-
-    const response = await apiClient.get('/calendars', { params })
-
-    if (response.data.success) {
-      events.value = response.data.data.events || []
-      pagination.value = response.data.data.pagination || null
-    } else {
-      events.value = []
-      pagination.value = null
-      error.value = response.data.message || 'خطا در دریافت اطلاعات وقایع'
-    }
-  } catch (err) {
-    console.error('Calendar fetch error:', err)
-    events.value = []
-    pagination.value = null
-    error.value = err.response?.data?.message || 'خطا در بارگذاری لیست وقایع'
-  } finally {
-    loading.value = false
+  if (response.data.success) {
+    events.value = response.data.data.events || []
+    pagination.value = response.data.data.pagination || null
+  } else {
+    error.value = response.data.message || 'خطا در دریافت اطلاعات وقایع'
+    clearEvents()
   }
-}
+}, {
+  onClear: clearEvents,
+  logLabel: 'Calendar fetch error:',
+  fallbackMessage: 'خطا در بارگذاری لیست وقایع'
+})
 
-const goToPage = (page) => {
-  if (!pagination.value) return
-  if (page >= 1 && page <= pagination.value.last_page) {
-    currentPage.value = page
-    fetchEvents()
-  }
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  fetchEvents()
-}
-
+const onPageChange = (page) => goToPage(page, fetchEvents)
+const handleSearch = () => search(fetchEvents)
 const handleClear = () => {
   searchTerm.value = ''
-  currentPage.value = 1
-  fetchEvents()
+  clear(fetchEvents)
 }
 
 const openCreateModal = () => {
@@ -658,11 +599,11 @@ const openEditModal = (event) => {
   selectedEvent.value = event
   const startDate = event.start_date && /^\d{4}\/\d{2}\/\d{2}$/.test(event.start_date)
     ? event.start_date
-    : isoToJalaliDate(event.starts_at)
+    : formatIsoToJalaliDate(event.starts_at)
 
   const endDate = event.end_date && /^\d{4}\/\d{2}\/\d{2}$/.test(event.end_date)
     ? event.end_date
-    : isoToJalaliDate(event.ends_at)
+    : formatIsoToJalaliDate(event.ends_at)
 
   Object.assign(editForm, {
     title: event.title || '',

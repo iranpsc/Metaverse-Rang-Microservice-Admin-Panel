@@ -19,12 +19,13 @@ class RegistrationInfoController extends Controller
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
 
-        $query = User::query();
+        $query = User::query()->latest();
 
         if ($searchTerm) {
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('email', 'like', '%'.$searchTerm.'%')
-                    ->orWhere('name', 'like', '%'.$searchTerm.'%');
+                    ->orWhere('name', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('code', 'like', '%'.$searchTerm.'%');
             });
         }
 

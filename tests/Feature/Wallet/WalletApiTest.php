@@ -95,6 +95,7 @@ class WalletApiTest extends TestCase
                         [
                             'id',
                             'user_name',
+                            'citizen_code',
                             'psc',
                             'blue',
                             'red',
@@ -129,7 +130,8 @@ class WalletApiTest extends TestCase
         $this->getJson(self::INDEX_PATH)
             ->assertOk()
             ->assertJsonPath('data.assets.0.id', $wallet->id)
-            ->assertJsonPath('data.assets.0.user_name', 'Ali Wallet Owner');
+            ->assertJsonPath('data.assets.0.user_name', 'Ali Wallet Owner')
+            ->assertJsonPath('data.assets.0.citizen_code', $user->code);
     }
 
     public function test_missing_user_relation_returns_dash_for_user_name(): void
@@ -151,6 +153,7 @@ class WalletApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.assets.0.id', $walletId)
             ->assertJsonPath('data.assets.0.user_name', '-')
+            ->assertJsonPath('data.assets.0.citizen_code', '-')
             ->assertJsonPath('data.assets.0.features_count', 0);
     }
 
@@ -345,6 +348,102 @@ class WalletApiTest extends TestCase
             ->assertJsonPath('data.pagination.from', 6)
             ->assertJsonPath('data.pagination.to', 10)
             ->assertJsonCount(5, 'data.assets');
+    }
+
+    // -------------------------------------------------------------------------
+    // Sorting
+    // -------------------------------------------------------------------------
+
+    public function test_sorts_by_psc_descending(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $low = $this->createUser(['name' => 'Low Psc', 'email' => 'low-psc@example.com', 'code' => '4101']);
+        $mid = $this->createUser(['name' => 'Mid Psc', 'email' => 'mid-psc@example.com', 'code' => '4102']);
+        $high = $this->createUser(['name' => 'High Psc', 'email' => 'high-psc@example.com', 'code' => '4103']);
+
+        $this->createWallet($low, ['psc' => 10]);
+        $this->createWallet($mid, ['psc' => 50]);
+        $this->createWallet($high, ['psc' => 100]);
+
+        $names = collect($this->getJson(self::INDEX_PATH.'?asset=psc&sort=desc')->assertOk()->json('data.assets'))
+            ->pluck('user_name')
+            ->all();
+
+        $this->assertSame(['High Psc', 'Mid Psc', 'Low Psc'], $names);
+    }
+
+    public function test_sorts_by_psc_ascending(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $low = $this->createUser(['name' => 'Low Psc', 'email' => 'low-psc-asc@example.com', 'code' => '4201']);
+        $mid = $this->createUser(['name' => 'Mid Psc', 'email' => 'mid-psc-asc@example.com', 'code' => '4202']);
+        $high = $this->createUser(['name' => 'High Psc', 'email' => 'high-psc-asc@example.com', 'code' => '4203']);
+
+        $this->createWallet($low, ['psc' => 10]);
+        $this->createWallet($mid, ['psc' => 50]);
+        $this->createWallet($high, ['psc' => 100]);
+
+        $names = collect($this->getJson(self::INDEX_PATH.'?asset=psc&sort=asc')->assertOk()->json('data.assets'))
+            ->pluck('user_name')
+            ->all();
+
+        $this->assertSame(['Low Psc', 'Mid Psc', 'High Psc'], $names);
+    }
+
+    public function test_sorts_by_features_count_descending(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $none = $this->createUser(['name' => 'No Features Sort', 'email' => 'none-feat@example.com', 'code' => '4301']);
+        $one = $this->createUser(['name' => 'One Feature Sort', 'email' => 'one-feat@example.com', 'code' => '4302']);
+        $many = $this->createUser(['name' => 'Many Features Sort', 'email' => 'many-feat@example.com', 'code' => '4303']);
+
+        $this->createWallet($none);
+        $this->createWallet($one);
+        $this->createWallet($many);
+
+        $this->createFeature($one);
+        $this->createFeature($many, ['type' => 'land']);
+        $this->createFeature($many, ['type' => 'building']);
+        $this->createFeature($many, ['type' => 'road']);
+
+        $names = collect($this->getJson(self::INDEX_PATH.'?asset=features_count&sort=desc')->assertOk()->json('data.assets'))
+            ->pluck('user_name')
+            ->all();
+
+        $this->assertSame(['Many Features Sort', 'One Feature Sort', 'No Features Sort'], $names);
+    }
+
+    public function test_invalid_asset_is_ignored_and_request_succeeds(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $user = $this->createUser(['name' => 'Ignored Sort']);
+        $this->createWallet($user);
+
+        $this->getJson(self::INDEX_PATH.'?asset=hacked&sort=desc')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.assets.0.user_name', 'Ignored Sort');
+    }
+
+    public function test_invalid_sort_direction_defaults_to_descending(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $low = $this->createUser(['name' => 'Low Irr', 'email' => 'low-irr@example.com', 'code' => '4401']);
+        $high = $this->createUser(['name' => 'High Irr', 'email' => 'high-irr@example.com', 'code' => '4402']);
+
+        $this->createWallet($low, ['irr' => 5]);
+        $this->createWallet($high, ['irr' => 90]);
+
+        $names = collect($this->getJson(self::INDEX_PATH.'?asset=irr&sort=sideways')->assertOk()->json('data.assets'))
+            ->pluck('user_name')
+            ->all();
+
+        $this->assertSame(['High Irr', 'Low Irr'], $names);
     }
 
     // -------------------------------------------------------------------------

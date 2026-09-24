@@ -8,6 +8,9 @@ use App\Models\Kyc;
 use App\Notifications\KycDeniedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Spatie\Activitylog\Models\Activity;
 
 class KycController extends Controller
 {
@@ -20,10 +23,23 @@ class KycController extends Controller
         $perPage = $request->input('per_page', 10);
         $page = $request->input('page', 1);
 
-        $query = Kyc::query()->latest();
+        $query = Kyc::query()->with('user:id,name,code')->latest();
 
         if ($searchTerm) {
-            $query->where('melli_code', 'like', '%'.trim($searchTerm).'%');
+            $normalized = preg_replace('/\s+/u', ' ', trim($searchTerm));
+            $term = '%'.$normalized.'%';
+            $fullNameExpression = $this->fullNameSqlExpression();
+
+            $query->where(function ($q) use ($term, $fullNameExpression) {
+                $q->where('melli_code', 'like', $term)
+                    ->orWhere('fname', 'like', $term)
+                    ->orWhere('lname', 'like', $term)
+                    ->orWhereRaw("{$fullNameExpression} LIKE ?", [$term])
+                    ->orWhereHas('user', function ($userQuery) use ($term) {
+                        $userQuery->where('name', 'like', $term)
+                            ->orWhere('code', 'like', $term);
+                    });
+            });
         }
 
         $kycs = $query->paginate($perPage, ['*'], 'page', $page);
@@ -52,9 +68,12 @@ class KycController extends Controller
     {
         $kyc = Kyc::with(['verifyText', 'user'])->findOrFail($id);
 
+        $payload = (new KycResource($kyc))->resolve();
+        $payload['rejected_by'] = $this->resolveRejectedBy($kyc);
+
         return response()->json([
             'success' => true,
-            'data' => new KycResource($kyc),
+            'data' => $payload,
             'message' => 'KYC record retrieved successfully.',
         ]);
     }
@@ -96,5 +115,42 @@ class KycController extends Controller
             'data' => new KycResource($kyc->fresh()),
             'message' => 'اطلاعات با موفقیت ثبت شد',
         ]);
+    }
+
+    /**
+     * @return array{id: int|string, name: string}|null
+     */
+    private function resolveRejectedBy(Kyc $kyc): ?array
+    {
+        if ((int) $kyc->status !== -1 || ! Schema::hasTable('activity_log')) {
+            return null;
+        }
+
+        $activity = Activity::query()
+            ->where('subject_type', $kyc->getMorphClass())
+            ->where('subject_id', $kyc->getKey())
+            ->where('event', 'updated')
+            ->with('causer')
+            ->latest('id')
+            ->get()
+            ->first(function (Activity $activity) {
+                return (int) data_get($activity->properties, 'attributes.status') === -1;
+            });
+
+        if (! $activity?->causer) {
+            return null;
+        }
+
+        return [
+            'id' => $activity->causer->id,
+            'name' => $activity->causer->name,
+        ];
+    }
+
+    private function fullNameSqlExpression(): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "TRIM(COALESCE(fname, '') || ' ' || COALESCE(lname, ''))"
+            : "TRIM(CONCAT(COALESCE(fname, ''), ' ', COALESCE(lname, '')))";
     }
 }

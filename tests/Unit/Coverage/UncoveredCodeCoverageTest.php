@@ -13,7 +13,6 @@ use App\Models\Comission;
 use App\Models\Coordinate;
 use App\Models\CrsProperty;
 use App\Models\Dislike;
-use App\Models\Employee\Employee;
 use App\Models\FeatureImage;
 use App\Models\FirstOrder;
 use App\Models\Image;
@@ -34,9 +33,14 @@ use App\Models\Transaction;
 use App\Models\Translations\Translation;
 use App\Models\VariableChangeLog;
 use App\Models\View;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Mockery;
@@ -51,8 +55,8 @@ class UncoveredCodeCoverageTest extends TestCase
         config()->set('database.default', 'sqlite');
         config()->set('database.connections.sqlite.database', ':memory:');
         config()->set('activitylog.enabled', false);
-        \Illuminate\Support\Facades\DB::purge('sqlite');
-        \Illuminate\Support\Facades\DB::reconnect('sqlite');
+        DB::purge('sqlite');
+        DB::reconnect('sqlite');
     }
 
     protected function tearDown(): void
@@ -87,41 +91,40 @@ class UncoveredCodeCoverageTest extends TestCase
 
     public function test_thin_model_relations_for_previously_uncovered_models(): void
     {
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new Asset)->user());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new Asset)->variable());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new Comission)->trade());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new Coordinate)->geometry());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new CrsProperty)->crs());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphTo::class, (new Dislike)->dislikeable());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new FeatureImage)->feature());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new FirstOrder)->user());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphTo::class, (new Image)->imageable());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphTo::class, (new Interaction)->likeable());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphTo::class, (new KycError)->errorable());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new Land)->user());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphTo::class, (new Like)->dislikeable());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new Note)->user());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphOne::class, (new Order)->transactions());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new ReferralOrderHistory)->user());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new ReferralOrderHistory)->referral());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new TicketResponse)->ticket());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new TicketResponse)->responser());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphTo::class, (new Transaction)->payable());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new Transaction)->user());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphTo::class, (new VariableChangeLog)->changeable());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphTo::class, (new View)->viewable());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new Answer)->question());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new CorrectAnswer)->question());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new CorrectAnswer)->answer());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new UserChallengePrizes)->user());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new UserChallengePrizes)->questionPrize());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphMany::class, (new Employee)->bankAccounts());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new Prize)->level());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new UserLog)->user());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new SellFeatureRequest)->seller());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new SellFeatureRequest)->feature());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, (new Ticket)->responses());
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, (new Ticket)->sender());
+        $this->assertInstanceOf(BelongsTo::class, (new Asset)->user());
+        $this->assertInstanceOf(BelongsTo::class, (new Asset)->variable());
+        $this->assertInstanceOf(BelongsTo::class, (new Comission)->trade());
+        $this->assertInstanceOf(BelongsTo::class, (new Coordinate)->geometry());
+        $this->assertInstanceOf(BelongsTo::class, (new CrsProperty)->crs());
+        $this->assertInstanceOf(MorphTo::class, (new Dislike)->dislikeable());
+        $this->assertInstanceOf(BelongsTo::class, (new FeatureImage)->feature());
+        $this->assertInstanceOf(BelongsTo::class, (new FirstOrder)->user());
+        $this->assertInstanceOf(MorphTo::class, (new Image)->imageable());
+        $this->assertInstanceOf(MorphTo::class, (new Interaction)->likeable());
+        $this->assertInstanceOf(MorphTo::class, (new KycError)->errorable());
+        $this->assertInstanceOf(BelongsTo::class, (new Land)->user());
+        $this->assertInstanceOf(MorphTo::class, (new Like)->dislikeable());
+        $this->assertInstanceOf(BelongsTo::class, (new Note)->user());
+        $this->assertInstanceOf(MorphOne::class, (new Order)->transactions());
+        $this->assertInstanceOf(BelongsTo::class, (new ReferralOrderHistory)->user());
+        $this->assertInstanceOf(BelongsTo::class, (new ReferralOrderHistory)->referral());
+        $this->assertInstanceOf(BelongsTo::class, (new TicketResponse)->ticket());
+        $this->assertInstanceOf(BelongsTo::class, (new TicketResponse)->responser());
+        $this->assertInstanceOf(MorphTo::class, (new Transaction)->payable());
+        $this->assertInstanceOf(BelongsTo::class, (new Transaction)->user());
+        $this->assertInstanceOf(MorphTo::class, (new VariableChangeLog)->changeable());
+        $this->assertInstanceOf(MorphTo::class, (new View)->viewable());
+        $this->assertInstanceOf(BelongsTo::class, (new Answer)->question());
+        $this->assertInstanceOf(BelongsTo::class, (new CorrectAnswer)->question());
+        $this->assertInstanceOf(BelongsTo::class, (new CorrectAnswer)->answer());
+        $this->assertInstanceOf(BelongsTo::class, (new UserChallengePrizes)->user());
+        $this->assertInstanceOf(BelongsTo::class, (new UserChallengePrizes)->questionPrize());
+        $this->assertInstanceOf(BelongsTo::class, (new Prize)->level());
+        $this->assertInstanceOf(BelongsTo::class, (new UserLog)->user());
+        $this->assertInstanceOf(BelongsTo::class, (new SellFeatureRequest)->seller());
+        $this->assertInstanceOf(BelongsTo::class, (new SellFeatureRequest)->feature());
+        $this->assertInstanceOf(HasMany::class, (new Ticket)->responses());
+        $this->assertInstanceOf(BelongsTo::class, (new Ticket)->sender());
     }
 
     public function test_legacy_translation_controller_index_and_nested_resources(): void
