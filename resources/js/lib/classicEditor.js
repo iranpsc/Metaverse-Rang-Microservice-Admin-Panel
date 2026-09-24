@@ -55,8 +55,8 @@ MetaverseClassicEditor.builtinPlugins = [
 ]
 
 MetaverseClassicEditor.defaultConfig = {
-    // ckeditor5@47+ on npm is LTS-only and rejects GPL (forces read-only).
-    // Stay on the dual-licensed OSS line (46.x) and keep the GPL key.
+    // Self-hosted OSS build: GPL key is valid for non-premium features.
+    // 47.6.2+ patches XSS in General HTML Support (CVE-2026-28343).
     licenseKey: 'GPL',
     toolbar: {
         items: [
