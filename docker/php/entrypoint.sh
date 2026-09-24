@@ -48,6 +48,24 @@ if [ ! -L public/uploads ]; then
     php artisan storage:link --force 2>/dev/null || true
 fi
 
+# Dokploy recreates this container on each deploy. Migrate before the server starts.
+# Set RUN_MIGRATIONS=0 to skip. MySQL is external (metarang-mysql), so wait until it answers.
+if [ "${RUN_MIGRATIONS:-1}" = "1" ]; then
+    echo "Waiting for the database..."
+    attempt=1
+    until php artisan db:show --database="${DB_CONNECTION:-mysql}" >/dev/null 2>&1; do
+        if [ "$attempt" -ge 30 ]; then
+            echo "Database is not reachable; migrations were not run."
+            exit 1
+        fi
+        attempt=$((attempt + 1))
+        sleep 2
+    done
+
+    echo "Running database migrations..."
+    php artisan migrate --force --no-interaction
+fi
+
 chown -R www-data:www-data storage bootstrap/cache database 2>/dev/null || true
 chmod -R ug+rwx storage bootstrap/cache 2>/dev/null || true
 chmod ug+rw database/database.sqlite 2>/dev/null || true
