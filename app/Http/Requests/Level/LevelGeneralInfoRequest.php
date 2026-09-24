@@ -2,11 +2,13 @@
 
 namespace App\Http\Requests\Level;
 
-use App\Http\Controllers\FileUploadController;
+use App\Http\Requests\Level\Concerns\ValidatesLevelFbxFile;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LevelGeneralInfoRequest extends FormRequest
 {
+    use ValidatesLevelFbxFile;
+
     public function authorize(): bool
     {
         return true;
@@ -24,7 +26,7 @@ class LevelGeneralInfoRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        return array_merge([
             'score' => ['required', 'integer', 'min:0'],
             'description' => ['required', 'string', 'max:6000'],
             'rank' => ['required', 'integer', 'min:0'],
@@ -40,66 +42,14 @@ class LevelGeneralInfoRequest extends FormRequest
             'has_animation' => ['required', 'boolean'],
             'lines' => ['required', 'integer', 'min:0'],
             'png_file' => ['nullable', 'image', 'mimes:png', 'max:5120'],
-            'fbx_file' => ['nullable', 'array', 'max:20'],
-            'fbx_file.*' => ['required', 'string', 'url', 'max:2048'],
             'gif_file' => ['nullable', 'file', 'mimes:gif', 'max:5120'],
-        ];
+        ], $this->fbxFileRules());
     }
 
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            $fbxFile = $this->input('fbx_file');
-            if (! is_array($fbxFile)) {
-                return;
-            }
-
-            $allowed = FileUploadController::ALLOWED_EXTENSIONS;
-
-            foreach ($fbxFile as $fileType => $url) {
-                $normalizedType = strtolower((string) preg_replace('/_\d+$/', '', (string) $fileType));
-                if (! in_array($normalizedType, $allowed, true)) {
-                    $validator->errors()->add(
-                        'fbx_file',
-                        'کلیدهای فایل مدل باید یکی از این فرمت‌ها باشند: '.implode(', ', $allowed)
-                    );
-
-                    return;
-                }
-
-                $urlExtension = $this->extensionFromUrl(is_string($url) ? $url : '');
-                if ($urlExtension === '' || ! in_array($urlExtension, $allowed, true)) {
-                    $validator->errors()->add(
-                        'fbx_file',
-                        'پسوند لینک فایل مدل باید یکی از این فرمت‌ها باشد: '.implode(', ', $allowed)
-                    );
-
-                    return;
-                }
-
-                if ($normalizedType !== $urlExtension && ! $this->isCompatibleImageType($normalizedType, $urlExtension)) {
-                    $validator->errors()->add(
-                        'fbx_file',
-                        "نوع فایل «{$normalizedType}» با پسوند لینک «{$urlExtension}» هم‌خوانی ندارد."
-                    );
-
-                    return;
-                }
-            }
+            $this->validateFbxFileMap($validator);
         });
-    }
-
-    private function extensionFromUrl(string $url): string
-    {
-        $path = parse_url($url, PHP_URL_PATH) ?: $url;
-
-        return strtolower((string) pathinfo($path, PATHINFO_EXTENSION));
-    }
-
-    private function isCompatibleImageType(string $keyType, string $urlExtension): bool
-    {
-        $jpegFamily = ['jpeg', 'jpg'];
-
-        return in_array($keyType, $jpegFamily, true) && in_array($urlExtension, $jpegFamily, true);
     }
 }

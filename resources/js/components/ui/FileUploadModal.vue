@@ -350,6 +350,7 @@ const createFileItem = (file) => ({
   progress: 0,
   url: null,
   fileType: getExtension(file.name),
+  fileSize: String(file.size ?? 0),
   error: null
 })
 
@@ -533,7 +534,7 @@ const extractUploadInfo = (payload) => {
     try {
       payload = JSON.parse(payload)
     } catch {
-      return { url: null, fileType: null, message: payload }
+      return { url: null, fileType: null, fileSize: null, message: payload }
     }
   }
 
@@ -552,11 +553,12 @@ const extractUploadInfo = (payload) => {
     return {
       url,
       fileType: data?.file_type ?? data?.fileType ?? payload.file_type ?? payload.fileType ?? null,
+      fileSize: data?.file_size ?? data?.fileSize ?? payload.file_size ?? payload.fileSize ?? null,
       message: payload.message ?? data?.message ?? null
     }
   }
 
-  return { url: null, fileType: null, message: null }
+  return { url: null, fileType: null, fileSize: null, message: null }
 }
 
 /**
@@ -587,6 +589,7 @@ const resolveUploadInfoFromFile = (resumableFile, response) => {
         info = {
           url: candidate.url,
           fileType: candidate.fileType || info.fileType,
+          fileSize: candidate.fileSize || info.fileSize,
           message: candidate.message || info.message
         }
         break
@@ -630,7 +633,11 @@ const buildLinksMap = () => {
       const baseType = (item.fileType || getExtension(item.file.name) || 'file').toLowerCase()
       typeCounts[baseType] = (typeCounts[baseType] || 0) + 1
       const key = typeCounts[baseType] === 1 ? baseType : `${baseType}_${typeCounts[baseType]}`
-      links[key] = item.url
+      links[key] = {
+        type: baseType,
+        size: String(item.fileSize ?? item.file?.size ?? 0),
+        url: item.url
+      }
     })
 
   return links
@@ -827,7 +834,7 @@ const startChunkUpload = async () => {
 
   resumable.on('fileSuccess', (file, response) => {
     const item = findItemByResumableFile(file)
-    const { url, fileType, message } = resolveUploadInfoFromFile(file, response)
+    const { url, fileType, fileSize, message } = resolveUploadInfoFromFile(file, response)
 
     if (!item) return
 
@@ -845,6 +852,9 @@ const startChunkUpload = async () => {
     item.progress = 100
     item.url = url
     item.fileType = (fileType || item.fileType || getExtension(item.file.name)).toLowerCase()
+    if (fileSize != null && fileSize !== '') {
+      item.fileSize = String(fileSize)
+    }
     item.error = null
   })
 

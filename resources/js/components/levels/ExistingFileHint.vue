@@ -31,16 +31,16 @@
 
     <ul v-show="!isCollapsible || isExpanded" class="space-y-1.5">
       <li
-        v-for="(url, fileType) in fileEntries"
-        :key="`${fileType}-${url}`"
+        v-for="(entry, fileType) in fileEntries"
+        :key="`${fileType}-${entryUrl(entry)}`"
         class="flex items-center justify-between gap-2 rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-elevated)]/50 px-3 py-2 text-xs"
       >
-        <span class="min-w-0 truncate text-[var(--theme-text-secondary)]" :title="String(fileType)">
-          {{ fileType }}
+        <span class="min-w-0 truncate text-[var(--theme-text-secondary)]" :title="entryLabel(fileType, entry)">
+          {{ entryLabel(fileType, entry) }}
         </span>
         <div class="flex shrink-0 items-center gap-2">
           <a
-            :href="url"
+            :href="entryUrl(entry)"
             target="_blank"
             rel="noopener"
             class="inline-flex items-center text-primary-300 hover:text-primary-200"
@@ -108,6 +108,25 @@ const isExpanded = ref(true)
 const deletingKey = ref(null)
 const localEntries = ref({})
 
+const entryUrl = (entry) => {
+  if (typeof entry === 'string') return entry
+  if (entry && typeof entry === 'object' && typeof entry.url === 'string') return entry.url
+  return ''
+}
+
+const entryLabel = (fileType, entry) => {
+  const type = entry && typeof entry === 'object' && entry.type ? entry.type : fileType
+  const size = entry && typeof entry === 'object' && entry.size && entry.size !== '0'
+    ? ` · ${entry.size}`
+    : ''
+  return `${type}${size}`
+}
+
+const isFbxEntry = (value) => {
+  if (typeof value === 'string' && value) return true
+  return Boolean(value && typeof value === 'object' && typeof value.url === 'string' && value.url)
+}
+
 const parseEntries = (value) => {
   if (!value) {
     return {}
@@ -121,7 +140,7 @@ const parseEntries = (value) => {
       const parsed = JSON.parse(trimmed)
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         return Object.fromEntries(
-          Object.entries(parsed).filter(([, link]) => typeof link === 'string' && link)
+          Object.entries(parsed).filter(([, link]) => isFbxEntry(link))
         )
       }
     } catch {
@@ -133,7 +152,7 @@ const parseEntries = (value) => {
 
   if (Array.isArray(value)) {
     return value.reduce((acc, item, index) => {
-      if (typeof item === 'string' && item) {
+      if (isFbxEntry(item)) {
         acc[`file_${index + 1}`] = item
       }
       return acc
@@ -142,7 +161,7 @@ const parseEntries = (value) => {
 
   if (typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value).filter(([, link]) => typeof link === 'string' && link)
+      Object.entries(value).filter(([, link]) => isFbxEntry(link))
     )
   }
 

@@ -23,7 +23,11 @@ class LevelGiftUploadServiceTest extends TestCase
     {
         $files = [];
         for ($i = 1; $i <= 21; $i++) {
-            $files["png_{$i}"] = "https://example.com/file{$i}.png";
+            $files["png_{$i}"] = [
+                'type' => 'png',
+                'size' => '1',
+                'url' => "https://example.com/file{$i}.png",
+            ];
         }
 
         $this->expectException(InvalidArgumentException::class);
@@ -33,28 +37,36 @@ class LevelGiftUploadServiceTest extends TestCase
     public function test_validate_fbx_file_extensions_rejects_blank_disallowed_and_mismatched(): void
     {
         try {
-            $this->service->validateFbxFileExtensions(['png' => '']);
+            $this->service->validateFbxFileExtensions([
+                'png' => ['type' => 'png', 'size' => '0', 'url' => ''],
+            ]);
             $this->fail('Expected blank url exception');
         } catch (InvalidArgumentException $e) {
             $this->assertStringContainsString('نامعتبر', $e->getMessage());
         }
 
         try {
-            $this->service->validateFbxFileExtensions(['exe' => 'https://example.com/a.exe']);
+            $this->service->validateFbxFileExtensions([
+                'exe' => ['type' => 'exe', 'size' => '1', 'url' => 'https://example.com/a.exe'],
+            ]);
             $this->fail('Expected disallowed type exception');
         } catch (InvalidArgumentException $e) {
             $this->assertStringContainsString('فرمت فایل مدل مجاز نیست', $e->getMessage());
         }
 
         try {
-            $this->service->validateFbxFileExtensions(['png' => 'https://example.com/a']);
+            $this->service->validateFbxFileExtensions([
+                'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://example.com/a'],
+            ]);
             $this->fail('Expected missing extension exception');
         } catch (InvalidArgumentException $e) {
             $this->assertStringContainsString('پسوند لینک فایل مدل مجاز نیست', $e->getMessage());
         }
 
         try {
-            $this->service->validateFbxFileExtensions(['png' => 'https://example.com/a.fbx']);
+            $this->service->validateFbxFileExtensions([
+                'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://example.com/a.fbx'],
+            ]);
             $this->fail('Expected mismatch exception');
         } catch (InvalidArgumentException $e) {
             $this->assertStringContainsString('هم‌خوانی ندارد', $e->getMessage());
@@ -64,20 +76,24 @@ class LevelGiftUploadServiceTest extends TestCase
     public function test_validate_fbx_file_extensions_allows_jpeg_jpg_family(): void
     {
         $normalized = $this->service->validateFbxFileExtensions([
-            'jpeg' => 'https://example.com/photo.jpg',
+            'jpeg' => ['type' => 'jpeg', 'size' => '9', 'url' => 'https://example.com/photo.jpg'],
         ]);
 
-        $this->assertSame('https://example.com/photo.jpg', $normalized['jpeg']);
+        $this->assertSame('https://example.com/photo.jpg', $normalized['jpeg']['url']);
+        $this->assertSame('jpeg', $normalized['jpeg']['type']);
     }
 
     public function test_merge_fbx_file_links_and_extract_storage_path_edges(): void
     {
         $merged = $this->service->mergeFbxFileLinks(
-            ['png' => 'https://cdn.example/a.png', 'png_2' => 'https://cdn.example/b.png'],
-            ['png' => 'https://cdn.example/c.png']
+            [
+                'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/a.png'],
+                'png_2' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/b.png'],
+            ],
+            ['png' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/c.png']]
         );
 
-        $this->assertSame('https://cdn.example/c.png', $merged['png_3']);
+        $this->assertSame('https://cdn.example/c.png', $merged['png_3']['url']);
         $this->assertNull($this->service->extractStoragePath(null));
         $this->assertSame('relative/x.fbx', $this->service->extractStoragePath('/relative/x.fbx'));
         $this->assertSame(
@@ -90,11 +106,17 @@ class LevelGiftUploadServiceTest extends TestCase
     {
         $existing = [];
         for ($i = 1; $i <= 20; $i++) {
-            $existing["png_{$i}"] = "https://cdn.example/old{$i}.png";
+            $existing["png_{$i}"] = [
+                'type' => 'png',
+                'size' => '1',
+                'url' => "https://cdn.example/old{$i}.png",
+            ];
         }
 
         try {
-            $this->service->mergeFbxFileLinks($existing, ['fbx' => 'https://cdn.example/new.fbx']);
+            $this->service->mergeFbxFileLinks($existing, [
+                'fbx' => ['type' => 'fbx', 'size' => '1', 'url' => 'https://cdn.example/new.fbx'],
+            ]);
             $this->fail('Expected overflow exception');
         } catch (InvalidArgumentException $e) {
             $this->assertStringContainsString('حداکثر ۲۰ فایل مدل', $e->getMessage());

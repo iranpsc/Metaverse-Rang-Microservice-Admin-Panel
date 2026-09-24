@@ -524,15 +524,27 @@ const validateFbxLinks = () => {
     return false
   }
 
-  for (const [fileType, url] of entries) {
+  for (const [fileType, entry] of entries) {
     const normalizedType = String(fileType).toLowerCase().replace(/_\d+$/, '')
     if (!ALLOWED_MODEL_FILE_TYPES.includes(normalizedType)) {
       errors.fbx_file = `فرمت فایل مجاز نیست. فرمت‌های مجاز: ${ALLOWED_MODEL_FILE_TYPES.join(', ')}`
       return false
     }
 
+    const url = typeof entry === 'string'
+      ? entry
+      : (entry && typeof entry === 'object' ? entry.url : null)
+    const entryType = entry && typeof entry === 'object' && entry.type
+      ? String(entry.type).toLowerCase()
+      : normalizedType
+
     if (typeof url !== 'string' || !url.trim()) {
       errors.fbx_file = 'لینک یکی از فایل‌های مدل نامعتبر است'
+      return false
+    }
+
+    if (!ALLOWED_MODEL_FILE_TYPES.includes(entryType)) {
+      errors.fbx_file = `فرمت فایل مجاز نیست. فرمت‌های مجاز: ${ALLOWED_MODEL_FILE_TYPES.join(', ')}`
       return false
     }
 
@@ -553,6 +565,12 @@ const validateFbxLinks = () => {
     const compatibleJpeg = jpegFamily.includes(normalizedType) && jpegFamily.includes(urlExtension)
     if (normalizedType !== urlExtension && !compatibleJpeg) {
       errors.fbx_file = `نوع فایل «${normalizedType}» با پسوند لینک «${urlExtension}» هم‌خوانی ندارد`
+      return false
+    }
+
+    const compatibleEntryJpeg = jpegFamily.includes(entryType) && jpegFamily.includes(urlExtension)
+    if (entryType !== urlExtension && !compatibleEntryJpeg) {
+      errors.fbx_file = `نوع فایل «${entryType}» با پسوند لینک «${urlExtension}» هم‌خوانی ندارد`
       return false
     }
   }

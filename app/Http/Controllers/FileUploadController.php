@@ -39,10 +39,25 @@ class FileUploadController extends Controller
             }
 
             $originalName = $file->getClientOriginalName() ?: ('file.'.$extension);
-            $safeBaseName = Str::slug(pathinfo($originalName, PATHINFO_FILENAME)) ?: 'upload';
-            $fileName = $safeBaseName.'-'.md5(uniqid((string) time(), true)).'.'.$extension;
+            $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+            // Keep the original basename; only strip path separators and reserved characters.
+            $safeBaseName = preg_replace('/[\\\\\\/\\x00<>:"|?*]+/u', '-', (string) $baseName) ?? '';
+            $safeBaseName = trim($safeBaseName, " .\t\n\r");
+            if ($safeBaseName === '') {
+                $safeBaseName = Str::slug((string) $baseName) ?: 'upload';
+            }
 
-            Storage::disk('public')->makeDirectory('levels');
+            $disk = Storage::disk('public');
+            $disk->makeDirectory('levels');
+
+            $fileName = $safeBaseName.'.'.$extension;
+            $suffix = 2;
+            while ($disk->exists('levels/'.$fileName)) {
+                $fileName = $safeBaseName.'-'.$suffix.'.'.$extension;
+                $suffix++;
+            }
+
+            $fileSize = (string) max(0, (int) $file->getSize());
             $filePath = $file->storeAs('levels', $fileName, 'public');
 
             @unlink($file->getPathname());
@@ -56,11 +71,13 @@ class FileUploadController extends Controller
                 'file_path' => $filePath,
                 'file_url' => $fileUrl,
                 'file_type' => $extension,
+                'file_size' => $fileSize,
                 'data' => [
                     'file_name' => $fileName,
                     'file_path' => $filePath,
                     'file_url' => $fileUrl,
                     'file_type' => $extension,
+                    'file_size' => $fileSize,
                 ],
                 'message' => 'بارگذاری فایل با موفقیت انجام شد.',
             ], Response::HTTP_CREATED);
