@@ -9,12 +9,14 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\Concerns\ActsAsSuperAdmin;
+use Tests\Concerns\BuildsLevelFbxFileMaps;
 use Tests\Concerns\CreatesLevelGeneralInfoApiSchema;
 use Tests\TestCase;
 
 class LevelGeneralInfoApiTest extends TestCase
 {
     use ActsAsSuperAdmin;
+    use BuildsLevelFbxFileMaps;
     use CreatesLevelGeneralInfoApiSchema;
 
     private const SHOW_SUCCESS_MESSAGE = 'اطلاعات کلی سطح با موفقیت دریافت شد.';
@@ -244,8 +246,16 @@ class LevelGeneralInfoApiTest extends TestCase
         $this->assertIsInt($payload['points']);
         $this->assertIsBool($payload['has_animation']);
         $this->assertSame([
-            'fbx' => 'https://cdn.example.com/models/info.fbx',
-            'glb' => 'https://cdn.example.com/models/info.glb',
+            'fbx' => [
+                'type' => 'fbx',
+                'size' => '0',
+                'url' => 'https://cdn.example.com/models/info.fbx',
+            ],
+            'glb' => [
+                'type' => 'glb',
+                'size' => '0',
+                'url' => 'https://cdn.example.com/models/info.glb',
+            ],
         ], $payload['fbx_file']);
     }
 
@@ -273,9 +283,9 @@ class LevelGeneralInfoApiTest extends TestCase
             'designer' => '  Designer  ',
             'model_designer' => '  Model Designer  ',
             'creation_date' => '  2024-06-01  ',
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => 'https://cdn.example.com/a.fbx',
-            ],
+            ]),
         ]))
             ->assertCreated()
             ->assertJsonPath('success', true)
@@ -287,7 +297,7 @@ class LevelGeneralInfoApiTest extends TestCase
             ->assertJsonPath('data.general_info.designer', 'Designer')
             ->assertJsonPath('data.general_info.model_designer', 'Model Designer')
             ->assertJsonPath('data.general_info.creation_date', '2024-06-01')
-            ->assertJsonPath('data.general_info.fbx_file.fbx', 'https://cdn.example.com/a.fbx');
+            ->assertJsonPath('data.general_info.fbx_file.fbx.url', 'https://cdn.example.com/a.fbx');
 
         $this->assertDatabaseHas('level_general_infos', [
             'level_id' => $level->id,
@@ -334,12 +344,12 @@ class LevelGeneralInfoApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->postJson($this->generalInfoPath($level), $this->validPayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'jpeg' => 'https://cdn.example.com/textures/model.jpg',
-            ],
+            ]),
         ]))
             ->assertCreated()
-            ->assertJsonPath('data.general_info.fbx_file.jpeg', 'https://cdn.example.com/textures/model.jpg');
+            ->assertJsonPath('data.general_info.fbx_file.jpeg.url', 'https://cdn.example.com/textures/model.jpg');
     }
 
     public function test_store_rejects_when_general_info_already_exists(): void
@@ -484,9 +494,9 @@ class LevelGeneralInfoApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->postJson($this->generalInfoPath($level), $this->validPayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'exe' => 'https://cdn.example.com/malware.exe',
-            ],
+            ]),
         ]))
             ->assertStatus(422)
             ->assertJsonValidationErrors(['fbx_file']);
@@ -498,9 +508,9 @@ class LevelGeneralInfoApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->postJson($this->generalInfoPath($level), $this->validPayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => 'https://cdn.example.com/models/info.glb',
-            ],
+            ]),
         ]))
             ->assertStatus(422)
             ->assertJsonValidationErrors(['fbx_file']);
@@ -512,12 +522,12 @@ class LevelGeneralInfoApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->postJson($this->generalInfoPath($level), $this->validPayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => 'not-a-url',
-            ],
+            ]),
         ]))
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['fbx_file.fbx']);
+            ->assertJsonValidationErrors(['fbx_file.fbx.url']);
     }
 
     public function test_store_rejects_more_than_twenty_fbx_entries(): void
@@ -528,7 +538,7 @@ class LevelGeneralInfoApiTest extends TestCase
         $fbxFile = [];
         for ($i = 1; $i <= 21; $i++) {
             $key = $i === 1 ? 'fbx' : "fbx_{$i}";
-            $fbxFile[$key] = "https://cdn.example.com/models/info_{$i}.fbx";
+            $fbxFile[$key] = $this->fbxFileEntry("https://cdn.example.com/models/info_{$i}.fbx");
         }
 
         $this->postJson($this->generalInfoPath($level), $this->validPayload([
@@ -545,14 +555,14 @@ class LevelGeneralInfoApiTest extends TestCase
 
         $payload = $this->validMultipartPayload([
             'designer' => 'JSON fbx info',
-            'fbx_file' => json_encode([
+            'fbx_file' => json_encode($this->fbxFileMap([
                 'glb' => 'https://cdn.example.com/models/decoded.glb',
-            ], JSON_UNESCAPED_SLASHES),
+            ]), JSON_UNESCAPED_SLASHES),
         ]);
 
         $this->post($this->generalInfoPath($level), $payload, ['Accept' => 'application/json'])
             ->assertCreated()
-            ->assertJsonPath('data.general_info.fbx_file.glb', 'https://cdn.example.com/models/decoded.glb');
+            ->assertJsonPath('data.general_info.fbx_file.glb.url', 'https://cdn.example.com/models/decoded.glb');
     }
 
     // -------------------------------------------------------------------------
@@ -599,17 +609,17 @@ class LevelGeneralInfoApiTest extends TestCase
             ->create(['level_id' => $level->id]);
 
         $response = $this->putJson($this->generalInfoPath($level), $this->validPayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'glb' => 'https://cdn.example.com/new.glb',
-            ],
+            ]),
         ]))
             ->assertOk()
             ->assertJsonPath('success', true);
 
         $fbxFile = $response->json('data.general_info.fbx_file');
 
-        $this->assertSame('https://cdn.example.com/old.fbx', $fbxFile['fbx']);
-        $this->assertSame('https://cdn.example.com/new.glb', $fbxFile['glb']);
+        $this->assertSame('https://cdn.example.com/old.fbx', $fbxFile['fbx']['url']);
+        $this->assertSame('https://cdn.example.com/new.glb', $fbxFile['glb']['url']);
     }
 
     public function test_update_suffixes_conflicting_fbx_keys(): void
@@ -623,15 +633,15 @@ class LevelGeneralInfoApiTest extends TestCase
             ->create(['level_id' => $level->id]);
 
         $response = $this->putJson($this->generalInfoPath($level), $this->validPayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => 'https://cdn.example.com/new.fbx',
-            ],
+            ]),
         ]))->assertOk();
 
         $fbxFile = $response->json('data.general_info.fbx_file');
 
-        $this->assertSame('https://cdn.example.com/old.fbx', $fbxFile['fbx']);
-        $this->assertSame('https://cdn.example.com/new.fbx', $fbxFile['fbx_2']);
+        $this->assertSame('https://cdn.example.com/old.fbx', $fbxFile['fbx']['url']);
+        $this->assertSame('https://cdn.example.com/new.fbx', $fbxFile['fbx_2']['url']);
     }
 
     public function test_update_replaces_uploaded_png_and_cleans_previous_file(): void
@@ -689,9 +699,9 @@ class LevelGeneralInfoApiTest extends TestCase
             ->create(['level_id' => $level->id]);
 
         $this->putJson($this->generalInfoPath($level), $this->validPayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'glb' => 'https://cdn.example.com/extra.glb',
-            ],
+            ]),
         ]))
             ->assertStatus(422)
             ->assertJsonPath('success', false)
@@ -808,7 +818,7 @@ class LevelGeneralInfoApiTest extends TestCase
 
         $remaining = $response->json('data.fbx_file');
         $this->assertArrayNotHasKey('fbx', $remaining);
-        $this->assertSame('https://cdn.example.com/keep.glb', $remaining['glb']);
+        $this->assertSame('https://cdn.example.com/keep.glb', $remaining['glb']['url']);
         Storage::disk('public')->assertMissing('levels/model.fbx');
     }
 
@@ -1019,13 +1029,13 @@ class LevelGeneralInfoApiTest extends TestCase
             ->create(['level_id' => $level->id]);
 
         $response = $this->putJson($this->generalInfoPath($level), $this->validPayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => $url,
-            ],
+            ]),
         ]))->assertOk();
 
         $this->assertCount(1, $response->json('data.general_info.fbx_file'));
-        $this->assertSame($url, $response->json('data.general_info.fbx_file.fbx'));
+        $this->assertSame($url, $response->json('data.general_info.fbx_file.fbx.url'));
     }
 
     // -------------------------------------------------------------------------

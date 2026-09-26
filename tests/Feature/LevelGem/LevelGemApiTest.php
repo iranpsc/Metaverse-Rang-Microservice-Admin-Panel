@@ -8,12 +8,14 @@ use App\Repositories\LevelGemRepository;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\ActsAsSuperAdmin;
+use Tests\Concerns\BuildsLevelFbxFileMaps;
 use Tests\Concerns\CreatesLevelGemApiSchema;
 use Tests\TestCase;
 
 class LevelGemApiTest extends TestCase
 {
     use ActsAsSuperAdmin;
+    use BuildsLevelFbxFileMaps;
     use CreatesLevelGemApiSchema;
 
     private const SHOW_WITH_GEM_MESSAGE = 'گوهر سطح با موفقیت دریافت شد.';
@@ -312,18 +314,18 @@ class LevelGemApiTest extends TestCase
 
         $response = $this->postJson($this->gemPath($level), $this->validStorePayload([
             'name' => 'Gem With Models',
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => $fbxUrl,
                 'glb' => $glbUrl,
-            ],
+            ]),
         ]))
             ->assertCreated()
-            ->assertJsonPath('data.gem.fbx_file.fbx', $fbxUrl)
-            ->assertJsonPath('data.gem.fbx_file.glb', $glbUrl);
+            ->assertJsonPath('data.gem.fbx_file.fbx.url', $fbxUrl)
+            ->assertJsonPath('data.gem.fbx_file.glb.url', $glbUrl);
 
         $gem = LevelGem::query()->where('level_id', $level->id)->first();
         $this->assertIsArray($gem->fbx_file);
-        $this->assertSame($fbxUrl, $gem->fbx_file['fbx']);
+        $this->assertSame($fbxUrl, $gem->fbx_file['fbx']['url']);
     }
 
     public function test_store_accepts_fbx_file_as_json_string(): void
@@ -335,10 +337,10 @@ class LevelGemApiTest extends TestCase
 
         $this->post($this->gemPath($level), $this->validStorePayload([
             'name' => 'JSON String FBX',
-            'fbx_file' => json_encode(['fbx' => $fbxUrl]),
+            'fbx_file' => json_encode($this->fbxFileMap(['fbx' => $fbxUrl])),
         ]), ['Accept' => 'application/json'])
             ->assertCreated()
-            ->assertJsonPath('data.gem.fbx_file.fbx', $fbxUrl);
+            ->assertJsonPath('data.gem.fbx_file.fbx.url', $fbxUrl);
     }
 
     public function test_store_accepts_compatible_jpeg_jpg_fbx_keys(): void
@@ -349,12 +351,12 @@ class LevelGemApiTest extends TestCase
         $jpegUrl = url('uploads/levels/texture.jpg');
 
         $this->postJson($this->gemPath($level), $this->validStorePayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'jpeg' => $jpegUrl,
-            ],
+            ]),
         ]))
             ->assertCreated()
-            ->assertJsonPath('data.gem.fbx_file.jpeg', $jpegUrl);
+            ->assertJsonPath('data.gem.fbx_file.jpeg.url', $jpegUrl);
     }
 
     public function test_store_rejects_when_gem_already_exists(): void
@@ -511,9 +513,9 @@ class LevelGemApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->postJson($this->gemPath($level), $this->validStorePayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'exe' => url('uploads/levels/malware.exe'),
-            ],
+            ]),
         ]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['fbx_file']);
@@ -525,9 +527,9 @@ class LevelGemApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->postJson($this->gemPath($level), $this->validStorePayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => url('uploads/levels/model.txt'),
-            ],
+            ]),
         ]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['fbx_file']);
@@ -539,9 +541,9 @@ class LevelGemApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->postJson($this->gemPath($level), $this->validStorePayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => url('uploads/levels/model.glb'),
-            ],
+            ]),
         ]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['fbx_file']);
@@ -553,12 +555,12 @@ class LevelGemApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->postJson($this->gemPath($level), $this->validStorePayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => 'not-a-url',
-            ],
+            ]),
         ]))
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['fbx_file.fbx']);
+            ->assertJsonValidationErrors(['fbx_file.fbx.url']);
     }
 
     public function test_store_rejects_more_than_twenty_fbx_entries(): void
@@ -569,7 +571,7 @@ class LevelGemApiTest extends TestCase
         $files = [];
         for ($i = 1; $i <= 21; $i++) {
             $key = $i === 1 ? 'fbx' : 'fbx_'.$i;
-            $files[$key] = url("uploads/levels/model-{$i}.fbx");
+            $files[$key] = $this->fbxFileEntry(url("uploads/levels/model-{$i}.fbx"));
         }
 
         $this->postJson($this->gemPath($level), $this->validStorePayload([
@@ -664,19 +666,19 @@ class LevelGemApiTest extends TestCase
         $existingFbx = url('uploads/levels/existing.fbx');
         LevelGem::factory()->create([
             'level_id' => $level->id,
-            'fbx_file' => ['fbx' => $existingFbx],
+            'fbx_file' => $this->fbxFileMap(['fbx' => $existingFbx]),
         ]);
 
         $newGlb = url('uploads/levels/new.glb');
 
         $this->putJson($this->gemPath($level), $this->validStorePayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'glb' => $newGlb,
-            ],
+            ]),
         ]))
             ->assertOk()
-            ->assertJsonPath('data.gem.fbx_file.fbx', $existingFbx)
-            ->assertJsonPath('data.gem.fbx_file.glb', $newGlb);
+            ->assertJsonPath('data.gem.fbx_file.fbx.url', $existingFbx)
+            ->assertJsonPath('data.gem.fbx_file.glb.url', $newGlb);
     }
 
     public function test_update_assigns_unique_suffix_for_conflicting_fbx_keys(): void
@@ -687,20 +689,20 @@ class LevelGemApiTest extends TestCase
         $existing = url('uploads/levels/a.fbx');
         LevelGem::factory()->create([
             'level_id' => $level->id,
-            'fbx_file' => ['fbx' => $existing],
+            'fbx_file' => $this->fbxFileMap(['fbx' => $existing]),
         ]);
 
         $incoming = url('uploads/levels/b.fbx');
 
         $response = $this->putJson($this->gemPath($level), $this->validStorePayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => $incoming,
-            ],
+            ]),
         ]))->assertOk();
 
         $files = $response->json('data.gem.fbx_file');
-        $this->assertSame($existing, $files['fbx']);
-        $this->assertSame($incoming, $files['fbx_2']);
+        $this->assertSame($existing, $files['fbx']['url']);
+        $this->assertSame($incoming, $files['fbx_2']['url']);
     }
 
     public function test_update_skips_duplicate_fbx_url(): void
@@ -711,17 +713,17 @@ class LevelGemApiTest extends TestCase
         $existing = url('uploads/levels/same.fbx');
         LevelGem::factory()->create([
             'level_id' => $level->id,
-            'fbx_file' => ['fbx' => $existing],
+            'fbx_file' => $this->fbxFileMap(['fbx' => $existing]),
         ]);
 
         $response = $this->putJson($this->gemPath($level), $this->validStorePayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => $existing,
-            ],
+            ]),
         ]))->assertOk();
 
         $this->assertCount(1, $response->json('data.gem.fbx_file'));
-        $this->assertSame($existing, $response->json('data.gem.fbx_file.fbx'));
+        $this->assertSame($existing, $response->json('data.gem.fbx_file.fbx.url'));
     }
 
     public function test_update_rejects_when_merged_fbx_files_exceed_limit(): void
@@ -732,7 +734,7 @@ class LevelGemApiTest extends TestCase
         $existing = [];
         for ($i = 1; $i <= 20; $i++) {
             $key = $i === 1 ? 'fbx' : 'fbx_'.$i;
-            $existing[$key] = url("uploads/levels/existing-{$i}.fbx");
+            $existing[$key] = $this->fbxFileEntry(url("uploads/levels/existing-{$i}.fbx"));
         }
 
         LevelGem::factory()->create([
@@ -741,9 +743,9 @@ class LevelGemApiTest extends TestCase
         ]);
 
         $this->putJson($this->gemPath($level), $this->validStorePayload([
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'glb' => url('uploads/levels/overflow.glb'),
-            ],
+            ]),
         ]))
             ->assertStatus(422)
             ->assertJsonPath('success', false)
@@ -755,7 +757,7 @@ class LevelGemApiTest extends TestCase
         $this->actingAsSuperAdmin();
         $level = Level::factory()->create();
 
-        $existing = ['fbx' => url('uploads/levels/keep.fbx')];
+        $existing = $this->fbxFileMap(['fbx' => url('uploads/levels/keep.fbx')]);
         LevelGem::factory()->create([
             'level_id' => $level->id,
             'fbx_file' => $existing,
@@ -768,7 +770,7 @@ class LevelGemApiTest extends TestCase
         $this->putJson($this->gemPath($level), $payload)
             ->assertOk()
             ->assertJsonPath('data.gem.name', 'Updated Without Fbx')
-            ->assertJsonPath('data.gem.fbx_file.fbx', $existing['fbx']);
+            ->assertJsonPath('data.gem.fbx_file.fbx.url', $existing['fbx']['url']);
     }
 
     public function test_update_returns_500_when_repository_throws(): void
@@ -839,10 +841,10 @@ class LevelGemApiTest extends TestCase
 
         LevelGem::factory()->create([
             'level_id' => $level->id,
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => url('uploads/'.$path),
                 'glb' => $keepUrl,
-            ],
+            ]),
         ]);
 
         $response = $this->deleteJson($this->gemFilesPath($level), [
@@ -852,7 +854,7 @@ class LevelGemApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.field', 'fbx_file')
-            ->assertJsonPath('data.fbx_file.glb', $keepUrl);
+            ->assertJsonPath('data.fbx_file.glb.url', $keepUrl);
 
         $this->assertArrayNotHasKey('fbx', $response->json('data.fbx_file'));
         Storage::disk('public')->assertMissing($path);
@@ -867,9 +869,9 @@ class LevelGemApiTest extends TestCase
         Storage::disk('public')->put($path, 'fbx');
         LevelGem::factory()->create([
             'level_id' => $level->id,
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => url('uploads/'.$path),
-            ],
+            ]),
         ]);
 
         $this->deleteJson($this->gemFilesPath($level), [
@@ -930,7 +932,7 @@ class LevelGemApiTest extends TestCase
         $level = Level::factory()->create();
         LevelGem::factory()->create([
             'level_id' => $level->id,
-            'fbx_file' => ['fbx' => url('uploads/levels/a.fbx')],
+            'fbx_file' => $this->fbxFileMap(['fbx' => url('uploads/levels/a.fbx')]),
         ]);
 
         $this->deleteJson($this->gemFilesPath($level), [
@@ -1028,9 +1030,9 @@ class LevelGemApiTest extends TestCase
         Storage::disk('public')->put($safePath, 'safe');
         LevelGem::factory()->create([
             'level_id' => $level->id,
-            'fbx_file' => [
+            'fbx_file' => $this->fbxFileMap([
                 'fbx' => url('uploads/'.$safePath),
-            ],
+            ]),
         ]);
 
         $this->deleteJson($this->gemFilesPath($level), [

@@ -41,12 +41,29 @@ class LevelGeneralInfoFactory extends Factory
     }
 
     /**
-     * @param  array<string, string>  $files
+     * @param  array<string, string|array{type?: string, size?: string, url: string}>  $files
      */
     public function withFbxFiles(array $files): static
     {
+        $normalized = [];
+
+        foreach ($files as $key => $entry) {
+            if (is_string($entry)) {
+                $baseType = strtolower((string) preg_replace('/_\d+$/', '', (string) $key)) ?: 'fbx';
+                $normalized[$key] = [
+                    'type' => $baseType,
+                    'size' => '0',
+                    'url' => $entry,
+                ];
+
+                continue;
+            }
+
+            $normalized[$key] = $entry;
+        }
+
         return $this->state(fn () => [
-            'fbx_file' => $files,
+            'fbx_file' => $normalized,
         ]);
     }
 

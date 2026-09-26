@@ -23,7 +23,11 @@ class LevelGemUploadServiceTest extends TestCase
     {
         $files = [];
         for ($i = 1; $i <= 21; $i++) {
-            $files["png_{$i}"] = "https://example.com/file{$i}.png";
+            $files["png_{$i}"] = [
+                'type' => 'png',
+                'size' => '10',
+                'url' => "https://example.com/file{$i}.png",
+            ];
         }
 
         $this->expectException(InvalidArgumentException::class);
@@ -37,7 +41,9 @@ class LevelGemUploadServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('نامعتبر');
 
-        $this->service->validateFbxFileExtensions(['png' => '   ']);
+        $this->service->validateFbxFileExtensions([
+            'png' => ['type' => 'png', 'size' => '0', 'url' => '   '],
+        ]);
     }
 
     public function test_validate_fbx_file_extensions_rejects_disallowed_type(): void
@@ -45,7 +51,9 @@ class LevelGemUploadServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('فرمت فایل مدل مجاز نیست');
 
-        $this->service->validateFbxFileExtensions(['exe' => 'https://example.com/a.exe']);
+        $this->service->validateFbxFileExtensions([
+            'exe' => ['type' => 'exe', 'size' => '1', 'url' => 'https://example.com/a.exe'],
+        ]);
     }
 
     public function test_validate_fbx_file_extensions_rejects_disallowed_url_extension(): void
@@ -53,7 +61,9 @@ class LevelGemUploadServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('پسوند لینک فایل مدل مجاز نیست');
 
-        $this->service->validateFbxFileExtensions(['png' => 'https://example.com/a']);
+        $this->service->validateFbxFileExtensions([
+            'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://example.com/a'],
+        ]);
     }
 
     public function test_validate_fbx_file_extensions_rejects_type_extension_mismatch(): void
@@ -61,34 +71,41 @@ class LevelGemUploadServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('هم‌خوانی ندارد');
 
-        $this->service->validateFbxFileExtensions(['png' => 'https://example.com/a.fbx']);
+        $this->service->validateFbxFileExtensions([
+            'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://example.com/a.fbx'],
+        ]);
     }
 
     public function test_validate_fbx_file_extensions_allows_jpeg_jpg_family(): void
     {
         $normalized = $this->service->validateFbxFileExtensions([
-            'jpeg' => 'https://example.com/photo.jpg',
-            'jpg_2' => 'https://example.com/photo2.jpeg',
+            'jpeg' => ['type' => 'jpeg', 'size' => '12', 'url' => 'https://example.com/photo.jpg'],
+            'jpg_2' => ['type' => 'jpg', 'size' => '34', 'url' => 'https://example.com/photo2.jpeg'],
         ]);
 
-        $this->assertSame('https://example.com/photo.jpg', $normalized['jpeg']);
-        $this->assertSame('https://example.com/photo2.jpeg', $normalized['jpg_2']);
+        $this->assertSame('https://example.com/photo.jpg', $normalized['jpeg']['url']);
+        $this->assertSame('jpeg', $normalized['jpeg']['type']);
+        $this->assertSame('12', $normalized['jpeg']['size']);
+        $this->assertSame('https://example.com/photo2.jpeg', $normalized['jpg_2']['url']);
     }
 
     public function test_merge_fbx_file_links_skips_blank_and_duplicate_urls_and_suffixes_keys(): void
     {
         $merged = $this->service->mergeFbxFileLinks(
-            ['png' => 'https://cdn.example/a.png', 'empty' => ''],
             [
-                'png' => 'https://cdn.example/b.png',
-                'fbx' => 'https://cdn.example/a.png',
-                'bad' => '  ',
+                'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/a.png'],
+                'empty' => ['type' => 'png', 'size' => '0', 'url' => ''],
+            ],
+            [
+                'png' => ['type' => 'png', 'size' => '2', 'url' => 'https://cdn.example/b.png'],
+                'fbx' => ['type' => 'fbx', 'size' => '3', 'url' => 'https://cdn.example/a.png'],
+                'bad' => ['type' => 'fbx', 'size' => '0', 'url' => '  '],
             ]
         );
 
         $this->assertSame([
-            'png' => 'https://cdn.example/a.png',
-            'png_2' => 'https://cdn.example/b.png',
+            'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/a.png'],
+            'png_2' => ['type' => 'png', 'size' => '2', 'url' => 'https://cdn.example/b.png'],
         ], $merged);
     }
 
@@ -96,14 +113,18 @@ class LevelGemUploadServiceTest extends TestCase
     {
         $existing = [];
         for ($i = 1; $i <= 20; $i++) {
-            $existing["png_{$i}"] = "https://cdn.example/old{$i}.png";
+            $existing["png_{$i}"] = [
+                'type' => 'png',
+                'size' => '1',
+                'url' => "https://cdn.example/old{$i}.png",
+            ];
         }
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('ابتدا برخی فایل‌های قبلی را حذف کنید');
 
         $this->service->mergeFbxFileLinks($existing, [
-            'fbx' => 'https://cdn.example/new.fbx',
+            'fbx' => ['type' => 'fbx', 'size' => '1', 'url' => 'https://cdn.example/new.fbx'],
         ]);
     }
 
@@ -138,13 +159,13 @@ class LevelGemUploadServiceTest extends TestCase
     {
         $merged = $this->service->mergeFbxFileLinks(
             [
-                'png' => 'https://cdn.example/1.png',
-                'png_2' => 'https://cdn.example/2.png',
+                'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/1.png'],
+                'png_2' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/2.png'],
             ],
-            ['png' => 'https://cdn.example/3.png']
+            ['png' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/3.png']]
         );
 
         $this->assertArrayHasKey('png_3', $merged);
-        $this->assertSame('https://cdn.example/3.png', $merged['png_3']);
+        $this->assertSame('https://cdn.example/3.png', $merged['png_3']['url']);
     }
 }

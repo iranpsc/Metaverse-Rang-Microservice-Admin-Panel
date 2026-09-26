@@ -44,9 +44,15 @@ class LevelGemFactory extends Factory
 
     public function withFbx(): static
     {
+        $url = url('uploads/levels/'.fake()->uuid().'.fbx');
+
         return $this->state(fn () => [
             'fbx_file' => [
-                'fbx' => url('uploads/levels/'.fake()->uuid().'.fbx'),
+                'fbx' => [
+                    'type' => 'fbx',
+                    'size' => '0',
+                    'url' => $url,
+                ],
             ],
         ]);
     }

@@ -23,7 +23,11 @@ class LevelGeneralInfoUploadServiceTest extends TestCase
     {
         $files = [];
         for ($i = 1; $i <= 21; $i++) {
-            $files["png_{$i}"] = "https://example.com/file{$i}.png";
+            $files["png_{$i}"] = [
+                'type' => 'png',
+                'size' => '1',
+                'url' => "https://example.com/file{$i}.png",
+            ];
         }
 
         $this->expectException(InvalidArgumentException::class);
@@ -37,7 +41,9 @@ class LevelGeneralInfoUploadServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('نامعتبر');
 
-        $this->service->validateFbxFileExtensions(['png' => '   ']);
+        $this->service->validateFbxFileExtensions([
+            'png' => ['type' => 'png', 'size' => '0', 'url' => '   '],
+        ]);
     }
 
     public function test_validate_fbx_file_extensions_rejects_disallowed_type(): void
@@ -45,7 +51,9 @@ class LevelGeneralInfoUploadServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('فرمت فایل مدل مجاز نیست');
 
-        $this->service->validateFbxFileExtensions(['exe' => 'https://example.com/a.exe']);
+        $this->service->validateFbxFileExtensions([
+            'exe' => ['type' => 'exe', 'size' => '1', 'url' => 'https://example.com/a.exe'],
+        ]);
     }
 
     public function test_validate_fbx_file_extensions_rejects_disallowed_url_extension(): void
@@ -53,7 +61,9 @@ class LevelGeneralInfoUploadServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('پسوند لینک فایل مدل مجاز نیست');
 
-        $this->service->validateFbxFileExtensions(['png' => 'https://example.com/a']);
+        $this->service->validateFbxFileExtensions([
+            'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://example.com/a'],
+        ]);
     }
 
     public function test_validate_fbx_file_extensions_rejects_type_extension_mismatch(): void
@@ -61,22 +71,24 @@ class LevelGeneralInfoUploadServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('هم‌خوانی ندارد');
 
-        $this->service->validateFbxFileExtensions(['png' => 'https://example.com/a.fbx']);
+        $this->service->validateFbxFileExtensions([
+            'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://example.com/a.fbx'],
+        ]);
     }
 
     public function test_merge_fbx_file_links_skips_blank_incoming_urls(): void
     {
         $merged = $this->service->mergeFbxFileLinks(
-            ['png' => 'https://cdn.example/a.png'],
+            ['png' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/a.png']],
             [
-                'fbx' => '  ',
-                'glb' => 'https://cdn.example/b.glb',
+                'fbx' => ['type' => 'fbx', 'size' => '0', 'url' => '  '],
+                'glb' => ['type' => 'glb', 'size' => '2', 'url' => 'https://cdn.example/b.glb'],
             ]
         );
 
         $this->assertSame([
-            'png' => 'https://cdn.example/a.png',
-            'glb' => 'https://cdn.example/b.glb',
+            'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/a.png'],
+            'glb' => ['type' => 'glb', 'size' => '2', 'url' => 'https://cdn.example/b.glb'],
         ], $merged);
     }
 
@@ -89,25 +101,25 @@ class LevelGeneralInfoUploadServiceTest extends TestCase
     public function test_unique_fbx_file_key_uses_file_base_when_desired_key_empty(): void
     {
         $merged = $this->service->mergeFbxFileLinks(
-            ['' => 'https://cdn.example/1.bin'],
-            ['' => 'https://cdn.example/2.bin']
+            ['' => ['type' => 'bin', 'size' => '1', 'url' => 'https://cdn.example/1.bin']],
+            ['' => ['type' => 'bin', 'size' => '1', 'url' => 'https://cdn.example/2.bin']]
         );
 
         $this->assertArrayHasKey('file_2', $merged);
-        $this->assertSame('https://cdn.example/2.bin', $merged['file_2']);
+        $this->assertSame('https://cdn.example/2.bin', $merged['file_2']['url']);
     }
 
     public function test_unique_fbx_file_key_increments_when_suffix_exists(): void
     {
         $merged = $this->service->mergeFbxFileLinks(
             [
-                'png' => 'https://cdn.example/1.png',
-                'png_2' => 'https://cdn.example/2.png',
+                'png' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/1.png'],
+                'png_2' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/2.png'],
             ],
-            ['png' => 'https://cdn.example/3.png']
+            ['png' => ['type' => 'png', 'size' => '1', 'url' => 'https://cdn.example/3.png']]
         );
 
         $this->assertArrayHasKey('png_3', $merged);
-        $this->assertSame('https://cdn.example/3.png', $merged['png_3']);
+        $this->assertSame('https://cdn.example/3.png', $merged['png_3']['url']);
     }
 }

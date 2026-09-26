@@ -31,7 +31,15 @@ class LevelGiftRepository
             return ['found' => false, 'url' => null];
         }
 
-        $url = is_string($files[$fileKey]) ? $files[$fileKey] : null;
+        $url = null;
+        if (is_array($files[$fileKey])) {
+            $url = isset($files[$fileKey]['url']) && is_string($files[$fileKey]['url'])
+                ? $files[$fileKey]['url']
+                : null;
+        } elseif (is_string($files[$fileKey])) {
+            $url = $files[$fileKey];
+        }
+
         unset($files[$fileKey]);
         $remainingValue = count($files) > 0 ? $files : null;
 

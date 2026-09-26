@@ -56,6 +56,7 @@ class FileUploadApiTest extends TestCase
             ->assertJsonPath('status', true)
             ->assertJsonPath('message', self::FINISHED_MESSAGE)
             ->assertJsonPath('file_type', 'png')
+            ->assertJsonPath('file_name', 'hero.png')
             ->assertJsonStructure([
                 'success',
                 'status',
@@ -63,7 +64,8 @@ class FileUploadApiTest extends TestCase
                 'file_path',
                 'file_url',
                 'file_type',
-                'data' => ['file_name', 'file_path', 'file_url', 'file_type'],
+                'file_size',
+                'data' => ['file_name', 'file_path', 'file_url', 'file_type', 'file_size'],
                 'message',
             ]);
 
@@ -72,11 +74,15 @@ class FileUploadApiTest extends TestCase
         $fileUrl = $response->json('file_url');
 
         $this->assertIsString($fileName);
+        $this->assertSame('hero.png', $fileName);
         $this->assertStringEndsWith('.png', $fileName);
         $this->assertSame('levels/'.$fileName, $filePath);
         $this->assertSame($filePath, $response->json('data.file_path'));
         $this->assertSame($fileUrl, $response->json('data.file_url'));
         $this->assertStringContainsString('uploads/'.$filePath, $fileUrl);
+        $this->assertSame($response->json('file_size'), $response->json('data.file_size'));
+        $this->assertIsString($response->json('file_size'));
+        $this->assertDoesNotMatchRegularExpression('/-[a-f0-9]{32}\\.png$/', $fileName);
 
         Storage::disk('public')->assertExists($filePath);
     }
