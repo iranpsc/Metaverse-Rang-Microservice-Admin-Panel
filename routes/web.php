@@ -11,9 +11,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/lang/{file}', function ($file) {
-    return response()->file(public_path('lang/' . $file));
-});
+Route::get('/lang/{file}', function (string $file) {
+    $path = storage_path('app/lang/'.basename($file));
+
+    abort_unless(is_file($path), 404);
+
+    return response()->file($path);
+})->where('file', '[A-Za-z0-9._-]+\.json');
 
 Route::get('/{any}', function () {
     return view('app');

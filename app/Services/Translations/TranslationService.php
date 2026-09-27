@@ -643,7 +643,7 @@ class TranslationService
     private function writeLangFile(Translation $translation, array $payload): string
     {
         $fileName = strtolower($translation->code).'.json';
-        $filePath = public_path("lang/{$fileName}");
+        $filePath = storage_path("app/lang/{$fileName}");
         $encodedPayload = json_encode(
             $payload,
             JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT

@@ -518,7 +518,7 @@ class TranslationApiTest extends TestCase
         $disposition = (string) $response->headers->get('content-disposition');
         $this->assertStringContainsString('fr.json', $disposition);
 
-        $filePath = public_path('lang/fr.json');
+        $filePath = storage_path('app/lang/fr.json');
         $this->trackLangFile($filePath);
         $this->assertFileExists($filePath);
 
@@ -557,7 +557,7 @@ class TranslationApiTest extends TestCase
 
         $this->post($this->exportPath($translation))->assertOk();
 
-        $filePath = public_path('lang/af.json');
+        $filePath = storage_path('app/lang/af.json');
         $this->trackLangFile($filePath);
 
         $payload = json_decode((string) file_get_contents($filePath), true, flags: JSON_THROW_ON_ERROR);
@@ -586,7 +586,7 @@ class TranslationApiTest extends TestCase
 
         $response = $this->post($this->exportPath($translation));
 
-        $filePath = public_path('lang/sq.json');
+        $filePath = storage_path('app/lang/sq.json');
         $this->trackLangFile($filePath);
 
         $response->assertOk();
@@ -620,7 +620,7 @@ class TranslationApiTest extends TestCase
 
         $response = $this->post($this->exportPath($translation));
 
-        $filePath = public_path('lang/ak.json');
+        $filePath = storage_path('app/lang/ak.json');
         $this->trackLangFile($filePath);
 
         $response->assertOk();
@@ -700,7 +700,7 @@ class TranslationApiTest extends TestCase
             'translation' => 'Number',
         ], 'sqlite');
 
-        $filePath = public_path('lang/en.json');
+        $filePath = storage_path('app/lang/en.json');
         $this->trackLangFile($filePath);
         $this->assertFileExists($filePath);
     }
@@ -814,7 +814,7 @@ class TranslationApiTest extends TestCase
             $notificationModal->tabs()->where('name', 'notification')->exists()
         );
 
-        $filePath = public_path('lang/de.json');
+        $filePath = storage_path('app/lang/de.json');
         $this->trackLangFile($filePath);
         $this->assertFileExists($filePath);
     }
