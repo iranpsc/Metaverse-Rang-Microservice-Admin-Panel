@@ -3,28 +3,26 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
 
 class SecurityHeaders
 {
     /**
      * Handle an incoming request.
      *
-     * @param  Request  $request
-     * @param  Closure(Request): (Response|RedirectResponse)  $next
-     * @return Response|RedirectResponse
+     * @param  Closure(Request): Response  $next
      */
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
 
-        $response->header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-        $response->header('X-Frame-Options', 'SAMEORIGIN');
-        $response->header('X-Content-Type-Options', 'nosniff');
-        $response->header('Referrer-Policy', 'same-origin');
-        $response->header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+        // BinaryFileResponse (lang file downloads) has no Laravel header() helper.
+        $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
+        $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('Referrer-Policy', 'same-origin');
+        $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
         return $response;
     }
