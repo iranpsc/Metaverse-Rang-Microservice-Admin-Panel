@@ -137,7 +137,7 @@ class TranslationServiceTest extends TestCase
         $service = new TranslationService(new Filesystem);
         $result = $service->exportTranslation($translation);
 
-        $filePath = public_path('lang/fr.json');
+        $filePath = storage_path('app/lang/fr.json');
         $this->createdLangFiles[] = $filePath;
 
         $this->assertInstanceOf(BinaryFileResponse::class, $result);
@@ -361,7 +361,7 @@ class TranslationServiceTest extends TestCase
             $notificationModal->tabs()->where('name', 'notification')->exists()
         );
 
-        $filePath = public_path('lang/en.json');
+        $filePath = storage_path('app/lang/en.json');
         $this->createdLangFiles[] = $filePath;
         $this->assertFileExists($filePath);
 
@@ -412,7 +412,7 @@ class TranslationServiceTest extends TestCase
             'translation' => 'Notifications',
         ], 'sqlite');
 
-        $this->createdLangFiles[] = public_path('lang/en.json');
+        $this->createdLangFiles[] = storage_path('app/lang/en.json');
         $english->refresh();
         $this->assertSame(4, (int) $english->version);
     }
@@ -451,7 +451,7 @@ class TranslationServiceTest extends TestCase
             'translation' => 'Benachrichtigungen',
         ], 'sqlite');
 
-        $this->createdLangFiles[] = public_path('lang/de.json');
+        $this->createdLangFiles[] = storage_path('app/lang/de.json');
     }
 
     public function test_import_translation_updates_all_duplicate_unique_ids_in_same_tab(): void
@@ -496,7 +496,7 @@ class TranslationServiceTest extends TestCase
             ->where('translation', 'Music')
             ->count());
 
-        $filePath = public_path('lang/en.json');
+        $filePath = storage_path('app/lang/en.json');
         $this->createdLangFiles[] = $filePath;
         $payload = json_decode((string) file_get_contents($filePath), true, flags: JSON_THROW_ON_ERROR);
         $this->assertSame('Music', $payload[97] ?? $payload['97'] ?? null);
@@ -522,7 +522,7 @@ class TranslationServiceTest extends TestCase
         $service = new TranslationService(new Filesystem);
         $service->exportTranslation($translation);
 
-        $filePath = public_path('lang/fr.json');
+        $filePath = storage_path('app/lang/fr.json');
         $this->createdLangFiles[] = $filePath;
         $payload = json_decode((string) file_get_contents($filePath), true, flags: JSON_THROW_ON_ERROR);
 
@@ -568,7 +568,7 @@ class TranslationServiceTest extends TestCase
             'translation' => 'choose',
         ], 'sqlite');
 
-        $filePath = public_path('lang/en.json');
+        $filePath = storage_path('app/lang/en.json');
         $this->createdLangFiles[] = $filePath;
         $payload = json_decode((string) file_get_contents($filePath), true, flags: JSON_THROW_ON_ERROR);
         $this->assertSame('choose', $payload[''] ?? null);
