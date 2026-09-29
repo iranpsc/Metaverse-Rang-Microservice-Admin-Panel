@@ -114,30 +114,9 @@ class TicketsApiTest extends TestCase
     public function test_authenticated_regular_admin_can_access_endpoints(): void
     {
         $this->actingAsRegularAdmin();
-        $ticket = $this->createTicket(['department' => 'protection']);
 
-        $this->getJson(self::DEPARTMENTS_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->getJson(self::INDEX_PATH.'?department=protection')
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        Notification::fake();
-
-        $this->post($this->responsePath($ticket), ['response' => 'Regular reply'], [
-            'Accept' => 'application/json',
-        ])
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->postJson($this->transferPath($ticket), [
-            'department' => 'ztb',
-            'importance' => -1,
-        ])
-            ->assertOk()
-            ->assertJsonPath('success', true);
+        $this->getJson(self::INDEX_PATH)
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------
@@ -630,7 +609,7 @@ class TicketsApiTest extends TestCase
 
     public function test_send_response_uses_authenticated_admin_as_responser(): void
     {
-        $admin = $this->actingAsRegularAdmin();
+        $admin = $this->actingAsAdminWithRole('support-management');
         Notification::fake();
 
         $ticket = $this->createTicket(['department' => 'citizens_safety', 'code' => 'ADM-1']);

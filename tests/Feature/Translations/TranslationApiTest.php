@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
+use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Tests\Concerns\CreatesAuthApiSchema;
 use Tests\TestCase;
@@ -943,6 +944,12 @@ class TranslationApiTest extends TestCase
             'email' => Str::uuid().'@example.com',
             'password' => bcrypt('password'),
         ]);
+
+        $role = Role::firstOrCreate(
+            ['name' => 'translations-management', 'guard_name' => 'admin'],
+            ['title' => 'Translations']
+        );
+        $admin->assignRole($role);
 
         Sanctum::actingAs($admin, abilities: ['*'], guard: 'admin');
 

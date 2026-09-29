@@ -82,19 +82,7 @@ class VersionApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE);
-
-        $this->postJson(self::INDEX_PATH, $this->validStorePayload([
-            'title' => 'Regular admin version',
-        ]))
-            ->assertCreated()
-            ->assertJsonPath('success', true);
-
-        $toDelete = Calendar::factory()->version()->create();
-
-        $this->deleteJson($this->versionPath($toDelete))->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------
@@ -437,7 +425,7 @@ class VersionApiTest extends TestCase
 
     public function test_store_with_regular_admin_sets_writer_to_admin_name(): void
     {
-        $admin = $this->actingAsRegularAdmin();
+        $admin = $this->actingAsAdminWithRole('versions-management');
 
         $this->postJson(self::INDEX_PATH, $this->validStorePayload([
             'title' => 'Regular writer version',

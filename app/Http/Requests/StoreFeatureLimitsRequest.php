@@ -16,7 +16,7 @@ class StoreFeatureLimitsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user('admin')?->hasRole('super-admin') ?? false;
+        return $this->user('admin')?->hasAnyRole(['super-admin', 'features-management']) ?? false;
     }
 
     /**

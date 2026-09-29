@@ -105,20 +105,7 @@ class VideoCategoriesApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $response = $this->post(self::INDEX_PATH, $this->validVideoCategoryStorePayload([
-            'slug' => 'regular-admin-category',
-        ]), ['Accept' => 'application/json'])
-            ->assertCreated();
-
-        $id = $response->json('data.id');
-
-        $this->putJson($this->categoryPath($id), $this->validVideoCategoryUpdatePayload())
-            ->assertOk();
-
-        $this->deleteJson($this->categoryPath($id))->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

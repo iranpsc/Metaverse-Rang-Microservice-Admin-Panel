@@ -9,6 +9,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
+use Spatie\Permission\Models\Role;
 use Tests\Concerns\CreatesAuthApiSchema;
 use Tests\TestCase;
 
@@ -714,6 +715,12 @@ class ModalApiTest extends TestCase
             'email' => Str::uuid().'@example.com',
             'password' => bcrypt('password'),
         ]);
+
+        $role = Role::firstOrCreate(
+            ['name' => 'translations-management', 'guard_name' => 'admin'],
+            ['title' => 'Translations']
+        );
+        $admin->assignRole($role);
 
         Sanctum::actingAs($admin, abilities: ['*'], guard: 'admin');
 

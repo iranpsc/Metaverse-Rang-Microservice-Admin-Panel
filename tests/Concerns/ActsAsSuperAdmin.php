@@ -49,4 +49,18 @@ trait ActsAsSuperAdmin
 
         return $admin;
     }
+
+    protected function actingAsAdminWithRole(string $roleName): Admin
+    {
+        $admin = $this->actingAsRegularAdmin();
+
+        $role = Role::firstOrCreate(
+            ['name' => $roleName, 'guard_name' => 'admin'],
+            ['title' => $roleName]
+        );
+
+        $admin->assignRole($role);
+
+        return $admin;
+    }
 }

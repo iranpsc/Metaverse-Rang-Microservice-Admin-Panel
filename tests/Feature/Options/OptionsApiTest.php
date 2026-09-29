@@ -110,20 +110,8 @@ class OptionsApiTest extends TestCase
     {
         $this->actingAsRegularAdmin();
 
-        $this->getJson(self::INDEX_PATH)->assertOk()->assertJsonPath('success', true);
-        $this->getJson(self::VARIABLES_PATH)->assertOk()->assertJsonPath('success', true);
-
-        $response = $this->postJson(self::INDEX_PATH, $this->validOptionStorePayload([
-            'code' => 'REG-1',
-        ]))->assertOk();
-
-        $id = $response->json('data.id');
-
-        $this->putJson($this->optionPath($id), $this->validOptionUpdatePayload([
-            'code' => 'REG-1-UPD',
-        ]))->assertOk();
-
-        $this->deleteJson($this->optionPath($id))->assertOk();
+        $this->getJson(self::INDEX_PATH)
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------
@@ -574,7 +562,7 @@ class OptionsApiTest extends TestCase
 
     public function test_regular_admin_change_log_uses_authenticated_admin_name(): void
     {
-        $admin = $this->actingAsRegularAdmin();
+        $admin = $this->actingAsAdminWithRole('store-management');
         $option = $this->createOption(['code' => 'REG-LOG', 'amount' => 1]);
 
         $this->putJson($this->optionPath($option), $this->validOptionUpdatePayload([

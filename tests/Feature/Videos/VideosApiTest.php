@@ -125,21 +125,8 @@ class VideosApiTest extends TestCase
     {
         $this->actingAsRegularAdmin();
 
-        $category = $this->createVideoCategory();
-        $sub = $this->createVideoSubCategory($category);
-        $creator = $this->createCreatorUser();
-
-        $this->getJson(self::INDEX_PATH)->assertOk();
-        $this->getJson(self::META_PATH)->assertOk();
-
-        $response = $this->post(self::INDEX_PATH, $this->validVideoStorePayload($category, $sub, $creator), [
-            'Accept' => 'application/json',
-        ])->assertCreated();
-
-        $id = $response->json('data.id');
-
-        $this->putJson($this->videoPath($id), $this->validVideoUpdatePayload())->assertOk();
-        $this->deleteJson($this->videoPath($id))->assertOk();
+        $this->getJson(self::INDEX_PATH)
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

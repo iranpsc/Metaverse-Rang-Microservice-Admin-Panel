@@ -93,24 +93,7 @@ class UserLevelsControllerTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE);
-
-        $this->getJson(self::SEARCH_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::SEARCH_SUCCESS_MESSAGE);
-
-        $user = User::factory()->create();
-
-        $this->postJson(self::PROMOTE_PATH, [
-            'user_id' => $user->id,
-            'score' => 5,
-        ])
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::PROMOTE_SUCCESS_MESSAGE);
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

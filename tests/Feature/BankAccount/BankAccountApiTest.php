@@ -82,23 +82,7 @@ class BankAccountApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE);
-
-        $user = $this->createUser();
-        $this->createKyc($user);
-        $bankAccount = $this->createBankAccount($user);
-
-        $this->getJson($this->bankAccountPath($bankAccount))
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::SHOW_SUCCESS_MESSAGE);
-
-        $this->putJson($this->bankAccountPath($bankAccount), ['bank_account_errors' => []])
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::UPDATE_SUCCESS_MESSAGE);
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

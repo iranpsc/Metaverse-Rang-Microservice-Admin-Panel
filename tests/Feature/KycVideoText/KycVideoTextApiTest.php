@@ -92,32 +92,7 @@ class KycVideoTextApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE);
-
-        $this->postJson(self::INDEX_PATH, $this->validStorePayload([
-            'text' => 'Regular admin video text',
-        ]))
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::STORE_SUCCESS_MESSAGE);
-
-        $videoText = $this->createVideoText(['text' => 'Regular updatable']);
-
-        $this->putJson($this->videoTextPath($videoText), $this->validUpdatePayload([
-            'text' => 'Updated by regular admin',
-        ]))
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::UPDATE_SUCCESS_MESSAGE);
-
-        $toDelete = $this->createVideoText(['text' => 'Regular delete target']);
-
-        $this->deleteJson($this->videoTextPath($toDelete))
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::DESTROY_SUCCESS_MESSAGE);
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

@@ -18,8 +18,9 @@ class EnsureAdminSanctumAuth
     {
         // If user is authenticated via Sanctum token, set admin guard
         if ($request->user()) {
-            // Ensure the user is available via admin guard
+            // Spatie role middleware reads the default guard. API admins authenticate on admin.
             Auth::guard('admin')->setUser($request->user());
+            Auth::shouldUse('admin');
         }
 
         return $next($request);

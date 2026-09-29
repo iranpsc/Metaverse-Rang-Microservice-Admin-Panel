@@ -116,9 +116,7 @@ class MapsApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE);
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------
@@ -603,7 +601,7 @@ class MapsApiTest extends TestCase
 
     public function test_regular_admin_can_store_update_and_destroy(): void
     {
-        $admin = $this->actingAsRegularAdmin();
+        $admin = $this->actingAsAdminWithRole('maps-management');
 
         $suffix = Str::lower(Str::random(8));
         $mapFileName = "regular-map-{$suffix}.txt";

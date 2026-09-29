@@ -1,4 +1,4 @@
-export default [
+const menuConfig = [
   { id: 'dashboard', label: 'داشبورد', route: '/', icon: 'home', color: 'primary', roles: [], permissions: [] },
   {
     id: 'citizens',
@@ -31,7 +31,7 @@ export default [
       { id: 'features-trades', label: 'مبادله زمین', route: '/features/trades', icon: 'cube', color: 'primary', permissions: ['view-features-trades'] }
     ]
   },
-  { id: 'admins', label: 'مدیران', route: '/admins', icon: 'user', color: 'primary', roles: [], permissions: ['access-management'] },
+  { id: 'admins', label: 'مدیران', route: '/admins', icon: 'user', color: 'primary', roles: ['access-management'], permissions: [] },
   {
     id: 'support', label: 'پشتیبانی', route: '#', icon: 'phone', color: 'rose', roles: ['support-management', 'super-admin'], permissions: [],
     children: [
@@ -90,6 +90,29 @@ export default [
   },
   { id: 'translations', label: 'ترجمه', route: '/translations', icon: 'list', color: 'primary', roles: ['translations-management', 'super-admin'], permissions: [] },
   { id: 'isic-codes', label: 'کدهای ISIC', route: '/isic-codes', icon: 'list', color: 'primary', roles: ['isic-codes-management', 'super-admin'], permissions: [] },
-  { id: 'activity-logs', label: 'گزارش فعالیت‌ها', route: '/activity-logs', icon: 'list', color: 'blue', roles: [], permissions: ['view-activity-logs'] },
+  { id: 'activity-logs', label: 'گزارش فعالیت‌ها', route: '/activity-logs', icon: 'list', color: 'blue', roles: ['super-admin'], permissions: [] },
   { id: 'bulk-messaging', label: 'ارسال پیام به کاربران', route: '/messaging', icon: 'mail', color: 'secondary', roles: ['super-admin'], permissions: [] }
 ]
+
+export function requiredRolesForPath(path) {
+  const normalized = (path || '/').split('?')[0].replace(/\/+$/, '') || '/'
+
+  for (const item of menuConfig) {
+    if (!item.roles?.length) {
+      continue
+    }
+
+    const routes = [item.route, ...(item.children || []).map((child) => child.route)]
+      .filter((route) => route && route !== '#')
+
+    const matched = routes.some((route) => normalized === route || normalized.startsWith(`${route}/`))
+
+    if (matched) {
+      return item.roles
+    }
+  }
+
+  return []
+}
+
+export default menuConfig

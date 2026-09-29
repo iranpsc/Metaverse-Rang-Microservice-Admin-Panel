@@ -94,12 +94,14 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     });
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
-    Route::get('/registration-info', [RegistrationInfoController::class, 'index']);
-    Route::get('/connected-wallets', [ConnectedWalletController::class, 'index']);
-    Route::get('/reports', [ReportController::class, 'index']);
-    Route::get('/assets', [WalletController::class, 'index']);
-    Route::get('/profile-details', [ProfileDetailsController::class, 'index']);
-    Route::get('/withdraws', [WithdrawController::class, 'index']);
+    Route::middleware('role:citizens-management|super-admin')->group(function () {
+        Route::get('/registration-info', [RegistrationInfoController::class, 'index']);
+        Route::get('/connected-wallets', [ConnectedWalletController::class, 'index']);
+        Route::get('/assets', [WalletController::class, 'index']);
+        Route::get('/profile-details', [ProfileDetailsController::class, 'index']);
+        Route::get('/withdraws', [WithdrawController::class, 'index']);
+    });
+    Route::get('/reports', [ReportController::class, 'index'])->middleware('role:reports-management|super-admin');
 
     // Activity logs
     Route::prefix('activity-logs')->controller(ActivityLogController::class)->group(function () {
@@ -109,14 +111,14 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     });
 
     // Challenge routes
-    Route::prefix('challenge/questions')->controller(ChallengeQuestionsController::class)->group(function () {
+    Route::prefix('challenge/questions')->middleware('role:challenge-management|super-admin')->controller(ChallengeQuestionsController::class)->group(function () {
         Route::get('/', 'index');
         Route::post('import', 'import');
         Route::delete('{question}', 'destroy');
     });
 
     // Calendar routes
-    Route::prefix('calendars')->controller(CalendarController::class)->group(function () {
+    Route::prefix('calendars')->middleware('role:calendar-management|super-admin')->controller(CalendarController::class)->group(function () {
         Route::get('/', 'index');
         Route::post('/', 'store');
         Route::put('{calendar}', 'update');
@@ -124,28 +126,28 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     });
 
     // Versions routes
-    Route::prefix('versions')->controller(VersionController::class)->group(function () {
+    Route::prefix('versions')->middleware('role:versions-management|super-admin')->controller(VersionController::class)->group(function () {
         Route::get('/', 'index');
         Route::post('/', 'store');
         Route::delete('{version}', 'destroy');
     });
 
     // KYC routes
-    Route::prefix('kycs')->controller(KycController::class)->group(function () {
+    Route::prefix('kycs')->middleware('role:citizens-management|super-admin')->controller(KycController::class)->group(function () {
         Route::get('/', 'index');
         Route::get('{id}', 'show');
         Route::put('{id}', 'update');
     });
 
     // Bank Account routes
-    Route::prefix('bank-accounts')->controller(BankAccountController::class)->group(function () {
+    Route::prefix('bank-accounts')->middleware('role:citizens-management|super-admin')->controller(BankAccountController::class)->group(function () {
         Route::get('/', 'index');
         Route::get('{id}', 'show');
         Route::put('{id}', 'update');
     });
 
     // KYC Video Text routes
-    Route::prefix('kyc-video-texts')->controller(KycVideoTextController::class)->group(function () {
+    Route::prefix('kyc-video-texts')->middleware('role:citizens-management|super-admin')->controller(KycVideoTextController::class)->group(function () {
         Route::get('/', 'index');
         Route::post('/', 'store');
         Route::put('{id}', 'update');
@@ -166,7 +168,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
         });
 
     // Deposits routes
-    Route::prefix('deposits')->controller(DepositController::class)->group(function () {
+    Route::prefix('deposits')->middleware('role:citizens-management|super-admin')->controller(DepositController::class)->group(function () {
         Route::get('/', 'index');
         Route::get('export', 'export');
     });
@@ -180,7 +182,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     });
 
     // Lands routes
-    Route::prefix('lands')->group(function () {
+    Route::prefix('lands')->middleware('role:features-management|super-admin')->group(function () {
         Route::controller(LandsController::class)->group(function () {
             Route::get('/', 'index');
             Route::get('owner-transfer/options', 'ownerTransferOptions');
@@ -209,6 +211,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     // File Upload Controller
     Route::post('/upload/chunk', [FileUploadController::class, 'upload'])->withoutMiddleware('throttle:api');
 
+    Route::middleware('role:level-management|super-admin')->group(function () {
     // Levels Controller
     Route::apiResource('levels', LevelsController::class)->except(['show']);
 
@@ -258,9 +261,10 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
         });
         Route::get('users/search', 'searchUsers');
     });
+    });
 
     // Admins routes
-    Route::prefix('admins')->controller(AdminsController::class)->group(function () {
+    Route::prefix('admins')->middleware('role:access-management|super-admin')->controller(AdminsController::class)->group(function () {
         Route::get('/', 'index');
         Route::get('users', 'searchUsers');
         Route::get('roles', 'getRoles');
@@ -273,7 +277,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     });
 
     // Support - Tickets routes
-    Route::prefix('tickets')->controller(TicketsController::class)->group(function () {
+    Route::prefix('tickets')->middleware('role:support-management|super-admin')->controller(TicketsController::class)->group(function () {
         Route::get('/', 'index');
         Route::get('departments', 'getDepartments');
         Route::post('{id}/response', 'sendResponse');
@@ -281,7 +285,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     });
 
     // VariablesController routes
-    Route::prefix('variables')->controller(VariablesController::class)->group(function () {
+    Route::prefix('variables')->middleware('role:store-management|super-admin')->controller(VariablesController::class)->group(function () {
         Route::get('/', 'index');
         Route::post('/', 'store');
         Route::put('{id}', 'update');
@@ -289,7 +293,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     });
 
     // System variables routes
-    Route::prefix('system-variables')->controller(SystemVariablesController::class)->group(function () {
+    Route::prefix('system-variables')->middleware('role:system-variables-management|super-admin')->controller(SystemVariablesController::class)->group(function () {
         Route::get('/', 'index');
         Route::post('/', 'store');
         Route::put('{system_variable}', 'update');
@@ -297,7 +301,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     });
 
     // OptionsController routes
-    Route::prefix('options')->controller(OptionsController::class)->group(function () {
+    Route::prefix('options')->middleware('role:store-management|super-admin')->controller(OptionsController::class)->group(function () {
         Route::get('/', 'index');
         Route::get('variables', 'getVariables');
         Route::post('/', 'store');
@@ -305,6 +309,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
         Route::delete('{id}', 'destroy');
     });
 
+    Route::middleware('role:tutorials-management|super-admin')->group(function () {
     // Video categories routes
     Route::apiResource('video-categories', VideoCategoriesController::class)->except(['show']);
 
@@ -317,9 +322,10 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
         Route::post('chunk', VideoUploadController::class)->withoutMiddleware('throttle:api');
     });
     Route::apiResource('videos', VideosController::class)->except(['show']);
+    });
 
     // Dynasty routes group
-    Route::prefix('dynasty')->group(function () {
+    Route::prefix('dynasty')->middleware('role:dynasty-management|super-admin')->group(function () {
         Route::prefix('messages')->controller(DynastyMessagesController::class)->group(function () {
             Route::get('/', 'index');
             Route::post('/', 'store');
@@ -341,24 +347,28 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     });
 
     // Maps routes
+    Route::middleware('role:maps-management|super-admin')->group(function () {
     Route::prefix('maps')->controller(MapsController::class)->group(function () {
         Route::post('{map}/insert-into-database', 'insertIntoDatabase');
     });
     Route::apiResource('maps', MapsController::class)->except(['show']);
+    });
 
     // ISIC Codes routes
+    Route::middleware('role:isic-codes-management|super-admin')->group(function () {
     Route::prefix('isic-codes')->controller(IsicCodeController::class)->group(function () {
         Route::post('import', 'import');
         Route::post('{isicCode}/approve', 'approve');
         Route::post('{isicCode}/deny', 'deny');
     });
     Route::apiResource('isic-codes', IsicCodeController::class)->except(['show', 'update']);
+    });
 
     // Translations routes
-    Route::prefix('translations')->group(function () {
+    Route::prefix('translations')->middleware('role:translations-management|super-admin')->group(function () {
         Route::controller(TranslationController::class)->group(function () {
             Route::get('languages', 'languages');
-            Route::get('/', 'index')->withoutMiddleware('auth:sanctum');
+            Route::get('/', 'index')->withoutMiddleware(['auth:sanctum', EnsureAdminSanctumAuth::class, 'role:translations-management|super-admin']);
             Route::post('/', 'store');
             Route::post('import', 'importNew');
             Route::get('{translation}', 'show');
@@ -393,7 +403,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     });
 
     // Bulk messaging routes (super-admin only)
-    Route::prefix('bulk-messages')->controller(BulkMessageController::class)->group(function () {
+    Route::prefix('bulk-messages')->middleware('role:super-admin')->controller(BulkMessageController::class)->group(function () {
         Route::get('users/search', 'searchUsers');
         Route::post('send', 'send');
     });
