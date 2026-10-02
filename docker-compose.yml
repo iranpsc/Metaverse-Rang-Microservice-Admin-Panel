@@ -12,7 +12,9 @@ name: ${COMPOSE_PROJECT_NAME:-admin-panel}
 # https://docs.docker.com/engine/storage/bind-mounts/
 #
 # MySQL lives in the microservices stack; reach it as metarang-mysql on metarang-shared.
-# Redis here is Laravel-only (sessions/cache/queue) — do not point REDIS_HOST at the Go Redis.
+# Redis here is Laravel-only (sessions/cache/queue). Laravel uses the
+# admin-panel-redis alias on admin-panel-private so the short name "redis"
+# on dokploy-network or metarang-shared cannot steal the connection.
 
 x-php-image: &php-image ${PHP_IMAGE:-admin-panel-php:production}
 
@@ -58,7 +60,8 @@ x-php-environment: &php-environment
   SESSION_DRIVER: ${SESSION_DRIVER:-redis}
   QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
   QUEUE_FAILED_DRIVER: ${QUEUE_FAILED_DRIVER:-database-uuids}
-  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_HOST: ${REDIS_HOST:-admin-panel-redis}
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-}
   REDIS_PORT: ${REDIS_PORT:-6379}
   FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
   SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN:-}
@@ -152,7 +155,9 @@ services:
       timeout: 3s
       retries: 10
     networks:
-      - admin-panel-private
+      admin-panel-private:
+        aliases:
+          - admin-panel-redis
 
   queue:
     <<: *app-common

@@ -146,7 +146,8 @@ DB_PASSWORD=same-as-MYSQL_PASSWORD-on-microservices
 CACHE_DRIVER=redis
 SESSION_DRIVER=redis
 QUEUE_CONNECTION=redis
-REDIS_HOST=redis
+REDIS_HOST=admin-panel-redis
+REDIS_PASSWORD=
 REDIS_PORT=6379
 
 FILESYSTEM_DISK=local
@@ -161,7 +162,7 @@ Generate `APP_KEY` once (locally or in a one-off container):
 php artisan key:generate --show
 ```
 
-`REDIS_HOST=redis` must stay as **this** Compose service name (Laravel sessions/cache). Do **not** point it at the microservices Redis. `DB_HOST=metarang-mysql` is the network alias of MySQL in the microservices stack (`metarang-shared`). Credentials must match that stack's `MYSQL_*` values.
+`REDIS_HOST` defaults to `admin-panel-redis`, the network alias of this stack's Redis on `admin-panel-private`. Set it in Dokploy only to override that default. Do **not** point Laravel at the microservices Redis. `DB_HOST=metarang-mysql` is the network alias of MySQL in the microservices stack (`metarang-shared`). Credentials must match that stack's `MYSQL_*` values.
 
 Translation models use a separate **sqlite** connection at `database/database.sqlite` (persisted under `../files/database`). Do **not** set `DB_CONNECTION=sqlite`.
 
