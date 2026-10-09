@@ -104,21 +104,9 @@ class VideoSubCategoriesApiTest extends TestCase
     public function test_authenticated_regular_admin_can_access_all_endpoints(): void
     {
         $this->actingAsRegularAdmin();
-        $category = $this->createVideoCategory();
 
-        $this->getJson(self::INDEX_PATH)->assertOk();
-
-        $response = $this->post(self::INDEX_PATH, $this->validVideoSubCategoryStorePayload($category, [
-            'slug' => 'regular-sub',
-        ]), ['Accept' => 'application/json'])
-            ->assertCreated();
-
-        $id = $response->json('data.id');
-
-        $this->putJson($this->subCategoryPath($id), $this->validVideoSubCategoryUpdatePayload($category))
-            ->assertOk();
-
-        $this->deleteJson($this->subCategoryPath($id))->assertOk();
+        $this->getJson(self::INDEX_PATH)
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

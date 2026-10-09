@@ -137,24 +137,7 @@ class LevelGeneralInfoApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->getJson($this->generalInfoPath($level))
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->postJson($this->generalInfoPath($level), $this->validPayload([
-            'designer' => 'Regular admin designer',
-        ]))
-            ->assertCreated()
-            ->assertJsonPath('success', true);
-
-        $this->putJson($this->generalInfoPath($level), $this->validPayload([
-            'designer' => 'Updated by regular',
-        ]))->assertOk();
-
-        $level->fresh()->generalInfo->update(['gif_file' => url('uploads/levels/regular.gif')]);
-
-        $this->deleteJson($this->generalInfoFilesPath($level), [
-            'field' => 'gif_file',
-        ])->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

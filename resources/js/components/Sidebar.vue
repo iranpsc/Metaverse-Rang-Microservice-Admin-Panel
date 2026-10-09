@@ -496,36 +496,25 @@ const matchesSearch = (text, query) => {
 const authStore = useAuthStore()
 const menuItems = ref(menuConfig)
 
-const canAccessMenuItem = (item) => {
-  const user = authStore.user
-  if (!user) return false
-  const roles = user.roles || []
-  const permissions = user.permissions || []
+const assignedRoles = () => {
+  const roles = authStore.user?.roles
+  return Array.isArray(roles) ? roles : []
+}
+
+const canAccessParentMenu = (item) => {
+  if (!authStore.user) return false
+
+  const roles = assignedRoles()
   if (roles.includes('super-admin')) return true
+  if (!item.roles?.length) return true
 
-  const hasRole = !item.roles?.length || item.roles.some((role) => roles.includes(role))
-  const hasPermission = !item.permissions?.length || item.permissions.some((perm) => permissions.includes(perm))
-
-  if (item.roles?.length && item.permissions?.length) {
-    return hasRole || hasPermission
-  }
-  if (item.roles?.length) return hasRole
-  if (item.permissions?.length) return hasPermission
-  return true
+  return item.roles.some((role) => roles.includes(role))
 }
 
 // Filtered menu items based on search query
 const filteredMenuItems = computed(() => {
   const accessibleMenus = menuItems.value
-    .map((menu) => {
-      if (menu.children?.length) {
-        const children = menu.children.filter((child) => canAccessMenuItem(child))
-        if (children.length === 0 && !canAccessMenuItem(menu)) return null
-        return { ...menu, children }
-      }
-      return canAccessMenuItem(menu) ? menu : null
-    })
-    .filter((menu) => menu !== null)
+    .filter((menu) => canAccessParentMenu(menu))
 
   if (!searchQuery.value || !searchQuery.value.trim()) {
     return accessibleMenus

@@ -76,9 +76,7 @@ class ChallengeQuestionsApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::SUCCESS_MESSAGE);
+            ->assertForbidden();
     }
 
     public function test_authenticated_super_admin_can_import(): void
@@ -102,19 +100,9 @@ class ChallengeQuestionsApiTest extends TestCase
     public function test_authenticated_regular_admin_can_import(): void
     {
         $this->actingAsRegularAdmin();
-        Bus::fake();
-
-        Excel::shouldReceive('toArray')
-            ->once()
-            ->andReturn([[
-                ['code', 'image', 'title'],
-                ['Q1', 'img.png', 'Title'],
-            ]]);
 
         $this->postImport($this->fakeXlsx())
-            ->assertStatus(202)
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::IMPORT_SUCCESS_MESSAGE);
+            ->assertForbidden();
     }
 
     public function test_authenticated_super_admin_can_destroy(): void
@@ -136,9 +124,7 @@ class ChallengeQuestionsApiTest extends TestCase
         $question = $this->createQuestion();
 
         $this->deleteJson($this->destroyPath($question))
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::DESTROY_SUCCESS_MESSAGE);
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

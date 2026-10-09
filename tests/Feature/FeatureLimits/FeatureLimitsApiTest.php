@@ -87,17 +87,8 @@ class FeatureLimitsApiTest extends TestCase
     {
         $this->actingAsRegularAdmin();
 
-        $limit = $this->createFeatureLimit();
-
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE);
-
-        $this->deleteJson($this->destroyPath($limit->id))
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::DESTROY_SUCCESS_MESSAGE);
+            ->assertForbidden();
     }
 
     public function test_regular_admin_cannot_store(): void

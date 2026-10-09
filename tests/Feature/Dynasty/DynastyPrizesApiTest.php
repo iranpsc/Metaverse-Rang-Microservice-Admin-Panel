@@ -110,17 +110,7 @@ class DynastyPrizesApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $response = $this->postJson(self::INDEX_PATH, $this->validDynastyPrizeStorePayload([
-            'member' => 'mother',
-        ]))->assertOk();
-
-        $id = $response->json('data.id');
-
-        $this->putJson($this->prizePath($id), $this->validDynastyPrizeUpdatePayload())->assertOk();
-        $this->deleteJson($this->prizePath($id))->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

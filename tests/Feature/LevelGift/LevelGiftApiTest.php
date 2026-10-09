@@ -137,24 +137,7 @@ class LevelGiftApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->getJson($this->giftPath($level))
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->postJson($this->giftPath($level), $this->validPayload([
-            'name' => 'Regular admin gift',
-        ]))
-            ->assertCreated()
-            ->assertJsonPath('success', true);
-
-        $this->putJson($this->giftPath($level), $this->validPayload([
-            'name' => 'Updated by regular',
-        ]))->assertOk();
-
-        $level->fresh()->gift->update(['gif_file' => url('uploads/levels/regular.gif')]);
-
-        $this->deleteJson($this->giftFilesPath($level), [
-            'field' => 'gif_file',
-        ])->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

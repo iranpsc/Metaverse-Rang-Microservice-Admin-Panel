@@ -99,26 +99,7 @@ class VariablesApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->post(self::INDEX_PATH, $this->validVariableStorePayload([
-            'asset' => 'yellow',
-        ]), ['Accept' => 'application/json'])
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $variable = Variable::firstOrFail();
-
-        $this->putJson($this->variablePath($variable), $this->validVariableUpdatePayload([
-            'price' => 3000,
-        ]))
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->deleteJson($this->variablePath($variable))
-            ->assertOk()
-            ->assertJsonPath('success', true);
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------
@@ -514,7 +495,7 @@ class VariablesApiTest extends TestCase
 
     public function test_regular_admin_change_log_uses_authenticated_admin_name(): void
     {
-        $admin = $this->actingAsRegularAdmin();
+        $admin = $this->actingAsAdminWithRole('store-management');
         $variable = $this->createVariable(['asset' => 'psc', 'price' => 40]);
 
         $this->putJson($this->variablePath($variable), [

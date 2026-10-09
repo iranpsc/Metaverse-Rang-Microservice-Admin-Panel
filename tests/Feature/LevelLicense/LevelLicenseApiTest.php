@@ -116,16 +116,7 @@ class LevelLicenseApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->getJson($this->licensesPath($level))
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->postJson($this->licensesPath($level), $this->validPayload())
-            ->assertCreated()
-            ->assertJsonPath('success', true);
-
-        $this->putJson($this->licensesPath($level), $this->validPayload([
-            'gate_license' => false,
-        ]))->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

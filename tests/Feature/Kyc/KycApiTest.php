@@ -81,22 +81,7 @@ class KycApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE);
-
-        $user = $this->createUser();
-        $kyc = $this->createKyc($user);
-
-        $this->getJson($this->kycPath($kyc))
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::SHOW_SUCCESS_MESSAGE);
-
-        $this->putJson($this->kycPath($kyc), ['kyc_errors' => []])
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::UPDATE_SUCCESS_MESSAGE);
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

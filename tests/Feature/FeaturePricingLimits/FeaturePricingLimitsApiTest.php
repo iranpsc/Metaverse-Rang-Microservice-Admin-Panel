@@ -58,25 +58,7 @@ class FeaturePricingLimitsApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE)
-            ->assertJsonPath('data.price_limits', null)
-            ->assertJsonPath('data.activity_logs', []);
-
-        $this->postJson(self::UPDATE_PATH, $this->validUpdatePayload([
-            'public_price_limit' => 3000,
-            'under_eighteen_price_limit' => 1500,
-        ]))
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::UPDATE_SUCCESS_MESSAGE);
-
-        $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('data.price_limits.public_price_limit', 3000)
-            ->assertJsonPath('data.price_limits.under_eighteen_price_limit', 1500)
-            ->assertJsonCount(1, 'data.activity_logs');
+            ->assertForbidden();
     }
 
     public function test_super_admin_can_access_both_endpoints(): void

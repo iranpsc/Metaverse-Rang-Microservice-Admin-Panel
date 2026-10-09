@@ -108,25 +108,7 @@ class CalendarApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE);
-
-        $this->post(self::INDEX_PATH, $this->validStorePayload([
-            'title' => 'Regular admin event',
-        ]), ['Accept' => 'application/json'])
-            ->assertCreated()
-            ->assertJsonPath('success', true);
-
-        $calendar = Calendar::factory()->create();
-
-        $this->putJson($this->calendarPath($calendar), $this->validUpdatePayload([
-            'title' => 'Updated by regular',
-        ]))->assertOk();
-
-        $toDelete = Calendar::factory()->create();
-
-        $this->deleteJson($this->calendarPath($toDelete))->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------
@@ -900,7 +882,7 @@ class CalendarApiTest extends TestCase
 
     public function test_store_with_regular_admin_sets_writer_to_admin_name(): void
     {
-        $admin = $this->actingAsRegularAdmin();
+        $admin = $this->actingAsAdminWithRole('calendar-management');
 
         $this->post(self::INDEX_PATH, $this->validStorePayload([
             'title' => 'Regular writer event',

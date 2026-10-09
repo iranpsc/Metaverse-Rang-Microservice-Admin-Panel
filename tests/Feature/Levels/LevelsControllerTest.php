@@ -104,27 +104,7 @@ class LevelsControllerTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE);
-
-        $this->post(self::INDEX_PATH, $this->validStorePayload([
-            'name' => 'Regular Admin Level',
-            'slug' => 'regular-admin-level',
-        ]), ['Accept' => 'application/json'])
-            ->assertCreated()
-            ->assertJsonPath('success', true);
-
-        $level = Level::factory()->create();
-
-        $this->putJson($this->levelPath($level), $this->validUpdatePayload([
-            'name' => 'Updated by regular',
-            'slug' => 'updated-by-regular',
-        ]))->assertOk();
-
-        $toDelete = Level::factory()->create();
-
-        $this->deleteJson($this->levelPath($toDelete))->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

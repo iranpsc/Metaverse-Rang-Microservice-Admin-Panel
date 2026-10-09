@@ -54,9 +54,7 @@ class DepositApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::SUCCESS_MESSAGE);
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------
@@ -508,7 +506,7 @@ class DepositApiTest extends TestCase
     {
         $this->actingAsRegularAdmin();
 
-        $this->get(self::EXPORT_PATH)->assertOk();
+        $this->get(self::EXPORT_PATH)->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

@@ -57,8 +57,7 @@ class VideoUploadApiTest extends TestCase
         $this->post(self::CHUNK_PATH, [
             'file' => UploadedFile::fake()->create('clip.mp4', 100, 'video/mp4'),
         ], ['Accept' => 'application/json'])
-            ->assertCreated()
-            ->assertJsonPath('success', true);
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

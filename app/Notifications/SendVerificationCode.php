@@ -25,10 +25,12 @@ class SendVerificationCode extends KavenegarBaseNotification implements ShouldQu
     {
         $this->code = random_int(100000, 999999);
 
+        $durationSeconds = config('phone_verification.sms_resend_cooldown_seconds');
+
         Cache::put(
             'verify.code.'.Auth::guard('admin')->id(),
             Hash::make($this->code),
-            now()->addMinutes(1)
+            now()->addSeconds($durationMinutes)
         );
     }
 

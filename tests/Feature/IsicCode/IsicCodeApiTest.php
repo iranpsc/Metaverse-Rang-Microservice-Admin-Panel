@@ -135,34 +135,7 @@ class IsicCodeApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('message', self::INDEX_SUCCESS_MESSAGE);
-
-        $this->postJson(self::INDEX_PATH, $this->validStorePayload([
-            'name' => 'Regular Admin ISIC',
-            'code' => '4444',
-        ]))
-            ->assertCreated()
-            ->assertJsonPath('success', true);
-
-        Excel::shouldReceive('queueImport')->once()->andReturnNull();
-
-        $this->postImport($this->fakeXlsx())
-            ->assertStatus(202)
-            ->assertJsonPath('success', true);
-
-        $toApprove = $this->createIsicCode(['verified' => false]);
-
-        $this->postJson($this->approvePath($toApprove))->assertOk();
-
-        $toDeny = $this->createIsicCode(['verified' => true]);
-
-        $this->postJson($this->denyPath($toDeny))->assertOk();
-
-        $toDelete = $this->createIsicCode();
-
-        $this->deleteJson($this->isicCodePath($toDelete))->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

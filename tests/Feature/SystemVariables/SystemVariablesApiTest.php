@@ -102,22 +102,7 @@ class SystemVariablesApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $response = $this->postJson(self::INDEX_PATH, $this->validSystemVariableStorePayload([
-            'slug' => 'regular-admin-sv',
-        ]))->assertCreated();
-
-        $id = $response->json('data.id');
-
-        $this->putJson($this->systemVariablePath($id), [
-            'name' => 'Regular Updated',
-            'slug' => 'regular-admin-sv',
-            'value' => 33,
-        ])->assertOk();
-
-        $this->deleteJson($this->systemVariablePath($id))->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------
@@ -539,7 +524,7 @@ class SystemVariablesApiTest extends TestCase
 
     public function test_regular_admin_change_log_uses_authenticated_admin_name(): void
     {
-        $admin = $this->actingAsRegularAdmin();
+        $admin = $this->actingAsAdminWithRole('system-variables-management');
         $variable = $this->createSystemVariable(['value' => 3]);
 
         $this->putJson($this->systemVariablePath($variable), [

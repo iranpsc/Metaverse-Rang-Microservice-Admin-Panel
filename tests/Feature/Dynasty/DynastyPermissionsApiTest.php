@@ -75,13 +75,7 @@ class DynastyPermissionsApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::SHOW_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->putJson(self::SHOW_PATH, $this->validDynastyPermissionUpdatePayload([
-            'BFR' => false,
-            'SF' => true,
-        ]))->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

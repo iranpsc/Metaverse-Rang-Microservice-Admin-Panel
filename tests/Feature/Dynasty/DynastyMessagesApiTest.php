@@ -110,21 +110,7 @@ class DynastyMessagesApiTest extends TestCase
         $this->actingAsRegularAdmin();
 
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $response = $this->postJson(self::INDEX_PATH, $this->validDynastyMessageStorePayload([
-            'type' => 'reciever_message',
-            'content' => 'Regular admin message',
-        ]))->assertOk();
-
-        $id = $response->json('data.id');
-
-        $this->putJson($this->messagePath($id), $this->validDynastyMessageUpdatePayload([
-            'content' => 'Updated by regular',
-        ]))->assertOk();
-
-        $this->deleteJson($this->messagePath($id))->assertOk();
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

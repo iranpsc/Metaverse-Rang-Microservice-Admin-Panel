@@ -117,19 +117,8 @@ class LandsApiTest extends TestCase
     {
         $this->actingAsRegularAdmin();
 
-        $property = $this->createLandWithProperties();
-
         $this->getJson(self::INDEX_PATH)
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->getJson(self::OWNER_TRANSFER_OPTIONS_PATH.'?type=users')
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->putJson($this->propertiesPath($property->feature_id), $this->validPropertiesPayload())
-            ->assertOk()
-            ->assertJsonPath('success', true);
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

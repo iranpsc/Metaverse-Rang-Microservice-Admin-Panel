@@ -132,20 +132,7 @@ class LevelGemApiTest extends TestCase
         $level = Level::factory()->create();
 
         $this->getJson($this->gemPath($level))
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $this->postJson($this->gemPath($level), $this->validStorePayload([
-            'name' => 'Regular admin gem',
-        ]))
-            ->assertCreated()
-            ->assertJsonPath('success', true);
-
-        $this->putJson($this->gemPath($level), $this->validStorePayload([
-            'name' => 'Updated by regular',
-        ]))
-            ->assertOk()
-            ->assertJsonPath('success', true);
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

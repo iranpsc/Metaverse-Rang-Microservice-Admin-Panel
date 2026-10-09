@@ -7,6 +7,7 @@ import NotFound from '../components/errors/NotFound.vue'
 import { navigationProgress } from '../composables/useNavigationProgress'
 import { useAuth } from '../composables/useAuth'
 import { isChunkLoadError, reloadForStaleChunk } from '../utils/chunkLoadRecovery'
+import { requiredRolesForPath } from './menuConfig'
 const Dashboard = () => import('../pages/Dashboard.vue')
 const RegistrationInfo = () => import('../pages/citizens/RegistrationInfo.vue')
 const KycList = () => import('../pages/citizens/KycList.vue')
@@ -575,17 +576,25 @@ router.beforeEach(async (to, from, next) => {
       }
     }
 
+    let userData = null
+    try {
+      userData = JSON.parse(localStorage.getItem('admin_user_data') || 'null')
+    } catch {
+      userData = null
+    }
+
+    const roles = Array.isArray(userData?.roles) ? userData.roles : []
+    const isSuperAdmin = roles.includes('super-admin')
+    const requiredRoles = requiredRolesForPath(to.path)
+
+    if (requiredRoles.length && !isSuperAdmin && !requiredRoles.some((role) => roles.includes(role))) {
+      next({ name: 'dashboard' })
+      return
+    }
+
     if (to.meta.permission) {
-      let userData = null
-      try {
-        userData = JSON.parse(localStorage.getItem('admin_user_data') || 'null')
-      } catch {
-        userData = null
-      }
       const permissions = userData?.permissions || []
-      const roles = userData?.roles || []
       const hasPermission = permissions.includes(to.meta.permission)
-      const isSuperAdmin = roles.includes('super-admin')
       if (!hasPermission && !isSuperAdmin) {
         next({ name: 'dashboard' })
         return

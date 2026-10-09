@@ -104,25 +104,10 @@ class LevelPrizeApiTest extends TestCase
     {
         $this->actingAsRegularAdmin();
 
-        $levelForShow = Level::factory()->create();
-        LevelPrize::factory()->create(['level_id' => $levelForShow->id]);
+        $level = Level::factory()->create();
 
-        $this->getJson($this->prizePath($levelForShow))
-            ->assertOk()
-            ->assertJsonPath('success', true);
-
-        $levelForStore = Level::factory()->create();
-
-        $this->postJson($this->prizePath($levelForStore), $this->validPayload())
-            ->assertCreated()
-            ->assertJsonPath('success', true);
-
-        $levelForUpdate = Level::factory()->create();
-        LevelPrize::factory()->create(['level_id' => $levelForUpdate->id]);
-
-        $this->putJson($this->prizePath($levelForUpdate), $this->validPayload([
-            'yellow' => 7,
-        ]))->assertOk();
+        $this->getJson($this->prizePath($level))
+            ->assertForbidden();
     }
 
     // -------------------------------------------------------------------------

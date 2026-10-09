@@ -172,7 +172,10 @@ const buildSelect2Config = () => {
           results: (data.results || []).map((item) => ({
             id: String(item.value),
             text: item.label,
-            disabled: Boolean(item.disabled)
+            disabled: Boolean(item.disabled),
+            // Select2 4.1.0 maps results through an unbound _normalizeItem.
+            // A preset id skips this.container, which throws under Vite's strict bundle.
+            _resultId: `select2-result-${item.value}`
           })),
           pagination: {
             more: Boolean(data.more)
