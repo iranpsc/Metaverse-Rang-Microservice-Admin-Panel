@@ -30,7 +30,7 @@ class SendVerificationCode extends KavenegarBaseNotification implements ShouldQu
         Cache::put(
             'verify.code.'.Auth::guard('admin')->id(),
             Hash::make($this->code),
-            now()->addSeconds($durationMinutes)
+            now()->addSeconds($durationSeconds)
         );
     }
 
