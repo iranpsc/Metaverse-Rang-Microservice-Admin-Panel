@@ -47,10 +47,6 @@ return new class extends Migration
                 }
             }
         });
-
-        Schema::connection($this->connection)->table('fields', function (Blueprint $table) {
-            $table->unique(['tab_id', 'unique_id'], 'fields_tab_id_unique_id_unique');
-        });
     }
 
     /**
