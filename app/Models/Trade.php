@@ -9,10 +9,14 @@ class Trade extends Model
 {
     use HasFactory;
 
+    protected $table = 'trades';
+
     protected $fillable = [
         'feature_id',
         'buyer_id',
         'seller_id',
+        'psc_amount',
+        'irr_amount',
         'date',
     ];
 

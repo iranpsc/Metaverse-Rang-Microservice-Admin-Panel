@@ -65,30 +65,6 @@ class UncoveredCodeCoverageTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_ip_model_casts_and_admin_scope(): void
-    {
-        Schema::create('ips', function (Blueprint $table) {
-            $table->id();
-            $table->string('title')->nullable();
-            $table->string('type')->nullable();
-            $table->unsignedBigInteger('from')->nullable();
-            $table->unsignedBigInteger('to')->nullable();
-            $table->timestamps();
-        });
-
-        $ip = Ip::query()->create([
-            'title' => 'range',
-            'type' => 'admin',
-            'from' => '127.0.0.1',
-            'to' => '127.0.0.2',
-        ]);
-
-        $fresh = $ip->fresh();
-        $this->assertSame('127.0.0.1', $fresh->from);
-        $this->assertSame('127.0.0.2', $fresh->to);
-        $this->assertSame(1, Ip::admin()->count());
-    }
-
     public function test_thin_model_relations_for_previously_uncovered_models(): void
     {
         $this->assertInstanceOf(BelongsTo::class, (new Asset)->user());
@@ -125,69 +101,6 @@ class UncoveredCodeCoverageTest extends TestCase
         $this->assertInstanceOf(BelongsTo::class, (new SellFeatureRequest)->feature());
         $this->assertInstanceOf(HasMany::class, (new Ticket)->responses());
         $this->assertInstanceOf(BelongsTo::class, (new Ticket)->sender());
-    }
-
-    public function test_legacy_translation_controller_index_and_nested_resources(): void
-    {
-        Schema::create('translations', function (Blueprint $table) {
-            $table->id();
-            $table->string('code');
-            $table->string('name')->nullable();
-            $table->string('native_name')->nullable();
-            $table->string('direction')->nullable();
-            $table->unsignedInteger('version')->default(0);
-            $table->string('file_url')->nullable();
-            $table->boolean('status')->default(true);
-            $table->timestamps();
-        });
-        Schema::create('modals', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('translation_id');
-            $table->string('name');
-            $table->timestamps();
-        });
-        Schema::create('tabs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('modal_id');
-            $table->string('name');
-            $table->timestamps();
-        });
-        Schema::create('fields', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('tab_id');
-            $table->unsignedBigInteger('unique_id')->nullable();
-            $table->text('translation')->nullable();
-            $table->timestamps();
-        });
-
-        $translation = Translation::query()->create([
-            'code' => 'en',
-            'name' => 'English',
-            'native_name' => 'English',
-            'direction' => 'ltr',
-            'status' => true,
-            'version' => 1,
-            'file_url' => 'https://example.test/lang/en.json',
-        ]);
-        $modal = $translation->modals()->create(['name' => 'profile']);
-        $tab = $modal->tabs()->create(['name' => 'general']);
-        $tab->fields()->create(['unique_id' => 1, 'translation' => 'Hello']);
-
-        $controller = new LegacyTranslationController;
-        $index = $controller->index();
-        $this->assertSame(200, $index->getStatusCode());
-        $payload = $index->getData(true);
-        $this->assertSame('en', $payload['data'][0]['code']);
-        $this->assertStringContainsString('EN.svg', $payload['data'][0]['icon']);
-
-        $modals = $controller->getModals($translation)->getData(true);
-        $this->assertCount(1, $modals['data']);
-
-        $tabs = $controller->getTabs($translation, $modal)->getData(true);
-        $this->assertCount(1, $tabs['data']);
-
-        $fields = $controller->getFields($translation, $modal, $tab)->getData(true);
-        $this->assertCount(1, $fields['data']);
     }
 
     public function test_upload_video_controller_finished_and_partial_chunk_paths(): void

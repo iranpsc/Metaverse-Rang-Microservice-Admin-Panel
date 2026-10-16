@@ -13,9 +13,7 @@ class ActivityLogController extends Controller
 {
     public function categories(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        if (! $user || (! $user->can('view-activity-logs') && ! $user->hasRole('super-admin'))) {
+        if (! $this->canViewActivityLogs($request->user())) {
             return response()->json([
                 'success' => false,
                 'message' => 'شما دسترسی مشاهده گزارش فعالیت‌ها را ندارید.',
@@ -34,9 +32,7 @@ class ActivityLogController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        if (! $user || (! $user->can('view-activity-logs') && ! $user->hasRole('super-admin'))) {
+        if (! $this->canViewActivityLogs($request->user())) {
             return response()->json([
                 'success' => false,
                 'message' => 'شما دسترسی مشاهده گزارش فعالیت‌ها را ندارید.',
@@ -98,9 +94,7 @@ class ActivityLogController extends Controller
 
     public function show(Request $request, int $id): JsonResponse
     {
-        $user = $request->user();
-
-        if (! $user || (! $user->can('view-activity-logs') && ! $user->hasRole('super-admin'))) {
+        if (! $this->canViewActivityLogs($request->user())) {
             return response()->json([
                 'success' => false,
                 'message' => 'شما دسترسی مشاهده گزارش فعالیت‌ها را ندارید.',
@@ -115,6 +109,21 @@ class ActivityLogController extends Controller
                 'activity' => $this->formatActivity($activity, includeSubject: true),
             ],
         ]);
+    }
+
+    private function canViewActivityLogs(mixed $user): bool
+    {
+        if (! $user || ! method_exists($user, 'hasRole') || ! method_exists($user, 'getAllPermissions')) {
+            return false;
+        }
+
+        if ($user->hasRole('super-admin')) {
+            return true;
+        }
+
+        // Permission names are stored on web, admin, or sanctum. The request
+        // default guard is admin, so a name lookup via can() misses the others.
+        return $user->getAllPermissions()->contains('name', 'view-activity-logs');
     }
 
     /**

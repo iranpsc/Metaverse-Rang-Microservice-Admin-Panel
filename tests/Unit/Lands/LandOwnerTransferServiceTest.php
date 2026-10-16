@@ -159,6 +159,11 @@ class LandOwnerTransferServiceTest extends TestCase
             'id' => $feature->id,
             'owner_id' => $newOwner->id,
         ]);
+        $this->assertDatabaseHas('feature_properties', [
+            'feature_id' => $feature->id,
+            'id' => 'SVC-TRANSFER-001',
+            'owner' => 'New Service Owner',
+        ]);
     }
 
     public function test_transfer_owner_throws_when_land_is_not_system_owned(): void

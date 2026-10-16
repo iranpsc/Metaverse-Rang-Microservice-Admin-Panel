@@ -212,55 +212,55 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     Route::post('/upload/chunk', [FileUploadController::class, 'upload'])->withoutMiddleware('throttle:api');
 
     Route::middleware('role:level-management|super-admin')->group(function () {
-    // Levels Controller
-    Route::apiResource('levels', LevelsController::class)->except(['show']);
+        // Levels Controller
+        Route::apiResource('levels', LevelsController::class)->except(['show']);
 
-    // Level Prize Controller
-    Route::prefix('levels/{level}/prize')->controller(LevelPrizeController::class)->group(function () {
-        Route::get('/', 'show');
-        Route::post('/', 'store');
-        Route::put('/', 'update');
-    });
-
-    // Level Gift Controller
-    Route::prefix('levels/{level}/gift')->controller(LevelGiftController::class)->group(function () {
-        Route::get('/', 'show');
-        Route::post('/', 'store');
-        Route::put('/', 'update');
-        Route::delete('files', 'destroyFile');
-    });
-
-    // Level License Controller
-    Route::prefix('levels/{level}/licenses')->controller(LevelLicenseController::class)->group(function () {
-        Route::get('/', 'show');
-        Route::post('/', 'store');
-        Route::put('/', 'update');
-    });
-
-    // Level Gem Controller
-    Route::prefix('levels/{level}/gem')->controller(LevelGemController::class)->group(function () {
-        Route::get('/', 'show');
-        Route::post('/', 'store');
-        Route::put('/', 'update');
-        Route::delete('files', 'destroyFile');
-    });
-
-    // Level General Info Controller
-    Route::prefix('levels/{level}/general-info')->controller(LevelGeneralInfoController::class)->group(function () {
-        Route::get('/', 'show');
-        Route::post('/', 'store');
-        Route::put('/', 'update');
-        Route::delete('files', 'destroyFile');
-    });
-
-    // User levels routes
-    Route::controller(UserLevelsController::class)->group(function () {
-        Route::prefix('user-levels')->group(function () {
-            Route::get('/', 'index');
-            Route::post('promote', 'promote');
+        // Level Prize Controller
+        Route::prefix('levels/{level}/prize')->controller(LevelPrizeController::class)->group(function () {
+            Route::get('/', 'show');
+            Route::post('/', 'store');
+            Route::put('/', 'update');
         });
-        Route::get('users/search', 'searchUsers');
-    });
+
+        // Level Gift Controller
+        Route::prefix('levels/{level}/gift')->controller(LevelGiftController::class)->group(function () {
+            Route::get('/', 'show');
+            Route::post('/', 'store');
+            Route::put('/', 'update');
+            Route::delete('files', 'destroyFile');
+        });
+
+        // Level License Controller
+        Route::prefix('levels/{level}/licenses')->controller(LevelLicenseController::class)->group(function () {
+            Route::get('/', 'show');
+            Route::post('/', 'store');
+            Route::put('/', 'update');
+        });
+
+        // Level Gem Controller
+        Route::prefix('levels/{level}/gem')->controller(LevelGemController::class)->group(function () {
+            Route::get('/', 'show');
+            Route::post('/', 'store');
+            Route::put('/', 'update');
+            Route::delete('files', 'destroyFile');
+        });
+
+        // Level General Info Controller
+        Route::prefix('levels/{level}/general-info')->controller(LevelGeneralInfoController::class)->group(function () {
+            Route::get('/', 'show');
+            Route::post('/', 'store');
+            Route::put('/', 'update');
+            Route::delete('files', 'destroyFile');
+        });
+
+        // User levels routes
+        Route::controller(UserLevelsController::class)->group(function () {
+            Route::prefix('user-levels')->group(function () {
+                Route::get('/', 'index');
+                Route::post('promote', 'promote');
+            });
+            Route::get('users/search', 'searchUsers');
+        });
     });
 
     // Admins routes
@@ -310,18 +310,18 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     });
 
     Route::middleware('role:tutorials-management|super-admin')->group(function () {
-    // Video categories routes
-    Route::apiResource('video-categories', VideoCategoriesController::class)->except(['show']);
+        // Video categories routes
+        Route::apiResource('video-categories', VideoCategoriesController::class)->except(['show']);
 
-    // Video sub categories routes
-    Route::apiResource('video-sub-categories', VideoSubCategoriesController::class)->except(['show']);
+        // Video sub categories routes
+        Route::apiResource('video-sub-categories', VideoSubCategoriesController::class)->except(['show']);
 
-    // Videos routes
-    Route::prefix('videos')->group(function () {
-        Route::get('meta', [VideosController::class, 'meta']);
-        Route::post('chunk', VideoUploadController::class)->withoutMiddleware('throttle:api');
-    });
-    Route::apiResource('videos', VideosController::class)->except(['show']);
+        // Videos routes
+        Route::prefix('videos')->group(function () {
+            Route::get('meta', [VideosController::class, 'meta']);
+            Route::post('chunk', VideoUploadController::class)->withoutMiddleware('throttle:api');
+        });
+        Route::apiResource('videos', VideosController::class)->except(['show']);
     });
 
     // Dynasty routes group
@@ -348,20 +348,20 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
 
     // Maps routes
     Route::middleware('role:maps-management|super-admin')->group(function () {
-    Route::prefix('maps')->controller(MapsController::class)->group(function () {
-        Route::post('{map}/insert-into-database', 'insertIntoDatabase');
-    });
-    Route::apiResource('maps', MapsController::class)->except(['show']);
+        Route::prefix('maps')->controller(MapsController::class)->group(function () {
+            Route::post('{map}/insert-into-database', 'insertIntoDatabase');
+        });
+        Route::apiResource('maps', MapsController::class)->except(['show']);
     });
 
     // ISIC Codes routes
     Route::middleware('role:isic-codes-management|super-admin')->group(function () {
-    Route::prefix('isic-codes')->controller(IsicCodeController::class)->group(function () {
-        Route::post('import', 'import');
-        Route::post('{isicCode}/approve', 'approve');
-        Route::post('{isicCode}/deny', 'deny');
-    });
-    Route::apiResource('isic-codes', IsicCodeController::class)->except(['show', 'update']);
+        Route::prefix('isic-codes')->controller(IsicCodeController::class)->group(function () {
+            Route::post('import', 'import');
+            Route::post('{isicCode}/approve', 'approve');
+            Route::post('{isicCode}/deny', 'deny');
+        });
+        Route::apiResource('isic-codes', IsicCodeController::class)->except(['show', 'update']);
     });
 
     // Translations routes

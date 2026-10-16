@@ -3,6 +3,8 @@
 namespace Tests\Unit\Models;
 
 use App\Models\BuyFeatureRequest;
+use App\Models\Challenge\UserChallengePrizes;
+use App\Models\Challenge\UserQuestionAnswer;
 use App\Models\Feature;
 use App\Models\FirstOrder;
 use App\Models\GeneralSetting;
@@ -19,8 +21,6 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\User\UserActivity;
 use App\Models\Wallet;
-use App\Models\Challenge\UserChallengePrizes;
-use App\Models\Challenge\UserQuestionAnswer;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;

@@ -366,7 +366,21 @@ class AdminsController extends Controller
         }
 
         if ($request->has('permissions') && count($request->permissions) > 0) {
-            $admin->givePermissionTo($request->permissions);
+            // Names are resolved explicitly. The admin guard is the request default,
+            // while direct permissions may be stored on the web guard.
+            $permissions = Permission::query()
+                ->whereIn('name', $request->permissions)
+                ->whereIn('guard_name', ['web', 'admin'])
+                ->get();
+
+            if ($permissions->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No valid permissions found for the specified guard',
+                ], 422);
+            }
+
+            $admin->givePermissionTo($permissions);
         }
 
         return response()->json([
