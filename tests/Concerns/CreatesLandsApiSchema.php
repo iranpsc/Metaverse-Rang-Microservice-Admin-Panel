@@ -28,6 +28,7 @@ trait CreatesLandsApiSchema
         $this->createGeometriesTable();
         $this->createCoordinatesTable();
         $this->createTradesTable();
+        $this->createFeatureHourlyProfitsTable();
         $this->seedSystemUser();
     }
 
@@ -129,6 +130,23 @@ trait CreatesLandsApiSchema
         });
     }
 
+    private function createFeatureHourlyProfitsTable(): void
+    {
+        if (Schema::hasTable('feature_hourly_profits')) {
+            return;
+        }
+
+        Schema::create('feature_hourly_profits', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('feature_id');
+            $table->unsignedBigInteger('user_id');
+            $table->string('asset');
+            $table->decimal('amount', 16, 4);
+            $table->datetime('dead_line');
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+    }
     protected function seedSystemUser(): User
     {
         $existing = User::query()->find(1);

@@ -3,6 +3,7 @@
 namespace App\Services\Lands;
 
 use App\Models\Feature;
+use App\Models\FeatureHourlyProfit;
 use App\Models\FeatureProperties;
 use App\Models\Trade;
 use App\Models\User;
@@ -44,21 +45,36 @@ class LandOwnerTransferService
 
             Trade::create([
                 'feature_id' => $feature->id,
-                'buyer_id' => self::SYSTEM_OWNER_ID,
-                'seller_id' => $newOwnerId,
-                'psc_amount' => $psc_amount,
-                'irr_amount' => $irr_amount,
-                'date' => $date,
-            ]);
-            Trade::create([
-                'feature_id' => $feature->id,
                 'buyer_id' => $newOwnerId,
                 'seller_id' => self::SYSTEM_OWNER_ID,
                 'psc_amount' => $psc_amount,
                 'irr_amount' => $irr_amount,
                 'date' => $date,
             ]);
+
+            FeatureHourlyProfit::create([
+                'feature_id' => $feature->id,
+                'user_id' => $newOwnerId,
+                'asset' => $this->getAssetType($feature->properties->karbari),
+                'dead_line' => now()->addDays(10),
+            ]);
         });
+    }
+
+    /**
+     * Get the asset type based on the karbari.
+     *
+     * @param string $karbari
+     * @return string
+     */
+    private function getAssetType(string $karbari): string
+    {
+        return match ($karbari) {
+            'm' => 'yellow',
+            'a' => 'blue',
+            't' => 'red',
+            'default' => 'unknown',
+        };
     }
 
     /**
