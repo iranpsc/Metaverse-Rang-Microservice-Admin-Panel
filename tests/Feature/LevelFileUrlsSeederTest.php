@@ -11,6 +11,20 @@ use Tests\TestCase;
 
 class LevelFileUrlsSeederTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'database.default' => 'sqlite',
+            'database.connections.sqlite.url' => null,
+            'database.connections.sqlite.database' => ':memory:',
+        ]);
+
+        DB::purge('sqlite');
+        DB::reconnect('sqlite');
+    }
+
     public function test_it_replaces_file_urls_and_preserves_other_data_on_repeated_runs(): void
     {
         config(['app.url' => 'https://files.example.test/admin/']);
