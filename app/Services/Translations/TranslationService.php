@@ -546,7 +546,7 @@ class TranslationService
      *
      * @return array<int|string, string|null>
      */
-    private function buildFlatPayloadForTranslation(Translation $translation): array
+    public function buildFlatPayloadForTranslation(Translation $translation): array
     {
         $fields = Field::query()
             ->whereHas('tab.modal', function ($query) use ($translation) {

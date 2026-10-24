@@ -78,6 +78,15 @@
           پاک کردن فیلترها
         </Button>
       </div>
+      <div class="webhook-controls">
+        <Button v-if="webhookSummary.can_send" :disabled="sending || !webhookSummary.enabled || !!webhookSummary.active_cycle || (!webhookSummary.pending_count && !webhookSummary.blocked_batch)" @click="sendWebhook()">
+          {{ sending || webhookSummary.active_cycle ? 'در حال ارسال…' : 'ارسال وبهوک' }}
+        </Button>
+        <p class="text-xs text-[var(--theme-text-muted)]">{{ webhookSummary.pending_count ?? 0 }} تغییر در انتظار — {{ webhookSummary.next_version }}</p>
+        <p class="text-xs text-[var(--theme-text-muted)]">ارسال شامل تغییرات همه مدیران است و به فیلترهای جدول محدود نمی‌شود.</p>
+        <p v-if="!webhookSummary.enabled" class="text-xs text-amber-400">ارسال وبهوک غیرفعال است؛ تغییرات ذخیره می‌شوند.</p>
+        <p v-if="webhookSummary.blocked_batch" class="text-xs text-rose-400">بسته ناموفق ابتدا دوباره ارسال خواهد شد.</p>
+      </div>
     </section>
 
     <LoadingState v-if="loading" />
@@ -103,6 +112,9 @@
         </template>
         <template #cell-event="{ value }">
           <span :class="eventBadgeClass(value)">{{ eventLabel(value) }}</span>
+        </template>
+        <template #cell-delivery="{ row }">
+          <span :class="deliveryBadgeClass(row.delivery?.status)">{{ deliveryLabel(row.delivery?.status) }}</span>
         </template>
         <template #cell-causer="{ row }">
           <span class="text-[var(--theme-text-secondary)]">
@@ -182,6 +194,18 @@
           <p class="text-[var(--theme-text-secondary)]">{{ selectedActivity.description }}</p>
         </div>
 
+        <div v-if="selectedActivity.delivery" class="space-y-2">
+          <h3 class="text-lg font-semibold">وضعیت ارسال وبهوک</h3>
+          <p>{{ deliveryLabel(selectedActivity.delivery.status) }} — {{ selectedActivity.delivery.version || 'بدون بسته' }}</p>
+          <p class="text-xs">نقش‌ها: {{ selectedActivity.causer?.roles?.join(', ') || '—' }}</p>
+          <p class="text-xs">تلاش‌ها: {{ selectedActivity.delivery.attempts }} — HTTP: {{ selectedActivity.delivery.http_status ?? '—' }}</p>
+          <p class="text-xs">زمان تحویل: {{ selectedActivity.delivery.delivered_at || '—' }}</p>
+          <p class="text-xs" dir="ltr">{{ selectedActivity.delivery.batch_id }}</p>
+          <p v-if="selectedActivity.delivery.error" class="text-rose-400">{{ selectedActivity.delivery.error }}</p>
+          <pre class="text-xs overflow-auto" dir="ltr">{{ selectedActivity.delivery.affected_routes.join('\n') }}</pre>
+          <Button v-if="webhookSummary.can_send && selectedActivity.delivery.status === 'failed' && selectedActivity.delivery.batch_id === webhookSummary.blocked_batch?.id"
+            :disabled="sending || !webhookSummary.enabled || !!webhookSummary.active_cycle" @click="sendWebhook(selectedActivity.delivery.batch_id)">ارسال مجدد بسته</Button>
+        </div>
         <div v-if="hasChangeDetails" class="space-y-2">
           <h3 class="text-lg font-semibold text-[var(--theme-text-primary)]">تغییرات</h3>
           <pre class="text-xs text-[var(--theme-text-secondary)] bg-[var(--theme-bg-glass)] border border-[var(--theme-border)] rounded-lg p-4 overflow-x-auto max-h-64">{{ formattedProperties }}</pre>
@@ -192,7 +216,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Table, Pagination, LoadingState, ErrorState, Button, Modal, SearchBox } from '../../components/ui'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
@@ -200,6 +224,41 @@ import { useToast } from '../../composables/useToast'
 import { splitJalaliDateTime } from '../../utils/dateFormatter'
 
 const { showToast } = useToast()
+
+const webhookSummary = ref({})
+const sending = ref(false)
+let refreshTimer
+let disposed = false
+const deliveryLabel = status => ({ pending: 'در انتظار', delivered: 'تحویل شده', failed: 'ناموفق' }[status] || 'نامرتبط')
+const deliveryBadgeClass = status => 'inline-flex px-2 py-1 rounded-full text-xs ' + ({ pending: 'bg-amber-500/10 text-amber-300', delivered: 'bg-emerald-500/10 text-emerald-300', failed: 'bg-rose-500/10 text-rose-300' }[status] || 'text-[var(--theme-text-muted)]')
+const fetchWebhookSummary = async () => {
+  const response = await apiClient.get('/activity-logs/webhook-summary')
+  webhookSummary.value = response.data.data
+}
+const sendWebhook = async batchId => {
+  sending.value = true
+  try {
+    await apiClient.post(batchId ? `/activity-logs/webhook-batches/${batchId}/retry` : '/activity-logs/webhook-dispatch')
+    showToast('ارسال بسته در صف قرار گرفت.', 'success')
+    await fetchWebhookSummary()
+    await fetchActivities()
+  } catch (err) {
+    showToast(err.response?.data?.message || 'خطا در ارسال وبهوک', 'error')
+  } finally { sending.value = false }
+}
+const pollDelivery = async () => {
+  if (disposed) return
+  try {
+    const wasActive = webhookSummary.value.active_cycle
+    await fetchWebhookSummary()
+    if (wasActive || webhookSummary.value.active_cycle) {
+      await fetchActivities()
+      if (isDetailModalOpen.value && selectedActivity.value) await openDetailModal(selectedActivity.value)
+    }
+  } catch { /* Preserve data during transient network failures. */ }
+  if (!disposed) refreshTimer = setTimeout(pollDelivery, 5000)
+}
+onUnmounted(() => { disposed = true; clearTimeout(refreshTimer) })
 
 const loading = ref(true)
 const error = ref(null)
@@ -219,6 +278,7 @@ const tableColumns = [
   { key: 'event', label: 'رویداد' },
   { key: 'description', label: 'توضیحات' },
   { key: 'causer', label: 'کاربر' },
+  { key: 'delivery', label: 'وضعیت ارسال' },
   { key: 'created_at_jalali', label: 'تاریخ' },
   { key: 'created_at_time', label: 'زمان' },
   { key: 'actions', label: 'عملیات' }
@@ -381,10 +441,12 @@ const handleModalToggle = (value) => {
 onMounted(async () => {
   await fetchCategories()
   await fetchActivities()
+  await pollDelivery()
 })
 </script>
 
 <style scoped>
+.webhook-controls { margin-inline-start: auto; max-width: 23rem; display: flex; flex-direction: column; gap: .5rem; }
 .activity-logs-page {
   padding: 1rem;
   display: flex;
@@ -479,7 +541,8 @@ onMounted(async () => {
     grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
       'search search search'
-      'category event actions';
+      'category event webhook'
+      'actions actions webhook';
     align-items: end;
     column-gap: 1rem;
     row-gap: 1rem;
@@ -488,6 +551,8 @@ onMounted(async () => {
   .filters-panel__search {
     grid-area: search;
   }
+
+  .webhook-controls { grid-area: webhook; }
 
   .filters-panel__grid {
     display: contents;

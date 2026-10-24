@@ -4,13 +4,77 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\ActivityLogCategoryResolver;
+use App\Services\ContentWebhooks\ChangeRecorder;
+use App\Services\ContentWebhooks\DeliveryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Morilog\Jalali\Jalalian;
 use Spatie\Activitylog\Models\Activity;
 
 class ActivityLogController extends Controller
 {
+    public function webhookSummary(Request $request): JsonResponse
+    {
+        abort_unless($this->canViewActivityLogs($request->user()), 403);
+        $ready = Schema::hasTable('content_delivery_state');
+        $state = $ready ? DB::table('content_delivery_state')->where('id', 1)->first() : null;
+        $failed = $ready ? DB::table('content_webhook_batches')->where('status', 'failed')->orderBy('created_at')->first(['id', 'version', 'error', 'http_status']) : null;
+        $pending = $ready ? DB::table('content_changes')->leftJoin('content_webhook_batches as b', 'b.id', '=', 'content_changes.batch_id')
+            ->where(fn ($q) => $q->whereNull('batch_id')->orWhere('b.status', 'pending')) : null;
+
+        return response()->json(['success' => true, 'data' => [
+            'enabled' => $ready && (bool) config('content_webhooks.enabled'),
+            'can_send' => $this->canSend($request->user()),
+            'pending_count' => $pending ? (clone $pending)->count() : 0,
+            'oldest_pending_at' => $pending ? (clone $pending)->min('content_changes.created_at') : null,
+            'blocked_batch' => $failed, 'active_cycle' => $state?->active_cycle,
+            'next_version' => 'V1.1.'.($state?->next_patch ?? 1),
+            'last_delivered_at' => $ready ? DB::table('content_webhook_batches')->max('delivered_at') : null,
+        ]]);
+    }
+
+    public function webhookDispatch(Request $request): JsonResponse
+    {
+        abort_unless($this->canSend($request->user()), 403);
+        $cycle = app(DeliveryService::class)->trigger('manual', ChangeRecorder::actor());
+
+        return response()->json(['success' => true, 'data' => ['cycle_id' => $cycle]], 202);
+    }
+
+    public function webhookRetry(Request $request, string $batch): JsonResponse
+    {
+        abort_unless($this->canSend($request->user()), 403);
+        $cycle = app(DeliveryService::class)->trigger('manual', ChangeRecorder::actor(), $batch);
+
+        return response()->json(['success' => true, 'data' => ['cycle_id' => $cycle]], 202);
+    }
+
+    private function canSend(mixed $user): bool
+    {
+        return $user && method_exists($user, 'getAllPermissions') &&
+            ($user->hasRole('super-admin') || $user->getAllPermissions()->contains('name', 'send-content-webhooks'));
+    }
+
+    private function deliveryDetails(int $activityId): ?array
+    {
+        if (! Schema::hasTable('content_changes')) {
+            return null;
+        }
+        $change = DB::table('content_changes')->where('activity_id', $activityId)->first();
+        if (! $change) {
+            return null;
+        }
+        $batch = $change->batch_id ? DB::table('content_webhook_batches')->where('id', $change->batch_id)->first() : null;
+
+        return ['status' => $batch?->status ?? 'pending', 'batch_id' => $batch?->id,
+            'version' => $batch?->version, 'attempts' => $batch?->attempts ?? 0,
+            'http_status' => $batch?->http_status, 'error' => $batch?->error,
+            'delivered_at' => $batch?->delivered_at,
+            'affected_routes' => json_decode($change->data, true)['affected_routes']];
+    }
+
     public function categories(Request $request): JsonResponse
     {
         if (! $this->canViewActivityLogs($request->user())) {
@@ -152,10 +216,15 @@ class ActivityLogController extends Controller
                 'email' => $activity->causer->email,
             ] : null,
             'properties' => $properties,
+            'delivery' => $this->deliveryDetails($activity->id),
             'created_at' => $activity->created_at,
             'created_at_jalali' => $jalali?->format('Y/m/d'),
             'created_at_time' => $jalali?->format('H:i:s'),
         ];
+
+        if (array_key_exists('modifier', $properties)) {
+            $formatted['causer'] = $properties['modifier'];
+        }
 
         if ($includeSubject) {
             $formatted['subject'] = $activity->subject;

@@ -54,6 +54,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\FileUploadController;
+use App\Http\Middleware\CaptureContentChanges;
 use App\Http\Middleware\EnsureAdminSanctumAuth;
 use App\Http\Middleware\RequirePhoneVerification;
 use App\Models\KycVerifyText;
@@ -87,7 +88,7 @@ Route::middleware(['guest'])->group(function () {
     });
 });
 
-Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(function () {
+Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class, CaptureContentChanges::class])->group(function () {
     Route::controller(LoginController::class)->group(function () {
         Route::get('/me', 'me');
         Route::post('/logout', 'logout');
@@ -106,6 +107,9 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class])->group(functi
     // Activity logs
     Route::prefix('activity-logs')->controller(ActivityLogController::class)->group(function () {
         Route::get('categories', 'categories');
+        Route::get('webhook-summary', 'webhookSummary');
+        Route::post('webhook-dispatch', 'webhookDispatch');
+        Route::post('webhook-batches/{batch}/retry', 'webhookRetry');
         Route::get('/', 'index');
         Route::get('{id}', 'show');
     });
