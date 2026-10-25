@@ -157,7 +157,7 @@ class TranslationApiTest extends TestCase
             ->assertJsonPath('data.0.status', true)
             ->assertJsonPath('data.0.modals_count', 2)
             ->assertJsonPath('data.0.file_url', 'https://metarang.com/lang/en.json')
-            ->assertJsonPath('data.0.icon', asset('assets/images/flags/EN.svg'));
+            ->assertJsonPath('data.0.icon', asset('assets/images/flags/en.svg'));
     }
 
     public function test_index_orders_translations_by_name_ascending(): void
