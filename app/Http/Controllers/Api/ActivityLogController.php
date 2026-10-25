@@ -51,6 +51,15 @@ class ActivityLogController extends Controller
         return response()->json(['success' => true, 'data' => ['cycle_id' => $cycle]], 202);
     }
 
+    public function webhookCancel(Request $request): JsonResponse
+    {
+        abort_unless($this->canSend($request->user()), 403);
+        $data = $request->validate(['cycle_id' => ['required', 'uuid']]);
+        app(DeliveryService::class)->cancel($data['cycle_id']);
+
+        return response()->json(['success' => true, 'data' => ['cycle_id' => $data['cycle_id']]]);
+    }
+
     private function canSend(mixed $user): bool
     {
         return $user && method_exists($user, 'getAllPermissions') &&

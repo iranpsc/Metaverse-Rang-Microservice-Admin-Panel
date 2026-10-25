@@ -109,6 +109,7 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class, CaptureContent
         Route::get('categories', 'categories');
         Route::get('webhook-summary', 'webhookSummary');
         Route::post('webhook-dispatch', 'webhookDispatch');
+        Route::post('webhook-cancel', 'webhookCancel');
         Route::post('webhook-batches/{batch}/retry', 'webhookRetry');
         Route::get('/', 'index');
         Route::get('{id}', 'show');

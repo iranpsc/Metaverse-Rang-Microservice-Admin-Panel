@@ -10,6 +10,16 @@ use Illuminate\Support\Str;
 
 class DeliveryService
 {
+    public function cancel(string $cycleId): void
+    {
+        DB::transaction(function () use ($cycleId) {
+            $this->reserveSqliteWriter();
+            $state = DB::table('content_delivery_state')->where('id', 1)->lockForUpdate()->first();
+            abort_unless($state && $state->active_cycle === $cycleId, 409, 'This delivery cycle is no longer active.');
+            $this->finish($cycleId, 'cancelled');
+        });
+    }
+
     public function trigger(string $trigger = 'manual', ?array $actor = null, ?string $retry = null): string
     {
         abort_unless(config('content_webhooks.enabled'), 409, 'Content webhook delivery is disabled.');

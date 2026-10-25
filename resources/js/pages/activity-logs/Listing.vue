@@ -79,11 +79,17 @@
         </Button>
       </div>
       <div class="webhook-controls">
-        <Button v-if="webhookSummary.can_send" :disabled="sending || !webhookSummary.enabled || !!webhookSummary.active_cycle || (!webhookSummary.pending_count && !webhookSummary.blocked_batch)" @click="sendWebhook()">
-          {{ sending || webhookSummary.active_cycle ? 'در حال ارسال…' : 'ارسال وبهوک' }}
-        </Button>
+        <div v-if="webhookSummary.can_send" class="webhook-controls__buttons">
+          <Button variant="danger" :disabled="sending || cancelling || !webhookSummary.active_cycle" @click="cancelWebhook">
+            {{ cancelling ? 'در حال لغو…' : 'لغو ارسال' }}
+          </Button>
+          <Button :disabled="sending || cancelling || !webhookSummary.enabled || !!webhookSummary.active_cycle || (!webhookSummary.pending_count && !webhookSummary.blocked_batch)" @click="sendWebhook()">
+            {{ sending || webhookSummary.active_cycle ? 'در حال ارسال…' : 'ارسال وبهوک' }}
+          </Button>
+        </div>
         <p class="text-xs text-[var(--theme-text-muted)]">{{ webhookSummary.pending_count ?? 0 }} تغییر در انتظار — {{ webhookSummary.next_version }}</p>
         <p class="text-xs text-[var(--theme-text-muted)]">ارسال شامل تغییرات همه مدیران است و به فیلترهای جدول محدود نمی‌شود.</p>
+        <p class="text-xs text-[var(--theme-text-muted)]">لغو، ارسال فعلی را متوقف می‌کند و تغییرات را برای ارسال بعدی نگه می‌دارد.</p>
         <p v-if="!webhookSummary.enabled" class="text-xs text-amber-400">ارسال وبهوک غیرفعال است؛ تغییرات ذخیره می‌شوند.</p>
         <p v-if="webhookSummary.blocked_batch" class="text-xs text-rose-400">بسته ناموفق ابتدا دوباره ارسال خواهد شد.</p>
       </div>
@@ -216,7 +222,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Table, Pagination, LoadingState, ErrorState, Button, Modal, SearchBox } from '../../components/ui'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
@@ -227,8 +233,7 @@ const { showToast } = useToast()
 
 const webhookSummary = ref({})
 const sending = ref(false)
-let refreshTimer
-let disposed = false
+const cancelling = ref(false)
 const deliveryLabel = status => ({ pending: 'در انتظار', delivered: 'تحویل شده', failed: 'ناموفق' }[status] || 'نامرتبط')
 const deliveryBadgeClass = status => 'inline-flex px-2 py-1 rounded-full text-xs ' + ({ pending: 'bg-amber-500/10 text-amber-300', delivered: 'bg-emerald-500/10 text-emerald-300', failed: 'bg-rose-500/10 text-rose-300' }[status] || 'text-[var(--theme-text-muted)]')
 const fetchWebhookSummary = async () => {
@@ -246,20 +251,20 @@ const sendWebhook = async batchId => {
     showToast(err.response?.data?.message || 'خطا در ارسال وبهوک', 'error')
   } finally { sending.value = false }
 }
-const pollDelivery = async () => {
-  if (disposed) return
+const cancelWebhook = async () => {
+  const cycleId = webhookSummary.value.active_cycle
+  if (!cycleId) return
+  cancelling.value = true
   try {
-    const wasActive = webhookSummary.value.active_cycle
-    await fetchWebhookSummary()
-    if (wasActive || webhookSummary.value.active_cycle) {
-      await fetchActivities()
-      if (isDetailModalOpen.value && selectedActivity.value) await openDetailModal(selectedActivity.value)
-    }
-  } catch { /* Preserve data during transient network failures. */ }
-  if (!disposed) refreshTimer = setTimeout(pollDelivery, 5000)
+    await apiClient.post('/activity-logs/webhook-cancel', { cycle_id: cycleId })
+    showToast('ارسال متوقف شد؛ تغییرات برای ارسال بعدی باقی می‌مانند.', 'success')
+  } catch (err) {
+    showToast(err.response?.data?.message || 'خطا در لغو ارسال وبهوک', 'error')
+  } finally {
+    try { await fetchWebhookSummary(); await fetchActivities() } catch { /* Keep the existing data if refresh fails. */ }
+    cancelling.value = false
+  }
 }
-onUnmounted(() => { disposed = true; clearTimeout(refreshTimer) })
-
 const loading = ref(true)
 const error = ref(null)
 const activities = ref([])
@@ -441,12 +446,13 @@ const handleModalToggle = (value) => {
 onMounted(async () => {
   await fetchCategories()
   await fetchActivities()
-  await pollDelivery()
+  try { await fetchWebhookSummary() } catch { /* Keep the page usable if the summary is unavailable. */ }
 })
 </script>
 
 <style scoped>
 .webhook-controls { margin-inline-start: auto; max-width: 23rem; display: flex; flex-direction: column; gap: .5rem; }
+.webhook-controls__buttons { display: flex; gap: .5rem; flex-wrap: wrap; }
 .activity-logs-page {
   padding: 1rem;
   display: flex;

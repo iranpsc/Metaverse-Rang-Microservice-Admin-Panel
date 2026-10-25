@@ -186,6 +186,46 @@ class ContentWebhookTest extends TestCase
         Queue::assertPushed(DeliverContentWebhook::class);
     }
 
+    public function test_cancelling_a_delivery_preserves_pending_changes_and_the_frozen_batch(): void
+    {
+        $this->actingAsSuperAdmin();
+        $this->change();
+        $service = app(DeliveryService::class);
+        $cycle = $service->trigger();
+        $service->deliver($cycle);
+        $batch = DB::table('content_webhook_batches')->first();
+
+        $this->postJson('/api/activity-logs/webhook-cancel', ['cycle_id' => $cycle])->assertOk();
+        $this->assertNull($service->deliver($cycle));
+        Http::assertNothingSent();
+        $this->assertSame('cancelled', DB::table('content_delivery_cycles')->where('id', $cycle)->value('status'));
+        $this->getJson('/api/activity-logs/webhook-summary')->assertJsonPath('data.pending_count', 1)->assertJsonPath('data.active_cycle', null);
+        $this->assertEquals(1, DB::table('content_delivery_state')->where('id', 1)->value('next_patch'));
+
+        $next = $service->trigger();
+        $this->postJson('/api/activity-logs/webhook-cancel', ['cycle_id' => $cycle])->assertStatus(409);
+        $this->assertSame($next, DB::table('content_delivery_state')->where('id', 1)->value('active_cycle'));
+        $this->accept();
+        $service->deliver($next);
+        $this->assertSame($batch->payload, DB::table('content_webhook_batches')->where('id', $batch->id)->value('payload'));
+        $this->assertSame('delivered', DB::table('content_webhook_batches')->where('id', $batch->id)->value('status'));
+    }
+
+    public function test_cancel_requires_permission_and_preserves_unpacked_changes(): void
+    {
+        $this->actingAsRegularAdmin();
+        $this->postJson('/api/activity-logs/webhook-cancel', ['cycle_id' => (string) \Illuminate\Support\Str::uuid()])->assertForbidden();
+        $this->app['auth']->forgetGuards();
+        $this->actingAsSuperAdmin();
+        $this->change();
+        $service = app(DeliveryService::class);
+        $cycle = $service->trigger();
+        $this->postJson('/api/activity-logs/webhook-cancel', ['cycle_id' => $cycle])->assertOk();
+        $this->assertNull($service->deliver($cycle));
+        $this->getJson('/api/activity-logs/webhook-summary')->assertJsonPath('data.pending_count', 1);
+        $this->assertSame(0, DB::table('content_webhook_batches')->count());
+    }
+
     public function test_every_member_exposes_failed_pending_and_delivered_states_through_api(): void
     {
         $this->actingAsSuperAdmin();

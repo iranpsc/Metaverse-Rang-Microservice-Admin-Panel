@@ -405,6 +405,33 @@
         }
       }
     },
+    "/api/activity-logs/webhook-cancel": {
+      "post": {
+        "operationId": "cancelWebhookCycle",
+        "summary": "Stop the active delivery cycle and keep unsent changes pending",
+        "description": "Cancellation waits for any ongoing delivery attempt to finish. A request already accepted by the receiver cannot be recalled. A frozen batch retains its ID and payload for a later delivery. The supplied cycle ID prevents a stale cancellation from stopping a newer cycle.",
+        "security": [{ "AdminAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["cycle_id"],
+                "properties": { "cycle_id": { "type": "string", "format": "uuid" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cycle stopped; pending changes remain available for a later send." },
+          "401": { "description": "Unauthenticated." },
+          "403": { "description": "Missing send-content-webhooks permission." },
+          "409": { "description": "The specified cycle is no longer active." },
+          "422": { "description": "Invalid or missing cycle ID." }
+        }
+      }
+    },
     "/api/activity-logs/webhook-batches/{batch}/retry": {
       "post": {
         "operationId": "retryWebhookBatch",
