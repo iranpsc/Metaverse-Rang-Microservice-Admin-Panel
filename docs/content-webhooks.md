@@ -5,7 +5,7 @@ The admin records content changes immediately, but sends only after a manual tri
 ## Setup
 
 1. Run `php artisan migrate`. The content webhook migration creates the primary delivery tables and the source outbox on the translation SQLite connection. Back up both databases together. Rollback removes publication history.
-2. Configure `WEBHOOK_URL` and `WEBHOOK_SECRET` in the deployment environment. The sender uses `Authorization: Bearer <WEBHOOK_SECRET>` with a JSON body containing `batch_id` and `version`; it sends no custom Metarang headers. Leave `CONTENT_WEBHOOKS_ENABLED=false` until the receiver passes integration testing. Never commit the secret.
+2. Configure `WEBHOOK_URL` and `WEBHOOK_SECRET` in the deployment environment. The sender uses `x-webhook-secret: <WEBHOOK_SECRET>` with a JSON body containing `batch_id` and `version`; it sends no custom Metarang headers. Leave `CONTENT_WEBHOOKS_ENABLED=false` until the receiver passes integration testing. Never commit the secret.
 3. Run a supervised dedicated worker: `php artisan queue:work content-webhooks --queue=content-webhooks --sleep=1 --timeout=45 --tries=0`. This uses the database driver regardless of the application's default queue. The existing `jobs` table must be migrated.
 4. Run Laravel's scheduler every minute (`php artisan schedule:run`, or the deployment's existing scheduler). Midnight delivery is configured in `routes/console.php`; the recovery task only resumes already authorized cycles and projects committed changes.
 5. Grant `send-content-webhooks` (admin guard) to appropriate admins through existing permission management. Super-admins already have access. Viewing logs alone does not permit sending everyone's changes.
@@ -98,6 +98,6 @@ php vendor/bin/phpunit tests/Feature/ContentWebhooks/ContentWebhookTest.php --fi
 Remove-Item Env:CONTENT_WEBHOOK_SIMULATION
 ```
 
-The local simulation checks the bearer token, JSON contract and duplicate identity; its `failure=503`, `failure=401` and `failure=timeout` query modes exercise error paths. It is built from the agreed contract. Lookup of an owning-team mock was unavailable because Postman CLI was signed out; no cloud mock or webhook resource was created.
+The local simulation checks the webhook secret, JSON contract and duplicate identity; its `failure=503`, `failure=401` and `failure=timeout` query modes exercise error paths. It is built from the agreed contract. Lookup of an owning-team mock was unavailable because Postman CLI was signed out; no cloud mock or webhook resource was created.
 
 Watch the admin summary for pending count/age, oldest failed pack and last successful delivery. Worker logs contain batch IDs and delivery outcomes. Before enabling production, verify the real receiver's route/tag mapping, authentication, duplicate handling, and language loading. Local mock success does not establish that external integration.

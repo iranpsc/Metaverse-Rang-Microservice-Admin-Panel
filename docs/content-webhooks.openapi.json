@@ -15,10 +15,10 @@
       "post": {
         "operationId": "acceptContentBatch",
         "summary": "Accept one immutable batch of admin content invalidations",
-        "description": "Authenticate Authorization: Bearer <WEBHOOK_SECRET>. Read version and batch ID from the JSON body. Atomically remember accepted batch IDs and acknowledge identical retries. Invalidate the union once; collection/search targets include every cached query variant. Never interpret arbitrary routes as URLs to fetch. Scheduled batches have triggered_by=null. Receiver implementation is external to this repository.",
+        "description": "Authenticate the x-webhook-secret header against WEBHOOK_SECRET. Read version and batch ID from the JSON body. Atomically remember accepted batch IDs and acknowledge identical retries. Invalidate the union once; collection/search targets include every cached query variant. Never interpret arbitrary routes as URLs to fetch. Scheduled batches have triggered_by=null. Receiver implementation is external to this repository.",
         "security": [
           {
-            "WebhookBearer": []
+            "WebhookSecret": []
           }
         ],
         "requestBody": {
@@ -245,7 +245,7 @@
             }
           },
           "401": {
-            "description": "Bearer token rejected; permanent failure",
+            "description": "Webhook secret rejected; permanent failure",
             "content": {
               "application/json": {
                 "schema": {
@@ -257,7 +257,7 @@
                   }
                 },
                 "example": {
-                  "error": "Invalid webhook token"
+                  "error": "Invalid webhook secret"
                 }
               }
             }
@@ -444,10 +444,11 @@
   },
   "components": {
     "securitySchemes": {
-      "WebhookBearer": {
-        "type": "http",
-        "scheme": "bearer",
-        "description": "The shared WEBHOOK_SECRET value is sent as an Authorization bearer token."
+      "WebhookSecret": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-webhook-secret",
+        "description": "The shared WEBHOOK_SECRET value."
       },
       "AdminAuth": {
         "type": "http",

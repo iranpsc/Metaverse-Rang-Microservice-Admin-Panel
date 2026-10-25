@@ -11,6 +11,8 @@
 
 Final validation results:
 
+- On 2026-10-25, after switching to `x-webhook-secret`, the complete Node receiver suite passed **51 tests and 412 assertions**. The real database queue test also passed against the Postman simulation (**1 test, 14 assertions**), whose request log confirmed the header and a successful acknowledgement. OpenAPI syntax lint passed.
+
 - After switching to `WEBHOOK_URL`, `WEBHOOK_SECRET`, and bearer authentication, the complete webhook suite passed: **51 tests, 412 assertions**, including actual queued HTTP delivery to the updated Node receiver. The revised OpenAPI specification passed Postman syntax lint.
 
 - Broad relevant Laravel run: **720 tests, 3,722 assertions; 719 passed**, one video-upload cleanup failure using a long Windows temporary storage path.
@@ -30,7 +32,7 @@ Set `LARAVEL_STORAGE_PATH` for that test process; do not change the application'
 | Translations | `TranslationWebhookTest`: Persian-only creation ignores English placeholders; shared deletion includes populated languages; hierarchy-only changes are audit-only; import targets selected locale; separate SQLite rollback and idempotent projection; actual dictionary content exists before real HTTP dispatch; publication failure prevents transport |
 | Shared batches, grouping and cutoff | `ContentWebhookTest`: repeated edits, multiple historical actors, unique routes, new edits remain unassigned, immutable retry body, oldest failed pack before newer changes |
 | Versions and status | First V1.1.1, failed delivery consumes no version, retry advances once, pending/failed/delivered member API responses, empty and disabled delivery |
-| Real transport and authentication | Node receiver: bearer token, JSON contract, route union, duplicate identity, bad token, HTTP 401/409/422/408/429/500/503, HTML proxy failure, malformed acknowledgement, socket reset and timeout |
+| Real transport and authentication | Node receiver: `x-webhook-secret`, JSON contract, route union, duplicate identity, incorrect secret, HTTP 401/409/422/408/429/500/503, HTML proxy failure, malformed acknowledgement, socket reset and timeout |
 | Lost acknowledgement | Node accepts the batch but delays its acknowledgement beyond the sender timeout; retry carries identical bytes and is acknowledged as a duplicate |
 | Races and worker interruption | `ConcurrencyTest`: separate PHP processes and a file-backed SQLite WAL database; simultaneous triggers share cycle; competing workers send once; killed worker after receiver acceptance recovers immutable payload and advances version once |
 | Scheduling and recovery | Tehran midnight is due at 20:30 UTC, not 20:29; scheduled actor is null; recovery resumes an active authorized cycle and does not publish untriggered changes |

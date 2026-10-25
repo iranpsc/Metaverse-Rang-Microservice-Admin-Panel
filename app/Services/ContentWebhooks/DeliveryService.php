@@ -92,7 +92,7 @@ class DeliveryService
                     app(TranslationPublisher::class)->publish($locale);
                 }
                 $response = Http::connectTimeout(5)->timeout(15)->withoutRedirecting()
-                    ->withToken($secret)->withBody($batch->payload, 'application/json')->post($url);
+                    ->withHeaders(['x-webhook-secret' => $secret])->withBody($batch->payload, 'application/json')->post($url);
                 $status = $response->status();
                 if ($status !== 200 || $response->json('batch_id') !== $batch->id || $response->json('status') !== 'accepted') {
                     $error = 'Receiver did not acknowledge this batch.';

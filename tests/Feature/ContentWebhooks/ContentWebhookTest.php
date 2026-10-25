@@ -64,7 +64,7 @@ class ContentWebhookTest extends TestCase
         Http::fake(fn ($request) => Http::response(['batch_id' => $request['batch_id'], 'status' => 'accepted']));
     }
 
-    public function test_repeated_changes_are_one_signed_pack_and_later_changes_stay_pending(): void
+    public function test_repeated_changes_are_one_authenticated_pack_and_later_changes_stay_pending(): void
     {
         $this->change();
         $this->change();
@@ -83,7 +83,7 @@ class ContentWebhookTest extends TestCase
         $this->assertSame(0, $service->deliver($cycle));
         $this->assertNull($service->deliver($cycle));
         Http::assertSent(fn ($request) => $request->body() === $batch->payload &&
-            $request->header('Authorization') === ['Bearer test-secret'] &&
+            $request->header('x-webhook-secret') === ['test-secret'] && ! $request->hasHeader('Authorization') &&
             ! $request->hasHeader('X-Metarang-Version') && ! $request->hasHeader('X-Metarang-Batch-Id') &&
             ! $request->hasHeader('X-Metarang-Signature'));
         Http::assertSentCount(1);
@@ -243,7 +243,7 @@ class ContentWebhookTest extends TestCase
         $this->assertSame(0, DB::table('jobs')->count());
         // A real duplicate acknowledgement from the stand-in is idempotent.
         $batch = DB::table('content_webhook_batches')->first();
-        $ack = Http::withToken('local-webhook-test-secret')
+        $ack = Http::withHeaders(['x-webhook-secret' => 'local-webhook-test-secret'])
             ->withBody($batch->payload, 'application/json')->post(config('content_webhooks.url'));
         $this->assertSame(200, $ack->status());
         $this->assertSame($batch->id, $ack->json('batch_id'));
@@ -353,7 +353,7 @@ class ContentWebhookTest extends TestCase
 
     public static function receiverFailures(): array
     {
-        return ['bad bearer token' => ['success', 'wrong-secret', null, 401], 'unauthorized' => ['401', 'local-webhook-test-secret', null, 401],
+        return ['bad webhook secret' => ['success', 'wrong-secret', null, 401], 'unauthorized' => ['401', 'local-webhook-test-secret', null, 401],
             'validation' => ['422', 'local-webhook-test-secret', null, 422], 'conflict' => ['409', 'local-webhook-test-secret', null, 409],
             'request timeout' => ['408', 'local-webhook-test-secret', 10, 408], 'rate limit' => ['429', 'local-webhook-test-secret', 10, 429],
             'server error' => ['500', 'local-webhook-test-secret', 10, 500], 'unavailable' => ['503', 'local-webhook-test-secret', 10, 503],

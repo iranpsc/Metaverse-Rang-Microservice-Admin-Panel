@@ -53,9 +53,9 @@ const server = http.createServer(async (req, res) => {
     fs.appendFileSync(logFile, JSON.stringify(entry) + '\n');
     reply(status, data);
   };
-  const authorization = req.headers.authorization || '';
-  const expected = `Bearer ${secret}`;
-  if (authorization.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(authorization), Buffer.from(expected))) return finish(401, { error: 'Invalid webhook token' });
+  const supplied = Buffer.from(req.headers['x-webhook-secret'] || '');
+  const expected = Buffer.from(secret);
+  if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return finish(401, { error: 'Invalid webhook secret' });
   let body;
   try { body = JSON.parse(raw); } catch { return finish(400, { error: 'Invalid JSON' }); }
   entry.body = body;
