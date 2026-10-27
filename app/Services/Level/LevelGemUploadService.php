@@ -96,14 +96,11 @@ class LevelGemUploadService
 
         foreach ($fileUploads as $field => $fileData) {
             if ($gem->{$field}) {
-                $path = $this->extractStoragePath($gem->{$field});
-                if ($path) {
-                    $replacedFiles[] = $path;
-                }
+                $replacedFiles = array_merge($replacedFiles, $this->extractStoragePaths($gem->{$field}));
             }
         }
 
-        return $replacedFiles;
+        return array_values(array_unique($replacedFiles));
     }
 
     /**
@@ -145,5 +142,30 @@ class LevelGemUploadService
         }
 
         return ltrim($url, '/');
+    }
+
+    /** @return list<string> */
+    private function extractStoragePaths(mixed $value): array
+    {
+        if (is_array($value)) {
+            $paths = [];
+            foreach ($value as $entry) {
+                $paths = array_merge($paths, $this->extractStoragePaths($entry));
+            }
+
+            return array_values(array_unique($paths));
+        }
+
+        if (! is_string($value) || $value === '') {
+            return [];
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_URL) && ! str_starts_with($value, rtrim(url('uploads'), '/'))) {
+            return [];
+        }
+
+        $path = $this->extractStoragePath($value);
+
+        return $path ? [$path] : [];
     }
 }
