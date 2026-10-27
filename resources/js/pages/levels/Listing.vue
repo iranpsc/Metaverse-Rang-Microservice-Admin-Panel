@@ -258,7 +258,7 @@
                   :href="selectedLevel.image"
                   target="_blank"
                   rel="noopener"
-                  class="ml-2 inline-flex items-center gap-1 text-primary-300 hover:text-primary-200 underline"
+                  class="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-primary-400/50 px-2 py-1 text-primary-300 no-underline transition-colors hover:bg-primary-400/10 hover:text-primary-200"
                   title="مشاهده تصویر"
                   aria-label="مشاهده تصویر"
                 >
@@ -273,7 +273,7 @@
                   :href="selectedLevel.background_image"
                   target="_blank"
                   rel="noopener"
-                  class="ml-2 inline-flex items-center gap-1 text-secondary-300 hover:text-secondary-200 underline"
+                  class="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-secondary-400/50 px-2 py-1 text-secondary-300 no-underline transition-colors hover:bg-secondary-400/10 hover:text-secondary-200"
                   title="مشاهده تصویر"
                   aria-label="مشاهده تصویر"
                 >
@@ -285,11 +285,11 @@
           </div>
         </div>
 
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Button
             variant="primary"
             rounded="full"
-            class="self-start lg:self-auto"
+            class="w-full"
             @click="goToPrizePage"
           >
             مدیریت پاداش سطح
@@ -297,7 +297,7 @@
           <Button
             variant="secondary"
             rounded="full"
-            class="self-start lg:self-auto"
+            class="w-full"
             @click="goToLicensesPage"
           >
             مدیریت مجوزهای سطح
@@ -305,7 +305,7 @@
           <Button
             variant="glass"
             rounded="full"
-            class="self-start lg:self-auto"
+            class="w-full"
             @click="goToGiftPage"
           >
             مدیریت هدیه سطح
@@ -313,7 +313,7 @@
           <Button
             variant="outline"
             rounded="full"
-            class="self-start lg:self-auto"
+            class="w-full"
             @click="goToGeneralInfoPage"
           >
             مدیریت اطلاعات کلی سطح
@@ -321,7 +321,7 @@
           <Button
             variant="ghost"
             rounded="full"
-            class="self-start lg:self-auto"
+            class="w-full border border-[var(--theme-border)] bg-[var(--theme-bg-elevated)] hover:bg-[var(--theme-bg-elevated)]/80"
             @click="goToGemPage"
           >
             مدیریت نگین سطح
