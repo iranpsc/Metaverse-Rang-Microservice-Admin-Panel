@@ -614,7 +614,18 @@ onMounted(async () => {
   background-position: left 0.65rem center;
   background-size: 1rem;
   cursor: pointer;
+  color-scheme: dark;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+:global(:root[data-theme='light']) .filters-panel__select,
+:global(body.light) .filters-panel__select {
+  color-scheme: light;
+}
+
+.filters-panel__select option {
+  background-color: var(--theme-bg-elevated);
+  color: var(--theme-text-primary);
 }
 
 .filters-panel__select:focus {

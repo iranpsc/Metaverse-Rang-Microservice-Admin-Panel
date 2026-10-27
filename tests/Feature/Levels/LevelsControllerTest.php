@@ -203,6 +203,24 @@ class LevelsControllerTest extends TestCase
         }
     }
 
+    public function test_index_rewrites_legacy_level_upload_urls_to_the_current_application(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $level = Level::factory()->create([
+            'background_image' => 'https://admin.metarang.com/uploads/levels/legacy-background.jpg',
+        ]);
+        $level->image()->create([
+            'url' => 'https://admin.metarang.com/uploads/levels/legacy-image.png',
+        ]);
+
+        $response = $this->getJson(self::INDEX_PATH)->assertOk();
+        $payload = collect($response->json('data.levels'))->firstWhere('id', $level->id);
+
+        $this->assertSame(url('uploads/levels/legacy-background.jpg'), $payload['background_image_url']);
+        $this->assertSame(url('uploads/levels/legacy-image.png'), $payload['image_url']);
+    }
+
     public function test_index_orders_levels_by_id_desc(): void
     {
         $this->actingAsSuperAdmin();

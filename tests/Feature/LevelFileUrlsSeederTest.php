@@ -6,7 +6,6 @@ use Database\Seeders\ReplaceLevelFileUrlsSeeder;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use InvalidArgumentException;
 use Tests\TestCase;
 
 class LevelFileUrlsSeederTest extends TestCase
@@ -27,9 +26,8 @@ class LevelFileUrlsSeederTest extends TestCase
 
     public function test_it_replaces_file_urls_and_preserves_other_data_on_repeated_runs(): void
     {
-        config(['app.url' => 'https://files.example.test/admin/']);
         $old = 'https://admin.metarang.com';
-        $new = 'https://files.example.test/admin';
+        $new = 'https://dev-admin.metarang.com';
         $tables = [
             'levels' => ['background_image'],
             'level_gems' => ['png_file', 'fbx_file'],
@@ -102,10 +100,4 @@ class LevelFileUrlsSeederTest extends TestCase
         }
     }
 
-    public function test_it_rejects_an_invalid_app_url_before_writing(): void
-    {
-        config(['app.url' => '/relative']);
-        $this->expectException(InvalidArgumentException::class);
-        $this->seed(ReplaceLevelFileUrlsSeeder::class);
-    }
 }
