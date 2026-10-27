@@ -393,6 +393,7 @@ const {
   loading,
   error,
   pagination,
+  currentPage,
   searchTerm,
   execute,
   search,
