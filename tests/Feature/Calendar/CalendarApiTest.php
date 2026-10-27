@@ -678,6 +678,20 @@ class CalendarApiTest extends TestCase
         ]);
     }
 
+    public function test_update_allows_unchanged_legacy_content_over_the_current_limit(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $legacyContent = str_repeat('Legacy event content ', 300);
+        $calendar = Calendar::factory()->create(['content' => $legacyContent]);
+
+        $this->putJson($this->calendarPath($calendar), $this->validUpdatePayload([
+            'content' => $legacyContent,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('data.event.id', $calendar->id);
+    }
+
     public function test_update_sets_ends_at_when_end_date_and_time_provided(): void
     {
         $this->actingAsSuperAdmin();
