@@ -109,14 +109,16 @@ class LevelGiftController extends Controller
 
             $fileUploads = $this->levelGiftUploadService->handleFileUploads($request);
             $storedFiles = array_column($fileUploads, 'path');
-            $previousFbxFiles = is_array($gift->fbx_file) ? $gift->fbx_file : [];
             $replacedFiles = $this->levelGiftUploadService->collectReplacedFilePaths($gift, $fileUploads);
             $validated = $this->levelGiftUploadService->applyUploadedFiles($fileUploads, $validated);
 
             if (array_key_exists('fbx_file', $validated) && is_array($validated['fbx_file'])) {
-                $validated['fbx_file'] = $this->levelGiftUploadService->mergeFbxFileLinks(
-                    $previousFbxFiles,
-                    $validated['fbx_file']
+                $replacedFiles = array_merge(
+                    $replacedFiles,
+                    array_diff(
+                        $this->levelGiftUploadService->collectFbxFilePaths(is_array($gift->fbx_file) ? $gift->fbx_file : []),
+                        $this->levelGiftUploadService->collectFbxFilePaths($validated['fbx_file'])
+                    )
                 );
             } else {
                 unset($validated['fbx_file']);

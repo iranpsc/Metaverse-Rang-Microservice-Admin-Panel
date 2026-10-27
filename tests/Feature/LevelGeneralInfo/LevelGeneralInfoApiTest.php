@@ -581,7 +581,7 @@ class LevelGeneralInfoApiTest extends TestCase
         ]);
     }
 
-    public function test_update_merges_incoming_fbx_files_with_existing(): void
+    public function test_update_replaces_existing_fbx_files(): void
     {
         $this->actingAsSuperAdmin();
         $level = Level::factory()->create();
@@ -601,11 +601,11 @@ class LevelGeneralInfoApiTest extends TestCase
 
         $fbxFile = $response->json('data.general_info.fbx_file');
 
-        $this->assertSame('https://cdn.example.com/old.fbx', $fbxFile['fbx']['url']);
+        $this->assertCount(1, $fbxFile);
         $this->assertSame('https://cdn.example.com/new.glb', $fbxFile['glb']['url']);
     }
 
-    public function test_update_suffixes_conflicting_fbx_keys(): void
+    public function test_update_replaces_conflicting_fbx_keys(): void
     {
         $this->actingAsSuperAdmin();
         $level = Level::factory()->create();
@@ -623,8 +623,8 @@ class LevelGeneralInfoApiTest extends TestCase
 
         $fbxFile = $response->json('data.general_info.fbx_file');
 
-        $this->assertSame('https://cdn.example.com/old.fbx', $fbxFile['fbx']['url']);
-        $this->assertSame('https://cdn.example.com/new.fbx', $fbxFile['fbx_2']['url']);
+        $this->assertCount(1, $fbxFile);
+        $this->assertSame('https://cdn.example.com/new.fbx', $fbxFile['fbx']['url']);
     }
 
     public function test_update_replaces_uploaded_png_and_cleans_previous_file(): void
@@ -666,7 +666,7 @@ class LevelGeneralInfoApiTest extends TestCase
             ->assertJsonPath('message', self::UPDATE_MISSING_MESSAGE);
     }
 
-    public function test_update_rejects_when_merged_fbx_files_exceed_limit(): void
+    public function test_update_replaces_a_full_existing_fbx_set(): void
     {
         $this->actingAsSuperAdmin();
         $level = Level::factory()->create();
@@ -686,12 +686,9 @@ class LevelGeneralInfoApiTest extends TestCase
                 'glb' => 'https://cdn.example.com/extra.glb',
             ]),
         ]))
-            ->assertStatus(422)
-            ->assertJsonPath('success', false)
-            ->assertJsonPath(
-                'message',
-                'حداکثر ۲۰ فایل مدل می‌توانید ذخیره کنید. ابتدا برخی فایل‌های قبلی را حذف کنید.'
-            );
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(1, 'data.general_info.fbx_file');
     }
 
     public function test_update_returns_server_error_when_repository_throws(): void

@@ -109,14 +109,16 @@ class LevelGemController extends Controller
 
             $fileUploads = $this->levelGemUploadService->handleFileUploads($request);
             $storedFiles = array_column($fileUploads, 'path');
-            $previousFbxFiles = is_array($gem->fbx_file) ? $gem->fbx_file : [];
             $replacedFiles = $this->levelGemUploadService->collectReplacedFilePaths($gem, $fileUploads);
             $validated = $this->levelGemUploadService->applyUploadedFiles($fileUploads, $validated);
 
             if (array_key_exists('fbx_file', $validated) && is_array($validated['fbx_file'])) {
-                $validated['fbx_file'] = $this->levelGemUploadService->mergeFbxFileLinks(
-                    $previousFbxFiles,
-                    $validated['fbx_file']
+                $replacedFiles = array_merge(
+                    $replacedFiles,
+                    array_diff(
+                        $this->levelGemUploadService->collectFbxFilePaths(is_array($gem->fbx_file) ? $gem->fbx_file : []),
+                        $this->levelGemUploadService->collectFbxFilePaths($validated['fbx_file'])
+                    )
                 );
             } else {
                 unset($validated['fbx_file']);

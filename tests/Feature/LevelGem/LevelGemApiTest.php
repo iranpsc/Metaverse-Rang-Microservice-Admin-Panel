@@ -645,7 +645,7 @@ class LevelGemApiTest extends TestCase
         Storage::disk('public')->assertExists($this->extractPublicPathFromUrl($newUrl));
     }
 
-    public function test_update_merges_new_fbx_links_without_dropping_existing(): void
+    public function test_update_replaces_existing_fbx_links(): void
     {
         $this->actingAsSuperAdmin();
         $level = Level::factory()->create();
@@ -664,11 +664,11 @@ class LevelGemApiTest extends TestCase
             ]),
         ]))
             ->assertOk()
-            ->assertJsonPath('data.gem.fbx_file.fbx.url', $existingFbx)
+            ->assertJsonCount(1, 'data.gem.fbx_file')
             ->assertJsonPath('data.gem.fbx_file.glb.url', $newGlb);
     }
 
-    public function test_update_assigns_unique_suffix_for_conflicting_fbx_keys(): void
+    public function test_update_replaces_conflicting_fbx_keys(): void
     {
         $this->actingAsSuperAdmin();
         $level = Level::factory()->create();
@@ -688,8 +688,8 @@ class LevelGemApiTest extends TestCase
         ]))->assertOk();
 
         $files = $response->json('data.gem.fbx_file');
-        $this->assertSame($existing, $files['fbx']['url']);
-        $this->assertSame($incoming, $files['fbx_2']['url']);
+        $this->assertCount(1, $files);
+        $this->assertSame($incoming, $files['fbx']['url']);
     }
 
     public function test_update_skips_duplicate_fbx_url(): void
@@ -713,7 +713,7 @@ class LevelGemApiTest extends TestCase
         $this->assertSame($existing, $response->json('data.gem.fbx_file.fbx.url'));
     }
 
-    public function test_update_rejects_when_merged_fbx_files_exceed_limit(): void
+    public function test_update_replaces_a_full_existing_fbx_set(): void
     {
         $this->actingAsSuperAdmin();
         $level = Level::factory()->create();
@@ -734,9 +734,9 @@ class LevelGemApiTest extends TestCase
                 'glb' => url('uploads/levels/overflow.glb'),
             ]),
         ]))
-            ->assertStatus(422)
-            ->assertJsonPath('success', false)
-            ->assertJsonPath('message', self::MERGE_LIMIT_MESSAGE);
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonCount(1, 'data.gem.fbx_file');
     }
 
     public function test_update_without_fbx_file_preserves_existing_map(): void
