@@ -627,6 +627,63 @@ class LevelsControllerTest extends TestCase
         Storage::disk('public')->assertExists($newImagePath);
     }
 
+    public function test_update_only_deletes_unique_non_null_images_for_the_target_level(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $level = Level::factory()->create();
+        $oldPath = 'levels/shared-old.png';
+        $unrelatedPath = 'levels/unrelated.png';
+
+        foreach ([Level::class, 'App\\Models\\Levels\\Level'] as $imageableType) {
+            $image = new Image(['url' => $oldPath]);
+            $image->imageable_type = $imageableType;
+            $image->imageable_id = $level->id;
+            $image->save();
+        }
+
+        $emptyImage = new Image(['url' => '']);
+        $emptyImage->imageable_type = Level::class;
+        $emptyImage->imageable_id = $level->id;
+        $emptyImage->save();
+
+        $unrelatedImage = new Image(['url' => $unrelatedPath]);
+        $unrelatedImage->imageable_type = 'App\\Models\\Other\\Model';
+        $unrelatedImage->imageable_id = $level->id;
+        $unrelatedImage->save();
+
+        Storage::disk('public')->put($oldPath, 'old-image');
+        Storage::disk('public')->put($unrelatedPath, 'unrelated-image');
+
+        $response = $this->post($this->levelPath($level), array_merge(
+            $this->validUpdatePayload(),
+            [
+                '_method' => 'PUT',
+                'image' => UploadedFile::fake()->image('replacement.png'),
+            ]
+        ), ['Accept' => 'application/json'])->assertOk();
+
+        $replacementPath = $response->json('data.level.image.url');
+
+        $this->assertDatabaseMissing('images', [
+            'imageable_id' => $level->id,
+            'url' => $oldPath,
+        ]);
+        $this->assertDatabaseHas('images', [
+            'imageable_type' => 'App\\Models\\Other\\Model',
+            'imageable_id' => $level->id,
+            'url' => $unrelatedPath,
+        ]);
+        $this->assertDatabaseHas('images', [
+            'imageable_type' => Level::class,
+            'imageable_id' => $level->id,
+            'url' => $replacementPath,
+        ]);
+        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('public')->assertExists($unrelatedPath);
+        Storage::disk('public')->assertExists($replacementPath);
+    }
+
     public function test_update_creates_morph_image_when_none_existed(): void
     {
         $this->actingAsSuperAdmin();
