@@ -1,11 +1,11 @@
 name: Instant Semantic Release
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
 
-# جلوگیری از تداخل در صورت مرج همزمان چند PR
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
@@ -19,8 +19,6 @@ jobs:
   release:
     name: Calculate Version & Publish Release
     runs-on: ubuntu-latest
-    # جلوگیری از اجرای حلقه بی‌نهایت زمانی که خود ربات فایل CHANGELOG را کامیت می‌کند
-    if: "!contains(github.event.head_commit.message, 'chore(release):')"
     steps:
       - name: Checkout Repository (Full History & Tags)
         uses: actions/checkout@v4
@@ -29,29 +27,19 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Normalize Legacy Tags & Check Initial Version
-        id: tag_check
         run: |
-          # حذف تگ‌های غیراستاندارد مثل backUp از حافظه موقت لوکال رانر تا پارسر SemVer خطا ندهد
           for tag in $(git tag); do
             if ! [[ "$tag" =~ ^[vV]?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
               git tag -d "$tag" || true
             fi
           done
 
-          # بررسی وجود تگ معتبر؛ اگر مخزن هیچ نسخه‌ای ندارد، پایه را روی v1.0.0 تنظیم می‌کند
-          LATEST_TAG=$(git tag -l --sort=-v:refname | head -n 1)
-          if [ -z "$LATEST_TAG" ]; then
-            echo "No prior SemVer tag found. Starting at v1.0.0 on first release."
-          else
-            echo "Continuing from existing tag: $LATEST_TAG"
-          fi
-
-      - name: Setup Node.js Runtime for Release Engine
+      - name: Setup Node.js Runtime
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Run Universal Semantic Release
+      - name: Run Universal Semantic Release (API Mode - Bypass Branch Lock)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -69,12 +57,7 @@ jobs:
                     { "type": "fix", "release": "patch" },
                     { "type": "perf", "release": "patch" },
                     { "type": "refactor", "release": "patch" },
-                    { "breaking": true, "release": "major" },
-                    { "type": "docs", "release": false },
-                    { "type": "chore", "release": false },
-                    { "type": "ci", "release": false },
-                    { "type": "test", "release": false },
-                    { "type": "style", "release": false }
+                    { "breaking": true, "release": "major" }
                   ]
                 }
               ],
@@ -85,25 +68,12 @@ jobs:
                 }
               ],
               [
-                "@semantic-release/changelog",
+                "@semantic-release/github",
                 {
-                  "changelogFile": "CHANGELOG.md"
+                  "successComment": "🎉 This issue/PR has been resolved and published in release **${nextRelease.gitTag}** 🎉",
+                  "releasedLabels": ["released", "qa: passed"]
                 }
-              ],
-              [
-                "@semantic-release/exec",
-                {
-                  "prepareCmd": "echo '${nextRelease.version}' > VERSION && if [ -f package.json ]; then npm version ${nextRelease.version} --no-git-tag-version --allow-same-version; fi && if [ -f ProjectSettings/ProjectVersion.txt ]; then sed -i 's/m_EditorVersion:.*/m_Version: ${nextRelease.version}/g' ProjectSettings/ProjectVersion.txt || true; fi"
-                }
-              ],
-              [
-                "@semantic-release/git",
-                {
-                  "assets": ["CHANGELOG.md", "VERSION", "package.json", "package-lock.json", "composer.json"],
-                  "message": "chore(release): v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
-                }
-              ],
-              "@semantic-release/github"
+              ]
             ]
           }
           EOF
@@ -111,9 +81,6 @@ jobs:
           npx --yes -p semantic-release@23 \
             -p @semantic-release/commit-analyzer@12 \
             -p @semantic-release/release-notes-generator@13 \
-            -p @semantic-release/changelog@6 \
-            -p @semantic-release/exec@6 \
-            -p @semantic-release/git@10 \
             -p @semantic-release/github@10 \
             -p conventional-changelog-conventionalcommits@7 \
             semantic-release
