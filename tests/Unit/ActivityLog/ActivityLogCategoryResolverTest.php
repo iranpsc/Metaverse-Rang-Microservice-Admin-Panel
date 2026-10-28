@@ -83,4 +83,23 @@ class ActivityLogCategoryResolverTest extends TestCase
             ActivityLogCategoryResolver::resolveForModel(new FeaturePricingLimit)
         );
     }
+
+    public function test_resolve_for_model_handles_versioned_calendars_and_level_images(): void
+    {
+        $this->assertSame('versions', ActivityLogCategoryResolver::resolveForModel(
+            new \App\Models\Calendar(['is_version' => true])
+        ));
+
+        $image = new \App\Models\Image;
+        $image->setRelation('imageable', new \App\Models\Level\Level);
+
+        $this->assertSame('levels', ActivityLogCategoryResolver::resolveForModel($image));
+        $this->assertSame('translations', ActivityLogCategoryResolver::resolveForModel(
+            new TranslationProbe
+        ));
+    }
+}
+
+class TranslationProbe extends \Illuminate\Database\Eloquent\Model
+{
 }

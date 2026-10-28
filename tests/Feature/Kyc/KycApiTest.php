@@ -6,8 +6,10 @@ use App\Models\Kyc;
 use App\Models\KycVerifyText;
 use App\Models\User;
 use App\Notifications\KycDeniedNotification;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Morilog\Jalali\Jalalian;
 use Tests\Concerns\ActsAsSuperAdmin;
@@ -445,6 +447,37 @@ class KycApiTest extends TestCase
             );
     }
 
+    public function test_show_resolves_admin_who_rejected_kyc_from_activity_log(): void
+    {
+        $admin = $this->actingAsSuperAdmin();
+        $this->createActivityLogTableIfMissing();
+
+        $user = $this->createUser();
+        $kyc = $this->createKyc($user, ['status' => -1]);
+
+        $this->insertKycActivity($kyc, $admin, ['status' => -1]);
+
+        $this->getJson($this->kycPath($kyc))
+            ->assertOk()
+            ->assertJsonPath('data.rejected_by.id', $admin->id)
+            ->assertJsonPath('data.rejected_by.name', $admin->name);
+    }
+
+    public function test_show_returns_null_rejected_by_when_rejection_has_no_causer(): void
+    {
+        $this->actingAsSuperAdmin();
+        $this->createActivityLogTableIfMissing();
+
+        $user = $this->createUser();
+        $kyc = $this->createKyc($user, ['status' => -1]);
+
+        $this->insertKycActivity($kyc, null, ['status' => -1]);
+
+        $this->getJson($this->kycPath($kyc))
+            ->assertOk()
+            ->assertJsonPath('data.rejected_by', null);
+    }
+
     // -------------------------------------------------------------------------
     // Update
     // -------------------------------------------------------------------------
@@ -644,5 +677,41 @@ class KycApiTest extends TestCase
             'errors' => null,
             'verify_text_id' => null,
         ], $overrides));
+    }
+
+    private function createActivityLogTableIfMissing(): void
+    {
+        if (Schema::hasTable('activity_log')) {
+            return;
+        }
+
+        Schema::create('activity_log', function (Blueprint $table): void {
+            $table->id();
+            $table->string('log_name')->nullable();
+            $table->text('description')->nullable();
+            $table->string('subject_type')->nullable();
+            $table->unsignedBigInteger('subject_id')->nullable();
+            $table->string('causer_type')->nullable();
+            $table->unsignedBigInteger('causer_id')->nullable();
+            $table->string('event')->nullable();
+            $table->json('properties')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    private function insertKycActivity(Kyc $kyc, ?object $causer, array $attributes): void
+    {
+        \Illuminate\Support\Facades\DB::table('activity_log')->insert([
+            'log_name' => 'default',
+            'description' => 'KYC updated',
+            'subject_type' => $kyc->getMorphClass(),
+            'subject_id' => $kyc->id,
+            'causer_type' => $causer ? $causer::class : null,
+            'causer_id' => $causer?->id,
+            'event' => 'updated',
+            'properties' => json_encode(['attributes' => $attributes], JSON_THROW_ON_ERROR),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 }

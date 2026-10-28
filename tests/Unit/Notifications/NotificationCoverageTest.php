@@ -5,6 +5,7 @@ namespace Tests\Unit\Notifications;
 use App\Notifications\AccountCreatedNotification;
 use App\Notifications\KycDeniedNotification;
 use App\Notifications\TicketResponded;
+use App\Notifications\SendVerificationCode;
 use Illuminate\Notifications\Messages\MailMessage;
 use Kavenegar\Laravel\Message\KavenegarMessage;
 use Tests\TestCase;
@@ -43,5 +44,13 @@ class NotificationCoverageTest extends TestCase
         $this->assertSame(['database'], $notification->via((object) []));
         $this->assertInstanceOf(MailMessage::class, $notification->toMail((object) []));
         $this->assertSame(['message' => 'Ticket reply body'], $notification->toArray((object) []));
+    }
+
+    public function test_verification_code_notification_builds_kavenegar_message(): void
+    {
+        $notification = new SendVerificationCode;
+
+        $this->assertSame(['kavenegar'], $notification->via((object) []));
+        $this->assertInstanceOf(KavenegarMessage::class, $notification->toKavenegar((object) []));
     }
 }

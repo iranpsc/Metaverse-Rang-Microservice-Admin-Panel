@@ -168,4 +168,46 @@ class LevelGemUploadServiceTest extends TestCase
         $this->assertArrayHasKey('png_3', $merged);
         $this->assertSame('https://cdn.example/3.png', $merged['png_3']['url']);
     }
+
+    public function test_normalize_fbx_file_entry_handles_strings_and_empty_values(): void
+    {
+        $this->assertSame([
+            'type' => 'fbx',
+            'size' => '0',
+            'url' => 'https://cdn.example/model.fbx',
+        ], $this->service->normalizeFbxFileEntry(' https://cdn.example/model.fbx '));
+
+        $this->assertSame('png', $this->service->normalizeFbxFileEntry(
+            'https://cdn.example/model',
+            'png_2'
+        )['type']);
+
+        $this->assertNull($this->service->normalizeFbxFileEntry('   '));
+        $this->assertNull($this->service->normalizeFbxFileEntry(123));
+        $this->assertNull($this->service->normalizeFbxFileEntry(['url' => '']));
+    }
+
+    public function test_normalize_fbx_file_entry_normalizes_type_and_size_variants(): void
+    {
+        $this->assertSame('png', $this->service->normalizeFbxFileEntry([
+            'url' => 'https://cdn.example/model.png',
+            'type' => ' PNG ',
+            'size' => 12.9,
+        ])['type']);
+        $this->assertSame('12', $this->service->normalizeFbxFileEntry([
+            'url' => 'https://cdn.example/model.png',
+            'size' => 12.9,
+        ])['size']);
+        $this->assertSame('0', $this->service->normalizeFbxFileEntry([
+            'url' => 'https://cdn.example/model.png',
+            'size' => ['invalid'],
+        ])['size']);
+        $this->assertSame('0', $this->service->normalizeFbxFileEntry([
+            'url' => 'https://cdn.example/model.png',
+            'size' => '   ',
+        ])['size']);
+        $this->assertSame('obj', $this->service->normalizeFbxFileEntry([
+            'url' => 'https://cdn.example/model',
+        ], 'obj_3')['type']);
+    }
 }

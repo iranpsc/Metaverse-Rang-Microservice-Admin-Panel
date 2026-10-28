@@ -376,6 +376,24 @@ class LevelGemApiTest extends TestCase
             ->assertJsonPath('message', self::STORE_ERROR_MESSAGE);
     }
 
+    public function test_store_returns_validation_error_when_upload_service_rejects_fbx_files(): void
+    {
+        $this->actingAsSuperAdmin();
+        $level = Level::factory()->create();
+
+        $this->partialMock(\App\Services\Level\LevelGemUploadService::class, function ($mock): void {
+            $mock->shouldReceive('validateFbxFileExtensions')->once()
+                ->andThrow(new \InvalidArgumentException('invalid fbx map'));
+        });
+
+        $this->postJson($this->gemPath($level), $this->validStorePayload([
+            'fbx_file' => $this->fbxFileMap(['png' => 'https://cdn.example.com/model.png']),
+        ]))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'invalid fbx map');
+    }
+
     // -------------------------------------------------------------------------
     // Store validation
     // -------------------------------------------------------------------------
@@ -776,6 +794,25 @@ class LevelGemApiTest extends TestCase
             ->assertStatus(500)
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', self::UPDATE_ERROR_MESSAGE);
+    }
+
+    public function test_update_returns_validation_error_when_upload_service_rejects_fbx_files(): void
+    {
+        $this->actingAsSuperAdmin();
+        $level = Level::factory()->create();
+        $this->createGem($level);
+
+        $this->partialMock(\App\Services\Level\LevelGemUploadService::class, function ($mock): void {
+            $mock->shouldReceive('validateFbxFileExtensions')->once()
+                ->andThrow(new \InvalidArgumentException('invalid fbx update'));
+        });
+
+        $this->putJson($this->gemPath($level), $this->validStorePayload([
+            'fbx_file' => $this->fbxFileMap(['png' => 'https://cdn.example.com/model.png']),
+        ]))
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('message', 'invalid fbx update');
     }
 
     public function test_update_requires_validation_same_as_store(): void
