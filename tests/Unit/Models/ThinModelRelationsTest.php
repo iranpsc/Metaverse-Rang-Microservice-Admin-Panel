@@ -23,7 +23,7 @@ use Tests\TestCase;
 class ThinModelRelationsTest extends TestCase
 {
     /**
-     * @return array<string, array{object, list<string>}> 
+     * @return array<string, array{object, list<string>}>
      */
     public static function relationCases(): array
     {
