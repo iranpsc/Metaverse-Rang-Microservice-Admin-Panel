@@ -19,14 +19,7 @@ if [ ! -f database/database.sqlite ]; then
     touch database/database.sqlite
 fi
 
-# Install Composer deps only when missing (dev bind-mount case).
-# Skip timestamp-based reinstalls so startup is not blocked on Packagist.
-if [ "${COMPOSER_SKIP_INSTALL:-0}" != "1" ] && [ ! -f vendor/autoload.php ] && [ -f composer.json ]; then
-    composer install --no-interaction --prefer-dist --optimize-autoloader
-fi
-
-# Named volumes / host bind-mounts can retain stale package caches from --dev installs.
-# Always rediscover so providers match the vendor tree in this container.
+# Always rediscover so providers match the baked vendor tree in this container.
 rm -f bootstrap/cache/packages.php bootstrap/cache/services.php bootstrap/cache/config.php bootstrap/cache/routes*.php
 php artisan package:discover --ansi --no-interaction
 

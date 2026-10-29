@@ -58,6 +58,7 @@ x-php-environment: &php-environment
   SESSION_DRIVER: ${SESSION_DRIVER:-redis}
   QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
   QUEUE_FAILED_DRIVER: ${QUEUE_FAILED_DRIVER:-database-uuids}
+  RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
   REDIS_HOST: ${REDIS_HOST:-redis}
   REDIS_PORT: ${REDIS_PORT:-6379}
   FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
@@ -76,6 +77,11 @@ x-app-common: &app-common
   environment:
     <<: *php-environment
   init: true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
   networks:
     - admin-panel-private
     - metarang-shared
@@ -89,11 +95,13 @@ services:
       args:
         GITHUB_TOKEN: ${GITHUB_TOKEN:-}
         PHP_INI_FILE: production.ini
-    pull_policy: build
     ports:
       - "${APP_PORT:-8088}:8080"
     environment:
       <<: *php-environment
+      # Run Laravel migrations on every app container start/restart.
+      # The entrypoint waits for the external MySQL service before executing them.
+      RUN_MIGRATIONS: "1"
       PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
     command:
       - sh
@@ -112,30 +120,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-
-  # One-shot Vite build against the bind-mounted tree (profile: dev).
-  # Uses a repo-relative path — only for local profile:dev, not Dokploy AutoDeploy.
-  node:
-    image: node:22-alpine
-    pull_policy: if_not_present
-    restart: "no"
-    working_dir: /var/www/html
-    volumes:
-      - type: bind
-        source: ${HOST_APP_PATH:-.}
-        target: /var/www/html
-        consistency: cached
-      - type: volume
-        source: node-modules
-        target: /var/www/html/node_modules
-      - type: volume
-        source: npm-cache
-        target: /root/.npm
-    command: ["sh", "docker/scripts/build-assets.sh"]
-    profiles:
-      - dev
-    networks:
-      - admin-panel-private
 
   redis:
     image: redis:7-alpine
@@ -190,6 +174,4 @@ networks:
     driver: bridge
 
 volumes:
-  node-modules:
-  npm-cache:
   redis-data:
