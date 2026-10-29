@@ -18,6 +18,8 @@ class LevelsController extends Controller
 {
     private const LEGACY_LEVEL_MODEL = 'App\\Models\\Levels\\Level';
 
+    private const MALFORMED_LEGACY_LEVEL_MODEL = 'App//Models//Levels//Level';
+
     /**
      * Display a listing of the levels.
      */
@@ -256,6 +258,7 @@ class LevelsController extends Controller
             ->whereIn('imageable_type', [
                 Level::class,
                 self::LEGACY_LEVEL_MODEL,
+                self::MALFORMED_LEGACY_LEVEL_MODEL,
             ]);
     }
 }

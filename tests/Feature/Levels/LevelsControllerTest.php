@@ -627,6 +627,36 @@ class LevelsControllerTest extends TestCase
         Storage::disk('public')->assertExists($newImagePath);
     }
 
+    public function test_update_replaces_image_with_doubled_slash_legacy_type(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $level = Level::factory()->create();
+        $legacyType = 'App//Models//Levels//Level';
+        $legacyImage = new Image(['url' => 'levels/doubled-slash-old.png']);
+        $legacyImage->imageable_type = $legacyType;
+        $legacyImage->imageable_id = $level->id;
+        $legacyImage->save();
+        Storage::disk('public')->put('levels/doubled-slash-old.png', 'legacy-old');
+
+        $response = $this->post($this->levelPath($level), array_merge(
+            $this->validUpdatePayload(),
+            [
+                '_method' => 'PUT',
+                'image' => UploadedFile::fake()->image('replacement.png'),
+            ]
+        ), ['Accept' => 'application/json'])->assertOk();
+
+        $newImagePath = $response->json('data.level.image.url');
+
+        $this->assertDatabaseMissing('images', [
+            'imageable_type' => $legacyType,
+            'imageable_id' => $level->id,
+        ]);
+        Storage::disk('public')->assertMissing('levels/doubled-slash-old.png');
+        Storage::disk('public')->assertExists($newImagePath);
+    }
+
     public function test_update_only_deletes_unique_non_null_images_for_the_target_level(): void
     {
         $this->actingAsSuperAdmin();
