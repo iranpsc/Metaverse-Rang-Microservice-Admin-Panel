@@ -39,7 +39,10 @@ class LandOwnerTransferService
         DB::transaction(function () use ($feature, $newOwnerId) {
             $newOwner = User::findOrFail($newOwnerId);
             $feature->update(['owner_id' => $newOwnerId]);
-            $feature->properties->update(['owner' => $newOwner->name]);
+            $feature->properties->update([
+                'owner' => $newOwner->name,
+                'rgb' => $this->getSoldAndNotPricedRgb($feature->properties->karbari),
+            ]);
             $psc_amount = $irr_amount = 0;
             $date = now()->toDateString();
 
@@ -50,6 +53,7 @@ class LandOwnerTransferService
                 'psc_amount' => $psc_amount,
                 'irr_amount' => $irr_amount,
                 'date' => $date,
+                'type' => 'gift',
             ]);
 
             FeatureHourlyProfit::create([
@@ -63,9 +67,6 @@ class LandOwnerTransferService
 
     /**
      * Get the asset type based on the karbari.
-     *
-     * @param string $karbari
-     * @return string
      */
     private function getAssetType(string $karbari): string
     {
@@ -74,6 +75,16 @@ class LandOwnerTransferService
             'a' => 'blue',
             't' => 'red',
             'default' => 'unknown',
+        };
+    }
+
+    private function getSoldAndNotPricedRgb(string $karbari): string
+    {
+        return match ($karbari) {
+            'm' => 'b',
+            't' => 'i',
+            'a' => 'p',
+            default => '',
         };
     }
 

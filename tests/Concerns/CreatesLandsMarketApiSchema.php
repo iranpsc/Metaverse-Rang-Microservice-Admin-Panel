@@ -33,6 +33,7 @@ trait CreatesLandsMarketApiSchema
             $table->unsignedBigInteger('buyer_id');
             $table->unsignedBigInteger('seller_id');
             $table->date('date')->nullable();
+            $table->string('type')->default('land');
             $table->timestamps();
         });
     }

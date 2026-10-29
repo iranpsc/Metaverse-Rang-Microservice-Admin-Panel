@@ -18,6 +18,7 @@ class Trade extends Model
         'psc_amount',
         'irr_amount',
         'date',
+        'type',
     ];
 
     public function feature()

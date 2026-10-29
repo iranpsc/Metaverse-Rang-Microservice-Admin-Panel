@@ -126,6 +126,7 @@ trait CreatesLandsApiSchema
             $table->decimal('psc_amount', 16, 4);
             $table->decimal('irr_amount', 16, 4);
             $table->date('date');
+            $table->string('type')->default('land');
             $table->timestamps();
         });
     }
@@ -147,6 +148,7 @@ trait CreatesLandsApiSchema
             $table->timestamps();
         });
     }
+
     protected function seedSystemUser(): User
     {
         $existing = User::query()->find(1);

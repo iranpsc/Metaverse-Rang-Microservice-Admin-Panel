@@ -163,6 +163,13 @@ class LandOwnerTransferServiceTest extends TestCase
             'feature_id' => $feature->id,
             'id' => 'SVC-TRANSFER-001',
             'owner' => 'New Service Owner',
+            'rgb' => 'b',
+        ]);
+        $this->assertDatabaseHas('trades', [
+            'feature_id' => $feature->id,
+            'buyer_id' => $newOwner->id,
+            'seller_id' => 1,
+            'type' => 'gift',
         ]);
     }
 
