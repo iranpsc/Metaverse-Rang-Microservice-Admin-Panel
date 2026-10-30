@@ -1,5 +1,0 @@
-simulation: content-webhooks
-routing: path
-mocks:
-  - routeKey: nextjs
-    path: ../mocks/nextjs-webhook/default.js
