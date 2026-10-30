@@ -142,6 +142,10 @@ services:
     <<: *app-common
     # Reuse the image built by `app` (same tag); do not pull a registry image by this name.
     pull_policy: never
+    # Migrations are owned by the app container; avoid concurrent migration attempts.
+    environment:
+      <<: *php-environment
+      RUN_MIGRATIONS: "0"
     # Use default QUEUE_CONNECTION (redis). --max-time recycles the worker hourly; restart policy brings it back.
     command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600", "--timeout=90"]
     stop_grace_period: 60s
@@ -154,6 +158,10 @@ services:
   scheduler:
     <<: *app-common
     pull_policy: never
+    # Migrations are owned by the app container; avoid concurrent migration attempts.
+    environment:
+      <<: *php-environment
+      RUN_MIGRATIONS: "0"
     # schedule:work keeps a single long-lived process (better signal handling than sleep loops).
     # Redis is required for schedule mutexes when CACHE_STORE=redis.
     command: ["php", "artisan", "schedule:work", "--verbose", "--no-interaction"]

@@ -178,11 +178,12 @@ Production Redis is **not** published to the host; it is reachable only on the i
 ### 6. Deploy
 
 1. Trigger **Deploy** in Dokploy (builds `docker/php/Dockerfile` with context `.`).
-2. Wait until logs show: `Server running on [http://0.0.0.0:8080]`.
-3. Run migrations only if this environment's Laravel `migrations` table matches this app. The microservices `metarang_db` already contains the shared schema — a blind `migrate --force` can alter Go-owned tables.
+2. The `app` container waits for MySQL and runs `php artisan migrate --force` automatically before starting Laravel. The `queue` and `scheduler` containers explicitly skip migrations to avoid concurrent migration attempts.
+3. Wait until logs show: `Server running on [http://0.0.0.0:8080]`.
+4. Automatic migrations are appropriate only if this environment's Laravel `migrations` table matches this app. The microservices `metarang_db` already contains the shared schema — a blind migration can alter Go-owned tables.
 
 ```bash
-# Translation SQLite schema (skip if you already copied a populated database.sqlite)
+# Translation SQLite schema, if needed (skip if you already copied a populated database.sqlite)
 docker compose exec app php artisan migrate --database=sqlite --force
 ```
 
