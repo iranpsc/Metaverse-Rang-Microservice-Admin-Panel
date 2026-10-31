@@ -7,6 +7,7 @@ use App\Models\Feature;
 use App\Models\FeatureLimit;
 use App\Models\FeatureHourlyProfit;
 use App\Models\Geometry;
+use App\Models\Image;
 use App\Models\Map;
 use App\Models\Option;
 use App\Models\SellFeatureRequest;
@@ -112,5 +113,18 @@ class ThinModelRelationsTest extends TestCase
         $this->expectException(\Error::class);
 
         (new Map)->crs();
+    }
+
+    public function test_image_relation_normalizes_legacy_level_morph_type(): void
+    {
+        $this->expectException(\Error::class);
+
+        $image = new Image(['imageable_id' => 123]);
+        $image->setRawAttributes([
+            'imageable_type' => 'App\\Models\\Levels\\Level',
+            'imageable_id' => 123,
+        ]);
+
+        $image->imageable();
     }
 }
