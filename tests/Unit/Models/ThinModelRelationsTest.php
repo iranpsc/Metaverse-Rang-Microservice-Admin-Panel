@@ -133,13 +133,17 @@ class ThinModelRelationsTest extends TestCase
 
     public function test_video_slug_is_regenerated_when_already_taken(): void
     {
-        Schema::create('videos', function (Blueprint $table): void {
-            $table->id();
-            $table->string('slug')->nullable();
-            $table->timestamps();
-        });
+        $originalDatabase = config('database.connections.sqlite.database');
+        config(['database.connections.sqlite.database' => ':memory:']);
+        DB::purge('sqlite');
 
         try {
+            Schema::connection('sqlite')->create('videos', function (Blueprint $table): void {
+                $table->id();
+                $table->string('slug')->nullable();
+                $table->timestamps();
+            });
+
             DB::table('videos')->insert(['slug' => 'taken']);
             $video = new Video;
             $video->slug = 'taken';
@@ -147,7 +151,9 @@ class ThinModelRelationsTest extends TestCase
             $this->assertNotSame('taken', $video->slug);
             $this->assertSame(15, strlen($video->slug));
         } finally {
-            Schema::dropIfExists('videos');
+            Schema::connection('sqlite')->dropIfExists('videos');
+            DB::purge('sqlite');
+            config(['database.connections.sqlite.database' => $originalDatabase]);
         }
     }
 }
