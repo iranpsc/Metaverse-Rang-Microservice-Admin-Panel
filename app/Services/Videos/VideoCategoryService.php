@@ -3,6 +3,7 @@
 namespace App\Services\Videos;
 
 use App\Models\VideoCategory;
+use App\Services\ContentWebhooks\DeletionContext;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -81,6 +82,7 @@ class VideoCategoryService
      */
     public function delete(VideoCategory $category): void
     {
+        app(DeletionContext::class)->remember($category);
         // Delete files if they exist.
         if (! empty($category->image)) {
             Storage::disk('public')->delete($category->image);

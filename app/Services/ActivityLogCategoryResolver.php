@@ -27,6 +27,7 @@ use App\Models\Kyc;
 use App\Models\KycError;
 use App\Models\KycVerifyText;
 use App\Models\Land;
+use App\Models\Level\Level;
 use App\Models\Like;
 use App\Models\LockedAsset;
 use App\Models\Map;
@@ -166,6 +167,16 @@ class ActivityLogCategoryResolver
         }
 
         $class = $model::class;
+
+        if ($model instanceof Calendar && $model->is_version) {
+            return 'versions';
+        }
+        if (str_starts_with($class, 'App\\Models\\Translations\\')) {
+            return 'translations';
+        }
+        if ($model instanceof Image && $model->imageable instanceof Level) {
+            return 'levels';
+        }
 
         if (isset(self::$modelMap[$class])) {
             return self::$modelMap[$class];

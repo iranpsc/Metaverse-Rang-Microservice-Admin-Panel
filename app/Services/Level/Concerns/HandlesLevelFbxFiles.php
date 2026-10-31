@@ -189,6 +189,34 @@ trait HandlesLevelFbxFiles
     }
 
     /**
+     * Return only paths which are stored on this application's public disk.
+     *
+     * @param  array<string, mixed>  $files
+     * @return list<string>
+     */
+    public function collectFbxFilePaths(array $files): array
+    {
+        $paths = [];
+        $publicUploadsUrl = rtrim(url('uploads'), '/');
+
+        foreach ($files as $entry) {
+            $url = $this->extractFbxFileUrl($entry);
+
+            if (! $url || (filter_var($url, FILTER_VALIDATE_URL) && ! str_starts_with($url, $publicUploadsUrl))) {
+                continue;
+            }
+
+            $path = $url ? $this->extractStoragePath($url) : null;
+
+            if ($path) {
+                $paths[] = $path;
+            }
+        }
+
+        return array_values(array_unique($paths));
+    }
+
+    /**
      * @param  array<string, array{type: string, size: string, url: string}>  $map
      */
     private function fbxFileMapContainsUrl(array $map, string $url): bool

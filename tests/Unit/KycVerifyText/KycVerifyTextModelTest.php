@@ -39,6 +39,14 @@ class KycVerifyTextModelTest extends TestCase
         $this->assertSame('kyc_verify_texts', $videoText->getTable());
     }
 
+    public function test_kycs_relation_is_has_many(): void
+    {
+        $relation = (new KycVerifyText)->kycs();
+
+        $this->assertSame('kycs', $relation->getRelated()->getTable());
+        $this->assertSame('verify_text_id', $relation->getForeignKeyName());
+    }
+
     public function test_mass_assignment_allows_text_field(): void
     {
         $videoText = KycVerifyText::create([

@@ -1,13 +1,15 @@
 # Docker
 
-Two Compose files:
+The project uses one Compose file for the production image and local smoke
+tests:
 
 | File | Purpose |
 | --- | --- |
 | `docker-compose.yml` | Production (Dokploy / local smoke test) |
-| `docker-compose.dev.yaml` | Local development (MySQL, Redis, Mailpit, Vite HMR) |
 
-Both build `docker/php/Dockerfile` with **context at the project root** (where `artisan` lives).
+It builds `docker/php/Dockerfile` with **context at the project root** (where
+`artisan` lives). Frontend assets are built in the image's Node build stage;
+there is no separate Node service or development override file.
 
 Base images are pulled from **Docker Hub**: `php:8.4-fpm-bookworm`, `composer:2`, `node:22-alpine`, `redis:7-alpine`, `mysql:8.0`, `axllent/mailpit:v1.21`.
 
@@ -177,11 +179,12 @@ Production Redis is **not** published to the host; it is reachable only on the i
 ### 6. Deploy
 
 1. Trigger **Deploy** in Dokploy (builds `docker/php/Dockerfile` with context `.`).
-2. Wait until logs show: `Server running on [http://0.0.0.0:8080]`.
-3. Run migrations only if this environment's Laravel `migrations` table matches this app. The microservices `metarang_db` already contains the shared schema — a blind `migrate --force` can alter Go-owned tables.
+2. The `app` container waits for MySQL and runs `php artisan migrate --force` automatically before starting Laravel. The `queue` and `scheduler` containers explicitly skip migrations to avoid concurrent migration attempts.
+3. Wait until logs show: `Server running on [http://0.0.0.0:8080]`.
+4. Automatic migrations are appropriate only if this environment's Laravel `migrations` table matches this app. The microservices `metarang_db` already contains the shared schema — a blind migration can alter Go-owned tables.
 
 ```bash
-# Translation SQLite schema (skip if you already copied a populated database.sqlite)
+# Translation SQLite schema, if needed (skip if you already copied a populated database.sqlite)
 docker compose exec app php artisan migrate --database=sqlite --force
 ```
 
@@ -215,46 +218,17 @@ curl -I https://your-domain.example
 | Bootstrap cache | Entrypoint clears stale `bootstrap/cache/*.php` on startup |
 | `artisan serve` | Fine for small deployments; for heavy traffic prefer php-fpm + nginx later |
 
-## Local development
+## Local smoke test
 
-Use **`docker-compose.dev.yaml`**. It bind-mounts the project tree, runs MySQL/Redis/Mailpit, and starts Vite on port 5173. Builds with `PHP_INI_FILE=local.ini`.
-
-```bash
-docker compose -f docker-compose.dev.yaml up -d --build
-```
-
-Default URLs:
-
-| Service | URL |
-| --- | --- |
-| App | http://localhost:8080 |
-| Vite | http://localhost:5173 |
-| Mailpit UI | http://localhost:8025 |
-
-Stop the stack:
+The same production image is used locally. Ensure the shared microservice
+networks exist and that MySQL is reachable as `metarang-mysql`, then set
+`HOST_STORAGE_PATH=./storage` and `HOST_DATABASE_PATH=./database` in `.env`.
 
 ```bash
-docker compose -f docker-compose.dev.yaml down
+docker compose build app
+docker compose up -d
+curl -I http://127.0.0.1:8088/
 ```
 
-On Windows bind mounts, the first app health check can take 1–3 minutes; the compose file uses an extended `start_period` for this.
-
-### Production compose with live source (optional)
-
-To bind-mount source on **`docker-compose.yml`** and run a one-shot Vite build instead of the dev stack:
-
-```env
-HOST_STORAGE_PATH=.
-HOST_STORAGE_TARGET=/var/www/html
-HOST_DATABASE_PATH=./database
-HOST_APP_PATH=.
-COMPOSE_PROFILES=dev
-```
-
-```bash
-docker network create dokploy-network   # if missing locally
-docker network create metarang-shared   # if missing locally
-docker compose up -d --build
-```
-
-This live-source mode is for **local** use only — never use `./` repo binds on Dokploy AutoDeploy.
+This keeps local and Dokploy behavior aligned while avoiding a second
+development image and a host-mounted source tree.

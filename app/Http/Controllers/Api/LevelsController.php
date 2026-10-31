@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Level\StoreLevelRequest;
 use App\Http\Requests\Level\UpdateLevelRequest;
 use App\Http\Resources\Level\LevelResource;
+use App\Models\Image;
 use App\Models\Level\Level;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,10 @@ use Throwable;
 
 class LevelsController extends Controller
 {
+    private const LEGACY_LEVEL_MODEL = 'App\\Models\\Levels\\Level';
+
+    private const MALFORMED_LEGACY_LEVEL_MODEL = 'App//Models//Levels//Level';
+
     /**
      * Display a listing of the levels.
      */
@@ -115,9 +120,9 @@ class LevelsController extends Controller
     {
         $newBackgroundPath = null;
         $newImagePath = null;
+        $oldImagePaths = [];
 
         $oldBackgroundPath = $this->extractStoragePath($level->background_image);
-        $oldImagePath = $level->image?->url;
 
         try {
             DB::beginTransaction();
@@ -139,13 +144,18 @@ class LevelsController extends Controller
             ]);
 
             if ($request->hasFile('image')) {
+                $oldImageRecords = $this->levelImageRecords($level)->get();
+                $oldImagePaths = $oldImageRecords
+                    ->pluck('url')
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->all();
+
                 $newImagePath = $request->file('image')->store('levels', 'public');
 
-                if ($level->image) {
-                    $level->image->update(['url' => $newImagePath]);
-                } else {
-                    $level->image()->create(['url' => $newImagePath]);
-                }
+                $oldImageRecords->each->delete();
+                $level->image()->create(['url' => $newImagePath]);
             }
 
             DB::commit();
@@ -154,7 +164,7 @@ class LevelsController extends Controller
                 Storage::disk('public')->delete($oldBackgroundPath);
             }
 
-            if ($newImagePath && $oldImagePath) {
+            foreach ($oldImagePaths as $oldImagePath) {
                 Storage::disk('public')->delete($oldImagePath);
             }
 
@@ -239,5 +249,16 @@ class LevelsController extends Controller
         }
 
         return ltrim($url, '/');
+    }
+
+    private function levelImageRecords(Level $level)
+    {
+        return Image::query()
+            ->where('imageable_id', $level->getKey())
+            ->whereIn('imageable_type', [
+                Level::class,
+                self::LEGACY_LEVEL_MODEL,
+                self::MALFORMED_LEGACY_LEVEL_MODEL,
+            ]);
     }
 }

@@ -27,6 +27,8 @@ trait CreatesLandsApiSchema
         $this->createFeaturePropertiesTable();
         $this->createGeometriesTable();
         $this->createCoordinatesTable();
+        $this->createTradesTable();
+        $this->createFeatureHourlyProfitsTable();
         $this->seedSystemUser();
     }
 
@@ -73,6 +75,7 @@ trait CreatesLandsApiSchema
             $table->integer('density')->nullable();
             $table->string('karbari')->nullable();
             $table->string('address')->nullable();
+            $table->string('owner')->nullable();
             $table->string('rgb')->nullable();
             $table->decimal('price', 16, 4)->nullable();
             $table->timestamps();
@@ -105,6 +108,43 @@ trait CreatesLandsApiSchema
             $table->decimal('x', 20, 10)->nullable();
             $table->decimal('y', 20, 10)->nullable();
             $table->string('index')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    private function createTradesTable(): void
+    {
+        if (Schema::hasTable('trades')) {
+            return;
+        }
+
+        Schema::create('trades', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('feature_id');
+            $table->unsignedBigInteger('buyer_id');
+            $table->unsignedBigInteger('seller_id');
+            $table->decimal('psc_amount', 16, 4);
+            $table->decimal('irr_amount', 16, 4);
+            $table->date('date');
+            $table->string('type')->default('land');
+            $table->timestamps();
+        });
+    }
+
+    private function createFeatureHourlyProfitsTable(): void
+    {
+        if (Schema::hasTable('feature_hourly_profits')) {
+            return;
+        }
+
+        Schema::create('feature_hourly_profits', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('feature_id');
+            $table->unsignedBigInteger('user_id');
+            $table->string('asset');
+            $table->decimal('amount', 16, 4);
+            $table->datetime('dead_line');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

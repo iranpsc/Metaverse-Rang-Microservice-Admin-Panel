@@ -101,6 +101,33 @@ class FileUploadApiTest extends TestCase
         Storage::disk('public')->assertExists($response->json('file_path'));
     }
 
+    public function test_finished_upload_falls_back_to_slug_for_reserved_filename(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $response = $this->post(self::CHUNK_PATH, [
+            'file' => UploadedFile::fake()->create('....png', 100, 'image/png'),
+        ], ['Accept' => 'application/json'])->assertCreated();
+
+        $this->assertSame('upload.png', $response->json('file_name'));
+    }
+
+    public function test_finished_upload_adds_suffix_when_file_name_already_exists(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $first = $this->post(self::CHUNK_PATH, [
+            'file' => UploadedFile::fake()->create('duplicate.png', 100, 'image/png'),
+        ], ['Accept' => 'application/json'])->assertCreated();
+        Storage::disk('public')->assertExists($first->json('file_path'));
+
+        $second = $this->post(self::CHUNK_PATH, [
+            'file' => UploadedFile::fake()->create('duplicate.png', 100, 'image/png'),
+        ], ['Accept' => 'application/json'])->assertCreated();
+
+        $this->assertSame('duplicate-2.png', $second->json('file_name'));
+    }
+
     // -------------------------------------------------------------------------
     // Chunked / partial upload
     // -------------------------------------------------------------------------

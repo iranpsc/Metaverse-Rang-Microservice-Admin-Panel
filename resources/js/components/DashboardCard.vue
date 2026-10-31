@@ -199,37 +199,34 @@ const glowGradient = computed(() => {
   }
 })
 
+const formatCompactNumber = (value) => {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return value
+
+  const absolute = Math.abs(number)
+  const units = [
+    { threshold: 1e9, suffix: 'B' },
+    { threshold: 1e6, suffix: 'M' },
+    { threshold: 1e3, suffix: 'K' }
+  ]
+  const unit = units.find(({ threshold }) => absolute >= threshold)
+  if (!unit) return number.toLocaleString('fa-IR')
+
+  const compact = number / unit.threshold
+  const formatted = Number(compact.toFixed(1)).toLocaleString('fa-IR', {
+    maximumFractionDigits: 1
+  })
+  return `${formatted}.${unit.suffix}`
+}
+
 const formattedValue = computed(() => {
-  if (props.isCurrency && typeof props.value === 'number') {
-    // Format as currency with Persian numerals
-    return new Intl.NumberFormat('fa-IR', {
-      style: 'currency',
-      currency: 'IRR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(props.value)
-  }
-  if (typeof props.value === 'number') {
-    return props.value.toLocaleString('fa-IR')
-  }
-  return props.value
+  const formatted = formatCompactNumber(props.value)
+  return props.isCurrency ? `${formatted} ریال` : formatted
 })
 
 const displayValue = computed(() => {
-  if (props.isCurrency && typeof animatedValue.value === 'number') {
-    // Format animated value as currency
-    return new Intl.NumberFormat('fa-IR', {
-      style: 'currency',
-      currency: 'IRR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(animatedValue.value)
-  }
-  // For non-currency numbers, use Persian locale
-  if (typeof animatedValue.value === 'number') {
-    return animatedValue.value.toLocaleString('fa-IR')
-  }
-  return animatedValue.value
+  const formatted = formatCompactNumber(animatedValue.value)
+  return props.isCurrency ? `${formatted} ریال` : formatted
 })
 
 // Animate number counting

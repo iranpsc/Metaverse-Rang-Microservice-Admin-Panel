@@ -31,7 +31,7 @@ RUN --mount=type=cache,target=/tmp/composer-cache \
     until composer install \
         --no-dev \
         --no-interaction \
-        --prefer-install=source \
+        --prefer-dist \
         --optimize-autoloader \
         --no-scripts \
         --ignore-platform-reqs; do \
@@ -68,7 +68,7 @@ LABEL org.opencontainers.image.title="admin-hamgit" \
       org.opencontainers.image.description="Laravel admin panel (PHP-FPM)" \
       org.opencontainers.image.source="https://github.com/irpsc/admin-hamgit"
 
-# Which PHP conf to bake in (production.ini for prod; local.ini for docker-compose.dev).
+# Which PHP conf to bake in.
 ARG PHP_INI_FILE=production.ini
 
 # Runtime libs stay; *-dev and $PHPIZE_DEPS are purged after compile.
@@ -132,8 +132,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libzip-dev; \
     rm -rf /tmp/* /tmp/pear ~/.pearrc
 
-COPY --link --from=vendor /usr/bin/composer /usr/bin/composer
-
 WORKDIR /var/www/html
 
 COPY --link . .
@@ -153,7 +151,6 @@ RUN set -eux; \
         storage/framework/views \
         storage/logs; \
     touch database/database.sqlite; \
-    composer dump-autoload --optimize --no-interaction; \
     cp .env.example .env; \
     php artisan package:discover --ansi; \
     rm -f .env; \

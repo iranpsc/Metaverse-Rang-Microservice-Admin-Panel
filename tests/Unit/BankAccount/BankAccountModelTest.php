@@ -3,7 +3,10 @@
 namespace Tests\Unit\BankAccount;
 
 use App\Models\BankAccount;
+use App\Models\Kyc;
 use App\Models\User;
+use App\Http\Resources\BankAccountResource;
+use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Str;
 use Tests\Concerns\CreatesBankAccountApiSchema;
@@ -116,6 +119,30 @@ class BankAccountModelTest extends TestCase
         $this->assertTrue($loaded->bankable->is($user));
         $this->assertSame('Bank User', $loaded->bankable->name);
         $this->assertInstanceOf(User::class, $loaded->bankable);
+    }
+
+    public function test_resource_handles_null_bankable_and_fallback_kyc_loading(): void
+    {
+        $nullBankAccount = BankAccount::make();
+        $nullBankAccount->setRelation('bankable', null);
+
+        $nullPayload = (new BankAccountResource($nullBankAccount))->toArray(Request::create('/'));
+        $this->assertNull($nullPayload['bankable']);
+
+        $user = $this->createUser(['name' => 'Fallback Bank User']);
+        Kyc::create([
+            'user_id' => $user->id,
+            'fname' => 'Fallback',
+            'lname' => 'Kyc',
+            'status' => 0,
+        ]);
+
+        $bankAccount = BankAccount::make();
+        $bankAccount->setRelation('bankable', $user);
+        $payload = (new BankAccountResource($bankAccount))->toArray(Request::create('/'));
+
+        $this->assertSame('Fallback', $payload['bankable']['fname']);
+        $this->assertSame('Kyc', $payload['bankable']['lname']);
     }
 
     // -------------------------------------------------------------------------

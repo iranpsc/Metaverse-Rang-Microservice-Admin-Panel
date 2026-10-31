@@ -12,7 +12,7 @@
         "lodash": "^4.18.1",
         "postcss": "^8.5.26",
         "sass": "^1.56.1",
-        "vite": "^8.2.2"
+        "vite": "^8.3.5"
     },
     "overrides": {
         "browserslist": "^4.28.7",
@@ -25,9 +25,9 @@
         "@primeuix/themes": "^1.2.5",
         "@tailwindcss/postcss": "^4.1.16",
         "autoprefixer": "^10.4.21",
-        "axios": "^1.20.0",
+        "axios": "^1.21.0",
         "ckeditor5": "47.6.2",
-        "dompurify": "^3.4.14",
+        "dompurify": "^3.4.17",
         "flatpickr": "^4.6.13",
         "jquery": "^3.7.1",
         "persian-date": "^1.1.0",
@@ -39,7 +39,7 @@
         "simple-line-icons": "^2.5.1",
         "sweetalert2": "^11.26.3",
         "tailwindcss": "^4.1.16",
-        "vue": "^3.5.22",
+        "vue": "^3.5.44",
         "vue-flatpickr-component": "^12.0.0",
         "vue-router": "^4.6.3"
     }

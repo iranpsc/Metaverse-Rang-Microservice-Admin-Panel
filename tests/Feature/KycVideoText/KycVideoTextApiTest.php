@@ -3,7 +3,10 @@
 namespace Tests\Feature\KycVideoText;
 
 use App\Models\KycVerifyText;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\Concerns\ActsAsSuperAdmin;
 use Tests\Concerns\CreatesKycVideoTextApiSchema;
 use Tests\TestCase;
@@ -530,7 +533,7 @@ class KycVideoTextApiTest extends TestCase
 
         $videoText = $this->createVideoText(['text' => 'Used text']);
 
-        \Illuminate\Support\Facades\DB::table('kycs')->insert([
+        DB::table('kycs')->insert([
             'user_id' => 1,
             'verify_text_id' => $videoText->id,
             'status' => 0,
@@ -612,11 +615,11 @@ class KycVideoTextApiTest extends TestCase
 
     private function createKycsTableForVideoTextProtection(): void
     {
-        if (\Illuminate\Support\Facades\Schema::hasTable('kycs')) {
+        if (Schema::hasTable('kycs')) {
             return;
         }
 
-        \Illuminate\Support\Facades\Schema::create('kycs', function (\Illuminate\Database\Schema\Blueprint $table) {
+        Schema::create('kycs', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('verify_text_id')->nullable();

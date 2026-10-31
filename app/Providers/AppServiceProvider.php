@@ -89,5 +89,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Nested model directories are not covered by the glob above.
         FeaturePricingLimit::observe(ModelActivityObserver::class);
+        foreach (glob(app_path('Models/Level/*.php')) as $file) {
+            $class = 'App\\Models\\Level\\'.basename($file, '.php');
+            $class::observe(ModelActivityObserver::class);
+        }
     }
 }

@@ -102,7 +102,7 @@
       </div>
 
       <template #footer>
-        <div class="flex flex-col md:flex-row gap-3" dir="rtl">
+        <div class="flex flex-row gap-3" dir="rtl">
           <Button
             variant="primary"
             class="w-full"

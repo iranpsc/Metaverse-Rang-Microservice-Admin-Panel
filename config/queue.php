@@ -29,6 +29,13 @@ return [
     */
 
     'connections' => [
+        'content-webhooks' => [
+            'driver' => 'database',
+            'table' => 'jobs',
+            'queue' => 'content-webhooks',
+            'retry_after' => 90,
+            'after_commit' => true,
+        ],
 
         'sync' => [
             'driver' => 'sync',

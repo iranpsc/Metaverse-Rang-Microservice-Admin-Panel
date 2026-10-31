@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Asset
@@ -12,10 +13,11 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $variable_id
  * @property string $count
  * @property int $user_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\User $user
- * @property-read \App\Models\Variable $variable
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read User $user
+ * @property-read Variable $variable
+ *
  * @method static \Illuminate\Database\Eloquent\Builder|Asset newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Asset newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Asset query()
@@ -25,13 +27,14 @@ use Illuminate\Database\Eloquent\Model;
  * @method static \Illuminate\Database\Eloquent\Builder|Asset whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Asset whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Asset whereVariableId($value)
+ *
  * @mixin \Eloquent
  */
 class Asset extends Model
 {
     use HasFactory;
 
-    protected $table = "assets";
+    protected $table = 'assets';
 
     protected $fillable = [
         'user_id',

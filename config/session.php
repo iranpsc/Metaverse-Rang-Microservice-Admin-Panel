@@ -168,7 +168,9 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE', true),
+    // Local Herd sites use HTTP; only require Secure cookies in production
+    // unless the environment explicitly overrides this setting.
+    'secure' => env('SESSION_SECURE_COOKIE', env('APP_ENV') === 'production'),
 
     /*
     |--------------------------------------------------------------------------

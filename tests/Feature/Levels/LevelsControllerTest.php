@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Levels;
 
+use App\Models\Image;
 use App\Models\Level\Level;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Route;
@@ -201,6 +202,24 @@ class LevelsControllerTest extends TestCase
             $this->assertArrayNotHasKey('id', $levelPayload['image']);
             $this->assertArrayNotHasKey('url', $levelPayload['image']);
         }
+    }
+
+    public function test_index_rewrites_legacy_level_upload_urls_to_the_current_application(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $level = Level::factory()->create([
+            'background_image' => 'https://admin.metarang.com/uploads/levels/legacy-background.jpg',
+        ]);
+        $level->image()->create([
+            'url' => 'https://admin.metarang.com/uploads/levels/legacy-image.png',
+        ]);
+
+        $response = $this->getJson(self::INDEX_PATH)->assertOk();
+        $payload = collect($response->json('data.levels'))->firstWhere('id', $level->id);
+
+        $this->assertSame(url('uploads/levels/legacy-background.jpg'), $payload['background_image_url']);
+        $this->assertSame(url('uploads/levels/legacy-image.png'), $payload['image_url']);
     }
 
     public function test_index_orders_levels_by_id_desc(): void
@@ -550,6 +569,149 @@ class LevelsControllerTest extends TestCase
         Storage::disk('public')->assertMissing('levels/old.png');
         Storage::disk('public')->assertExists($this->extractPublicPathFromUploadsUrl($newBackgroundUrl));
         Storage::disk('public')->assertExists($response->json('data.level.image.url'));
+        $this->assertDatabaseMissing('images', [
+            'imageable_type' => Level::class,
+            'imageable_id' => $level->id,
+            'url' => 'levels/old.png',
+        ]);
+        $this->assertDatabaseCount('images', 1);
+    }
+
+    public function test_update_replaces_all_legacy_level_image_records_and_files(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $level = Level::factory()->create();
+        $legacyType = 'App\\Models\\Levels\\Level';
+
+        $currentImage = new Image(['url' => 'levels/current-old.png']);
+        $currentImage->imageable_type = Level::class;
+        $currentImage->imageable_id = $level->id;
+        $currentImage->save();
+
+        $legacyImage = new Image(['url' => 'levels/legacy-old.png']);
+        $legacyImage->imageable_type = $legacyType;
+        $legacyImage->imageable_id = $level->id;
+        $legacyImage->save();
+        Storage::disk('public')->put('levels/current-old.png', 'current-old');
+        Storage::disk('public')->put('levels/legacy-old.png', 'legacy-old');
+
+        $response = $this->post($this->levelPath($level), array_merge(
+            $this->validUpdatePayload(),
+            [
+                '_method' => 'PUT',
+                'image' => UploadedFile::fake()->image('replacement.png'),
+            ]
+        ), ['Accept' => 'application/json'])->assertOk();
+
+        $newImagePath = $response->json('data.level.image.url');
+
+        $this->assertDatabaseMissing('images', [
+            'imageable_type' => Level::class,
+            'imageable_id' => $level->id,
+            'url' => 'levels/current-old.png',
+        ]);
+        $this->assertDatabaseMissing('images', [
+            'imageable_type' => $legacyType,
+            'imageable_id' => $level->id,
+            'url' => 'levels/legacy-old.png',
+        ]);
+        $this->assertDatabaseHas('images', [
+            'imageable_type' => Level::class,
+            'imageable_id' => $level->id,
+            'url' => $newImagePath,
+        ]);
+        $this->assertDatabaseCount('images', 1);
+        Storage::disk('public')->assertMissing('levels/current-old.png');
+        Storage::disk('public')->assertMissing('levels/legacy-old.png');
+        Storage::disk('public')->assertExists($newImagePath);
+    }
+
+    public function test_update_replaces_image_with_doubled_slash_legacy_type(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $level = Level::factory()->create();
+        $legacyType = 'App//Models//Levels//Level';
+        $legacyImage = new Image(['url' => 'levels/doubled-slash-old.png']);
+        $legacyImage->imageable_type = $legacyType;
+        $legacyImage->imageable_id = $level->id;
+        $legacyImage->save();
+        Storage::disk('public')->put('levels/doubled-slash-old.png', 'legacy-old');
+
+        $response = $this->post($this->levelPath($level), array_merge(
+            $this->validUpdatePayload(),
+            [
+                '_method' => 'PUT',
+                'image' => UploadedFile::fake()->image('replacement.png'),
+            ]
+        ), ['Accept' => 'application/json'])->assertOk();
+
+        $newImagePath = $response->json('data.level.image.url');
+
+        $this->assertDatabaseMissing('images', [
+            'imageable_type' => $legacyType,
+            'imageable_id' => $level->id,
+        ]);
+        Storage::disk('public')->assertMissing('levels/doubled-slash-old.png');
+        Storage::disk('public')->assertExists($newImagePath);
+    }
+
+    public function test_update_only_deletes_unique_non_null_images_for_the_target_level(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $level = Level::factory()->create();
+        $oldPath = 'levels/shared-old.png';
+        $unrelatedPath = 'levels/unrelated.png';
+
+        foreach ([Level::class, 'App\\Models\\Levels\\Level'] as $imageableType) {
+            $image = new Image(['url' => $oldPath]);
+            $image->imageable_type = $imageableType;
+            $image->imageable_id = $level->id;
+            $image->save();
+        }
+
+        $emptyImage = new Image(['url' => '']);
+        $emptyImage->imageable_type = Level::class;
+        $emptyImage->imageable_id = $level->id;
+        $emptyImage->save();
+
+        $unrelatedImage = new Image(['url' => $unrelatedPath]);
+        $unrelatedImage->imageable_type = 'App\\Models\\Other\\Model';
+        $unrelatedImage->imageable_id = $level->id;
+        $unrelatedImage->save();
+
+        Storage::disk('public')->put($oldPath, 'old-image');
+        Storage::disk('public')->put($unrelatedPath, 'unrelated-image');
+
+        $response = $this->post($this->levelPath($level), array_merge(
+            $this->validUpdatePayload(),
+            [
+                '_method' => 'PUT',
+                'image' => UploadedFile::fake()->image('replacement.png'),
+            ]
+        ), ['Accept' => 'application/json'])->assertOk();
+
+        $replacementPath = $response->json('data.level.image.url');
+
+        $this->assertDatabaseMissing('images', [
+            'imageable_id' => $level->id,
+            'url' => $oldPath,
+        ]);
+        $this->assertDatabaseHas('images', [
+            'imageable_type' => 'App\\Models\\Other\\Model',
+            'imageable_id' => $level->id,
+            'url' => $unrelatedPath,
+        ]);
+        $this->assertDatabaseHas('images', [
+            'imageable_type' => Level::class,
+            'imageable_id' => $level->id,
+            'url' => $replacementPath,
+        ]);
+        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('public')->assertExists($unrelatedPath);
+        Storage::disk('public')->assertExists($replacementPath);
     }
 
     public function test_update_creates_morph_image_when_none_existed(): void

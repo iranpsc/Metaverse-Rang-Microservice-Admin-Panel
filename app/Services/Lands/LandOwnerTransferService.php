@@ -3,7 +3,9 @@
 namespace App\Services\Lands;
 
 use App\Models\Feature;
+use App\Models\FeatureHourlyProfit;
 use App\Models\FeatureProperties;
+use App\Models\Trade;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -28,15 +30,62 @@ class LandOwnerTransferService
 
     public function transferOwner(int $featureId, int $newOwnerId): void
     {
-        $feature = Feature::findOrFail($featureId);
+        $feature = Feature::with('properties')->findOrFail($featureId);
 
         if ($feature->owner_id !== self::SYSTEM_OWNER_ID) {
             throw new UnprocessableEntityHttpException('فقط زمین‌های بدون مالک کاربر قابل انتقال هستند');
         }
 
         DB::transaction(function () use ($feature, $newOwnerId) {
+            $newOwner = User::findOrFail($newOwnerId);
             $feature->update(['owner_id' => $newOwnerId]);
+            $feature->properties->update([
+                'owner' => $newOwner->name,
+                'rgb' => $this->getSoldAndNotPricedRgb($feature->properties->karbari),
+            ]);
+            $psc_amount = $irr_amount = 0;
+            $date = now()->toDateString();
+
+            Trade::create([
+                'feature_id' => $feature->id,
+                'buyer_id' => $newOwnerId,
+                'seller_id' => self::SYSTEM_OWNER_ID,
+                'psc_amount' => $psc_amount,
+                'irr_amount' => $irr_amount,
+                'date' => $date,
+                'type' => 'gift',
+            ]);
+
+            FeatureHourlyProfit::create([
+                'feature_id' => $feature->id,
+                'user_id' => $newOwnerId,
+                'asset' => $this->getAssetType($feature->properties->karbari),
+                'dead_line' => now()->addDays(10),
+            ]);
         });
+    }
+
+    /**
+     * Get the asset type based on the karbari.
+     */
+    private function getAssetType(string $karbari): string
+    {
+        return match ($karbari) {
+            'm' => 'yellow',
+            'a' => 'blue',
+            't' => 'red',
+            'default' => 'unknown',
+        };
+    }
+
+    private function getSoldAndNotPricedRgb(string $karbari): string
+    {
+        return match ($karbari) {
+            'm' => 'b',
+            't' => 'i',
+            'a' => 'p',
+            default => '',
+        };
     }
 
     /**

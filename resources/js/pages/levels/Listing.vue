@@ -162,19 +162,20 @@
               :error="formErrors.image"
               :helper-text="imageHelperText"
             />
-            <p v-if="isEditMode && form.existingImageUrl" class="text-xs text-[var(--theme-text-secondary)]">
-              تصویر فعلی:
+            <div v-if="isEditMode && form.existingImageUrl" class="flex items-center gap-2 text-xs text-[var(--theme-text-secondary)]">
+              <span>تصویر فعلی:</span>
               <a
                 :href="form.existingImageUrl"
                 target="_blank"
                 rel="noopener"
-                class="inline-flex items-center gap-1 text-primary-300 hover:text-primary-200 underline"
+                class="inline-flex items-center gap-1 rounded-md border border-primary-400/50 px-2 py-1 text-primary-300 transition-colors hover:bg-primary-400/10 hover:text-primary-200"
                 title="مشاهده تصویر"
                 aria-label="مشاهده تصویر"
               >
                 <TableActionIcon name="image" icon-class="w-4 h-4 shrink-0" />
+                <span>مشاهده تصویر فعلی</span>
               </a>
-            </p>
+            </div>
           </div>
 
           <div class="space-y-3">
@@ -186,19 +187,20 @@
               :error="formErrors.background_image"
               :helper-text="backgroundHelperText"
             />
-            <p v-if="isEditMode && form.existingBackgroundUrl" class="text-xs text-[var(--theme-text-secondary)]">
-              تصویر فعلی:
+            <div v-if="isEditMode && form.existingBackgroundUrl" class="flex items-center gap-2 text-xs text-[var(--theme-text-secondary)]">
+              <span>تصویر فعلی:</span>
               <a
                 :href="form.existingBackgroundUrl"
                 target="_blank"
                 rel="noopener"
-                class="inline-flex items-center gap-1 text-secondary-300 hover:text-secondary-200 underline"
+                class="inline-flex items-center gap-1 rounded-md border border-secondary-400/50 px-2 py-1 text-secondary-300 transition-colors hover:bg-secondary-400/10 hover:text-secondary-200"
                 title="مشاهده تصویر"
                 aria-label="مشاهده تصویر"
               >
                 <TableActionIcon name="image" icon-class="w-4 h-4 shrink-0" />
+                <span>مشاهده تصویر فعلی</span>
               </a>
-            </p>
+            </div>
           </div>
         </div>
       </div>
@@ -256,7 +258,7 @@
                   :href="selectedLevel.image"
                   target="_blank"
                   rel="noopener"
-                  class="ml-2 inline-flex items-center gap-1 text-primary-300 hover:text-primary-200 underline"
+                  class="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-primary-400/50 px-2 py-1 text-primary-300 no-underline transition-colors hover:bg-primary-400/10 hover:text-primary-200"
                   title="مشاهده تصویر"
                   aria-label="مشاهده تصویر"
                 >
@@ -271,7 +273,7 @@
                   :href="selectedLevel.background_image"
                   target="_blank"
                   rel="noopener"
-                  class="ml-2 inline-flex items-center gap-1 text-secondary-300 hover:text-secondary-200 underline"
+                  class="mt-2 flex w-full items-center justify-center gap-1 rounded-md border border-secondary-400/50 px-2 py-1 text-secondary-300 no-underline transition-colors hover:bg-secondary-400/10 hover:text-secondary-200"
                   title="مشاهده تصویر"
                   aria-label="مشاهده تصویر"
                 >
@@ -283,11 +285,11 @@
           </div>
         </div>
 
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
           <Button
             variant="primary"
             rounded="full"
-            class="self-start lg:self-auto"
+            class="w-full"
             @click="goToPrizePage"
           >
             مدیریت پاداش سطح
@@ -295,7 +297,7 @@
           <Button
             variant="secondary"
             rounded="full"
-            class="self-start lg:self-auto"
+            class="w-full"
             @click="goToLicensesPage"
           >
             مدیریت مجوزهای سطح
@@ -303,7 +305,7 @@
           <Button
             variant="glass"
             rounded="full"
-            class="self-start lg:self-auto"
+            class="w-full"
             @click="goToGiftPage"
           >
             مدیریت هدیه سطح
@@ -311,7 +313,7 @@
           <Button
             variant="outline"
             rounded="full"
-            class="self-start lg:self-auto"
+            class="w-full"
             @click="goToGeneralInfoPage"
           >
             مدیریت اطلاعات کلی سطح
@@ -319,7 +321,7 @@
           <Button
             variant="ghost"
             rounded="full"
-            class="self-start lg:self-auto"
+            class="w-full border border-[var(--theme-border)] bg-[var(--theme-bg-elevated)] hover:bg-[var(--theme-bg-elevated)]/80"
             @click="goToGemPage"
           >
             مدیریت نگین سطح
@@ -445,16 +447,29 @@ const mapLevel = (level) => {
     slug: level.slug,
     score: level.score,
     image: imageUrl,
-    background_image: level.background_image_url || level.background_image || null,
+    background_image: resolveImageUrl(level.background_image_url || level.background_image),
     raw: level
   }
 }
 
 const resolveImageUrl = (value) => {
   if (!value) return null
-  if (value.startsWith('http://') || value.startsWith('https://')) {
-    return value
+
+  try {
+    const parsedUrl = new URL(value, window.location.origin)
+    const uploadsPath = parsedUrl.pathname.match(/^\/uploads\/.+/)
+
+    if (uploadsPath) {
+      return `${window.location.origin}${parsedUrl.pathname}${parsedUrl.search}${parsedUrl.hash}`
+    }
+
+    if (value.startsWith('http://') || value.startsWith('https://')) {
+      return value
+    }
+  } catch {
+    // Fall through and treat malformed or legacy values as storage paths.
   }
+
   return `/uploads/${value.replace(/^\/+/g, '')}`
 }
 

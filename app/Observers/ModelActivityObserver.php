@@ -3,7 +3,9 @@
 namespace App\Observers;
 
 use App\Services\ActivityLoggerService;
+use App\Services\ContentWebhooks\DeletionContext;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Activitylog\Models\Activity;
 
 class ModelActivityObserver
@@ -32,6 +34,14 @@ class ModelActivityObserver
         $original = array_intersect_key($model->getOriginal(), $changes);
 
         ActivityLoggerService::logModelEvent($model, 'updated', $changes, $original);
+    }
+
+    /** Cache deletion targets before cascading relationships disappear. */
+    public function deleting(Model $model): void
+    {
+        if (Schema::connection($model->getConnectionName())->hasTable('content_change_outbox')) {
+            app(DeletionContext::class)->remember($model);
+        }
     }
 
     public function deleted(Model $model): void

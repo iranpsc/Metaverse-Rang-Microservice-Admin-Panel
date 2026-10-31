@@ -6,10 +6,22 @@ use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Resources\DashboardResource;
 use App\Models\Admin;
 use App\Models\BuyFeatureRequest;
+use App\Models\Challenge\QuestionPrize;
+use App\Models\Challenge\UserQuestionAnswer;
+use App\Models\Crs;
+use App\Models\Dynasty\JoinRequest;
 use App\Models\Feature;
+use App\Models\Level\Level;
+use App\Models\LockedAsset;
 use App\Models\Map;
 use App\Notifications\SendVerificationCode;
 use App\Traits\SendsVerificationSms;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -150,7 +162,7 @@ class DeadCodeCoverageTest extends TestCase
         $map = new Map(['status' => 1, 'name' => 'Coverage Map']);
         $this->assertTrue($map->isPublished());
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\HasMany::class,
+            HasMany::class,
             $map->features()
         );
 
@@ -163,53 +175,53 @@ class DeadCodeCoverageTest extends TestCase
             'price_irr' => 1000,
         ]);
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
+            BelongsTo::class,
             $buy->seller()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
+            BelongsTo::class,
             $buy->buyer()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
+            BelongsTo::class,
             $buy->feature()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\MorphOne::class,
+            MorphOne::class,
             $buy->transactions()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\MorphOne::class,
+            MorphOne::class,
             $buy->lockedAssets()
         );
 
         $feature = new Feature(['map_id' => 1, 'type' => 'Feature', 'owner_id' => 1]);
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
+            BelongsTo::class,
             $feature->map()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\HasOne::class,
+            HasOne::class,
             $feature->properties()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\HasOne::class,
+            HasOne::class,
             $feature->geometry()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\HasMany::class,
+            HasMany::class,
             $feature->images()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
+            BelongsTo::class,
             $feature->owner()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\HasMany::class,
+            HasMany::class,
             $feature->buyRequests()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\MorphOne::class,
+            MorphOne::class,
             $feature->lockedAssets()
         );
 
@@ -219,61 +231,61 @@ class DeadCodeCoverageTest extends TestCase
         ]));
         $this->assertSame(['Super Admin'], $admin->getRoleTitles()->all());
 
-        $level = new \App\Models\Level\Level(['score' => '12']);
+        $level = new Level(['score' => '12']);
         $this->assertSame(12, $level->numeric_score);
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsToMany::class,
+            BelongsToMany::class,
             $level->users()
         );
 
         try {
-            \App\Models\Level\Level::query()->whereNumericScore('!!', 1);
+            Level::query()->whereNumericScore('!!', 1);
             $this->fail('Expected invalid operator exception');
         } catch (\InvalidArgumentException $exception) {
             $this->assertStringContainsString('Unsupported operator', $exception->getMessage());
         }
 
-        $crs = new \App\Models\Crs;
+        $crs = new Crs;
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
+            BelongsTo::class,
             $crs->map()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\HasMany::class,
+            HasMany::class,
             $crs->crs_properties()
         );
 
-        $locked = new \App\Models\LockedAsset;
+        $locked = new LockedAsset;
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
+            BelongsTo::class,
             $locked->user()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\MorphTo::class,
+            MorphTo::class,
             $locked->assetable()
         );
 
-        $prize = new \App\Models\Challenge\QuestionPrize;
+        $prize = new QuestionPrize;
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\HasMany::class,
+            HasMany::class,
             $prize->userChallengePrizes()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
+            BelongsTo::class,
             $prize->question()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
+            BelongsTo::class,
             $prize->challengePrizeList()
         );
 
-        $answer = new \App\Models\Challenge\UserQuestionAnswer;
+        $answer = new UserQuestionAnswer;
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
+            BelongsTo::class,
             $answer->user()
         );
         $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\BelongsTo::class,
+            BelongsTo::class,
             $answer->question()
         );
         if (method_exists($answer, 'questionAnswer')) {
@@ -288,8 +300,8 @@ class DeadCodeCoverageTest extends TestCase
             });
         }
 
-        \App\Models\Dynasty\JoinRequest::query()->create(['status' => 5]);
-        $this->assertGreaterThanOrEqual(1, \App\Models\Dynasty\JoinRequest::query()->count());
+        JoinRequest::query()->create(['status' => 5]);
+        $this->assertGreaterThanOrEqual(1, JoinRequest::query()->count());
     }
 
     private function createMinimalTables(): void

@@ -1,0 +1,624 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Admin content webhook contract",
+    "version": "1.0.0",
+    "description": "Sender and admin control APIs. Batch delivery version is independent of this contract version."
+  },
+  "servers": [
+    {
+      "url": "https://receiver.example.test"
+    }
+  ],
+  "paths": {
+    "/api/webhooks/cache-revalidate": {
+      "post": {
+        "operationId": "acceptContentBatch",
+        "summary": "Accept one immutable batch of admin content invalidations",
+        "description": "Authenticate the x-webhook-secret header against WEBHOOK_SECRET. Read version and batch ID from the JSON body. Atomically remember accepted batch IDs and acknowledge identical retries. Invalidate the union once; collection/search targets include every cached query variant. Never interpret arbitrary routes as URLs to fetch. Scheduled batches have triggered_by=null. Receiver implementation is external to this repository.",
+        "security": [
+          {
+            "WebhookSecret": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Batch"
+              },
+              "examples": {
+                "levelUpdate": {
+                  "value": {
+                    "event": "admin.content.batch",
+                    "batch_id": "10101010-2222-4333-8444-555555555555",
+                    "version": "V1.1.1",
+                    "timestamp": "2026-10-22T20:30:00Z",
+                    "trigger": "manual",
+                    "triggered_by": {
+                      "id": "4829",
+                      "name": "Example admin",
+                      "roles": [
+                        "super-admin"
+                      ]
+                    },
+                    "changes": [
+                      {
+                        "feature": "citizen_levels_details",
+                        "entity_id": "12",
+                        "resource": "gift",
+                        "actions": [
+                          "UPDATE"
+                        ],
+                        "modifiers": [
+                          {
+                            "id": "4829",
+                            "name": "Example admin",
+                            "roles": [
+                              "super-admin"
+                            ]
+                          }
+                        ],
+                        "affected_routes": [
+                          "/api/levels/12",
+                          "/api/levels/12/gift"
+                        ]
+                      }
+                    ],
+                    "affected_routes": [
+                      "/api/levels/12",
+                      "/api/levels/12/gift"
+                    ]
+                  }
+                },
+                "persianOnly": {
+                  "value": {
+                    "event": "admin.content.batch",
+                    "batch_id": "10101010-2222-4333-8444-555555555555",
+                    "version": "V1.1.1",
+                    "timestamp": "2026-10-22T20:30:00Z",
+                    "trigger": "manual",
+                    "triggered_by": {
+                      "id": "4829",
+                      "name": "Example admin",
+                      "roles": [
+                        "super-admin"
+                      ]
+                    },
+                    "changes": [
+                      {
+                        "feature": "translations",
+                        "entity_id": "1",
+                        "resource": "dictionary",
+                        "locale": "fa",
+                        "actions": [
+                          "CREATE",
+                          "UPDATE"
+                        ],
+                        "modifiers": [
+                          {
+                            "id": "4829",
+                            "name": "Example admin",
+                            "roles": [
+                              "super-admin"
+                            ]
+                          }
+                        ],
+                        "affected_routes": [
+                          "/lang/fa.json"
+                        ]
+                      }
+                    ],
+                    "affected_routes": [
+                      "/lang/fa.json"
+                    ]
+                  }
+                },
+                "mixedFeatures": {
+                  "value": {
+                    "event": "admin.content.batch",
+                    "batch_id": "10101010-2222-4333-8444-555555555555",
+                    "version": "V1.1.1",
+                    "timestamp": "2026-10-22T20:30:00Z",
+                    "trigger": "manual",
+                    "triggered_by": {
+                      "id": "4829",
+                      "name": "Example admin",
+                      "roles": [
+                        "super-admin"
+                      ]
+                    },
+                    "changes": [
+                      {
+                        "feature": "citizen_levels_details",
+                        "entity_id": "12",
+                        "resource": "gift",
+                        "actions": [
+                          "UPDATE"
+                        ],
+                        "modifiers": [
+                          {
+                            "id": "4829",
+                            "name": "Example admin",
+                            "roles": [
+                              "super-admin"
+                            ]
+                          }
+                        ],
+                        "affected_routes": [
+                          "/api/levels/12",
+                          "/api/levels/12/gift"
+                        ]
+                      },
+                      {
+                        "feature": "translations",
+                        "entity_id": "1",
+                        "resource": "dictionary",
+                        "locale": "fa",
+                        "actions": [
+                          "CREATE",
+                          "UPDATE"
+                        ],
+                        "modifiers": [
+                          {
+                            "id": "4829",
+                            "name": "Example admin",
+                            "roles": [
+                              "super-admin"
+                            ]
+                          }
+                        ],
+                        "affected_routes": [
+                          "/lang/fa.json"
+                        ]
+                      }
+                    ],
+                    "affected_routes": [
+                      "/api/levels/12",
+                      "/api/levels/12/gift",
+                      "/lang/fa.json"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "All targets accepted for invalidation; also returned for an identical previously accepted batch. Does not guarantee completed page regeneration.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "batch_id",
+                    "status"
+                  ],
+                  "properties": {
+                    "batch_id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "accepted"
+                      ]
+                    }
+                  }
+                },
+                "examples": {
+                  "accepted": {
+                    "value": {
+                      "batch_id": "10101010-2222-4333-8444-555555555555",
+                      "status": "accepted"
+                    }
+                  },
+                  "duplicate": {
+                    "value": {
+                      "batch_id": "10101010-2222-4333-8444-555555555555",
+                      "status": "accepted"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid JSON; permanent failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Invalid JSON"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Webhook secret rejected; permanent failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Invalid webhook secret"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Batch ID reused with a different payload; permanent failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Conflicting batch"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unsupported route or malformed contract; permanent failure",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Invalid contract"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limited; retryable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Rate limited"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Receiver failure; retryable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Invalidation failed"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Temporarily unavailable; retryable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "error": "Temporarily unavailable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/activity-logs/webhook-summary": {
+      "get": {
+        "operationId": "getWebhookSummary",
+        "summary": "Read global counts and delivery status",
+        "security": [
+          {
+            "AdminAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity log response envelope: success=true and data. Dispatch returns cycle_id; repeat clicks return the active cycle. Summary returns enabled, can_send, pending_count, oldest_pending_at, blocked_batch, active_cycle, next_version, last_delivered_at."
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Missing view-activity-logs for summary or send-content-webhooks for writes (super-admin bypass)."
+          },
+          "409": {
+            "description": "Delivery disabled or pack is not the oldest failed pack."
+          }
+        }
+      }
+    },
+    "/api/activity-logs/webhook-dispatch": {
+      "post": {
+        "operationId": "dispatchWebhookCycle",
+        "summary": "Queue all currently pending changes from all admins",
+        "security": [
+          {
+            "AdminAuth": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Activity log response envelope: success=true and data. Dispatch returns cycle_id; repeat clicks return the active cycle. Summary returns enabled, can_send, pending_count, oldest_pending_at, blocked_batch, active_cycle, next_version, last_delivered_at."
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Missing view-activity-logs for summary or send-content-webhooks for writes (super-admin bypass)."
+          },
+          "409": {
+            "description": "Delivery disabled or pack is not the oldest failed pack."
+          }
+        }
+      }
+    },
+    "/api/activity-logs/webhook-cancel": {
+      "post": {
+        "operationId": "cancelWebhookCycle",
+        "summary": "Stop the active delivery cycle and keep unsent changes pending",
+        "description": "Cancellation waits for any ongoing delivery attempt to finish. A request already accepted by the receiver cannot be recalled. A frozen batch retains its ID and payload for a later delivery. The supplied cycle ID prevents a stale cancellation from stopping a newer cycle.",
+        "security": [{ "AdminAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["cycle_id"],
+                "properties": { "cycle_id": { "type": "string", "format": "uuid" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Cycle stopped; pending changes remain available for a later send." },
+          "401": { "description": "Unauthenticated." },
+          "403": { "description": "Missing send-content-webhooks permission." },
+          "409": { "description": "The specified cycle is no longer active." },
+          "422": { "description": "Invalid or missing cycle ID." }
+        }
+      }
+    },
+    "/api/activity-logs/webhook-batches/{batch}/retry": {
+      "post": {
+        "operationId": "retryWebhookBatch",
+        "summary": "Retry only the oldest failed pack",
+        "security": [
+          {
+            "AdminAuth": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Activity log response envelope: success=true and data. Dispatch returns cycle_id; repeat clicks return the active cycle. Summary returns enabled, can_send, pending_count, oldest_pending_at, blocked_batch, active_cycle, next_version, last_delivered_at."
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Missing view-activity-logs for summary or send-content-webhooks for writes (super-admin bypass)."
+          },
+          "409": {
+            "description": "Delivery disabled or pack is not the oldest failed pack."
+          }
+        },
+        "parameters": [
+          {
+            "name": "batch",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "WebhookSecret": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-webhook-secret",
+        "description": "The shared WEBHOOK_SECRET value."
+      },
+      "AdminAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Existing admin Sanctum authentication."
+      }
+    },
+    "schemas": {
+      "Actor": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "roles"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Change": {
+        "type": "object",
+        "required": [
+          "feature",
+          "entity_id",
+          "resource",
+          "actions",
+          "modifiers",
+          "affected_routes"
+        ],
+        "properties": {
+          "feature": {
+            "type": "string"
+          },
+          "entity_id": {
+            "type": "string"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string"
+          },
+          "actions": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "CREATE",
+                "UPDATE",
+                "DELETE"
+              ]
+            }
+          },
+          "modifiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Actor"
+            }
+          },
+          "affected_routes": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Batch": {
+        "type": "object",
+        "required": [
+          "event",
+          "batch_id",
+          "version",
+          "timestamp",
+          "trigger",
+          "triggered_by",
+          "changes",
+          "affected_routes"
+        ],
+        "properties": {
+          "event": {
+            "type": "string",
+            "enum": [
+              "admin.content.batch"
+            ]
+          },
+          "batch_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^V1\\.1\\.[1-9][0-9]*$"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "scheduled"
+            ]
+          },
+          "triggered_by": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Actor"
+              }
+            ]
+          },
+          "changes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Change"
+            }
+          },
+          "affected_routes": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -109,14 +109,16 @@ class LevelGeneralInfoController extends Controller
 
             $fileUploads = $this->levelGeneralInfoUploadService->handleFileUploads($request);
             $storedFiles = array_column($fileUploads, 'path');
-            $previousFbxFiles = is_array($generalInfo->fbx_file) ? $generalInfo->fbx_file : [];
             $replacedFiles = $this->levelGeneralInfoUploadService->collectReplacedFilePaths($generalInfo, $fileUploads);
             $validated = $this->levelGeneralInfoUploadService->applyUploadedFiles($fileUploads, $validated);
 
             if (array_key_exists('fbx_file', $validated) && is_array($validated['fbx_file'])) {
-                $validated['fbx_file'] = $this->levelGeneralInfoUploadService->mergeFbxFileLinks(
-                    $previousFbxFiles,
-                    $validated['fbx_file']
+                $replacedFiles = array_merge(
+                    $replacedFiles,
+                    array_diff(
+                        $this->levelGeneralInfoUploadService->collectFbxFilePaths(is_array($generalInfo->fbx_file) ? $generalInfo->fbx_file : []),
+                        $this->levelGeneralInfoUploadService->collectFbxFilePaths($validated['fbx_file'])
+                    )
                 );
             } else {
                 unset($validated['fbx_file']);

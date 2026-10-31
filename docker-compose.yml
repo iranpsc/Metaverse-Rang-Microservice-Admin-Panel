@@ -79,6 +79,11 @@ x-app-common: &app-common
   environment:
     <<: *php-environment
   init: true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
   networks:
     - admin-panel-private
     - metarang-shared
@@ -92,11 +97,13 @@ services:
       args:
         GITHUB_TOKEN: ${GITHUB_TOKEN:-}
         PHP_INI_FILE: production.ini
-    pull_policy: build
     ports:
       - "${APP_PORT:-8088}:8080"
     environment:
       <<: *php-environment
+      # Run Laravel migrations on every app container start/restart.
+      # The entrypoint waits for the external MySQL service before executing them.
+      RUN_MIGRATIONS: "1"
       PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
     command:
       - sh
@@ -115,30 +122,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-
-  # One-shot Vite build against the bind-mounted tree (profile: dev).
-  # Uses a repo-relative path — only for local profile:dev, not Dokploy AutoDeploy.
-  node:
-    image: node:22-alpine
-    pull_policy: if_not_present
-    restart: "no"
-    working_dir: /var/www/html
-    volumes:
-      - type: bind
-        source: ${HOST_APP_PATH:-.}
-        target: /var/www/html
-        consistency: cached
-      - type: volume
-        source: node-modules
-        target: /var/www/html/node_modules
-      - type: volume
-        source: npm-cache
-        target: /root/.npm
-    command: ["sh", "docker/scripts/build-assets.sh"]
-    profiles:
-      - dev
-    networks:
-      - admin-panel-private
 
   redis:
     image: redis:7-alpine
@@ -163,6 +146,10 @@ services:
     <<: *app-common
     # Reuse the image built by `app` (same tag); do not pull a registry image by this name.
     pull_policy: never
+    # Migrations are owned by the app container; avoid concurrent migration attempts.
+    environment:
+      <<: *php-environment
+      RUN_MIGRATIONS: "0"
     # Use default QUEUE_CONNECTION (redis). --max-time recycles the worker hourly; restart policy brings it back.
     command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600", "--timeout=90"]
     stop_grace_period: 60s
@@ -175,6 +162,10 @@ services:
   scheduler:
     <<: *app-common
     pull_policy: never
+    # Migrations are owned by the app container; avoid concurrent migration attempts.
+    environment:
+      <<: *php-environment
+      RUN_MIGRATIONS: "0"
     # schedule:work keeps a single long-lived process (better signal handling than sleep loops).
     # Redis is required for schedule mutexes when CACHE_STORE=redis.
     command: ["php", "artisan", "schedule:work", "--verbose", "--no-interaction"]
@@ -195,6 +186,4 @@ networks:
     driver: bridge
 
 volumes:
-  node-modules:
-  npm-cache:
   redis-data:
