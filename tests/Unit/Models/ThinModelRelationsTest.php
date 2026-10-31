@@ -19,6 +19,9 @@ use App\Models\Wallet;
 use App\Models\Dynasty\DynastyPrize;
 use App\Models\Translations\Modal;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ThinModelRelationsTest extends TestCase
@@ -121,10 +124,30 @@ class ThinModelRelationsTest extends TestCase
 
         $image = new Image(['imageable_id' => 123]);
         $image->setRawAttributes([
-            'imageable_type' => 'App\\Models\\Levels\\Level',
+            'imageable_type' => 'App/Models/Levels/Level',
             'imageable_id' => 123,
         ]);
 
         $image->imageable();
+    }
+
+    public function test_video_slug_is_regenerated_when_already_taken(): void
+    {
+        Schema::create('videos', function (Blueprint $table): void {
+            $table->id();
+            $table->string('slug')->nullable();
+            $table->timestamps();
+        });
+
+        try {
+            DB::table('videos')->insert(['slug' => 'taken']);
+            $video = new Video;
+            $video->slug = 'taken';
+
+            $this->assertNotSame('taken', $video->slug);
+            $this->assertSame(15, strlen($video->slug));
+        } finally {
+            Schema::dropIfExists('videos');
+        }
     }
 }
