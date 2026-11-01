@@ -4,7 +4,6 @@ namespace Tests\Feature\FeatureLimits;
 
 use App\Models\FeatureLimit;
 use App\Models\FeatureProperties;
-use App\Services\Lands\FeatureLimitService;
 use Carbon\Carbon;
 use Morilog\Jalali\Jalalian;
 use Tests\Concerns\ActsAsSuperAdmin;
@@ -646,7 +645,7 @@ class FeatureLimitsApiTest extends TestCase
         $this->actingAsSuperAdmin();
         $this->createFeaturePropertyRange('FL', 1, 3, 1);
 
-        $this->mock(FeatureLimitService::class, function ($mock) {
+        $this->mock(\App\Services\Lands\FeatureLimitService::class, function ($mock) {
             $mock->shouldReceive('create')
                 ->once()
                 ->andThrow(new \RuntimeException('db failure'));

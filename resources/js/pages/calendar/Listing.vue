@@ -393,7 +393,6 @@ const {
   loading,
   error,
   pagination,
-  currentPage,
   searchTerm,
   execute,
   search,
@@ -722,14 +721,14 @@ const handleEditSubmit = async () => {
 
 const handleDelete = async (row) => {
   const result = await confirm(
-    `آیا از حذف وقعه «${row.title || 'بدون عنوان'}» مطمئن هستید؟`,
+    'آیا از حذف وقعه «${event.title}» مطمئن هستید؟',
     'حذف وقعه',
     { confirmText: 'بله، حذف شود', cancelText: 'انصراف' }
   )
   if (!result.isConfirmed) return
 
   try {
-        const response = await apiClient.delete(`/calendars/${row.id}`)
+        const response = await apiClient.delete(`/calendars/${event.id}`)
 
         if (response.data.success) {
           showToast(response.data.message || 'وقعه با موفقیت حذف شد', 'success')
