@@ -53,6 +53,8 @@ const ModalTabs = () => import('../pages/translations/ModalTabs.vue')
 const TabFields = () => import('../pages/translations/TabFields.vue')
 const IsicCodes = () => import(/* webpackChunkName: "isic-listing" */ '../pages/isic-codes/Listing.vue')
 const ActivityLogs = () => import(/* webpackChunkName: "activity-logs-listing" */ '../pages/activity-logs/Listing.vue')
+const Sitemaps = () => import(/* webpackChunkName: "sitemaps-listing" */ '../pages/sitemaps/Listing.vue')
+const SitemapLogs = () => import(/* webpackChunkName: "sitemap-logs" */ '../pages/sitemaps/Logs.vue')
 const BulkMessages = () => import('../pages/messaging/BulkMessages.vue')
 const Profile = () => import('../pages/profile/Profile.vue')
 
@@ -453,6 +455,18 @@ const routes = [
           title: 'گزارش فعالیت‌ها',
           permission: 'view-activity-logs'
         }
+      },
+      {
+        path: 'sitemaps',
+        name: 'sitemaps',
+        component: Sitemaps,
+        meta: { title: 'مدیریت سایت مپ‌ها' }
+      },
+      {
+        path: 'sitemaps/logs',
+        name: 'sitemap-logs',
+        component: SitemapLogs,
+        meta: { title: 'گزارش تولید نقشه‌های سایت', role: 'super-admin' }
       },
       {
         path: 'messaging',

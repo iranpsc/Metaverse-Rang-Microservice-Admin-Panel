@@ -91,6 +91,7 @@ const menuConfig = [
   { id: 'translations', label: 'ترجمه', route: '/translations', icon: 'list', color: 'primary', roles: ['translations-management', 'super-admin'], permissions: [] },
   { id: 'isic-codes', label: 'کدهای ISIC', route: '/isic-codes', icon: 'list', color: 'primary', roles: ['isic-codes-management', 'super-admin'], permissions: [] },
   { id: 'activity-logs', label: 'گزارش فعالیت‌ها', route: '/activity-logs', icon: 'list', color: 'blue', roles: ['super-admin'], permissions: [] },
+  { id: 'sitemaps', label: 'سایت مپ‌ها', route: '/sitemaps', icon: 'list', color: 'blue', roles: ['super-admin'], permissions: [] },
   { id: 'bulk-messaging', label: 'ارسال پیام به کاربران', route: '/messaging', icon: 'mail', color: 'secondary', roles: ['super-admin'], permissions: [] }
 ]
 

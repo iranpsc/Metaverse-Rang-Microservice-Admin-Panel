@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Translations;
 
+use App\Jobs\RefreshSitemapsForTranslationStatus;
 use App\Models\Admin;
 use App\Models\Translations\Translation;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
@@ -443,6 +445,7 @@ class TranslationApiTest extends TestCase
     public function test_admin_can_toggle_status_from_false_to_true(): void
     {
         $this->actingAsAdmin();
+        Queue::fake();
 
         $translation = $this->createTranslation([
             'code' => 'en',
@@ -464,11 +467,13 @@ class TranslationApiTest extends TestCase
             ]);
 
         $this->assertTrue((bool) $translation->fresh()->status);
+        Queue::assertPushed(RefreshSitemapsForTranslationStatus::class);
     }
 
     public function test_admin_can_toggle_status_from_true_to_false(): void
     {
         $this->actingAsAdmin();
+        Queue::fake();
 
         $translation = $this->createTranslation([
             'code' => 'en',
@@ -481,6 +486,7 @@ class TranslationApiTest extends TestCase
             ->assertJsonPath('data.translation.status', false);
 
         $this->assertFalse((bool) $translation->fresh()->status);
+        Queue::assertPushed(RefreshSitemapsForTranslationStatus::class);
     }
 
     // -------------------------------------------------------------------------
