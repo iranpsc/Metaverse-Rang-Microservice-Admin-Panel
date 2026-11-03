@@ -5,10 +5,11 @@ namespace Tests\Unit\Jobs;
 use App\Jobs\ImportMaps;
 use App\Models\Coordinate;
 use App\Models\Crs;
+use App\Models\CrsProperty;
 use App\Models\Feature;
 use App\Models\FeatureProperties;
 use App\Models\Geometry;
-use App\Models\User;
+use App\Models\Map;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Tests\Concerns\CreatesMapsApiSchema;
@@ -169,8 +170,8 @@ class ImportMapsJobTest extends TestCase
 
     private function seedSystemOwner(): void
     {
-        if (! User::query()->whereKey(1)->exists()) {
-            User::query()->create([
+        if (! \App\Models\User::query()->whereKey(1)->exists()) {
+            \App\Models\User::query()->create([
                 'id' => 1,
                 'name' => 'System',
                 'email' => 'system@import.test',

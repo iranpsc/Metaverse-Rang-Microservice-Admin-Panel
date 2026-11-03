@@ -27,9 +27,7 @@ class CalendarController extends Controller
                 'interactions as likes_count' => fn ($q) => $q->where('liked', 1),
                 'interactions as dislikes_count' => fn ($q) => $q->where('liked', 0),
             ])
-            // Show the newest start date first; use the id as a stable tie-breaker.
-            ->orderByDesc('starts_at')
-            ->orderByDesc('id');
+            ->orderByDesc('starts_at');
 
         if (! empty($search)) {
             $query->where(function ($q) use ($search) {

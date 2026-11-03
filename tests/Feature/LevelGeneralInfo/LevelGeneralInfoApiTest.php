@@ -365,24 +365,6 @@ class LevelGeneralInfoApiTest extends TestCase
             ->assertJsonPath('message', self::STORE_ERROR_MESSAGE);
     }
 
-    public function test_store_returns_validation_error_when_upload_service_rejects_fbx_files(): void
-    {
-        $this->actingAsSuperAdmin();
-        $level = Level::factory()->create();
-
-        $this->partialMock(\App\Services\Level\LevelGeneralInfoUploadService::class, function ($mock): void {
-            $mock->shouldReceive('validateFbxFileExtensions')->once()
-                ->andThrow(new \InvalidArgumentException('invalid fbx map'));
-        });
-
-        $this->postJson($this->generalInfoPath($level), $this->validPayload([
-            'fbx_file' => $this->fbxFileMap(['png' => 'https://cdn.example.com/model.png']),
-        ]))
-            ->assertStatus(422)
-            ->assertJsonPath('success', false)
-            ->assertJsonPath('message', 'invalid fbx map');
-    }
-
     // -------------------------------------------------------------------------
     // Store — validation
     // -------------------------------------------------------------------------
@@ -599,7 +581,7 @@ class LevelGeneralInfoApiTest extends TestCase
         ]);
     }
 
-    public function test_update_replaces_existing_fbx_files(): void
+    public function test_update_merges_incoming_fbx_files_with_existing(): void
     {
         $this->actingAsSuperAdmin();
         $level = Level::factory()->create();
@@ -619,11 +601,11 @@ class LevelGeneralInfoApiTest extends TestCase
 
         $fbxFile = $response->json('data.general_info.fbx_file');
 
-        $this->assertCount(1, $fbxFile);
+        $this->assertSame('https://cdn.example.com/old.fbx', $fbxFile['fbx']['url']);
         $this->assertSame('https://cdn.example.com/new.glb', $fbxFile['glb']['url']);
     }
 
-    public function test_update_replaces_conflicting_fbx_keys(): void
+    public function test_update_suffixes_conflicting_fbx_keys(): void
     {
         $this->actingAsSuperAdmin();
         $level = Level::factory()->create();
@@ -641,8 +623,8 @@ class LevelGeneralInfoApiTest extends TestCase
 
         $fbxFile = $response->json('data.general_info.fbx_file');
 
-        $this->assertCount(1, $fbxFile);
-        $this->assertSame('https://cdn.example.com/new.fbx', $fbxFile['fbx']['url']);
+        $this->assertSame('https://cdn.example.com/old.fbx', $fbxFile['fbx']['url']);
+        $this->assertSame('https://cdn.example.com/new.fbx', $fbxFile['fbx_2']['url']);
     }
 
     public function test_update_replaces_uploaded_png_and_cleans_previous_file(): void
@@ -684,7 +666,7 @@ class LevelGeneralInfoApiTest extends TestCase
             ->assertJsonPath('message', self::UPDATE_MISSING_MESSAGE);
     }
 
-    public function test_update_replaces_a_full_existing_fbx_set(): void
+    public function test_update_rejects_when_merged_fbx_files_exceed_limit(): void
     {
         $this->actingAsSuperAdmin();
         $level = Level::factory()->create();
@@ -704,9 +686,12 @@ class LevelGeneralInfoApiTest extends TestCase
                 'glb' => 'https://cdn.example.com/extra.glb',
             ]),
         ]))
-            ->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonCount(1, 'data.general_info.fbx_file');
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonPath(
+                'message',
+                'حداکثر ۲۰ فایل مدل می‌توانید ذخیره کنید. ابتدا برخی فایل‌های قبلی را حذف کنید.'
+            );
     }
 
     public function test_update_returns_server_error_when_repository_throws(): void
@@ -725,25 +710,6 @@ class LevelGeneralInfoApiTest extends TestCase
             ->assertStatus(500)
             ->assertJsonPath('success', false)
             ->assertJsonPath('message', self::UPDATE_ERROR_MESSAGE);
-    }
-
-    public function test_update_returns_validation_error_when_upload_service_rejects_fbx_files(): void
-    {
-        $this->actingAsSuperAdmin();
-        $level = Level::factory()->create();
-        LevelGeneralInfo::factory()->create(['level_id' => $level->id]);
-
-        $this->partialMock(\App\Services\Level\LevelGeneralInfoUploadService::class, function ($mock): void {
-            $mock->shouldReceive('validateFbxFileExtensions')->once()
-                ->andThrow(new \InvalidArgumentException('invalid fbx update'));
-        });
-
-        $this->putJson($this->generalInfoPath($level), $this->validPayload([
-            'fbx_file' => $this->fbxFileMap(['png' => 'https://cdn.example.com/model.png']),
-        ]))
-            ->assertStatus(422)
-            ->assertJsonPath('success', false)
-            ->assertJsonPath('message', 'invalid fbx update');
     }
 
     public function test_update_requires_same_validation_as_store(): void

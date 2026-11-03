@@ -18,30 +18,10 @@
 
     <!-- Pagination Controls -->
     <div :class="['flex items-center gap-2', controlsClass]">
-      <!-- First Button -->
-      <button
-        type="button"
-        @click="handleFirst"
-        :disabled="pagination.current_page <= 1 || disabled"
-        aria-label="اولین صفحه"
-        :class="[
-          'px-4 py-2 rounded-lg bg-[var(--theme-bg-elevated)] border border-[var(--theme-border)]',
-          'text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-glass)]',
-          'disabled:opacity-50 disabled:cursor-not-allowed transition-colors',
-          buttonClass
-        ]"
-      >
-        <slot name="first">
-          اول
-        </slot>
-      </button>
-
       <!-- Previous Button -->
       <button
-        type="button"
         @click="handlePrevious"
         :disabled="pagination.current_page <= 1 || disabled"
-        aria-label="صفحه قبلی"
         :class="[
           'px-4 py-2 rounded-lg bg-[var(--theme-bg-elevated)] border border-[var(--theme-border)]',
           'text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-glass)]',
@@ -50,10 +30,7 @@
         ]"
       >
         <slot name="previous">
-          <svg viewBox="0 0 24 24" aria-hidden="true" class="h-5 w-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-            <path d="m11 5 7 7-7 7" />
-            <path d="m4 5 7 7-7 7" />
-          </svg>
+          قبلی
         </slot>
       </button>
 
@@ -78,10 +55,8 @@
 
       <!-- Next Button -->
       <button
-        type="button"
         @click="handleNext"
         :disabled="pagination.current_page >= pagination.last_page || disabled"
-        aria-label="صفحه بعدی"
         :class="[
           'px-4 py-2 rounded-lg bg-[var(--theme-bg-elevated)] border border-[var(--theme-border)]',
           'text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-glass)]',
@@ -90,28 +65,7 @@
         ]"
       >
         <slot name="next">
-          <svg viewBox="0 0 24 24" aria-hidden="true" class="h-5 w-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-            <path d="m13 5-7 7 7 7" />
-            <path d="m20 5-7 7 7 7" />
-          </svg>
-        </slot>
-      </button>
-
-      <!-- Last Button -->
-      <button
-        type="button"
-        @click="handleLast"
-        :disabled="pagination.current_page >= pagination.last_page || disabled"
-        aria-label="آخرین صفحه"
-        :class="[
-          'px-4 py-2 rounded-lg bg-[var(--theme-bg-elevated)] border border-[var(--theme-border)]',
-          'text-[var(--theme-text-primary)] hover:bg-[var(--theme-bg-glass)]',
-          'disabled:opacity-50 disabled:cursor-not-allowed transition-colors',
-          buttonClass
-        ]"
-      >
-        <slot name="last">
-          آخر
+          بعدی
         </slot>
       </button>
     </div>
@@ -195,21 +149,9 @@ const handlePrevious = () => {
   }
 }
 
-const handleFirst = () => {
-  if (props.pagination.current_page > 1) {
-    handlePageChange(1)
-  }
-}
-
 const handleNext = () => {
   if (props.pagination.current_page < props.pagination.last_page) {
     handlePageChange(props.pagination.current_page + 1)
-  }
-}
-
-const handleLast = () => {
-  if (props.pagination.current_page < props.pagination.last_page) {
-    handlePageChange(props.pagination.last_page)
   }
 }
 

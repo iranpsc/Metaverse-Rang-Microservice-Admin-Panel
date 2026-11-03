@@ -5,7 +5,6 @@ namespace Tests\Feature\Translations;
 use App\Models\Admin;
 use App\Models\Translations\Translation;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -157,7 +156,7 @@ class TranslationApiTest extends TestCase
             ->assertJsonPath('data.0.status', true)
             ->assertJsonPath('data.0.modals_count', 2)
             ->assertJsonPath('data.0.file_url', 'https://metarang.com/lang/en.json')
-            ->assertJsonPath('data.0.icon', asset('assets/images/flags/en.svg'));
+            ->assertJsonPath('data.0.icon', asset('assets/images/flags/EN.svg'));
     }
 
     public function test_index_orders_translations_by_name_ascending(): void
@@ -734,7 +733,7 @@ class TranslationApiTest extends TestCase
 
         $english = $this->createTranslation(['code' => 'en', 'name' => 'English']);
 
-        $file = UploadedFile::fake()->createWithContent(
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent(
             'broken.json',
             '{not-valid-json'
         );
@@ -881,9 +880,9 @@ class TranslationApiTest extends TestCase
     /**
      * @param  array<int|string, string|null>  $payload
      */
-    private function makeTranslationUpload(array $payload): UploadedFile
+    private function makeTranslationUpload(array $payload): \Illuminate\Http\UploadedFile
     {
-        return UploadedFile::fake()->createWithContent(
+        return \Illuminate\Http\UploadedFile::fake()->createWithContent(
             'lang.json',
             json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE)
         );

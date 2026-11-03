@@ -41,10 +41,7 @@
     <slot name="icon-left" />
 
     <!-- Content -->
-      <span
-        class="min-w-0 text-center leading-tight"
-        :class="{ 'opacity-0': loading }"
-      >
+    <span :class="{ 'opacity-0': loading }">
       <slot />
     </span>
 
@@ -104,11 +101,11 @@ const effectiveRounded = computed(() => {
 
 const sizeClasses = computed(() => {
   const sizes = {
-      xs: 'px-2.5 py-1.5 text-[clamp(0.65rem,1.5vw,0.75rem)]',
-      sm: 'px-3 py-2 text-[clamp(0.7rem,1.6vw,0.875rem)]',
-      md: 'px-4 py-2.5 text-[clamp(0.7rem,1.7vw,0.875rem)]',
-      lg: 'px-5 py-3 text-[clamp(0.8rem,1.8vw,1rem)]',
-      xl: 'px-6 py-3.5 text-[clamp(0.9rem,2vw,1.125rem)]'
+    xs: 'px-2.5 py-1.5 text-xs',
+    sm: 'px-3 py-2 text-sm',
+    md: 'px-4 py-2.5 text-sm',
+    lg: 'px-5 py-3 text-base',
+    xl: 'px-6 py-3.5 text-lg'
   }
   return sizes[props.size]
 })

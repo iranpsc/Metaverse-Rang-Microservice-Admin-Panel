@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Admin;
-use App\Services\ContentWebhooks\ChangeRecorder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,9 +31,6 @@ class ActivityLoggerService
 
     public static function logModelEvent(Model $model, string $event, ?array $changes = null, ?array $original = null): void
     {
-        if (app(ChangeRecorder::class)->model($model, $event, $changes, $original)) {
-            return;
-        }
         $category = ActivityLogCategoryResolver::resolveForModel($model);
         $description = self::buildModelDescription($model, $event);
 

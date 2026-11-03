@@ -511,8 +511,16 @@ const validateFbxLinks = () => {
   }
 
   const entries = Object.entries(form.fbx_file)
-  if (entries.length > 20) {
-    errors.fbx_file = 'حداکثر ۲۰ فایل مدل می‌توانید انتخاب کنید.'
+  const existingCount = (
+    existingFiles.fbx_file
+    && typeof existingFiles.fbx_file === 'object'
+    && !Array.isArray(existingFiles.fbx_file)
+  )
+    ? Object.keys(existingFiles.fbx_file).length
+    : 0
+
+  if (existingCount + entries.length > 20) {
+    errors.fbx_file = `حداکثر ۲۰ فایل مدل مجاز است. ${existingCount} فایل قبلی ذخیره شده و ${entries.length} فایل جدید انتخاب شده است.`
     return false
   }
 
