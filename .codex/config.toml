@@ -1,0 +1,3 @@
+[mcp_servers.herd]
+command = "cmd"
+args = ["/c", "herd", "mcp"]
