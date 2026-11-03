@@ -55,6 +55,15 @@ const load = async () => {
 }
 
 const generate = async (item = null) => {
+  if (!item) {
+    const result = await confirm(
+      'تمام نقشه‌های سایت پویا برای همه زبان‌های فعال دوباره تولید می‌شوند. این فرایند ممکن است چند لحظه طول بکشد.',
+      'تایید بازسازی همه نقشه‌های سایت',
+      { confirmText: 'بله، بازسازی شود', cancelText: 'انصراف' }
+    )
+    if (!result.isConfirmed) return
+  }
+
   const key = actionKey('generate', item)
   activeAction.value = key
   try {
