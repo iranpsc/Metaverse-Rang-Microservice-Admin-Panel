@@ -12,7 +12,7 @@
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
         "laravel/ui": "^4.6.3",
-        "league/flysystem-ftp": "3.0",
+        "league/flysystem-ftp": "3.36.0",
         "maatwebsite/excel": "^3.1.70",
         "morilog/jalali": "3.*",
         "pion/laravel-chunk-upload": "^1.6",
