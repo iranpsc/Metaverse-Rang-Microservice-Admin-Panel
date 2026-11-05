@@ -83,7 +83,7 @@
           <Button variant="danger" :disabled="sending || cancelling || !webhookSummary.active_cycle" @click="cancelWebhook">
             {{ cancelling ? 'در حال لغو…' : 'لغو ارسال' }}
           </Button>
-          <Button :disabled="sending || cancelling || !webhookSummary.enabled || !!webhookSummary.active_cycle || (!webhookSummary.pending_count && !webhookSummary.blocked_batch)" @click="sendWebhook()">
+          <Button :disabled="sending || cancelling || !webhookSummary.enabled || !!webhookSummary.active_cycle || (!webhookSummary.pending_count && !webhookSummary.blocked_batch)" @click="openWebhookPreview()">
             {{ sending || webhookSummary.active_cycle ? 'در حال ارسال…' : 'ارسال وبهوک' }}
           </Button>
         </div>
@@ -153,6 +153,96 @@
     </template>
 
     <Modal
+      :model-value="isWebhookPreviewModalOpen"
+      :title="webhookPreview.is_retry ? 'ارسال مجدد بسته وبهوک' : 'تأیید ارسال وبهوک'"
+      size="xl"
+      @update:model-value="isWebhookPreviewModalOpen = $event"
+    >
+      <div class="space-y-5" dir="rtl">
+        <div v-if="webhookPreviewLoading" class="py-8 text-center text-sm text-[var(--theme-text-secondary)]">
+          در حال آماده‌سازی فهرست تغییرات…
+        </div>
+        <template v-else>
+          <div class="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-4">
+            <div class="rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-glass)] p-3">
+              <p class="text-xs text-[var(--theme-text-muted)]">نسخه</p>
+              <p class="mt-1 font-semibold" dir="ltr">{{ webhookPreview.version }}</p>
+            </div>
+            <div class="rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-glass)] p-3">
+              <p class="text-xs text-[var(--theme-text-muted)]">تعداد رویدادها</p>
+              <p class="mt-1 font-semibold">{{ webhookPreview.event_count }}</p>
+            </div>
+            <div class="col-span-2 min-w-0 rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-glass)] p-3 md:col-span-2">
+              <p class="text-xs text-[var(--theme-text-muted)]">مسیرهای تحت تأثیر</p>
+              <p class="mt-1 break-all text-xs" dir="ltr">{{ webhookPreview.affected_routes.join('، ') || '—' }}</p>
+            </div>
+          </div>
+
+          <div v-if="webhookPreview.events.length" class="max-h-80 space-y-2 overflow-y-auto">
+            <div v-for="event in webhookPreview.events" :key="event.id" class="rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-glass)] p-3">
+              <div class="flex flex-wrap items-center gap-2 text-xs">
+                <span :class="eventBadgeClass(event.event)">{{ eventLabel(event.event) }}</span>
+                <span class="text-[var(--theme-text-muted)]">{{ event.feature }} / {{ event.resource }}</span>
+                <span class="text-[var(--theme-text-muted)]" dir="ltr">#{{ event.entity_id }}</span>
+              </div>
+              <p class="mt-2 text-sm text-[var(--theme-text-primary)]">{{ event.description }}</p>
+              <p class="mt-1 text-xs text-[var(--theme-text-muted)]" dir="ltr">{{ event.affected_routes.join(' · ') }}</p>
+            </div>
+          </div>
+          <p v-else class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-300">
+            تغییر قابل ارسالی وجود ندارد.
+          </p>
+        </template>
+      </div>
+
+      <template #footer>
+        <Button variant="glass" @click="isWebhookPreviewModalOpen = false">انصراف</Button>
+        <Button :disabled="webhookPreviewLoading || !webhookPreview.event_count" @click="confirmWebhookSend">
+          {{ webhookPreview.is_retry ? 'ارسال مجدد' : 'تأیید و ارسال' }}
+        </Button>
+      </template>
+    </Modal>
+
+    <Modal
+      :model-value="isWebhookProgressModalOpen"
+      title="وضعیت ارسال وبهوک"
+      size="lg"
+      :closable="!sending"
+      :close-on-escape="!sending"
+      :z-index="60"
+      @update:model-value="isWebhookProgressModalOpen = $event"
+    >
+      <div class="space-y-5" dir="rtl">
+        <div class="rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-glass)] p-4">
+          <p class="text-sm font-semibold text-[var(--theme-text-primary)]">{{ webhookProgressMessage }}</p>
+          <p v-if="webhookProgress.cycleId" class="mt-2 text-xs text-[var(--theme-text-muted)]" dir="ltr">
+            {{ webhookProgress.cycleId }}
+          </p>
+        </div>
+
+        <div v-if="webhookProgress.httpStatus !== null" class="space-y-2">
+          <h4 class="text-sm font-semibold text-[var(--theme-text-primary)]">پاسخ دریافتی از وبهوک</h4>
+          <p class="text-xs text-[var(--theme-text-secondary)]" dir="ltr">HTTP {{ webhookProgress.httpStatus }}</p>
+          <pre v-if="webhookProgress.responseBody" class="max-h-64 overflow-y-auto whitespace-pre-wrap break-all rounded-lg border border-[var(--theme-border)] bg-[var(--theme-bg-glass)] p-4 text-xs text-[var(--theme-text-secondary)]" dir="ltr">{{ formattedWebhookResponse }}</pre>
+          <p v-else class="text-sm text-[var(--theme-text-muted)]">وبهوک پاسخی بدون بدنه برگرداند.</p>
+        </div>
+
+        <div v-else-if="sending" class="flex items-center gap-3 text-sm text-[var(--theme-text-secondary)]">
+          <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-primary-400 border-t-transparent" />
+          در انتظار دریافت پاسخ از وبهوک…
+        </div>
+
+        <p v-if="webhookProgress.error" class="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300">
+          {{ webhookProgress.error }}
+        </p>
+      </div>
+
+      <template v-if="!sending" #footer>
+        <Button @click="isWebhookProgressModalOpen = false">بستن</Button>
+      </template>
+    </Modal>
+
+    <Modal
       :model-value="isDetailModalOpen"
       title="جزئیات فعالیت"
       size="lg"
@@ -203,18 +293,14 @@
         <div v-if="selectedActivity.delivery" class="space-y-2">
           <h3 class="text-lg font-semibold">وضعیت ارسال وبهوک</h3>
           <p>{{ deliveryLabel(selectedActivity.delivery.status) }} — {{ selectedActivity.delivery.version || 'بدون بسته' }}</p>
-          <p class="text-xs">نقش‌ها: {{ selectedActivity.causer?.roles?.join(', ') || '—' }}</p>
           <p class="text-xs">تلاش‌ها: {{ selectedActivity.delivery.attempts }} — HTTP: {{ selectedActivity.delivery.http_status ?? '—' }}</p>
           <p class="text-xs">زمان تحویل: {{ selectedActivity.delivery.delivered_at || '—' }}</p>
           <p class="text-xs" dir="ltr">{{ selectedActivity.delivery.batch_id }}</p>
           <p v-if="selectedActivity.delivery.error" class="text-rose-400">{{ selectedActivity.delivery.error }}</p>
+          <h4 class="text-sm font-semibold text-[var(--theme-text-primary)]">مسیرهای API تحت تأثیر این تغییر</h4>
           <pre class="text-xs overflow-auto" dir="ltr">{{ selectedActivity.delivery.affected_routes.join('\n') }}</pre>
           <Button v-if="webhookSummary.can_send && selectedActivity.delivery.status === 'failed' && selectedActivity.delivery.batch_id === webhookSummary.blocked_batch?.id"
-            :disabled="sending || !webhookSummary.enabled || !!webhookSummary.active_cycle" @click="sendWebhook(selectedActivity.delivery.batch_id)">ارسال مجدد بسته</Button>
-        </div>
-        <div v-if="hasChangeDetails" class="space-y-2">
-          <h3 class="text-lg font-semibold text-[var(--theme-text-primary)]">تغییرات</h3>
-          <pre class="text-xs text-[var(--theme-text-secondary)] bg-[var(--theme-bg-glass)] border border-[var(--theme-border)] rounded-lg p-4 overflow-x-auto max-h-64">{{ formattedProperties }}</pre>
+            :disabled="sending || !webhookSummary.enabled || !!webhookSummary.active_cycle" @click="openWebhookPreview(selectedActivity.delivery.batch_id)">ارسال مجدد بسته</Button>
         </div>
       </div>
     </Modal>
@@ -228,32 +314,125 @@ import { Table, Pagination, LoadingState, ErrorState, Button, Modal, SearchBox }
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { useToast } from '../../composables/useToast'
 import { splitJalaliDateTime } from '../../utils/dateFormatter'
+import { confirm } from '../../utils/notifications'
 
 const { showToast } = useToast()
 
 const webhookSummary = ref({})
 const sending = ref(false)
 const cancelling = ref(false)
+const isWebhookProgressModalOpen = ref(false)
+const isWebhookPreviewModalOpen = ref(false)
+const webhookPreviewLoading = ref(false)
+const webhookPreview = ref({ batchId: null, version: null, is_retry: false, event_count: 0, events: [], affected_routes: [] })
+const webhookProgress = ref({
+  cycleId: null,
+  status: 'idle',
+  httpStatus: null,
+  responseBody: null,
+  error: null
+})
 const deliveryLabel = status => ({ pending: 'در انتظار', delivered: 'تحویل شده', failed: 'ناموفق' }[status] || 'نامرتبط')
 const deliveryBadgeClass = status => 'inline-flex px-2 py-1 rounded-full text-xs ' + ({ pending: 'bg-amber-500/10 text-amber-300', delivered: 'bg-emerald-500/10 text-emerald-300', failed: 'bg-rose-500/10 text-rose-300' }[status] || 'text-[var(--theme-text-muted)]')
+const webhookProgressMessage = computed(() => ({
+  dispatching: 'در حال قرار دادن بسته در صف ارسال…',
+  pending: 'بسته در صف است و در حال ارسال به وبهوک است…',
+  delivered: 'وبهوک با موفقیت پاسخ داد و ارسال تکمیل شد.',
+  failed: 'ارسال وبهوک ناموفق بود.',
+  cancelled: 'ارسال وبهوک لغو شد.',
+  waiting: 'ارسال هنوز در حال انجام است؛ این پنجره را بعداً برای نتیجه بررسی کنید.',
+  error: 'دریافت وضعیت ارسال وبهوک با خطا مواجه شد.'
+}[webhookProgress.value.status] || 'در حال آماده‌سازی ارسال…'))
+const formattedWebhookResponse = computed(() => {
+  const responseBody = webhookProgress.value.responseBody
+  if (!responseBody) return ''
+
+  try {
+    return JSON.stringify(JSON.parse(responseBody), null, 2)
+  } catch {
+    return responseBody
+  }
+})
+const openWebhookPreview = async batchId => {
+  webhookPreviewLoading.value = true
+  isWebhookPreviewModalOpen.value = true
+  try {
+    const response = await apiClient.get('/activity-logs/webhook-preview', { params: batchId ? { batch_id: batchId } : undefined })
+    const data = response.data.data
+    webhookPreview.value = { ...data, batchId: data.batch_id }
+  } catch (err) {
+    isWebhookPreviewModalOpen.value = false
+    showToast(err.response?.data?.message || 'خطا در آماده‌سازی فهرست تغییرات', 'error')
+  } finally {
+    webhookPreviewLoading.value = false
+  }
+}
+const confirmWebhookSend = async () => {
+  const batchId = webhookPreview.value.batchId
+  isWebhookPreviewModalOpen.value = false
+  await sendWebhook(batchId, true)
+}
 const fetchWebhookSummary = async () => {
   const response = await apiClient.get('/activity-logs/webhook-summary')
   webhookSummary.value = response.data.data
 }
-const sendWebhook = async batchId => {
+const waitForWebhookCompletion = async cycleId => {
+  for (let attempt = 0; attempt < 120; attempt += 1) {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    const response = await apiClient.get(`/activity-logs/webhook-cycles/${cycleId}`)
+    const delivery = response.data.data
+    webhookProgress.value = {
+      cycleId: delivery.cycle_id,
+      status: delivery.status,
+      httpStatus: delivery.http_status,
+      responseBody: delivery.response_body,
+      error: delivery.error
+    }
+    if (['delivered', 'failed', 'cancelled'].includes(delivery.status)) {
+      await fetchWebhookSummary()
+      await fetchActivities()
+      return
+    }
+  }
+  webhookProgress.value.status = 'waiting'
+  await fetchWebhookSummary()
+  await fetchActivities()
+}
+const sendWebhook = async (batchId, confirmed = false) => {
+  if (!confirmed) return openWebhookPreview(batchId)
+
+  isWebhookProgressModalOpen.value = true
+  webhookProgress.value = {
+    cycleId: null,
+    status: 'dispatching',
+    httpStatus: null,
+    responseBody: null,
+    error: null
+  }
   sending.value = true
   try {
-    await apiClient.post(batchId ? `/activity-logs/webhook-batches/${batchId}/retry` : '/activity-logs/webhook-dispatch')
-    showToast('ارسال بسته در صف قرار گرفت.', 'success')
-    await fetchWebhookSummary()
-    await fetchActivities()
+    const response = await apiClient.post(batchId ? `/activity-logs/webhook-batches/${batchId}/retry` : '/activity-logs/webhook-dispatch')
+    const cycleId = response.data.data.cycle_id
+    webhookProgress.value.cycleId = cycleId
+    webhookProgress.value.status = 'pending'
+    await waitForWebhookCompletion(cycleId)
+    if (webhookProgress.value.status === 'delivered') showToast('ارسال وبهوک با موفقیت انجام شد.', 'success')
   } catch (err) {
+    webhookProgress.value.status = 'error'
+    webhookProgress.value.error = err.response?.data?.message || 'خطا در ارسال وبهوک'
     showToast(err.response?.data?.message || 'خطا در ارسال وبهوک', 'error')
   } finally { sending.value = false }
 }
 const cancelWebhook = async () => {
   const cycleId = webhookSummary.value.active_cycle
   if (!cycleId) return
+  const confirmation = await confirm(
+    'ارسال فعلی متوقف می‌شود و تغییرات برای ارسال بعدی باقی می‌مانند. ادامه می‌دهید؟',
+    'لغو ارسال وبهوک',
+    { confirmText: 'بله، لغو شود' }
+  )
+  if (!confirmation.isConfirmed) return
+
   cancelling.value = true
   try {
     await apiClient.post('/activity-logs/webhook-cancel', { cycle_id: cycleId })
@@ -337,18 +516,6 @@ const modalEventTime = computed(() => {
     selectedActivity.value.created_at_jalali,
     selectedActivity.value.created_at_time
   ).time
-})
-
-const hasChangeDetails = computed(() => {
-  if (!selectedActivity.value?.properties) return false
-  const props = selectedActivity.value.properties
-  return props.attributes || props.old
-})
-
-const formattedProperties = computed(() => {
-  if (!selectedActivity.value?.properties) return ''
-  const { attributes, old, ...rest } = selectedActivity.value.properties
-  return JSON.stringify({ attributes, old, ...rest }, null, 2)
 })
 
 const fetchCategories = async () => {

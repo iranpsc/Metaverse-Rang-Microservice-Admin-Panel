@@ -380,6 +380,42 @@
         }
       }
     },
+    "/api/activity-logs/webhook-cycles/{cycle}": {
+      "get": {
+        "operationId": "getWebhookCycle",
+        "summary": "Read delivery progress and the latest receiver response for a webhook cycle",
+        "security": [
+          {
+            "AdminAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cycle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity log response envelope: success=true and data containing cycle_id, status, last_batch_id, http_status, response_body, and error. The response body is the latest receiver response, capped at 60,000 bytes."
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "403": {
+            "description": "Missing send-content-webhooks permission."
+          },
+          "404": {
+            "description": "Delivery cycle does not exist."
+          }
+        }
+      }
+    },
     "/api/activity-logs/webhook-dispatch": {
       "post": {
         "operationId": "dispatchWebhookCycle",

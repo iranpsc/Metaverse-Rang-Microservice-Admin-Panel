@@ -89,6 +89,7 @@ class DeliveryService
                 return max(1, (int) now('UTC')->diffInSeconds($batch->available_at));
             }
             $status = null;
+            $responseBody = null;
             $error = null;
             $retryable = true;
             try {
@@ -104,7 +105,20 @@ class DeliveryService
                 $response = Http::connectTimeout(5)->timeout(15)->withoutRedirecting()
                     ->withHeaders(['x-webhook-secret' => $secret])->withBody($batch->payload, 'application/json')->post($url);
                 $status = $response->status();
-                if ($status !== 200 || $response->json('batch_id') !== $batch->id || $response->json('status') !== 'accepted') {
+                $responseBody = substr($response->body(), 0, 60000);
+                $receiverResponse = $response->json();
+                $receiverData = is_array($receiverResponse) ? ($receiverResponse['data'] ?? null) : null;
+                $acknowledgement = is_array($receiverData)
+                    ? $receiverData
+                    : $receiverResponse;
+                $isFlatAcknowledgement = is_array($acknowledgement)
+                    && ($acknowledgement['batch_id'] ?? null) === $batch->id
+                    && ($acknowledgement['status'] ?? null) === 'accepted';
+                $isSuccessEnvelope = is_array($receiverResponse)
+                    && ($receiverResponse['success'] ?? false) === true
+                    && is_array($acknowledgement)
+                    && ($acknowledgement['batch_id'] ?? null) === $batch->id;
+                if ($status !== 200 || (! $isFlatAcknowledgement && ! $isSuccessEnvelope)) {
                     $error = 'Receiver did not acknowledge this batch.';
                     $retryable = in_array($status, [408, 429]) || $status >= 500;
                 }
@@ -115,6 +129,13 @@ class DeliveryService
             $attempt = $batch->retry_attempts + 1;
             DB::table('content_webhook_attempts')->insert(['batch_id' => $batch->id, 'number' => $batch->attempts + 1,
                 'http_status' => $status, 'error' => $error, 'created_at' => now('UTC'), 'updated_at' => now('UTC')]);
+            DB::table('content_delivery_cycles')->where('id', $cycleId)->update([
+                'last_batch_id' => $batch->id,
+                'last_http_status' => $status,
+                'last_response_body' => $responseBody,
+                'last_error' => $error,
+                'updated_at' => now('UTC'),
+            ]);
             $updates = ['attempts' => $batch->attempts + 1, 'retry_attempts' => $attempt, 'http_status' => $status,
                 'error' => $error, 'updated_at' => now('UTC')];
             if (! $error) {

@@ -117,6 +117,8 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class, CaptureContent
     Route::prefix('activity-logs')->controller(ActivityLogController::class)->group(function () {
         Route::get('categories', 'categories');
         Route::get('webhook-summary', 'webhookSummary');
+        Route::get('webhook-preview', 'webhookPreview');
+        Route::get('webhook-cycles/{cycle}', 'webhookCycle');
         Route::post('webhook-dispatch', 'webhookDispatch');
         Route::post('webhook-cancel', 'webhookCancel');
         Route::post('webhook-batches/{batch}/retry', 'webhookRetry');
