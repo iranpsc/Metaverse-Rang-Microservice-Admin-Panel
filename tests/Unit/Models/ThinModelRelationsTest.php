@@ -7,6 +7,7 @@ use App\Models\Feature;
 use App\Models\FeatureLimit;
 use App\Models\FeatureHourlyProfit;
 use App\Models\Geometry;
+use App\Models\Image;
 use App\Models\Map;
 use App\Models\Option;
 use App\Models\SellFeatureRequest;
@@ -18,6 +19,9 @@ use App\Models\Wallet;
 use App\Models\Dynasty\DynastyPrize;
 use App\Models\Translations\Modal;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class ThinModelRelationsTest extends TestCase
@@ -112,5 +116,44 @@ class ThinModelRelationsTest extends TestCase
         $this->expectException(\Error::class);
 
         (new Map)->crs();
+    }
+
+    public function test_image_relation_normalizes_legacy_level_morph_type(): void
+    {
+        $this->expectException(\Error::class);
+
+        $image = new Image(['imageable_id' => 123]);
+        $image->setRawAttributes([
+            'imageable_type' => 'App/Models/Levels/Level',
+            'imageable_id' => 123,
+        ]);
+
+        $image->imageable();
+    }
+
+    public function test_video_slug_is_regenerated_when_already_taken(): void
+    {
+        $originalDatabase = config('database.connections.sqlite.database');
+        config(['database.connections.sqlite.database' => ':memory:']);
+        DB::purge('sqlite');
+
+        try {
+            Schema::connection('sqlite')->create('videos', function (Blueprint $table): void {
+                $table->id();
+                $table->string('slug')->nullable();
+                $table->timestamps();
+            });
+
+            DB::table('videos')->insert(['slug' => 'taken']);
+            $video = new Video;
+            $video->slug = 'taken';
+
+            $this->assertNotSame('taken', $video->slug);
+            $this->assertSame(15, strlen($video->slug));
+        } finally {
+            Schema::connection('sqlite')->dropIfExists('videos');
+            DB::purge('sqlite');
+            config(['database.connections.sqlite.database' => $originalDatabase]);
+        }
     }
 }

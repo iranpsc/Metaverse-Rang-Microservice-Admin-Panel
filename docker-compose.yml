@@ -59,7 +59,8 @@ x-php-environment: &php-environment
   QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
   QUEUE_FAILED_DRIVER: ${QUEUE_FAILED_DRIVER:-database-uuids}
   RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
-  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_HOST: ${REDIS_HOST:-admin-panel-redis}
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-}
   REDIS_PORT: ${REDIS_PORT:-6379}
   FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
   SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN:-}
@@ -136,7 +137,9 @@ services:
       timeout: 3s
       retries: 10
     networks:
-      - admin-panel-private
+      admin-panel-private:
+        aliases:
+          - admin-panel-redis
 
   queue:
     <<: *app-common
