@@ -41,11 +41,23 @@ class ChangeRecorder
         };
         $part = $mapping['resource'] === 'record' ? '' : ' '.str_replace('-', ' ', $mapping['resource']);
         $detail = $event === 'updated' && $mapping['resource'] !== 'image' ? ' '.$labels : '';
+        $localizedSubject = match ($subject) {
+            'citizen level' => __('content_webhooks.subjects.citizen_level'),
+            'video category' => __('content_webhooks.subjects.video_category'),
+            'video subcategory' => __('content_webhooks.subjects.video_subcategory'),
+            'video' => __('content_webhooks.subjects.video'),
+            'version' => __('content_webhooks.subjects.version'),
+            default => __('content_webhooks.subjects.calendar_entry'),
+        };
+        $localizedEvent = __('content_webhooks.events.'.$event);
         $this->write($model->getConnectionName(), [...$mapping,
             'event' => $event, 'action' => match ($event) {
                 'created' => 'CREATE', 'deleted' => 'DELETE', default => 'UPDATE'
             },
-            'description' => "The {$subject} '{$mapping['name']}'{$part}{$detail} has been {$event}.",
+            'description' => __('content_webhooks.activity_description', [
+                'subject' => $localizedSubject, 'name' => $mapping['name'], 'part' => $part,
+                'detail' => $detail, 'event' => $localizedEvent,
+            ]),
             'model' => $model::class, 'model_id' => (string) $model->getKey(),
             'attributes' => $fields, 'old' => $original ?? [],
         ]);

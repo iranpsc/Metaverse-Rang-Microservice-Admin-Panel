@@ -43,6 +43,7 @@ if ($command === 'init') {
         $t->unsignedInteger('created_at');
     });
     (require database_path('migrations/2026_10_22_000001_create_content_webhook_tables.php'))->up();
+    (require database_path('migrations/2026_11_05_000001_add_webhook_response_to_delivery_cycles.php'))->up();
     app(ChangeRecorder::class)->write(null, ['feature' => 'citizen_levels', 'category' => 'levels', 'entity_id' => '12',
         'resource' => 'record', 'event' => 'updated', 'action' => 'UPDATE', 'description' => 'Concurrent edit', 'affected_routes' => ['/api/levels/12']]);
     app(ChangeRecorder::class)->reconcile();

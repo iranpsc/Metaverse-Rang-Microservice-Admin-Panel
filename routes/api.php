@@ -32,6 +32,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\ProfileDetailsController;
 use App\Http\Controllers\Api\RegistrationInfoController;
 use App\Http\Controllers\Api\ReportController;
+use App\Http\Controllers\Api\SitemapController;
 use App\Http\Controllers\Api\SoldController;
 use App\Http\Controllers\Api\SystemVariablesController;
 use App\Http\Controllers\Api\TicketsController;
@@ -104,10 +105,20 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class, CaptureContent
     });
     Route::get('/reports', [ReportController::class, 'index'])->middleware('role:reports-management|super-admin');
 
+    Route::prefix('sitemaps')->middleware('role:super-admin')->controller(SitemapController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('/logs', 'logs');
+        Route::post('/generate', 'generate');
+        Route::post('/upload', 'upload');
+        Route::delete('/{language}/{filename}', 'destroy');
+    });
+
     // Activity logs
     Route::prefix('activity-logs')->controller(ActivityLogController::class)->group(function () {
         Route::get('categories', 'categories');
         Route::get('webhook-summary', 'webhookSummary');
+        Route::get('webhook-preview', 'webhookPreview');
+        Route::get('webhook-cycles/{cycle}', 'webhookCycle');
         Route::post('webhook-dispatch', 'webhookDispatch');
         Route::post('webhook-cancel', 'webhookCancel');
         Route::post('webhook-batches/{batch}/retry', 'webhookRetry');

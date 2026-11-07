@@ -42,7 +42,9 @@ class TranslationPublisher
                 'action' => match ($event) {
                     'created' => 'CREATE', 'deleted' => 'DELETE', default => 'UPDATE'
                 },
-                'description' => "The {$locale} translation {$detail} has been {$event}.",
+                'description' => __('content_webhooks.translation_description', [
+                    'locale' => $locale, 'detail' => $detail, 'event' => __('content_webhooks.events.'.$event),
+                ]),
                 'attributes' => $new, 'old' => $old,
                 'affected_routes' => $publishedChanged ? ['/lang/'.rawurlencode(strtolower($locale)).'.json'] : [],
             ]);

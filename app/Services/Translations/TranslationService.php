@@ -2,6 +2,7 @@
 
 namespace App\Services\Translations;
 
+use App\Jobs\RefreshSitemapsForTranslationStatus;
 use App\Models\Translations\Field;
 use App\Models\Translations\Modal;
 use App\Models\Translations\Tab;
@@ -106,6 +107,8 @@ class TranslationService
     {
         $translation->status = ! (bool) $translation->status;
         $translation->save();
+
+        RefreshSitemapsForTranslationStatus::dispatch()->afterCommit();
 
         return $translation->refresh();
     }

@@ -35,6 +35,36 @@ class ActivityLogController extends Controller
         ]]);
     }
 
+    public function webhookPreview(Request $request): JsonResponse
+    {
+        abort_unless($this->canSend($request->user()), 403);
+        abort_unless(Schema::hasTable('content_changes') && Schema::hasTable('content_delivery_state'), 404);
+
+        app(ChangeRecorder::class)->reconcile();
+        $batch = DB::table('content_webhook_batches')->where('status', '!=', 'delivered')->orderBy('created_at')->first(['id', 'version', 'status']);
+        $changes = DB::table('content_changes')
+            ->when($batch, fn ($builder) => $builder->where('batch_id', $batch->id), fn ($builder) => $builder->whereNull('batch_id'))
+            ->orderBy('id')->get();
+        $events = $changes->map(function ($change) {
+            $data = json_decode($change->data, true, flags: JSON_THROW_ON_ERROR);
+
+            return [
+                'id' => $change->id, 'activity_id' => $change->activity_id, 'event' => $data['event'],
+                'description' => $data['description'], 'feature' => $data['feature'],
+                'resource' => $data['resource'], 'entity_id' => $data['entity_id'],
+                'locale' => $data['locale'] ?? null, 'affected_routes' => $data['affected_routes'],
+                'created_at' => $change->created_at,
+            ];
+        })->values();
+
+        return response()->json(['success' => true, 'data' => [
+            'batch_id' => $batch?->id,
+            'version' => $batch?->version ?? 'V1.1.'.(DB::table('content_delivery_state')->where('id', 1)->value('next_patch') ?? 1),
+            'is_retry' => $batch?->status === 'failed', 'events' => $events, 'event_count' => $events->count(),
+            'affected_routes' => $events->pluck('affected_routes')->flatten()->unique()->values(),
+        ]]);
+    }
+
     public function webhookDispatch(Request $request): JsonResponse
     {
         abort_unless($this->canSend($request->user()), 403);
@@ -49,6 +79,24 @@ class ActivityLogController extends Controller
         $cycle = app(DeliveryService::class)->trigger('manual', ChangeRecorder::actor(), $batch);
 
         return response()->json(['success' => true, 'data' => ['cycle_id' => $cycle]], 202);
+    }
+
+    public function webhookCycle(Request $request, string $cycle): JsonResponse
+    {
+        abort_unless($this->canSend($request->user()), 403);
+        abort_unless(Schema::hasTable('content_delivery_cycles'), 404);
+
+        $delivery = DB::table('content_delivery_cycles')->where('id', $cycle)->first();
+        abort_unless($delivery, 404);
+
+        return response()->json(['success' => true, 'data' => [
+            'cycle_id' => $delivery->id,
+            'status' => $delivery->status,
+            'last_batch_id' => $delivery->last_batch_id,
+            'http_status' => $delivery->last_http_status,
+            'response_body' => $delivery->last_response_body,
+            'error' => $delivery->last_error,
+        ]]);
     }
 
     public function webhookCancel(Request $request): JsonResponse

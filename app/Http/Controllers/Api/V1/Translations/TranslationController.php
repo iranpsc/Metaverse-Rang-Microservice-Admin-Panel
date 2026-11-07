@@ -111,21 +111,9 @@ class TranslationController extends Controller
         ]);
     }
 
-    public function export(Translation $translation): JsonResponse|BinaryFileResponse
+    public function export(Translation $translation): BinaryFileResponse
     {
-        $result = $this->translationService->exportTranslation($translation);
-
-        if ($result instanceof BinaryFileResponse) {
-            return $result;
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'message' => $result,
-            ],
-            'message' => 'Translation exported successfully.',
-        ]);
+        return $this->translationService->exportTranslation($translation);
     }
 
     /**

@@ -38,6 +38,7 @@ class TranslationWebhookTest extends TestCase
         config(['database.connections.primary' => config('database.connections.sqlite'), 'database.default' => 'primary']);
         $this->createActivityLogTable();
         (require database_path('migrations/2026_10_22_000001_create_content_webhook_tables.php'))->up();
+        (require database_path('migrations/2026_11_05_000001_add_webhook_response_to_delivery_cycles.php'))->up();
         Schema::connection('sqlite')->create('translations', function (Blueprint $t) {
             $t->id();
             $t->string('code');

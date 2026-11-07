@@ -15,6 +15,9 @@
     <!-- Icon Fonts -->
 
     <!-- Vite CSS & JS -->
+    <script>
+        window.__APP_CONFIG__ = @json(['frontEndUrl' => env('FRONT_END_URL', '')]);
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="font-sans antialiased">

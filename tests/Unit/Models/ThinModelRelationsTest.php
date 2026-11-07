@@ -19,9 +19,9 @@ use App\Models\Wallet;
 use App\Models\Dynasty\DynastyPrize;
 use App\Models\Translations\Modal;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class ThinModelRelationsTest extends TestCase

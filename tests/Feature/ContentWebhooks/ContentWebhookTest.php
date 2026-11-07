@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Permission;
@@ -45,6 +46,7 @@ class ContentWebhookTest extends TestCase
             $t->timestamps();
         });
         (require database_path('migrations/2026_10_22_000001_create_content_webhook_tables.php'))->up();
+        (require database_path('migrations/2026_11_05_000001_add_webhook_response_to_delivery_cycles.php'))->up();
         config(['content_webhooks.enabled' => true, 'content_webhooks.url' => 'https://receiver.test/webhook', 'content_webhooks.secret' => 'test-secret']);
         $this->realQueue = Queue::getFacadeRoot();
         Queue::fake();
@@ -58,10 +60,12 @@ class ContentWebhookTest extends TestCase
             'description' => 'Gift changed', 'affected_routes' => [$route]]);
     }
 
-    private function accept(): void
+    private function accept(bool $enveloped = false): void
     {
         Http::swap(new Factory);
-        Http::fake(fn ($request) => Http::response(['batch_id' => $request['batch_id'], 'status' => 'accepted']));
+        Http::fake(fn ($request) => Http::response($enveloped
+            ? ['success' => true, 'data' => ['batch_id' => $request['batch_id']]]
+            : ['batch_id' => $request['batch_id'], 'status' => 'accepted']));
     }
 
     public function test_repeated_changes_are_one_authenticated_pack_and_later_changes_stay_pending(): void
@@ -79,7 +83,7 @@ class ContentWebhookTest extends TestCase
         $this->assertSame(['/api/levels/12/gift'], $payload['affected_routes']);
         $this->change('/api/levels/12/gem');
         app(ChangeRecorder::class)->reconcile();
-        $this->accept();
+        $this->accept(enveloped: true);
         $this->assertSame(0, $service->deliver($cycle));
         $this->assertNull($service->deliver($cycle));
         Http::assertSent(fn ($request) => $request->body() === $batch->payload &&
@@ -186,6 +190,56 @@ class ContentWebhookTest extends TestCase
         Queue::assertPushed(DeliverContentWebhook::class);
     }
 
+    public function test_webhook_preview_lists_the_pack_that_will_be_sent(): void
+    {
+        $this->actingAsSuperAdmin();
+        $this->change('/api/levels/12/gift');
+        app(ChangeRecorder::class)->reconcile();
+
+        $this->getJson('/api/activity-logs/webhook-preview')
+            ->assertOk()
+            ->assertJsonPath('data.event_count', 1)
+            ->assertJsonPath('data.events.0.event', 'updated')
+            ->assertJsonPath('data.events.0.affected_routes.0', '/api/levels/12/gift')
+            ->assertJsonPath('data.affected_routes.0', '/api/levels/12/gift')
+            ->assertJsonPath('data.version', 'V1.1.1');
+    }
+
+    public function test_delivery_cycle_exposes_the_webhook_response_to_an_authorized_admin(): void
+    {
+        $this->actingAsSuperAdmin();
+        $this->change();
+        $service = app(DeliveryService::class);
+        $cycle = $service->trigger();
+        $service->deliver($cycle);
+        $this->accept();
+        $service->deliver($cycle);
+        $service->deliver($cycle);
+
+        $responseBody = DB::table('content_delivery_cycles')->where('id', $cycle)->value('last_response_body');
+
+        $this->getJson('/api/activity-logs/webhook-cycles/'.$cycle)
+            ->assertOk()
+            ->assertJsonPath('data.cycle_id', $cycle)
+            ->assertJsonPath('data.status', 'delivered')
+            ->assertJsonPath('data.http_status', 200)
+            ->assertJsonPath('data.response_body', $responseBody);
+    }
+
+    public function test_local_sync_queue_completes_a_successful_delivery_cycle(): void
+    {
+        Queue::swap($this->realQueue);
+        config(['content_webhooks.queue_connection' => 'sync']);
+        $this->change();
+        $this->accept(enveloped: true);
+
+        $cycle = app(DeliveryService::class)->trigger();
+
+        $this->assertSame('delivered', DB::table('content_delivery_cycles')->where('id', $cycle)->value('status'));
+        $this->assertSame(200, DB::table('content_delivery_cycles')->where('id', $cycle)->value('last_http_status'));
+        $this->assertNull(DB::table('content_delivery_state')->where('id', 1)->value('active_cycle'));
+    }
+
     public function test_cancelling_a_delivery_preserves_pending_changes_and_the_frozen_batch(): void
     {
         $this->actingAsSuperAdmin();
@@ -214,7 +268,7 @@ class ContentWebhookTest extends TestCase
     public function test_cancel_requires_permission_and_preserves_unpacked_changes(): void
     {
         $this->actingAsRegularAdmin();
-        $this->postJson('/api/activity-logs/webhook-cancel', ['cycle_id' => (string) \Illuminate\Support\Str::uuid()])->assertForbidden();
+        $this->postJson('/api/activity-logs/webhook-cancel', ['cycle_id' => (string) Str::uuid()])->assertForbidden();
         $this->app['auth']->forgetGuards();
         $this->actingAsSuperAdmin();
         $this->change();
