@@ -111,6 +111,15 @@ const parseErrorResponseData = async (
 
 apiClient.interceptors.request.use(
   async (config) => {
+    // Let Axios/browser generate the multipart boundary for file uploads.
+    // The instance-level JSON default otherwise overrides FormData requests,
+    // causing PHP/Laravel to receive no uploaded file at all.
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      config.headers = config.headers || {}
+      delete config.headers['Content-Type']
+      delete config.headers['content-type']
+    }
+
     const method = config.method?.toLowerCase()
     if (method && stateChangingMethods.includes(method)) {
       const hasXsrfToken = !!getCookie('XSRF-TOKEN')
