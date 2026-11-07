@@ -563,9 +563,7 @@ const submitCreate = async () => {
     saving.value = true
     const formData = buildCreateFormData()
 
-    const response = await apiClient.post('/calendars', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
+    const response = await apiClient.post('/calendars', formData)
 
     if (response.data.success) {
       showToast(response.data.message || 'وقعه با موفقیت ثبت شد', 'success')
@@ -684,9 +682,7 @@ const submitEdit = async () => {
     updating.value = true
     const formData = buildEditFormData()
 
-    const response = await apiClient.post(`/calendars/${selectedEvent.value.id}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
+    const response = await apiClient.post(`/calendars/${selectedEvent.value.id}`, formData)
 
     if (response.data.success) {
       showToast(response.data.message || 'وقعه با موفقیت بروزرسانی شد', 'success')

@@ -55,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, onUnmounted, watch, nextTick } from 'vue'
 
 const props = defineProps({
   modelValue: {
@@ -96,6 +96,7 @@ const emit = defineEmits(['update:modelValue', 'blur', 'focus'])
 
 const dateInputRef = ref(null)
 let datePickerInstance = null
+let datePickerInitialized = false
 const stableInputId = `persian-date-${Math.random().toString(36).slice(2, 11)}`
 
 const persianDigitMap = {
@@ -180,8 +181,8 @@ const ensureJQuery = async () => {
 }
 
 const initializeDatePicker = async () => {
-  if (!dateInputRef.value) {
-    return
+  if (!dateInputRef.value || datePickerInitialized) {
+    return datePickerInitialized
   }
 
   await ensureJQuery()
@@ -193,6 +194,7 @@ const initializeDatePicker = async () => {
   if (dateInputRef.value && typeof window.jQuery !== 'undefined' && window.jQuery.fn.pDatepicker) {
     try {
       const $el = window.jQuery(dateInputRef.value)
+      const currentValue = normalizeDateValue(props.modelValue || dateInputRef.value.value)
 
       // Destroy existing instance if any
       if (datePickerInstance) {
@@ -211,10 +213,13 @@ const initializeDatePicker = async () => {
       const datePickerOptions = {
         calendarType: 'persian',
         format: 'YYYY/MM/DD',
-        initialValue: !!props.modelValue,
+        initialValue: false,
         initialValueType: 'persian',
         autoClose: true,
-        observer: true,
+        // The observer rewrites manually entered values with the picker's
+        // current date while the modal is mounting. Keep the input as the
+        // source of truth so Jalali values remain stable.
+        observer: false,
         inputDelay: 800,
         position: 'auto',
         toolbox: {
@@ -265,16 +270,22 @@ const initializeDatePicker = async () => {
 
       // Get the instance from jQuery data
       datePickerInstance = $el.data('pDatepicker') || null
+      datePickerInitialized = true
 
       if (dateInputRef.value) {
         dateInputRef.value.removeEventListener('change', handleDateChange)
         dateInputRef.value.addEventListener('change', handleDateChange)
-        dateInputRef.value.value = normalizeDateValue(dateInputRef.value.value)
+        dateInputRef.value.value = currentValue
       }
+
+      return true
     } catch (error) {
       console.error('Error initializing date picker:', error)
+      return false
     }
   }
+
+  return false
 }
 
 const PERSIAN_DATE_SRC = '/assets/vendor/persian-date/dist/persian-date.min.js'
@@ -380,6 +391,35 @@ const handleDateChange = (event) => {
   emit('update:modelValue', value)
 }
 
+const showDatePicker = async () => {
+  if (!dateInputRef.value || props.disabled || props.readonly) {
+    return
+  }
+
+  if (datePickerInstance && typeof datePickerInstance.show === 'function') {
+    datePickerInstance.show()
+    return
+  }
+
+  try {
+    await initializeDatePicker()
+  } catch (error) {
+    console.warn('Failed to initialize date picker on demand:', error)
+  }
+
+  if (datePickerInstance && typeof datePickerInstance.show === 'function') {
+    datePickerInstance.show()
+    return
+  }
+
+  if (window.jQuery && window.jQuery.fn.pDatepicker) {
+    const $el = window.jQuery(dateInputRef.value)
+    if ($el.data('pDatepicker')) {
+      $el.pDatepicker('show')
+    }
+  }
+}
+
 const handleInput = (event) => {
   const value = normalizeDateValue(event.target.value)
   if (event.target.value !== value) {
@@ -393,42 +433,11 @@ const handleBlur = (event) => {
 }
 
 const handleClick = () => {
-  if (!dateInputRef.value || props.disabled || props.readonly) {
-    return
-  }
-
-  if (datePickerInstance && typeof datePickerInstance.show === 'function') {
-    setTimeout(() => datePickerInstance.show(), 10)
-    return
-  }
-
-  if (window.jQuery && window.jQuery.fn.pDatepicker) {
-    const $el = window.jQuery(dateInputRef.value)
-    if ($el.data('pDatepicker')) {
-      setTimeout(() => $el.pDatepicker('show'), 10)
-    } else {
-      setTimeout(() => initializeDatePicker(), 50)
-    }
-  }
+  showDatePicker()
 }
 
 const handleFocus = (event) => {
   emit('focus', event)
-  // Ensure picker opens on focus (only if not disabled or readonly)
-  if (dateInputRef.value && !props.disabled && !props.readonly) {
-    if (datePickerInstance && typeof datePickerInstance.show === 'function') {
-      setTimeout(() => {
-        datePickerInstance.show()
-      }, 50)
-    } else if (window.jQuery && window.jQuery.fn.pDatepicker && dateInputRef.value) {
-      const $el = window.jQuery(dateInputRef.value)
-      if ($el.data('pDatepicker')) {
-        setTimeout(() => {
-          $el.pDatepicker('show')
-        }, 50)
-      }
-    }
-  }
 }
 
 watch(
@@ -465,53 +474,6 @@ watch(
   { flush: 'post' }
 )
 
-onMounted(async () => {
-  await nextTick()
-
-  // Check if we're inside a modal (common modal class or parent check)
-  const isInModal = dateInputRef.value?.closest('[role="dialog"], .modal, [class*="modal"], [class*="Modal"]') !== null
-
-  // Wait longer if in a modal to allow modal animation to complete
-  const delay = isInModal ? 400 : 100
-
-  setTimeout(async () => {
-    // Retry initialization if it fails the first time
-    let retries = 3
-    let initialized = false
-
-    while (retries > 0 && !initialized) {
-      try {
-        await initializeDatePicker()
-        // Verify initialization was successful
-        if (dateInputRef.value && window.jQuery && window.jQuery.fn.pDatepicker) {
-          // Check if the input has been initialized by persian-datepicker
-          const $el = window.jQuery(dateInputRef.value)
-          if ($el && $el.data('pDatepicker')) {
-            initialized = true
-            datePickerInstance = $el.data('pDatepicker')
-          } else if (datePickerInstance) {
-            initialized = true
-          }
-        }
-
-        if (initialized) break
-      } catch (error) {
-        console.warn('Date picker initialization attempt failed:', error)
-      }
-
-      retries--
-      if (!initialized && retries > 0) {
-        // Wait before retrying
-        await new Promise(resolve => setTimeout(resolve, 200))
-      }
-    }
-
-    if (!initialized) {
-      console.error('Failed to initialize date picker after retries')
-    }
-  }, delay)
-})
-
 onUnmounted(() => {
   if (dateInputRef.value) {
     dateInputRef.value.removeEventListener('change', handleDateChange)
@@ -533,6 +495,7 @@ onUnmounted(() => {
       console.warn('Date picker cleanup warning:', e)
     }
     datePickerInstance = null
+    datePickerInitialized = false
   }
 
 })
