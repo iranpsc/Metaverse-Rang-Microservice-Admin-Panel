@@ -21,7 +21,7 @@
         "sadegh19b/laravel-persian-validation": "^2.0",
         "sentry/sentry-laravel": "^4.27",
         "spatie/laravel-activitylog": "^4.12",
-        "spatie/laravel-permission": "^6.25"
+        "spatie/laravel-permission": "^8.5"
     },
     "require-dev": {
         "brianium/paratest": "^7.20",
