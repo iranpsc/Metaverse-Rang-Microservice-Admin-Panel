@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { authApi } from '../utils/api'
+import { resetAdminTabSession } from '../utils/adminTabSession'
 
 const restoreUserFromStorage = () => {
   try {
@@ -74,6 +75,7 @@ export const useAuthStore = defineStore('auth', {
         this.setUserData(null)
         localStorage.removeItem('admin_token')
         localStorage.removeItem('admin_token_expires_at')
+        resetAdminTabSession()
         this.isLoading = false
       }
       return { success: true }

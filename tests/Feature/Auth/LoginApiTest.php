@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\Admin;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -20,6 +21,8 @@ class LoginApiTest extends TestCase
     private const ME_PATH = '/api/me';
 
     private const LOGOUT_PATH = '/api/logout';
+
+    private const CLAIM_TAB_PATH = '/api/session/tab/claim';
 
     protected function setUp(): void
     {
@@ -189,7 +192,9 @@ class LoginApiTest extends TestCase
 
         $this->assertDatabaseCount('personal_access_tokens', 1, 'sqlite');
 
-        $response = $this->withToken($token)->postJson(self::LOGOUT_PATH);
+        $response = $this->withToken($token)
+            ->withHeader('X-Admin-Tab-Id', $this->tabId())
+            ->postJson(self::LOGOUT_PATH);
 
         $response->assertOk()
             ->assertJson([
@@ -223,6 +228,7 @@ class LoginApiTest extends TestCase
         $token = $loginResponse->json('data.token');
 
         $this->withToken($token)
+            ->withHeader('X-Admin-Tab-Id', $this->tabId())
             ->getJson(self::ME_PATH)
             ->assertOk()
             ->assertJson([
@@ -283,6 +289,7 @@ class LoginApiTest extends TestCase
         $token = $admin->createToken('auth-token')->plainTextToken;
 
         $this->withToken($token)
+            ->withHeader('X-Admin-Tab-Id', $this->tabId())
             ->postJson(self::LOGOUT_PATH)
             ->assertOk();
 
@@ -292,6 +299,103 @@ class LoginApiTest extends TestCase
                 ->where('event', 'logout')
                 ->exists()
         );
+    }
+
+    public function test_only_the_active_tab_can_use_a_token_until_another_tab_claims_it(): void
+    {
+        $admin = $this->createAdmin([
+            'email' => 'tab-session@example.com',
+        ]);
+        $token = $admin->createToken('auth-token', ['*'], now()->addHours(3))->plainTextToken;
+        $firstTab = $this->tabId();
+        $secondTab = $this->tabId();
+
+        $this->withToken($token)
+            ->withHeader('X-Admin-Tab-Id', $firstTab)
+            ->postJson(self::CLAIM_TAB_PATH)
+            ->assertOk();
+
+        $this->assertDatabaseHas('personal_access_tokens', [
+            'active_tab_id' => $firstTab,
+        ], 'sqlite');
+
+        $this->withToken($token)
+            ->withHeader('X-Admin-Tab-Id', $secondTab)
+            ->getJson(self::ME_PATH)
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'admin_tab_conflict');
+
+        $this->withToken($token)
+            ->withHeader('X-Admin-Tab-Id', $secondTab)
+            ->postJson(self::CLAIM_TAB_PATH)
+            ->assertOk();
+
+        $this->withToken($token)
+            ->withHeader('X-Admin-Tab-Id', $firstTab)
+            ->getJson(self::ME_PATH)
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'admin_tab_conflict');
+
+        $this->withToken($token)
+            ->withHeader('X-Admin-Tab-Id', $secondTab)
+            ->getJson(self::ME_PATH)
+            ->assertOk();
+    }
+
+    public function test_different_tokens_for_the_same_admin_remain_independent(): void
+    {
+        $admin = $this->createAdmin([
+            'email' => 'independent-sessions@example.com',
+        ]);
+        $firstToken = $admin->createToken('auth-token', ['*'], now()->addHours(3))->plainTextToken;
+        $secondToken = $admin->createToken('auth-token', ['*'], now()->addHours(3))->plainTextToken;
+
+        $this->withToken($firstToken)
+            ->withHeader('X-Admin-Tab-Id', $this->tabId())
+            ->getJson(self::ME_PATH)
+            ->assertOk();
+
+        $this->withToken($secondToken)
+            ->withHeader('X-Admin-Tab-Id', $this->tabId())
+            ->getJson(self::ME_PATH)
+            ->assertOk();
+    }
+
+    public function test_logout_revokes_only_the_current_token(): void
+    {
+        $admin = $this->createAdmin([
+            'email' => 'independent-logout@example.com',
+        ]);
+        $firstToken = $admin->createToken('auth-token', ['*'], now()->addHours(3))->plainTextToken;
+        $secondToken = $admin->createToken('auth-token', ['*'], now()->addHours(3))->plainTextToken;
+
+        $this->withToken($firstToken)
+            ->withHeader('X-Admin-Tab-Id', $this->tabId())
+            ->postJson(self::LOGOUT_PATH)
+            ->assertOk();
+
+        $this->withToken($secondToken)
+            ->withHeader('X-Admin-Tab-Id', $this->tabId())
+            ->getJson(self::ME_PATH)
+            ->assertOk();
+    }
+
+    public function test_a_bearer_token_cannot_be_used_with_a_different_authenticated_admin(): void
+    {
+        $sessionAdmin = $this->createAdmin([
+            'email' => 'session-admin@example.com',
+        ]);
+        $tokenAdmin = $this->createAdmin([
+            'email' => 'token-admin@example.com',
+        ]);
+        $token = $tokenAdmin->createToken('auth-token', ['*'], now()->addHours(3))->plainTextToken;
+
+        Auth::guard('admin')->setUser($sessionAdmin);
+
+        $this->withToken($token)
+            ->withHeader('X-Admin-Tab-Id', $this->tabId())
+            ->getJson(self::ME_PATH)
+            ->assertUnauthorized();
     }
 
     /**
@@ -315,5 +419,10 @@ class LoginApiTest extends TestCase
     private function throttleKey(string $email): string
     {
         return Str::transliterate(Str::lower($email).'|127.0.0.1');
+    }
+
+    private function tabId(): string
+    {
+        return (string) Str::uuid();
     }
 }

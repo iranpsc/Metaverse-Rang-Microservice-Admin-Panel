@@ -51,11 +51,13 @@ use App\Http\Controllers\Api\VideoSubCategoriesController;
 use App\Http\Controllers\Api\VideoUploadController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\WithdrawController;
+use App\Http\Controllers\Auth\AdminTabSessionController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Middleware\CaptureContentChanges;
+use App\Http\Middleware\EnsureActiveAdminTab;
 use App\Http\Middleware\EnsureAdminSanctumAuth;
 use App\Http\Middleware\RequirePhoneVerification;
 use App\Models\KycVerifyText;
@@ -89,11 +91,20 @@ Route::middleware(['guest'])->group(function () {
     });
 });
 
-Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class, CaptureContentChanges::class])->group(function () {
+Route::middleware([
+    'auth:sanctum',
+    EnsureAdminSanctumAuth::class,
+    CaptureContentChanges::class,
+    EnsureActiveAdminTab::class,
+])->group(function () {
     Route::controller(LoginController::class)->group(function () {
         Route::get('/me', 'me');
         Route::post('/logout', 'logout');
     });
+
+    Route::post('/session/tab/claim', [AdminTabSessionController::class, 'claim'])
+        ->middleware('throttle:10,1')
+        ->withoutMiddleware(EnsureActiveAdminTab::class);
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::middleware('role:citizens-management|super-admin')->group(function () {

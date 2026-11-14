@@ -384,12 +384,17 @@ class ProfileApiTest extends TestCase
             'email' => $admin->email,
             'password' => 'password',
         ])->assertOk()->json('data.token');
+        $tabId = (string) Str::uuid();
 
         $this->withToken($token)
+            ->withHeader('X-Admin-Tab-Id', $tabId)
             ->postJson(self::REQUEST_PASSWORD_PATH, $this->validPasswordPayload())
             ->assertOk();
 
-        $this->withToken($token)->postJson('/api/logout')->assertOk();
+        $this->withToken($token)
+            ->withHeader('X-Admin-Tab-Id', $tabId)
+            ->postJson('/api/logout')
+            ->assertOk();
         $this->withoutToken();
         $this->flushSession();
         $this->app['auth']->forgetGuards();
