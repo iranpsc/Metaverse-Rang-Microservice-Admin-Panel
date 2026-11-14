@@ -74,7 +74,7 @@ Per [Dokploy Compose volumes](https://docs.dokploy.com/docs/core/docker-compose)
 | Do | Don't |
 | --- | --- |
 | `../files/storage:/var/www/html/storage` | Absolute `/opt/...` host paths (cleaned / fragile on deploy) |
-| `../files/database:/var/www/html/database` | Repo-relative `./storage` or `./docker/...` (wiped on AutoDeploy `git clone`) |
+| `../files/database:/var/lib/admin-panel/database` | Repo-relative `./storage` or `./docker/...` (wiped on AutoDeploy `git clone`) |
 | Bake config into the image | Mount `./docker/php/production.ini` from the repo |
 
 Compose defaults (no env override needed on Dokploy):
@@ -82,7 +82,7 @@ Compose defaults (no env override needed on Dokploy):
 | Host path (relative to `code/`) | Container path | Purpose |
 | --- | --- | --- |
 | `../files/storage` | `/var/www/html/storage` | Uploads (`app/public`), logs, cache |
-| `../files/database` | `/var/www/html/database` | Translation SQLite (`database.sqlite`) |
+| `../files/database` | `/var/lib/admin-panel/database` | Translation SQLite (`database.sqlite`); kept outside Laravel migrations |
 
 `create_host_path: true` lets Docker create empty `files/storage` and `files/database` if missing. The entrypoint then recreates Laravel subdirs when the mount starts empty.
 
@@ -102,7 +102,7 @@ volumes:
     target: /var/www/html/storage
   - type: volume
     source: laravel-database
-    target: /var/www/html/database
+    target: /var/lib/admin-panel/database
 ```
 
 ### 3. Seed existing data (optional)
@@ -166,7 +166,7 @@ php artisan key:generate --show
 
 `REDIS_HOST` defaults to `admin-panel-redis`, the network alias of this stack's Redis on `admin-panel-private`. Set it in Dokploy only to override that default. Do **not** point Laravel at the microservices Redis. `DB_HOST=metarang-mysql` is the network alias of MySQL in the microservices stack (`metarang-shared`). Credentials must match that stack's `MYSQL_*` values.
 
-Translation models use a separate **sqlite** connection at `database/database.sqlite` (persisted under `../files/database`). Do **not** set `DB_CONNECTION=sqlite`.
+Translation models use a separate **sqlite** connection at `/var/lib/admin-panel/database/database.sqlite` (persisted under `../files/database`). Do **not** set `DB_CONNECTION=sqlite`.
 
 ### 5. Networking / domain
 
@@ -196,7 +196,7 @@ docker compose exec app php artisan migrate --database=sqlite --force
 docker compose ps
 docker compose logs -f app
 docker compose exec app php artisan about
-docker compose exec app ls -lah /var/www/html/database/database.sqlite
+docker compose exec app ls -lah /var/lib/admin-panel/database/database.sqlite
 docker compose exec app ls -lah /var/www/html/storage/app/public | head
 docker compose exec app ls -lah /var/www/html/public/uploads
 curl -I https://your-domain.example
@@ -212,7 +212,7 @@ curl -I https://your-domain.example
 | Persistence | Dokploy `../files/{storage,database}` by default; local override with `HOST_*` |
 | Config mounts | PHP ini is **baked** into the image — do not mount from the repo on AutoDeploy |
 | External network | Production `app` joins **`dokploy-network`** (Traefik) and **`metarang-shared`** (MySQL) |
-| SQLite | `pdo_sqlite` enabled; Translation models use `database/database.sqlite` |
+| SQLite | `pdo_sqlite` enabled; Translation models use the persisted file outside `database/migrations` |
 | Uploads | `storage/app/public` ↔ `public/uploads` (created by entrypoint `storage:link`) |
 | MySQL | Not in production compose — connect via `DB_HOST=metarang-mysql`; included in `docker-compose.dev.yaml` only |
 | Bootstrap cache | Entrypoint clears stale `bootstrap/cache/*.php` on startup |

@@ -28,7 +28,7 @@ x-app-volumes: &app-volumes
       create_host_path: true
   - type: bind
     source: ${HOST_DATABASE_PATH:-../files/database}
-    target: ${HOST_DATABASE_TARGET:-/var/www/html/database}
+    target: ${HOST_DATABASE_TARGET:-/var/lib/admin-panel/database}
     bind:
       create_host_path: true
   - type: bind
@@ -51,8 +51,9 @@ x-php-environment: &php-environment
   DB_DATABASE: ${DB_DATABASE:-metarang_db}
   DB_USERNAME: ${DB_USERNAME:-metarang_user}
   DB_PASSWORD: ${DB_PASSWORD:-}
-  # Translation models use sqlite; must not inherit MySQL DB_DATABASE.
-  DB_SQLITE_DATABASE: ${DB_SQLITE_DATABASE:-/var/www/html/database/database.sqlite}
+  # Translation models use sqlite; keep its persisted file outside Laravel's
+  # code/database directory so the bind mount cannot hide database/migrations.
+  DB_SQLITE_DATABASE: ${DB_SQLITE_DATABASE:-/var/lib/admin-panel/database/database.sqlite}
   CACHE_DRIVER: ${CACHE_DRIVER:-redis}
   CACHE_STORE: ${CACHE_STORE:-redis}
   SESSION_DRIVER: ${SESSION_DRIVER:-redis}
