@@ -2,6 +2,7 @@ import axios, { type AxiosError, type AxiosRequestConfig } from 'axios'
 import { usePhoneVerificationStore } from '../store/phoneVerificationStore'
 import {
   getAdminTabId,
+  isAdminTabActive,
   markAdminTabInactive,
   resetAdminTabSession,
   waitForAdminTabSession
@@ -120,8 +121,9 @@ apiClient.interceptors.request.use(
   async (config) => {
     const authToken = localStorage.getItem('admin_token')
     const isTabClaimRequest = config.url?.endsWith('/session/tab/claim')
+    const isCsrfCookieRequest = config.url?.endsWith('/sanctum/csrf-cookie')
 
-    if (authToken && !isTabClaimRequest) {
+    if (authToken && !isTabClaimRequest && !isCsrfCookieRequest) {
       await waitForAdminTabSession()
     }
 
@@ -171,7 +173,8 @@ apiClient.interceptors.response.use(
 
       if (
         error.response.status === 409 &&
-        (error.response.data as { code?: string })?.code === 'admin_tab_conflict'
+        (error.response.data as { code?: string })?.code === 'admin_tab_conflict' &&
+        !isAdminTabActive()
       ) {
         markAdminTabInactive()
       }

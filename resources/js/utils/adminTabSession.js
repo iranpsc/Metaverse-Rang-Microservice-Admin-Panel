@@ -96,10 +96,23 @@ const claimInitialTab = () => {
   const claimPromise = Promise.resolve(claimHandler())
     .then(completeClaim)
     .catch((error) => {
+      const isTabConflict =
+        error?.response?.status === 409 &&
+        error?.response?.data?.code === 'admin_tab_conflict'
+      const isWaitingForVisibility = Boolean(initialResolve)
+
       initialClaimStarted = false
       initialReject?.(error)
       initialResolve = null
       initialReject = null
+
+      // A tab that lost the initial race must still be able to submit the
+      // explicit activation request. Its normal API calls remain protected by
+      // the server-side tab check and will receive 409 until activation.
+      if (isTabConflict && !isWaitingForVisibility) {
+        initializationPromise = Promise.resolve()
+      }
+
       throw error
     })
 
