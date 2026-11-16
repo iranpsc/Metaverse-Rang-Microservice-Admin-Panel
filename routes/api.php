@@ -395,7 +395,16 @@ Route::middleware([
     Route::prefix('translations')->middleware('role:translations-management|super-admin')->group(function () {
         Route::controller(TranslationController::class)->group(function () {
             Route::get('languages', 'languages');
-            Route::get('/', 'index')->withoutMiddleware(['auth:sanctum', EnsureAdminSanctumAuth::class, 'role:translations-management|super-admin']);
+            // This endpoint is intentionally public, but the SPA still sends
+            // its bearer token. Do not run the authenticated tab middleware
+            // after removing Sanctum auth: it would find the token while
+            // seeing no authenticated user and incorrectly return 401.
+            Route::get('/', 'index')->withoutMiddleware([
+                'auth:sanctum',
+                EnsureAdminSanctumAuth::class,
+                EnsureActiveAdminTab::class,
+                'role:translations-management|super-admin',
+            ]);
             Route::post('/', 'store');
             Route::post('import', 'importNew');
             Route::get('{translation}', 'show');
