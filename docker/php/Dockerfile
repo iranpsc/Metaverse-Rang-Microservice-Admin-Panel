@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker.arvancloud.ir/docker/dockerfile:1
 # Production PHP image with Laravel app baked in.
 # Build with context at the project root (see docker-compose.yml).
 # Follows Docker multi-stage + BuildKit cache-mount best practices:
@@ -8,7 +8,7 @@
 # -----------------------------------------------------------------------------
 # Composer dependencies (no app source — maximizes layer cache)
 # -----------------------------------------------------------------------------
-FROM composer:2 AS vendor
+FROM docker.arvancloud.ir/library/composer:2 AS vendor
 
 ARG GITHUB_TOKEN=
 
@@ -44,7 +44,9 @@ RUN --mount=type=cache,target=/tmp/composer-cache \
 # -----------------------------------------------------------------------------
 # Frontend assets (Vite)
 # -----------------------------------------------------------------------------
-FROM node:22-alpine AS frontend
+FROM docker.arvancloud.ir/library/node:22-alpine AS frontend
+
+ARG NPM_REGISTRY=https://package-mirror.liara.ir/repository/npm/
 
 WORKDIR /app
 
@@ -53,19 +55,28 @@ COPY package.json package-lock.json ./
 # --ignore-scripts: simple-line-icons postinstall needs `less`, which is not a
 # runtime dependency. Dist CSS is already shipped; Vite only imports that file.
 RUN --mount=type=cache,target=/root/.npm \
+    sed -i 's|https://dl-cdn.alpinelinux.org/alpine|https://mirror.arvancloud.ir/alpine|g' /etc/apk/repositories; \
+    npm config set registry "$NPM_REGISTRY" && \
+    npm config set replace-registry-host always && \
     npm ci --prefer-offline --no-audit --no-fund --ignore-scripts
 
-# Full tree needed so laravel-vite-plugin resolves the Laravel root correctly.
-COPY . .
+# Only frontend inputs are copied here. Keeping backend files out of this layer
+# means PHP-only changes reuse the expensive npm install/build layers.
+COPY vite.config.js postcss.config.js tsconfig.json ./
+COPY resources/css ./resources/css
+COPY resources/js ./resources/js
+COPY public ./public
 RUN npm run build
 
 # -----------------------------------------------------------------------------
-# Runtime: PHP-FPM + application
+# Runtime: PHP CLI + application
 # -----------------------------------------------------------------------------
-FROM php:8.4-fpm-bookworm AS app
+# The Compose services run `artisan serve`, queue:work, and schedule:work; no
+# FastCGI process is used. The CLI image avoids carrying the FPM runtime/config.
+FROM docker.arvancloud.ir/library/php:8.4-cli-bookworm AS app
 
 LABEL org.opencontainers.image.title="admin-hamgit" \
-      org.opencontainers.image.description="Laravel admin panel (PHP-FPM)" \
+      org.opencontainers.image.description="Laravel admin panel (PHP CLI)" \
       org.opencontainers.image.source="https://github.com/irpsc/admin-hamgit"
 
 # Which PHP conf to bake in.
@@ -79,6 +90,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     set -eux; \
     rm -f /etc/apt/apt.conf.d/docker-clean; \
     echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache; \
+    find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) -exec sed -E -i \
+        -e 's|https?://deb.debian.org/debian|https://mirror.arvancloud.ir/debian|g' \
+        -e 's|https?://security.debian.org/debian-security|https://mirror.arvancloud.ir/debian-security|g' {} +; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -97,7 +111,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libsqlite3-dev \
         libzip-dev \
         libzip4 \
-        unzip \
         $PHPIZE_DEPS; \
     docker-php-ext-configure gd --with-freetype --with-jpeg; \
     docker-php-ext-install -j"$(nproc)" \
@@ -161,4 +174,4 @@ RUN set -eux; \
 # Bind mounts (Dokploy ../files or local paths) obscure these dirs at runtime;
 # entrypoint recreates the required subdirs when mounts start empty.
 ENTRYPOINT ["entrypoint.sh"]
-CMD ["php-fpm"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080", "--no-reload"]

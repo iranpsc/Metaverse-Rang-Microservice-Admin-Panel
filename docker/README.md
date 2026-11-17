@@ -11,7 +11,7 @@ It builds `docker/php/Dockerfile` with **context at the project root** (where
 `artisan` lives). Frontend assets are built in the image's Node build stage;
 there is no separate Node service or development override file.
 
-Base images are pulled from **Docker Hub**: `php:8.4-fpm-bookworm`, `composer:2`, `node:22-alpine`, `redis:7-alpine`, `mysql:8.0`, `axllent/mailpit:v1.21`.
+Base images are pulled through the Iranian ArvanCloud Docker mirror: `docker.arvancloud.ir/library/php:8.4-cli-bookworm`, `docker.arvancloud.ir/library/composer:2`, `docker.arvancloud.ir/library/node:22-alpine`, and `docker.arvancloud.ir/library/redis:7-alpine`. The image build uses ArvanCloud Debian/Alpine mirrors, Liara's npm mirror, and Liara's Composer mirror.
 
 The Dockerfile follows Docker multi-stage + BuildKit practices ([best practices](https://docs.docker.com/build/building/best-practices/), [multi-stage](https://docs.docker.com/build/building/multi-stage/)): named stages, cache mounts for apt/Composer/npm, sorted packages, production PHP ini baked into the image.
 
@@ -216,7 +216,7 @@ curl -I https://your-domain.example
 | Uploads | `storage/app/public` ↔ `public/uploads` (created by entrypoint `storage:link`) |
 | MySQL | Not in production compose — connect via `DB_HOST=metarang-mysql`; included in `docker-compose.dev.yaml` only |
 | Bootstrap cache | Entrypoint clears stale `bootstrap/cache/*.php` on startup |
-| `artisan serve` | Fine for small deployments; for heavy traffic prefer php-fpm + nginx later |
+| `artisan serve` | Used by the CLI runtime; for heavy traffic prefer php-fpm + nginx later |
 
 ## Local smoke test
 

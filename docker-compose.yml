@@ -105,10 +105,6 @@ services:
       # The entrypoint waits for the external MySQL service before executing them.
       RUN_MIGRATIONS: "1"
       PHP_CLI_SERVER_WORKERS: ${PHP_CLI_SERVER_WORKERS:-4}
-    command:
-      - sh
-      - -c
-      - php artisan storage:link && exec php artisan serve --host=0.0.0.0 --port=8080 --no-reload
     depends_on:
       redis:
         condition: service_healthy
@@ -124,7 +120,7 @@ services:
       start_period: 30s
 
   redis:
-    image: redis:7-alpine
+    image: docker.arvancloud.ir/library/redis:7-alpine
     pull_policy: if_not_present
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
