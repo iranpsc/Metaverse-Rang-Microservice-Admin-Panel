@@ -26,10 +26,9 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { Swal, confirm, notifyError } from '../utils/notifications'
-import { authApi } from '../utils/api'
+import { ensureAdminTabSession } from '../utils/api'
 import {
   activateCurrentAdminTab,
-  initializeAdminTabSession,
   isAdminTabActive
 } from '../utils/adminTabSession'
 
@@ -83,9 +82,11 @@ const showConflictDialog = async () => {
 
 onMounted(() => {
   window.addEventListener('admin-tab-conflict', showConflictDialog)
-  initializeAdminTabSession(() => authApi.claimTab())
+  ensureAdminTabSession()
     .catch(() => {
-      isLocked.value = true
+      if (!isAdminTabActive() && localStorage.getItem('admin_token')) {
+        notifyError('برقراری نشست انجام نشد. لطفاً دوباره تلاش کنید.')
+      }
     })
 })
 

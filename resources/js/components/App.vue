@@ -39,8 +39,6 @@ import PhoneVerificationSessionModal from './PhoneVerificationSessionModal.vue'
 import AdminTabSessionGuard from './AdminTabSessionGuard.vue'
 import { useBreakpoint } from '../composables/useBreakpoint'
 import { usePhoneVerificationSession } from '../composables/usePhoneVerification'
-import { authApi } from '../utils/api'
-import { initializeAdminTabSession } from '../utils/adminTabSession'
 
 // Default to open (false) - this prevents CLS on desktop
 // The sidebar will be open by default, and CSS media queries ensure it's visible on desktop
@@ -48,10 +46,6 @@ const sidebarCollapsed = ref(false)
 const { windowWidth, isDesktop, stopBreakpoint } = useBreakpoint()
 const { init: initPhoneVerification, destroy: destroyPhoneVerification } = usePhoneVerificationSession()
 const route = useRoute()
-
-if (typeof window !== 'undefined' && localStorage.getItem('admin_token')) {
-  initializeAdminTabSession(() => authApi.claimTab()).catch(() => {})
-}
 
 const handleSidebarToggle = () => {
   sidebarCollapsed.value = !sidebarCollapsed.value

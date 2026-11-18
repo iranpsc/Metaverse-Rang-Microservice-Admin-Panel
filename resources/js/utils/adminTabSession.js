@@ -10,9 +10,7 @@ let claimHandler = null
 let channel = null
 let storageHandler = null
 let visibilityHandler = null
-let initialResolve = null
-let initialReject = null
-let initialClaimStarted = false
+let resolveVisibility = null
 let activeTabId = null
 
 const getOrCreateTabId = () => {
@@ -76,49 +74,32 @@ const completeClaim = () => {
   hasClaimedTab = true
   ownsTab = true
   announceActiveTab()
-  initialResolve?.()
-  initialResolve = null
-  initialReject = null
 }
 
-const markInactive = (activeId = getActiveTabId()) => {
-  ownsTab = activeId === getOrCreateTabId()
-
-  if (!ownsTab && document.visibilityState === 'visible') {
+const reportConflict = (activeId = getActiveTabId()) => {
+  if (hasClaimedTab && document.visibilityState === 'visible') {
     window.dispatchEvent(new CustomEvent('admin-tab-conflict', { detail: { tabId: activeId } }))
   }
 }
 
 const claimInitialTab = () => {
-  if (initialClaimStarted) return initializationPromise || Promise.resolve()
+  if (initializationPromise) return initializationPromise
 
-  initialClaimStarted = true
-  const claimPromise = Promise.resolve(claimHandler())
-    .then(completeClaim)
-    .catch((error) => {
-      const isTabConflict =
-        error?.response?.status === 409 &&
-        error?.response?.data?.code === 'admin_tab_conflict'
-      const isWaitingForVisibility = Boolean(initialResolve)
+  const ready = document.visibilityState === 'visible'
+    ? Promise.resolve()
+    : new Promise((resolve) => { resolveVisibility = resolve })
 
-      initialClaimStarted = false
-      initialReject?.(error)
-      initialResolve = null
-      initialReject = null
+  const pendingClaim = ready.then(async () => {
+    if (initializationPromise !== pendingClaim) return
+    await claimHandler()
+    if (initializationPromise === pendingClaim) completeClaim()
+  }).catch((error) => {
+    if (initializationPromise === pendingClaim) initializationPromise = null
+    throw error
+  })
 
-      // A tab that lost the initial race must still be able to submit the
-      // explicit activation request. Its normal API calls remain protected by
-      // the server-side tab check and will receive 409 until activation.
-      if (isTabConflict && !isWaitingForVisibility) {
-        initializationPromise = Promise.resolve()
-      }
-
-      throw error
-    })
-
-  if (!initialResolve) initializationPromise = claimPromise
-
-  return initializationPromise
+  initializationPromise = pendingClaim
+  return pendingClaim
 }
 
 export const getAdminTabId = () => getOrCreateTabId()
@@ -126,19 +107,34 @@ export const getAdminTabId = () => getOrCreateTabId()
 export const isAdminTabActive = () => ownsTab && getActiveTabId() === getOrCreateTabId()
 
 export const initializeAdminTabSession = (claim) => {
-  if (initialized) return initializationPromise || Promise.resolve()
+  if (initialized) return claimInitialTab()
 
   initialized = true
   claimHandler = claim
 
   const currentTabId = getOrCreateTabId()
+  const handlePeerClaim = (announcedId) => {
+    // Messages can arrive out of order. Prefer the latest shared owner and
+    // keep announcements from overwriting it.
+    let latestId = announcedId
+    try {
+      latestId = localStorage.getItem(ACTIVE_TAB_STORAGE_KEY) || announcedId
+    } catch {
+      // BroadcastChannel also works when storage is unavailable.
+    }
+
+    activeTabId = latestId
+    if (!ownsTab || !latestId || latestId === currentTabId) return
+
+    ownsTab = false
+    reportConflict(latestId)
+  }
 
   try {
     channel = new BroadcastChannel(CHANNEL_NAME)
     channel.addEventListener('message', (event) => {
       if (event.data?.type === 'claimed' && event.data.tabId !== currentTabId) {
-        setActiveTabId(event.data.tabId)
-        markInactive(event.data.tabId)
+        handlePeerClaim(event.data.tabId)
       }
     })
   } catch {
@@ -146,8 +142,8 @@ export const initializeAdminTabSession = (claim) => {
   }
 
   storageHandler = (event) => {
-    if (event.key === ACTIVE_TAB_STORAGE_KEY && event.newValue !== currentTabId) {
-      markInactive(event.newValue)
+    if (event.key === ACTIVE_TAB_STORAGE_KEY && event.newValue) {
+      handlePeerClaim(event.newValue)
     }
   }
   window.addEventListener('storage', storageHandler)
@@ -155,31 +151,19 @@ export const initializeAdminTabSession = (claim) => {
   visibilityHandler = () => {
     if (document.visibilityState !== 'visible') return
 
-    if (!hasClaimedTab) {
-      claimInitialTab().catch(() => {})
+    if (resolveVisibility) {
+      resolveVisibility()
+      resolveVisibility = null
       return
     }
 
-    if (!isAdminTabActive()) {
-      window.dispatchEvent(new CustomEvent('admin-tab-conflict', {
-        detail: { tabId: getActiveTabId() }
-      }))
-    }
+    if (!isAdminTabActive()) reportConflict()
   }
   document.addEventListener('visibilitychange', visibilityHandler)
 
   // A tab that has just been opened and is visible takes ownership. Existing
   // tabs learn about the change through BroadcastChannel/storage events.
-  if (document.visibilityState === 'visible') {
-    initializationPromise = claimInitialTab()
-  } else {
-    initializationPromise = new Promise((resolve, reject) => {
-      initialResolve = resolve
-      initialReject = reject
-    })
-  }
-
-  return initializationPromise
+  return claimInitialTab()
 }
 
 export const activateCurrentAdminTab = async () => {
@@ -187,29 +171,20 @@ export const activateCurrentAdminTab = async () => {
 
   await claimHandler()
   completeClaim()
-  initialClaimStarted = false
-  initializationPromise = Promise.resolve()
 }
 
-export const markAdminTabInactive = (activeId) => {
-  const currentActiveId = activeId || getActiveTabId()
-  if (currentActiveId) setActiveTabId(currentActiveId)
+export const markAdminTabInactive = () => {
   ownsTab = false
-  window.dispatchEvent(new CustomEvent('admin-tab-conflict', {
-    detail: { tabId: currentActiveId }
-  }))
+  reportConflict()
 }
-
-export const waitForAdminTabSession = () => initializationPromise || Promise.resolve()
 
 export const resetAdminTabSession = () => {
   initialized = false
   ownsTab = false
   hasClaimedTab = false
   initializationPromise = null
-  initialResolve = null
-  initialReject = null
-  initialClaimStarted = false
+  resolveVisibility?.()
+  resolveVisibility = null
   activeTabId = null
   claimHandler = null
   if (storageHandler) window.removeEventListener('storage', storageHandler)

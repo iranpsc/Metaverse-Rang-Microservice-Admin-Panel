@@ -2,10 +2,10 @@ import axios, { type AxiosError, type AxiosRequestConfig } from 'axios'
 import { usePhoneVerificationStore } from '../store/phoneVerificationStore'
 import {
   getAdminTabId,
+  initializeAdminTabSession,
   isAdminTabActive,
   markAdminTabInactive,
-  resetAdminTabSession,
-  waitForAdminTabSession
+  resetAdminTabSession
 } from './adminTabSession'
 
 export type ApiResponse<T> = {
@@ -124,7 +124,7 @@ apiClient.interceptors.request.use(
     const isCsrfCookieRequest = config.url?.endsWith('/sanctum/csrf-cookie')
 
     if (authToken && !isTabClaimRequest && !isCsrfCookieRequest) {
-      await waitForAdminTabSession()
+      await ensureAdminTabSession()
     }
 
     // Let Axios/browser generate the multipart boundary for file uploads.
@@ -272,6 +272,14 @@ export const authApi = {
       return throwApiError(error)
     }
   }
+}
+
+const claimAdminTab = () => authApi.claimTab()
+
+export const ensureAdminTabSession = () => {
+  if (!localStorage.getItem('admin_token')) return Promise.resolve()
+
+  return initializeAdminTabSession(claimAdminTab)
 }
 
 export default apiClient
