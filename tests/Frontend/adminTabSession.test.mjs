@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { after, beforeEach, test } from 'node:test'
+import { fileURLToPath } from 'node:url'
 import { AxiosError } from 'axios'
 import { createServer } from 'vite'
 
@@ -9,6 +10,7 @@ const stored = new Map()
 const browserWindow = new EventTarget()
 const browserDocument = Object.assign(new EventTarget(), {
   cookie: 'XSRF-TOKEN=test',
+  querySelector: () => null,
   visibilityState: 'visible'
 })
 const conflicts = []
@@ -17,12 +19,14 @@ browserWindow.addEventListener('admin-tab-conflict', (event) => conflicts.push(e
 const vite = await createServer({
   configFile: false,
   appType: 'custom',
+  resolve: { alias: { pinia: fileURLToPath(new URL('../../resources/js/utils/pinia-lite.js', import.meta.url)) } },
   optimizeDeps: { noDiscovery: true, include: [] },
   server: { middlewareMode: true, ws: false, watch: null }
 })
 const { default: api, ensureAdminTabSession } = await vite.ssrLoadModule('/resources/js/utils/api.ts')
 const { activateCurrentAdminTab, getAdminTabId, isAdminTabActive, resetAdminTabSession } =
   await vite.ssrLoadModule('/resources/js/utils/adminTabSession.js')
+const { usePhoneVerificationStore } = await vite.ssrLoadModule('/resources/js/store/phoneVerificationStore.js')
 
 Object.defineProperty(globalThis, 'localStorage', {
   configurable: true,
@@ -36,6 +40,7 @@ globalThis.window = browserWindow
 globalThis.document = browserDocument
 
 beforeEach(() => {
+  usePhoneVerificationStore().closeModal()
   resetAdminTabSession()
   stored.clear()
   stored.set('admin_token', 'test-token')
@@ -124,4 +129,49 @@ test('a hidden tab waits for visibility and reports a peer takeover when revisit
   assert.equal(claimAttempts, 2)
   assert.equal(isAdminTabActive(), true)
   assert.equal(stored.get(activeTabKey), getAdminTabId())
+})
+
+const phoneVerificationRequired = (config) =>
+  new AxiosError('Phone verification required', undefined, config, undefined, {
+    ...respond(config), status: 423, data: { requires_phone_verification: true }
+  })
+
+test('a phone verification response cannot queue the tab claim', { timeout: 2000 }, async () => {
+  api.defaults.adapter = async (config) => { throw phoneVerificationRequired(config) }
+
+  await assert.rejects(ensureAdminTabSession(), (error) => error.requires_phone_verification === true)
+  assert.equal(usePhoneVerificationStore().showModal, false)
+  assert.equal(usePhoneVerificationStore().pendingRetries.length, 0)
+})
+
+test('only a tab that still owns the session can queue a phone verification retry', { timeout: 2000 }, async () => {
+  const phone = usePhoneVerificationStore()
+  const profilePath = '/profile/info'
+  api.defaults.adapter = async (config) => {
+    if (config.url === profilePath) {
+      stored.set(activeTabKey, 'other-tab')
+      throw phoneVerificationRequired(config)
+    }
+    return respond(config)
+  }
+
+  await assert.rejects(api.put(profilePath, {}), (error) => error.response?.status === 423)
+  assert.equal(phone.showModal, false)
+  assert.equal(phone.pendingRetries.length, 0)
+
+  await activateCurrentAdminTab()
+  let requireVerification = true
+  api.defaults.adapter = async (config) => {
+    if (config.url === profilePath && requireVerification) throw phoneVerificationRequired(config)
+    if (config.url === '/phone-verification/confirm') requireVerification = false
+    return respond(config)
+  }
+
+  const update = api.put(profilePath, {})
+  await new Promise((resolve) => setImmediate(resolve))
+  assert.equal(phone.showModal, true)
+  assert.equal(phone.pendingRetries.length, 1)
+  assert.equal(await phone.confirmCode('123456'), true)
+  assert.equal((await update).status, 200)
+  assert.equal(phone.showModal, false)
 })

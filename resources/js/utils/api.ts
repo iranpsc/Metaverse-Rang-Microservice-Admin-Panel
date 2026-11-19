@@ -25,6 +25,7 @@ const apiClient = axios.create({
 })
 
 const stateChangingMethods = ['post', 'put', 'patch', 'delete']
+const tabClaimPath = '/session/tab/claim'
 let csrfCookiePromise: Promise<unknown> | null = null
 
 const getCookie = (name: string) => {
@@ -120,7 +121,7 @@ const parseErrorResponseData = async (
 apiClient.interceptors.request.use(
   async (config) => {
     const authToken = localStorage.getItem('admin_token')
-    const isTabClaimRequest = config.url?.endsWith('/session/tab/claim')
+    const isTabClaimRequest = config.url?.endsWith(tabClaimPath)
     const isCsrfCookieRequest = config.url?.endsWith('/sanctum/csrf-cookie')
 
     if (authToken && !isTabClaimRequest && !isCsrfCookieRequest) {
@@ -201,7 +202,9 @@ apiClient.interceptors.response.use(
       if (
         error.response.status === 423 &&
         responseData?.requires_phone_verification &&
-        retryConfig
+        retryConfig &&
+        !retryConfig.url?.endsWith(tabClaimPath) &&
+        isAdminTabActive()
       ) {
         const store = usePhoneVerificationStore()
         return new Promise((resolve, reject) => {
@@ -240,7 +243,7 @@ export const authApi = {
   },
   claimTab: async () => {
     try {
-      const response = await apiClient.post('/session/tab/claim', null, {
+      const response = await apiClient.post(tabClaimPath, null, {
         headers: { 'X-Admin-Tab-Id': getAdminTabId() }
       })
       return response.data

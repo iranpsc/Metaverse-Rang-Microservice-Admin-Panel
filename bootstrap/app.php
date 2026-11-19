@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Middleware\RequirePhoneVerification;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -32,7 +31,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->api(append: [
             StartSession::class,
-            RequirePhoneVerification::class,
         ]);
 
         $middleware->redirectGuestsTo('/login');

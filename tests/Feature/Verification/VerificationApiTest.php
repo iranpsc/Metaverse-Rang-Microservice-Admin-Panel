@@ -7,6 +7,7 @@ use Illuminate\Contracts\Notifications\Dispatcher;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Tests\Concerns\ActsAsSuperAdmin;
 use Tests\Concerns\CreatesVerificationApiSchema;
 use Tests\TestCase;
@@ -369,6 +370,44 @@ class VerificationApiTest extends TestCase
     // -------------------------------------------------------------------------
     // confirm (production)
     // -------------------------------------------------------------------------
+
+    public function test_tab_activation_and_phone_verification_can_recover_in_order(): void
+    {
+        $this->withProductionEnvironment(function () {
+            $admin = $this->actingAsSuperAdmin();
+            $token = $admin->createToken('auth-token')->plainTextToken;
+            $firstTab = (string) Str::uuid();
+            $secondTab = (string) Str::uuid();
+            $claimPath = '/api/session/tab/claim';
+            $profilePath = '/api/profile/info';
+            $profile = ['name' => 'Verified Admin'];
+            $confirmation = ['phone_verification' => 123456, 'duration_minutes' => 20];
+
+            $this->withToken($token)->withHeader('X-Admin-Tab-Id', $firstTab);
+            $this->postJson($claimPath)->assertOk();
+            $this->putJson($profilePath, $profile)
+                ->assertStatus(423)
+                ->assertJsonPath('requires_phone_verification', true);
+
+            $this->withHeader('X-Admin-Tab-Id', $secondTab);
+            $this->postJson($claimPath)->assertOk();
+
+            $this->withHeader('X-Admin-Tab-Id', $firstTab);
+            $this->putJson($profilePath, $profile)
+                ->assertConflict()
+                ->assertJsonPath('code', 'admin_tab_conflict');
+            $this->postJson(self::CONFIRM_PATH, $confirmation)->assertConflict();
+            $this->assertNotSame($profile['name'], $admin->fresh()->name);
+
+            $this->withHeader('X-Admin-Tab-Id', $secondTab);
+            $this->seedVerificationCode($admin);
+            $this->postJson(self::CONFIRM_PATH, $confirmation)
+                ->assertOk()
+                ->assertJsonPath('data.verified', true);
+            $this->putJson($profilePath, $profile)->assertOk();
+            $this->assertSame($profile['name'], $admin->fresh()->name);
+        });
+    }
 
     public function test_confirm_with_valid_code_and_duration_in_production(): void
     {
