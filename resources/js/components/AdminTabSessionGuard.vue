@@ -32,6 +32,7 @@ import {
   isAdminTabActive
 } from '../utils/adminTabSession'
 
+const emit = defineEmits(['blocked-change'])
 const isLocked = ref(false)
 const activationInProgress = ref(false)
 let dialogOpen = false
@@ -45,6 +46,7 @@ const activate = async () => {
   try {
     await activateCurrentAdminTab()
     isLocked.value = false
+    emit('blocked-change', false)
   } catch {
     isLocked.value = true
     notifyError('فعال‌سازی این تب انجام نشد. لطفاً دوباره تلاش کنید.')
@@ -56,6 +58,7 @@ const activate = async () => {
 const showConflictDialog = async () => {
   if (dialogOpen || isAdminTabActive()) return
 
+  emit('blocked-change', true)
   dialogOpen = true
 
   try {

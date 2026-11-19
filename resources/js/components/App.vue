@@ -23,8 +23,8 @@
       </ContentArea>
     </div>
 
-    <PhoneVerificationSessionModal />
-    <AdminTabSessionGuard />
+    <PhoneVerificationSessionModal :tab-blocked="tabBlocked" />
+    <AdminTabSessionGuard @blocked-change="tabBlocked = $event" />
   </div>
 </template>
 
@@ -43,6 +43,7 @@ import { usePhoneVerificationSession } from '../composables/usePhoneVerification
 // Default to open (false) - this prevents CLS on desktop
 // The sidebar will be open by default, and CSS media queries ensure it's visible on desktop
 const sidebarCollapsed = ref(false)
+const tabBlocked = ref(false)
 const { windowWidth, isDesktop, stopBreakpoint } = useBreakpoint()
 const { init: initPhoneVerification, destroy: destroyPhoneVerification } = usePhoneVerificationSession()
 const route = useRoute()

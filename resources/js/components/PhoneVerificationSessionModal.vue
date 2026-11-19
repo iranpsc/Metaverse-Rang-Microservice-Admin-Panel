@@ -1,6 +1,6 @@
 <template>
   <Modal
-    :model-value="store.showModal"
+    :model-value="showModal && !tabBlocked"
     title="تمدید جلسه تایید موبایل"
     size="md"
     :z-index="100"
@@ -109,6 +109,8 @@ import { ref, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { Modal, Spinner, Alert, Input, Button, MaskedInput } from './ui'
 import { usePhoneVerificationStore } from '../store/phoneVerificationStore'
+
+defineProps({ tabBlocked: Boolean })
 
 const store = usePhoneVerificationStore()
 const { showModal } = storeToRefs(store)

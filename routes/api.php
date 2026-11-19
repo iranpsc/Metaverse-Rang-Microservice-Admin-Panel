@@ -97,6 +97,7 @@ Route::middleware([
     EnsureAdminSanctumAuth::class,
     CaptureContentChanges::class,
     EnsureActiveAdminTab::class,
+    RequirePhoneVerification::class,
 ])->group(function () {
     Route::controller(LoginController::class)->group(function () {
         Route::get('/me', 'me');
@@ -105,7 +106,7 @@ Route::middleware([
 
     Route::post('/session/tab/claim', [AdminTabSessionController::class, 'claim'])
         ->middleware('throttle:10,1')
-        ->withoutMiddleware(EnsureActiveAdminTab::class);
+        ->withoutMiddleware([EnsureActiveAdminTab::class, RequirePhoneVerification::class]);
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::middleware('role:citizens-management|super-admin')->group(function () {
