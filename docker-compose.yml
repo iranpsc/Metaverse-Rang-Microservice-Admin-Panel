@@ -60,6 +60,8 @@ x-php-environment: &php-environment
   QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
   QUEUE_FAILED_DRIVER: ${QUEUE_FAILED_DRIVER:-database-uuids}
   RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  OPENAI_TRANSLATION_MODEL: ${OPENAI_TRANSLATION_MODEL:-gpt-5-mini}
   REDIS_HOST: ${REDIS_HOST:-admin-panel-redis}
   REDIS_PASSWORD: ${REDIS_PASSWORD:-}
   REDIS_PORT: ${REDIS_PORT:-6379}
@@ -153,6 +155,18 @@ services:
       app:
         condition: service_healthy
       redis:
+        condition: service_healthy
+
+  auto-translations:
+    <<: *app-common
+    pull_policy: never
+    environment:
+      <<: *php-environment
+      RUN_MIGRATIONS: "0"
+    command: ["php", "artisan", "queue:work", "auto-translations", "--sleep=2", "--timeout=80", "--max-time=3600"]
+    stop_grace_period: 85s
+    depends_on:
+      app:
         condition: service_healthy
 
   scheduler:

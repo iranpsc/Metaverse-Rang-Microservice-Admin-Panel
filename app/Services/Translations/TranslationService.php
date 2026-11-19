@@ -113,17 +113,34 @@ class TranslationService
         return $translation->refresh();
     }
 
+    /**
+     * Write the locale dictionary and return its JSON download.
+     *
+     * @param  Translation  $translation  Locale to export.
+     * @return BinaryFileResponse HTTP download containing the flat dictionary as JSON.
+     */
     public function exportTranslation(Translation $translation): BinaryFileResponse
     {
         $payload = $this->buildFlatPayloadForTranslation($translation);
         $filePath = $this->writeLangFile($translation, $payload);
 
+        $this->updateExportMetadata($translation);
+
+        return response()->download($filePath, basename($filePath));
+    }
+
+    /**
+     * Advance the export version and record the URL of the published dictionary.
+     *
+     * @param  Translation  $translation  Locale whose export metadata is updated.
+     * @return void Saves the new version and file URL to the locale row.
+     */
+    public function updateExportMetadata(Translation $translation): void
+    {
         $translation->increment('version');
         $fileName = strtolower($translation->code).'.json';
         $absoluteUrl = sprintf('%s/lang/%s', rtrim((string) config('app.url'), '/'), $fileName);
         $translation->update(['file_url' => $absoluteUrl]);
-
-        return response()->download($filePath, $fileName);
     }
 
     /**
@@ -155,6 +172,8 @@ class TranslationService
      * Import a flat lang JSON file (same shape as public/lang/fa.json) into a translation.
      * Placement of each unique_id is resolved from the Persian (fa) hierarchy.
      *
+     * @param  Translation  $translation  Locale receiving the imported values.
+     * @param  UploadedFile|array<int|string, mixed>|string  $source  Uploaded file, decoded dictionary, or raw JSON string.
      * @return array{
      *     updated: int,
      *     created: int,
@@ -259,10 +278,7 @@ class TranslationService
         $flatPayload = $this->buildFlatPayloadForTranslation($translation);
         $this->writeLangFile($translation, $flatPayload);
 
-        $translation->increment('version');
-        $fileName = strtolower($translation->code).'.json';
-        $absoluteUrl = sprintf('%s/lang/%s', rtrim((string) config('app.url'), '/'), $fileName);
-        $translation->update(['file_url' => $absoluteUrl]);
+        $this->updateExportMetadata($translation);
 
         return [
             ...$stats,
@@ -545,8 +561,9 @@ class TranslationService
 
     /**
      * Build the flat lang JSON payload. When the same unique_id exists on multiple
-     * rows, prefer a non-null translation so export matches the imported file.
+     * rows, prefer populated text and retain an empty string over null.
      *
+     * @param  Translation  $translation  Locale whose fields are exported.
      * @return array<int|string, string|null>
      */
     public function buildFlatPayloadForTranslation(Translation $translation): array
@@ -564,13 +581,7 @@ class TranslationService
         foreach ($fields as $field) {
             $key = $field->unique_id === null ? '' : (int) $field->unique_id;
 
-            if (! array_key_exists($key, $payload)) {
-                $payload[$key] = $field->translation;
-
-                continue;
-            }
-
-            if ($payload[$key] === null && $field->translation !== null) {
+            if (($payload[$key] ?? null) === null || ($payload[$key] === '' && $field->translation !== null)) {
                 $payload[$key] = $field->translation;
             }
         }

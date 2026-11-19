@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\SystemVariablesController;
 use App\Http\Controllers\Api\TicketsController;
 use App\Http\Controllers\Api\TradedController;
 use App\Http\Controllers\Api\UserLevelsController;
+use App\Http\Controllers\Api\V1\Translations\AutoTranslationController;
 use App\Http\Controllers\Api\V1\Translations\FieldController as TranslationFieldController;
 use App\Http\Controllers\Api\V1\Translations\ModalController as TranslationModalController;
 use App\Http\Controllers\Api\V1\Translations\TabController as TranslationTabController;
@@ -393,6 +394,12 @@ Route::middleware([
 
     // Translations routes
     Route::prefix('translations')->middleware('role:translations-management|super-admin')->group(function () {
+        Route::get('auto-translate/runs', [AutoTranslationController::class, 'index']);
+        Route::get('{translation}/auto-translate', [AutoTranslationController::class, 'latest']);
+        Route::post('{translation}/auto-translate', [AutoTranslationController::class, 'store'])
+            ->withoutMiddleware(CaptureContentChanges::class);
+        Route::get('{translation}/auto-translate/{run}', [AutoTranslationController::class, 'show'])->whereNumber('run');
+
         Route::controller(TranslationController::class)->group(function () {
             Route::get('languages', 'languages');
             // This endpoint is intentionally public, but the SPA still sends

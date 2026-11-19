@@ -2,6 +2,17 @@ import apiClient from '../utils/api'
 
 const baseUrl = '/translations'
 
+/**
+ * @typedef {object} AutoTranslationRun
+ * @property {number} id Run identifier.
+ * @property {number} translation_id Destination locale identifier.
+ * @property {'queued'|'translating'|'publishing'|'completed'|'failed'|'publication_failed'} status Current run state.
+ * @property {number} total Number of candidate keys.
+ * @property {number} processed Number of validated translations.
+ * @property {number} translated Number of translations applied to the destination.
+ * @property {string|null} error Most recent displayable OpenAI diagnostic.
+ */
+
 export const translationApi = {
   async getLanguages () {
     const response = await apiClient.get(`${baseUrl}/languages`)
@@ -31,6 +42,40 @@ export const translationApi = {
   async toggleTranslationStatus (translationId) {
     const response = await apiClient.patch(`${baseUrl}/${translationId}/status`)
     return response.data
+  },
+
+  /**
+   * Start or resume an auto-translation run for the destination language.
+   *
+   * @param {number} translationId Destination locale ID in the request path.
+   * @returns {Promise<AutoTranslationRun>} Run from the HTTP 202 response.
+   */
+  async startAutoTranslation (translationId) {
+    const response = await apiClient.post(`${baseUrl}/${translationId}/auto-translate`)
+    return response.data.data
+  },
+
+  /**
+   * Read the latest run, including its terminal status.
+   *
+   * @param {number} translationId Destination locale ID in the request path.
+   * @returns {Promise<AutoTranslationRun|null>} Latest run, or null before the first run.
+   */
+  async getLatestAutoTranslationRun (translationId) {
+    const response = await apiClient.get(`${baseUrl}/${translationId}/auto-translate`)
+    return response.data.data
+  },
+
+  /**
+   * Read progress and results for a run in the destination language.
+   *
+   * @param {number} translationId Destination locale ID in the request path.
+   * @param {number} runId Run ID in the request path.
+   * @returns {Promise<AutoTranslationRun>} Locale-scoped run from the HTTP 200 response.
+   */
+  async getAutoTranslationRun (translationId, runId) {
+    const response = await apiClient.get(`${baseUrl}/${translationId}/auto-translate/${runId}`)
+    return response.data.data
   },
 
   async exportTranslation (translationId) {

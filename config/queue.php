@@ -29,6 +29,15 @@ return [
     */
 
     'connections' => [
+        'auto-translations' => [
+            'driver' => 'database',
+            'connection' => 'sqlite',
+            'table' => 'auto_translation_jobs',
+            'queue' => 'auto-translations',
+            'retry_after' => 120,
+            'after_commit' => false,
+        ],
+
         'content-webhooks' => [
             'driver' => 'database',
             'table' => 'jobs',

@@ -14,6 +14,11 @@ return [
     |
     */
 
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+        'translation_model' => env('OPENAI_TRANSLATION_MODEL', 'gpt-5-mini'),
+    ],
+
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),
