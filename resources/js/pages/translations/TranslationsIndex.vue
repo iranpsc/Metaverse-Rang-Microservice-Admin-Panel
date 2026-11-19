@@ -121,6 +121,14 @@
               size="sm"
               variant="glass"
               rounded="full"
+              @click="handleAutoTranslate(row)"
+            >
+              ترجمه خودکار
+            </Button>
+            <Button
+              size="sm"
+              variant="glass"
+              rounded="full"
               :loading="exportingId === row.id"
               :disabled="exportingId !== null || importing"
               @click="() => handleExport(row)"
@@ -237,6 +245,7 @@ import Modal from '../../components/ui/Modal.vue'
 import FileInput from '../../components/ui/FileInput.vue'
 import { useToast } from '../../composables/useToast'
 import { confirm } from '../../utils/notifications'
+import { useAutoTranslationDialog } from '../../composables/useAutoTranslationDialog'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { usePaginatedList } from '../../composables/usePaginatedList'
 
@@ -345,6 +354,8 @@ const fetchTranslations = () => execute(async () => {
 })
 
 const onPageChange = (page) => goToPage(page, fetchTranslations)
+
+const handleAutoTranslate = useAutoTranslationDialog(fetchTranslations)
 
 const submitCreateTranslation = async () => {
   creating.value = true

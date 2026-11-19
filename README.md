@@ -126,9 +126,52 @@ This is a CMS for **client (game) UI strings**, not Laravel `lang/` files for th
 
 **Sync:** Create, rename, or delete of a modal, tab, or field is applied to **all** languages in a SQLite transaction (matched by name / `unique_id`). Editing field text updates only that locale. The UI shows translated vs empty counts per modal and tab.
 
-**Export:** Builds `{unique_id: text}` JSON, writes `public/lang/{code}.json`, increments version, and sets `file_url` (`https://metarang.com/lang/{code}.json`). Locally the file is downloaded; otherwise it is uploaded via the FTP disk.
+**Export:** Builds `{unique_id: text}` JSON, writes `storage/app/lang/{code}.json`, updates the version and `file_url`,
+and returns the file as a download. Laravel serves it at `/lang/{code}.json`.
 
 **Operator flow:** `/translations` → language → modals → tabs → edit fields → export for the client app.
+
+### Automatic translation
+
+Choose **«ترجمه خودکار»** on the destination language. The dialog shows live
+progress and OpenAI errors. You can close it and click the action again to see
+the latest status. A finished run offers an explicit retry. For each numeric key, the
+worker uses Persian when available and falls back to English, excluding the
+destination itself. It fills missing or empty values in batches, preserving
+existing translations and edits made while a run is processing. Active
+languages are published at `/lang/{code}.json` before the run completes.
+Disabled languages can be translated while their public dictionaries remain
+disabled. If publishing fails, the row offers a publication retry using the
+already-saved translations.
+
+Set `OPENAI_API_KEY` in the server environment. `OPENAI_TRANSLATION_MODEL` defaults
+to `gpt-5-mini` and must support Structured Outputs on the Responses API. The
+worker sends the strings selected for translation and their screen context to
+OpenAI. Run `php artisan migrate` to create the run and queue tables on the
+translations SQLite connection. Docker Compose starts the `auto-translations`
+worker with the app. For Herd and other native environments, start the dedicated
+worker alongside the existing default worker. It needs access to the same SQLite
+database and Laravel storage as the web process.
+
+```sh
+php artisan queue:work auto-translations --sleep=2 --timeout=80 --max-time=3600
+```
+
+The authenticated API uses the existing translation management roles.
+
+| Request | Result |
+| --- | --- |
+| `GET /api/translations/{translation}/auto-translate` | `200` with the latest run, including its final status, or `null` before the first run. |
+| `POST /api/translations/{translation}/auto-translate` | `202` with the new or already active run. Resumes publication for a run whose file write failed. A new run requires configured OpenAI credentials. |
+| `GET /api/translations/auto-translate/runs` | `200` with active runs and runs awaiting publication retry. |
+| `GET /api/translations/{translation}/auto-translate/{run}` | `200` with the specified run scoped to the destination language. |
+
+Each run has `id`, `translation_id`, `status`, `total`, `processed`, and
+`translated` under `data`. The nullable `error` field carries the latest OpenAI diagnostic.
+Status progresses from `queued` to `translating`,
+`publishing`, and `completed`. Empty runs can complete from the queue. A
+`failed` run has no applied translations. `publication_failed` means the
+translations were saved and the JSON still needs to be published.
 
 ## License
 

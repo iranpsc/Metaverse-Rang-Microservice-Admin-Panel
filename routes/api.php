@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\SystemVariablesController;
 use App\Http\Controllers\Api\TicketsController;
 use App\Http\Controllers\Api\TradedController;
 use App\Http\Controllers\Api\UserLevelsController;
+use App\Http\Controllers\Api\V1\Translations\AutoTranslationController;
 use App\Http\Controllers\Api\V1\Translations\FieldController as TranslationFieldController;
 use App\Http\Controllers\Api\V1\Translations\ModalController as TranslationModalController;
 use App\Http\Controllers\Api\V1\Translations\TabController as TranslationTabController;
@@ -51,11 +52,13 @@ use App\Http\Controllers\Api\VideoSubCategoriesController;
 use App\Http\Controllers\Api\VideoUploadController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\WithdrawController;
+use App\Http\Controllers\Auth\AdminTabSessionController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Middleware\CaptureContentChanges;
+use App\Http\Middleware\EnsureActiveAdminTab;
 use App\Http\Middleware\EnsureAdminSanctumAuth;
 use App\Http\Middleware\RequirePhoneVerification;
 use App\Models\KycVerifyText;
@@ -89,11 +92,20 @@ Route::middleware(['guest'])->group(function () {
     });
 });
 
-Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class, CaptureContentChanges::class])->group(function () {
+Route::middleware([
+    'auth:sanctum',
+    EnsureAdminSanctumAuth::class,
+    CaptureContentChanges::class,
+    EnsureActiveAdminTab::class,
+])->group(function () {
     Route::controller(LoginController::class)->group(function () {
         Route::get('/me', 'me');
         Route::post('/logout', 'logout');
     });
+
+    Route::post('/session/tab/claim', [AdminTabSessionController::class, 'claim'])
+        ->middleware('throttle:10,1')
+        ->withoutMiddleware(EnsureActiveAdminTab::class);
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::middleware('role:citizens-management|super-admin')->group(function () {
@@ -382,9 +394,24 @@ Route::middleware(['auth:sanctum', EnsureAdminSanctumAuth::class, CaptureContent
 
     // Translations routes
     Route::prefix('translations')->middleware('role:translations-management|super-admin')->group(function () {
+        Route::get('auto-translate/runs', [AutoTranslationController::class, 'index']);
+        Route::get('{translation}/auto-translate', [AutoTranslationController::class, 'latest']);
+        Route::post('{translation}/auto-translate', [AutoTranslationController::class, 'store'])
+            ->withoutMiddleware(CaptureContentChanges::class);
+        Route::get('{translation}/auto-translate/{run}', [AutoTranslationController::class, 'show'])->whereNumber('run');
+
         Route::controller(TranslationController::class)->group(function () {
             Route::get('languages', 'languages');
-            Route::get('/', 'index')->withoutMiddleware(['auth:sanctum', EnsureAdminSanctumAuth::class, 'role:translations-management|super-admin']);
+            // This endpoint is intentionally public, but the SPA still sends
+            // its bearer token. Do not run the authenticated tab middleware
+            // after removing Sanctum auth: it would find the token while
+            // seeing no authenticated user and incorrectly return 401.
+            Route::get('/', 'index')->withoutMiddleware([
+                'auth:sanctum',
+                EnsureAdminSanctumAuth::class,
+                EnsureActiveAdminTab::class,
+                'role:translations-management|super-admin',
+            ]);
             Route::post('/', 'store');
             Route::post('import', 'importNew');
             Route::get('{translation}', 'show');

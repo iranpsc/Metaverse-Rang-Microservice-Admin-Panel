@@ -65,10 +65,18 @@ class ChangeRecorder
         return true;
     }
 
-    public function write(?string $connection, array $data): void
+    /**
+     * Write the change to its source outbox using the supplied actor or the current admin.
+     *
+     * @param  string|null  $connection  Source database connection, with null selecting the default.
+     * @param  array<string, mixed>  $data  Change event to serialize into the outbox.
+     * @param  array{id: string, name: string, roles: list<string>}|null  $actor  Admin captured when the work was queued.
+     * @return void The event is available for later projection.
+     */
+    public function write(?string $connection, array $data, ?array $actor = null): void
     {
         DB::connection($connection)->table('content_change_outbox')->insert([
-            'id' => (string) Str::uuid(), 'data' => json_encode([...$data, 'modifier' => self::actor()], JSON_THROW_ON_ERROR),
+            'id' => (string) Str::uuid(), 'data' => json_encode([...$data, 'modifier' => $actor ?? self::actor()], JSON_THROW_ON_ERROR),
             'created_at' => now('UTC'),
         ]);
     }

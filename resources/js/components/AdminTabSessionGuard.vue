@@ -1,0 +1,96 @@
+<template>
+  <div
+    v-if="isLocked"
+    class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/70 p-6 backdrop-blur-sm"
+    dir="rtl"
+  >
+    <div class="w-full max-w-md rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-bg-elevated)] p-6 text-center shadow-2xl">
+      <h2 class="mb-3 text-lg font-semibold text-[var(--theme-text-primary)]">
+        این تب غیرفعال است
+      </h2>
+      <p class="mb-5 text-sm text-[var(--theme-text-secondary)]">
+        نشست شما در تب دیگری فعال است. برای ادامه، این تب را فعال کنید.
+      </p>
+      <button
+        type="button"
+        class="cursor-pointer rounded-full bg-gradient-to-r from-[#7C3AED] to-[#06B6D4] px-5 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-wait disabled:opacity-60"
+        :disabled="activationInProgress"
+        @click.stop="activate"
+      >
+        {{ activationInProgress ? 'در حال فعال‌سازی...' : 'فعال‌سازی این تب' }}
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { Swal, confirm, notifyError } from '../utils/notifications'
+import { ensureAdminTabSession } from '../utils/api'
+import {
+  activateCurrentAdminTab,
+  isAdminTabActive
+} from '../utils/adminTabSession'
+
+const isLocked = ref(false)
+const activationInProgress = ref(false)
+let dialogOpen = false
+
+const activate = async () => {
+  if (activationInProgress.value || isAdminTabActive()) return
+
+  activationInProgress.value = true
+  Swal.close()
+
+  try {
+    await activateCurrentAdminTab()
+    isLocked.value = false
+  } catch {
+    isLocked.value = true
+    notifyError('فعال‌سازی این تب انجام نشد. لطفاً دوباره تلاش کنید.')
+  } finally {
+    activationInProgress.value = false
+  }
+}
+
+const showConflictDialog = async () => {
+  if (dialogOpen || isAdminTabActive()) return
+
+  dialogOpen = true
+
+  try {
+    const result = await confirm(
+      'این نشست در تب دیگری فعال است. آیا می‌خواهید این تب را فعال کنید؟',
+      'تب فعال دیگری وجود دارد',
+      {
+        confirmText: 'فعال‌سازی این تب',
+        cancelText: 'لغو'
+      }
+    )
+
+    if (result.isConfirmed) {
+      await activate()
+    } else {
+      isLocked.value = true
+    }
+  } catch {
+    isLocked.value = true
+  } finally {
+    dialogOpen = false
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('admin-tab-conflict', showConflictDialog)
+  ensureAdminTabSession()
+    .catch(() => {
+      if (!isAdminTabActive() && localStorage.getItem('admin_token')) {
+        notifyError('برقراری نشست انجام نشد. لطفاً دوباره تلاش کنید.')
+      }
+    })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('admin-tab-conflict', showConflictDialog)
+})
+</script>

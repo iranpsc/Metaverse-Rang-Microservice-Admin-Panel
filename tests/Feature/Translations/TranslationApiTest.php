@@ -62,6 +62,21 @@ class TranslationApiTest extends TestCase
         $this->getJson(self::INDEX_PATH)->assertOk();
     }
 
+    public function test_index_remains_public_when_the_client_sends_an_admin_token(): void
+    {
+        $admin = Admin::create([
+            'name' => 'Test Admin',
+            'email' => Str::uuid().'@example.com',
+            'password' => bcrypt('password'),
+        ]);
+
+        $token = $admin->createToken('test')->plainTextToken;
+
+        $this->withToken($token)
+            ->getJson(self::INDEX_PATH)
+            ->assertOk();
+    }
+
     public function test_index_returns_only_active_translations(): void
     {
         $active = $this->createTranslation([

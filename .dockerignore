@@ -4,6 +4,7 @@
 .idea
 .vscode
 .cursor
+.codex
 agent-transcripts
 **/.DS_Store
 
@@ -32,6 +33,9 @@ storage/app/public/*
 .env
 .env.*
 !.env.example
+coverage
+database/*.sqlite
+database/*.sqlite-*
 .phpunit.result.cache
 npm-debug.log*
 yarn-error.log*
@@ -42,6 +46,7 @@ auth.json
 docker-compose*.yml
 .dockerignore
 .editorconfig
+.DS_Store
 .php-cs-fixer*
 phpstan*
 pint.json

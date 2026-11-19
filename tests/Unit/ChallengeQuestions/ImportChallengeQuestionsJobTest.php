@@ -32,7 +32,7 @@ class ImportChallengeQuestionsJobTest extends TestCase
             ]),
         ];
 
-        (new ImportChallengeQuestions($data))->handle();
+        ImportChallengeQuestions::dispatchSync($data);
 
         $this->assertDatabaseHas('questions', [
             'code' => 'IMP-001',
@@ -60,6 +60,8 @@ class ImportChallengeQuestionsJobTest extends TestCase
         $data = [
             $this->headerRow(),
             $emptyRow,
+            ['incomplete'],
+            $this->dataRow(['code' => '   ']),
             $this->dataRow([
                 'code' => 'IMP-002',
                 'title' => 'Only real row',
@@ -67,7 +69,7 @@ class ImportChallengeQuestionsJobTest extends TestCase
             ]),
         ];
 
-        (new ImportChallengeQuestions($data))->handle();
+        ImportChallengeQuestions::dispatchSync($data);
 
         $this->assertSame(1, Question::query()->count());
         $this->assertDatabaseHas('questions', ['code' => 'IMP-002']);
@@ -85,7 +87,7 @@ class ImportChallengeQuestionsJobTest extends TestCase
             ]),
         ];
 
-        (new ImportChallengeQuestions($data))->handle();
+        ImportChallengeQuestions::dispatchSync($data);
 
         $question = Question::query()->where('code', 'IMP-003')->firstOrFail();
         $answers = $question->answers()->orderBy('id')->get();
@@ -94,6 +96,59 @@ class ImportChallengeQuestionsJobTest extends TestCase
         $this->assertFalse((bool) $answers[1]->is_correct);
         $this->assertFalse((bool) $answers[2]->is_correct);
         $this->assertTrue((bool) $answers[3]->is_correct);
+    }
+
+    public function test_handle_updates_question_and_answers_by_code_on_reimport(): void
+    {
+        $original = $this->dataRow(['code' => 'IMP-004', 'correct' => 1]);
+        ImportChallengeQuestions::dispatchSync([$this->headerRow(), $original]);
+
+        $question = Question::query()->where('code', 'IMP-004')->firstOrFail();
+        $question->forceFill(['participants' => 12])->save();
+        $originalAnswers = $question->answers()->orderBy('id')->get();
+        $originalAnswers[3]->delete();
+
+        $updated = $this->dataRow([
+            'code' => ' IMP-004 ',
+            'title' => 'Updated challenge',
+            'correct' => 2,
+            'creator_code' => '5555',
+            'prize' => '2500',
+        ]);
+        $updated[1] = ' questions/new.png ';
+        $updated[5] = ' answers/new.png ';
+        $updated[6] = 'Updated answer';
+        $data = [$this->headerRow(), $updated];
+
+        ImportChallengeQuestions::dispatchSync($data);
+        $answersBeforeReplay = $question->answers()->orderBy('id')->get();
+        $this->travel(1)->seconds();
+        ImportChallengeQuestions::dispatchSync($data);
+
+        $this->assertDatabaseCount('questions', 1);
+        $this->assertDatabaseHas('questions', [
+            'id' => $question->id,
+            'code' => 'IMP-004',
+            'title' => 'Updated challenge',
+            'image' => 'questions/new.png',
+            'creator_code' => '5555',
+            'prize' => 2500,
+            'participants' => 12,
+        ]);
+
+        $answers = $question->answers()->orderBy('id')->get();
+        $this->assertCount(4, $answers);
+        $this->assertSame($originalAnswers->take(3)->modelKeys(), $answers->take(3)->modelKeys());
+        $this->assertSame($answersBeforeReplay->modelKeys(), $answers->modelKeys());
+        $this->assertSame(
+            $answersBeforeReplay->map->getRawOriginal('updated_at')->all(),
+            $answers->map->getRawOriginal('updated_at')->all(),
+        );
+        $this->assertFalse((bool) $answers[0]->is_correct);
+        $this->assertTrue((bool) $answers[1]->is_correct);
+        $this->assertSame('Updated answer', $answers[1]->title);
+        $this->assertSame('answers/new.png', $answers[1]->image);
+        $this->assertSame('Answer four', $answers[3]->title);
     }
 
     /**

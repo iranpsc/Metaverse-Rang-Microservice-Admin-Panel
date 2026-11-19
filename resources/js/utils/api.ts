@@ -1,5 +1,12 @@
 import axios, { type AxiosError, type AxiosRequestConfig } from 'axios'
 import { usePhoneVerificationStore } from '../store/phoneVerificationStore'
+import {
+  getAdminTabId,
+  initializeAdminTabSession,
+  isAdminTabActive,
+  markAdminTabInactive,
+  resetAdminTabSession
+} from './adminTabSession'
 
 export type ApiResponse<T> = {
   success: boolean
@@ -36,6 +43,7 @@ export const getSanctumStatefulHeaders = () => {
   if (xsrf) headers['X-XSRF-TOKEN'] = xsrf
   const authToken = localStorage.getItem('admin_token')
   if (authToken) headers.Authorization = `Bearer ${authToken}`
+  if (authToken) headers['X-Admin-Tab-Id'] = getAdminTabId()
   return headers
 }
 
@@ -111,6 +119,14 @@ const parseErrorResponseData = async (
 
 apiClient.interceptors.request.use(
   async (config) => {
+    const authToken = localStorage.getItem('admin_token')
+    const isTabClaimRequest = config.url?.endsWith('/session/tab/claim')
+    const isCsrfCookieRequest = config.url?.endsWith('/sanctum/csrf-cookie')
+
+    if (authToken && !isTabClaimRequest && !isCsrfCookieRequest) {
+      await ensureAdminTabSession()
+    }
+
     // Let Axios/browser generate the multipart boundary for file uploads.
     // The instance-level JSON default otherwise overrides FormData requests,
     // causing PHP/Laravel to receive no uploaded file at all.
@@ -131,10 +147,10 @@ apiClient.interceptors.request.use(
       }
     }
 
-    const authToken = localStorage.getItem('admin_token')
     if (authToken) {
       config.headers = config.headers || {}
       config.headers.Authorization = `Bearer ${authToken}`
+      config.headers['X-Admin-Tab-Id'] = getAdminTabId()
     }
     return config
   },
@@ -146,12 +162,21 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     if (error.response) {
       if (error.response.status === 401 && window.location.pathname !== '/login') {
+        resetAdminTabSession()
         localStorage.removeItem('admin_authenticated')
         localStorage.removeItem('admin_token')
         localStorage.removeItem('admin_token_expires_at')
         localStorage.removeItem('admin_user_data')
         window.location.href = '/login'
         return Promise.reject(error)
+      }
+
+      if (
+        error.response.status === 409 &&
+        (error.response.data as { code?: string })?.code === 'admin_tab_conflict' &&
+        !isAdminTabActive()
+      ) {
+        markAdminTabInactive()
       }
 
       const retryConfig = error.config as AxiosRequestConfig & { _retry?: boolean }
@@ -208,6 +233,17 @@ export const authApi = {
       localStorage.removeItem('admin_authenticated')
       localStorage.removeItem('admin_token')
       localStorage.removeItem('admin_token_expires_at')
+      resetAdminTabSession()
+    } catch (error) {
+      return throwApiError(error)
+    }
+  },
+  claimTab: async () => {
+    try {
+      const response = await apiClient.post('/session/tab/claim', null, {
+        headers: { 'X-Admin-Tab-Id': getAdminTabId() }
+      })
+      return response.data
     } catch (error) {
       return throwApiError(error)
     }
@@ -236,6 +272,14 @@ export const authApi = {
       return throwApiError(error)
     }
   }
+}
+
+const claimAdminTab = () => authApi.claimTab()
+
+export const ensureAdminTabSession = () => {
+  if (!localStorage.getItem('admin_token')) return Promise.resolve()
+
+  return initializeAdminTabSession(claimAdminTab)
 }
 
 export default apiClient

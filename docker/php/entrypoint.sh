@@ -14,9 +14,13 @@ mkdir -p \
     bootstrap/cache \
     database
 
-# Translation models use the sqlite connection at database/database.sqlite.
-if [ ! -f database/database.sqlite ]; then
-    touch database/database.sqlite
+# Translation models use a persisted sqlite file outside the Laravel code tree.
+# Keeping it outside database/ preserves the migration files baked into the image.
+SQLITE_DATABASE_PATH="${DB_SQLITE_DATABASE:-/var/lib/admin-panel/database/database.sqlite}"
+SQLITE_DATABASE_DIR="$(dirname "$SQLITE_DATABASE_PATH")"
+mkdir -p "$SQLITE_DATABASE_DIR"
+if [ ! -f "$SQLITE_DATABASE_PATH" ]; then
+    touch "$SQLITE_DATABASE_PATH"
 fi
 
 # Always rediscover so providers match the baked vendor tree in this container.
@@ -61,6 +65,8 @@ fi
 
 chown -R www-data:www-data storage bootstrap/cache database 2>/dev/null || true
 chmod -R ug+rwx storage bootstrap/cache 2>/dev/null || true
-chmod ug+rw database/database.sqlite 2>/dev/null || true
+chown -R www-data:www-data "$SQLITE_DATABASE_DIR" 2>/dev/null || true
+chmod -R ug+rwx "$SQLITE_DATABASE_DIR" 2>/dev/null || true
+chmod ug+rw "$SQLITE_DATABASE_PATH" 2>/dev/null || true
 
 exec docker-php-entrypoint "$@"

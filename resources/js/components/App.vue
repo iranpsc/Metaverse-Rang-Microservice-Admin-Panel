@@ -24,6 +24,7 @@
     </div>
 
     <PhoneVerificationSessionModal />
+    <AdminTabSessionGuard />
   </div>
 </template>
 
@@ -35,6 +36,7 @@ import Sidebar from './Sidebar.vue'
 import ContentArea from './ContentArea.vue'
 import ToastContainer from './ui/ToastContainer.vue'
 import PhoneVerificationSessionModal from './PhoneVerificationSessionModal.vue'
+import AdminTabSessionGuard from './AdminTabSessionGuard.vue'
 import { useBreakpoint } from '../composables/useBreakpoint'
 import { usePhoneVerificationSession } from '../composables/usePhoneVerification'
 

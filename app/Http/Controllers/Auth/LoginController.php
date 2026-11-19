@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AuthenticatedUserResource;
 use App\Services\ActivityLoggerService;
+use App\Services\Auth\AdminTabSessionService;
 use App\Services\PhoneVerificationSessionService;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
@@ -14,6 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class LoginController extends Controller
 {
@@ -40,6 +42,12 @@ class LoginController extends Controller
     protected $maxAttempts = 3;
 
     protected $decayMinutes = 5;
+
+    public function __construct(
+        private readonly AdminTabSessionService $tabSessionService,
+    ) {
+        $this->middleware('guest')->except(['logout', 'me']);
+    }
 
     /**
      * The user has been authenticated.
@@ -86,7 +94,18 @@ class LoginController extends Controller
                 'email' => $user->email,
                 'ip' => $request->ip(),
             ]);
-            $user->tokens()->delete();
+            $token = $user->currentAccessToken();
+
+            if (! $token instanceof PersonalAccessToken && $request->bearerToken()) {
+                $token = PersonalAccessToken::findToken($request->bearerToken());
+            }
+
+            if (
+                $token instanceof PersonalAccessToken
+                && $this->tabSessionService->belongsToUser($token, $user)
+            ) {
+                $token->delete();
+            }
         }
         $this->guard()->logout();
         $request->session()->invalidate();
@@ -129,16 +148,6 @@ class LoginController extends Controller
     protected function guard()
     {
         return Auth::guard('admin');
-    }
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware('guest')->except(['logout', 'me']);
     }
 
     protected function sendFailedLoginResponse(Request $request)

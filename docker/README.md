@@ -11,7 +11,7 @@ It builds `docker/php/Dockerfile` with **context at the project root** (where
 `artisan` lives). Frontend assets are built in the image's Node build stage;
 there is no separate Node service or development override file.
 
-Base images are pulled from **Docker Hub**: `php:8.4-fpm-bookworm`, `composer:2`, `node:22-alpine`, `redis:7-alpine`, `mysql:8.0`, `axllent/mailpit:v1.21`.
+Base images are pulled through the Iranian ArvanCloud Docker mirror: `docker.arvancloud.ir/library/php:8.4-cli-bookworm`, `docker.arvancloud.ir/library/composer:2`, `docker.arvancloud.ir/library/node:22-alpine`, and `docker.arvancloud.ir/library/redis:7-alpine`. The image build uses ArvanCloud Debian/Alpine mirrors, Liara's npm mirror, and Liara's Composer mirror.
 
 The Dockerfile follows Docker multi-stage + BuildKit practices ([best practices](https://docs.docker.com/build/building/best-practices/), [multi-stage](https://docs.docker.com/build/building/multi-stage/)): named stages, cache mounts for apt/Composer/npm, sorted packages, production PHP ini baked into the image.
 
@@ -74,7 +74,7 @@ Per [Dokploy Compose volumes](https://docs.dokploy.com/docs/core/docker-compose)
 | Do | Don't |
 | --- | --- |
 | `../files/storage:/var/www/html/storage` | Absolute `/opt/...` host paths (cleaned / fragile on deploy) |
-| `../files/database:/var/www/html/database` | Repo-relative `./storage` or `./docker/...` (wiped on AutoDeploy `git clone`) |
+| `../files/database:/var/lib/admin-panel/database` | Repo-relative `./storage` or `./docker/...` (wiped on AutoDeploy `git clone`) |
 | Bake config into the image | Mount `./docker/php/production.ini` from the repo |
 
 Compose defaults (no env override needed on Dokploy):
@@ -82,7 +82,7 @@ Compose defaults (no env override needed on Dokploy):
 | Host path (relative to `code/`) | Container path | Purpose |
 | --- | --- | --- |
 | `../files/storage` | `/var/www/html/storage` | Uploads (`app/public`), logs, cache |
-| `../files/database` | `/var/www/html/database` | Translation SQLite (`database.sqlite`) |
+| `../files/database` | `/var/lib/admin-panel/database` | Translation SQLite (`database.sqlite`); kept outside Laravel migrations |
 
 `create_host_path: true` lets Docker create empty `files/storage` and `files/database` if missing. The entrypoint then recreates Laravel subdirs when the mount starts empty.
 
@@ -102,7 +102,7 @@ volumes:
     target: /var/www/html/storage
   - type: volume
     source: laravel-database
-    target: /var/www/html/database
+    target: /var/lib/admin-panel/database
 ```
 
 ### 3. Seed existing data (optional)
@@ -166,7 +166,7 @@ php artisan key:generate --show
 
 `REDIS_HOST` defaults to `admin-panel-redis`, the network alias of this stack's Redis on `admin-panel-private`. Set it in Dokploy only to override that default. Do **not** point Laravel at the microservices Redis. `DB_HOST=metarang-mysql` is the network alias of MySQL in the microservices stack (`metarang-shared`). Credentials must match that stack's `MYSQL_*` values.
 
-Translation models use a separate **sqlite** connection at `database/database.sqlite` (persisted under `../files/database`). Do **not** set `DB_CONNECTION=sqlite`.
+Translation models use a separate **sqlite** connection at `/var/lib/admin-panel/database/database.sqlite` (persisted under `../files/database`). Do **not** set `DB_CONNECTION=sqlite`.
 
 ### 5. Networking / domain
 
@@ -196,7 +196,7 @@ docker compose exec app php artisan migrate --database=sqlite --force
 docker compose ps
 docker compose logs -f app
 docker compose exec app php artisan about
-docker compose exec app ls -lah /var/www/html/database/database.sqlite
+docker compose exec app ls -lah /var/lib/admin-panel/database/database.sqlite
 docker compose exec app ls -lah /var/www/html/storage/app/public | head
 docker compose exec app ls -lah /var/www/html/public/uploads
 curl -I https://your-domain.example
@@ -212,11 +212,11 @@ curl -I https://your-domain.example
 | Persistence | Dokploy `../files/{storage,database}` by default; local override with `HOST_*` |
 | Config mounts | PHP ini is **baked** into the image — do not mount from the repo on AutoDeploy |
 | External network | Production `app` joins **`dokploy-network`** (Traefik) and **`metarang-shared`** (MySQL) |
-| SQLite | `pdo_sqlite` enabled; Translation models use `database/database.sqlite` |
+| SQLite | `pdo_sqlite` enabled; Translation models use the persisted file outside `database/migrations` |
 | Uploads | `storage/app/public` ↔ `public/uploads` (created by entrypoint `storage:link`) |
 | MySQL | Not in production compose — connect via `DB_HOST=metarang-mysql`; included in `docker-compose.dev.yaml` only |
 | Bootstrap cache | Entrypoint clears stale `bootstrap/cache/*.php` on startup |
-| `artisan serve` | Fine for small deployments; for heavy traffic prefer php-fpm + nginx later |
+| `artisan serve` | Used by the CLI runtime; for heavy traffic prefer php-fpm + nginx later |
 
 ## Local smoke test
 

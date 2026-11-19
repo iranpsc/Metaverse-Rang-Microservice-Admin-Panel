@@ -65,6 +65,8 @@ trait CreatesDashboardSchema
             $table->text('abilities')->nullable();
             $table->timestamp('last_used_at')->nullable();
             $table->timestamp('expires_at')->nullable()->index();
+            $table->string('active_tab_id', 64)->nullable()->index();
+            $table->timestamp('active_tab_last_seen_at')->nullable();
             $table->timestamps();
         });
     }
