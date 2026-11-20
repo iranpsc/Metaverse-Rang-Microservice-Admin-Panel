@@ -57,7 +57,8 @@ class ModuleLifecycleTest extends TestCase
         });
         (require database_path('migrations/2026_10_22_000001_create_content_webhook_tables.php'))->up();
         (require database_path('migrations/2026_11_05_000001_add_webhook_response_to_delivery_cycles.php'))->up();
-        config(['content_webhooks.enabled' => true, 'content_webhooks.secret' => 'local-webhook-test-secret',
+        config(['content_webhooks.enabled' => true, 'content_webhooks.queue_connection' => 'database',
+            'content_webhooks.secret' => 'local-webhook-test-secret',
             'content_webhooks.url' => 'http://127.0.0.1:4900/api/webhooks/cache-revalidate']);
         $this->actingAsSuperAdmin();
     }

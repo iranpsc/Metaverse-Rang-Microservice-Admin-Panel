@@ -39,10 +39,11 @@ return [
         ],
 
         'content-webhooks' => [
-            'driver' => 'database',
-            'table' => 'jobs',
-            'queue' => 'content-webhooks',
+            'driver' => 'redis',
+            'connection' => env('CONTENT_WEBHOOK_REDIS_CONNECTION', 'default'),
+            'queue' => env('CONTENT_WEBHOOK_QUEUE', 'content-webhooks'),
             'retry_after' => 90,
+            'block_for' => null,
             'after_commit' => true,
         ],
 

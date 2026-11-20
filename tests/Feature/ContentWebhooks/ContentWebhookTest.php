@@ -240,6 +240,12 @@ class ContentWebhookTest extends TestCase
         $this->assertNull(DB::table('content_delivery_state')->where('id', 1)->value('active_cycle'));
     }
 
+    public function test_content_webhook_queue_uses_redis(): void
+    {
+        $this->assertSame('redis', config('queue.connections.content-webhooks.driver'));
+        $this->assertSame('content-webhooks', config('queue.connections.content-webhooks.queue'));
+    }
+
     public function test_cancelling_a_delivery_preserves_pending_changes_and_the_frozen_batch(): void
     {
         $this->actingAsSuperAdmin();
@@ -323,7 +329,8 @@ class ContentWebhookTest extends TestCase
         });
         Queue::swap($this->realQueue);
         Http::swap(new Factory);
-        config(['content_webhooks.url' => 'http://127.0.0.1:4900/nextjs/api/webhooks/cache-revalidate',
+        config(['content_webhooks.queue_connection' => 'database',
+            'content_webhooks.url' => 'http://127.0.0.1:4900/nextjs/api/webhooks/cache-revalidate',
             'content_webhooks.secret' => 'local-webhook-test-secret']);
         $work = fn () => $this->app->make('queue.worker')->runNextJob('content-webhooks', 'content-webhooks', new WorkerOptions(sleep: 0, maxTries: 0));
         $this->change();
