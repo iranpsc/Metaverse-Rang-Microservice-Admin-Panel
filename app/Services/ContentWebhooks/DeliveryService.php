@@ -31,6 +31,8 @@ class DeliveryService
             $oldest = DB::table('content_webhook_batches')->where('status', '!=', 'delivered')->orderBy('created_at')->first();
             if ($retry) {
                 abort_unless($oldest && $oldest->id === $retry && $oldest->status === 'failed', 409, 'Only the oldest failed pack can be retried.');
+            } elseif ($oldest?->status === 'failed') {
+                abort(409, 'The oldest failed pack must be retried.');
             }
             if ($state->active_cycle) {
                 return $state->active_cycle;

@@ -369,7 +369,9 @@ const openWebhookPreview = async batchId => {
   }
 }
 const confirmWebhookSend = async () => {
-  const batchId = webhookPreview.value.batchId
+  // A pending batch resumes through the regular dispatch endpoint. The retry
+  // endpoint deliberately accepts only a failed batch.
+  const batchId = webhookPreview.value.is_retry ? webhookPreview.value.batchId : null
   isWebhookPreviewModalOpen.value = false
   await sendWebhook(batchId, true)
 }

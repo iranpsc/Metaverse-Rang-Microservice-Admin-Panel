@@ -261,8 +261,11 @@ class ContentWebhookTest extends TestCase
         $this->assertSame('cancelled', DB::table('content_delivery_cycles')->where('id', $cycle)->value('status'));
         $this->getJson('/api/activity-logs/webhook-summary')->assertJsonPath('data.pending_count', 1)->assertJsonPath('data.active_cycle', null);
         $this->assertEquals(1, DB::table('content_delivery_state')->where('id', 1)->value('next_patch'));
+        $this->getJson('/api/activity-logs/webhook-preview')
+            ->assertJsonPath('data.batch_id', $batch->id)
+            ->assertJsonPath('data.is_retry', false);
 
-        $next = $service->trigger();
+        $next = $this->postJson('/api/activity-logs/webhook-dispatch')->assertStatus(202)->json('data.cycle_id');
         $this->postJson('/api/activity-logs/webhook-cancel', ['cycle_id' => $cycle])->assertStatus(409);
         $this->assertSame($next, DB::table('content_delivery_state')->where('id', 1)->value('active_cycle'));
         $this->accept();
@@ -417,6 +420,21 @@ class ContentWebhookTest extends TestCase
         $this->change();
         app(DeliveryService::class)->trigger();
         $this->postJson('/api/activity-logs/webhook-batches/00000000-0000-4000-8000-000000000000/retry')->assertStatus(409);
+    }
+
+    public function test_dispatch_rejects_a_failed_pack_that_requires_an_explicit_retry(): void
+    {
+        $this->actingAsSuperAdmin();
+        $this->change();
+        $service = app(DeliveryService::class);
+        $cycle = $service->trigger();
+        $service->deliver($cycle);
+        Http::fake(fn () => Http::response(['batch_id' => 'wrong', 'status' => 'accepted']));
+        $service->deliver($cycle);
+
+        $this->postJson('/api/activity-logs/webhook-dispatch')
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'The oldest failed pack must be retried.');
     }
 
     public function test_removing_only_a_level_image_does_not_invalidate_unrelated_subresources(): void
