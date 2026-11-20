@@ -1,3 +1,4 @@
+import { CanceledError } from 'axios'
 import { defineStore } from 'pinia'
 import apiClient from '../utils/api'
 
@@ -159,7 +160,7 @@ export const usePhoneVerificationStore = defineStore('phoneVerification', {
     closeModal() {
       this.showModal = false
       this.resetModal()
-      this.rejectPendingRetries(new Error('Phone verification cancelled'))
+      this.rejectPendingRetries(new CanceledError('Phone verification cancelled'))
     },
 
     enqueueRetry(retry) {

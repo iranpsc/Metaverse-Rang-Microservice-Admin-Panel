@@ -1,3 +1,4 @@
+import { isCancel } from 'axios'
 import { onScopeDispose } from 'vue'
 import { translationApi } from '../api/translations'
 import { getApiErrorMessage } from '../utils/apiErrors'
@@ -39,27 +40,24 @@ function describeRun (run) {
  * @returns {(row: {id: number, name: string}) => Promise<void>} Open or reopen the selected locale's dialog.
  */
 export function useAutoTranslationDialog (refreshTranslations) {
-  const pendingRequests = new Map()
+  let loadingRun = false
   let currentPopup
   let disposed = false
 
   /**
-   * Share a start or lookup request with a dialog reopened while it is pending.
+   * Load the latest run or submit a start request through the shared verification flow.
    *
    * @param {number} translationId Destination locale ID.
    * @param {boolean} restart Whether the admin explicitly requested another run or publication retry.
    * @returns {Promise<AutoTranslationRun>}
    */
-  function loadRun (translationId, restart) {
-    if (!pendingRequests.has(translationId)) {
-      const request = restart
-        ? translationApi.startAutoTranslation(translationId)
-        : translationApi.getLatestAutoTranslationRun(translationId)
-          .then((run) => run ?? translationApi.startAutoTranslation(translationId))
-      pendingRequests.set(translationId, request.finally(() => pendingRequests.delete(translationId)))
+  async function loadRun (translationId, restart) {
+    if (!restart) {
+      const run = await translationApi.getLatestAutoTranslationRun(translationId)
+      if (run) return run
     }
 
-    return pendingRequests.get(translationId)
+    return translationApi.startAutoTranslation(translationId)
   }
 
   /**
@@ -70,6 +68,23 @@ export function useAutoTranslationDialog (refreshTranslations) {
    * @returns {Promise<void>}
    */
   async function open (row, restart = false) {
+    if (loadingRun || disposed) return
+
+    loadingRun = true
+    let run
+    let requestError
+    try {
+      // A protected start request stays pending while the phone modal is open.
+      run = await loadRun(row.id, restart)
+    } catch (error) {
+      if (isCancel(error)) return
+      requestError = error
+    } finally {
+      loadingRun = false
+    }
+
+    if (disposed) return
+
     let timer
     let closed = false
     let retryRun = false
@@ -146,7 +161,11 @@ export function useAutoTranslationDialog (refreshTranslations) {
       if (completed && run.translated > 0) void refreshTranslations()
     }
 
-    void loadRun(row.id, restart).then(showRun, showRequestError)
+    if (run) {
+      showRun(run)
+    } else {
+      showRequestError(requestError)
+    }
     const { isConfirmed } = await result
     if (currentPopup === popup) currentPopup = undefined
     if (isConfirmed && !disposed) await open(row, retryRun)
