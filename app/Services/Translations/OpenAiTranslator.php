@@ -8,7 +8,7 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
-class OpenAiTranslator
+class OpenAiTranslator implements TranslationProvider
 {
     private const PROTECTED_TEXT = '~\{\{[^{}]+\}\}|\{[\w.-]+\}|(?<![\w:]):[a-z_]\w*|%[a-z_]\w*%|%%|%(?:\d+\$)?[sdif]|<[a-z/!][^<>]*>|\b(?:MetaRang|VOD|PSC|PSD|Rial)\b~iu';
 
@@ -34,6 +34,16 @@ class OpenAiTranslator
             ]],
         ],
     ];
+
+    /**
+     * Return the maximum OpenAI structured-output batch size.
+     *
+     * @return int Number of field strings sent in one request.
+     */
+    public function batchSize(): int
+    {
+        return 20;
+    }
 
     /**
      * Request a structured translation batch and validate each result against its source.

@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Services\Translations\AutoTranslationService;
-use App\Services\Translations\OpenAiTranslationException;
+use App\Services\Translations\TranslationProviderException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -36,7 +36,7 @@ class ProcessAutoTranslation implements ShouldQueue
     {
         try {
             $service->process($this->runId, $this->step);
-        } catch (OpenAiTranslationException $exception) {
+        } catch (TranslationProviderException $exception) {
             if (! $exception->retryable) {
                 $this->fail($exception);
 
@@ -57,7 +57,7 @@ class ProcessAutoTranslation implements ShouldQueue
      */
     public function failed(?Throwable $exception): void
     {
-        $error = $exception instanceof OpenAiTranslationException ? $exception->getMessage() : null;
+        $error = $exception instanceof TranslationProviderException ? $exception->getMessage() : null;
         app(AutoTranslationService::class)->fail($this->runId, $this->step, $error);
     }
 }

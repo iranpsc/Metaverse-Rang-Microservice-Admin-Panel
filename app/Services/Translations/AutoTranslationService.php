@@ -21,15 +21,21 @@ class AutoTranslationService
 
     private const SOURCES = [TranslationService::REFERENCE_LANGUAGE_CODE, 'en'];
 
+    public const OPENAI = 'openai';
+
+    public const CLOUDFLARE = 'cloudflare';
+
     /**
      * Receive the services used to translate and publish dictionaries.
      *
-     * @param  OpenAiTranslator  $translator  Provider used to translate each batch.
+     * @param  OpenAiTranslator  $openAiTranslator  OpenAI provider used to translate batches.
+     * @param  CloudflareTranslator  $cloudflareTranslator  Cloudflare Workers AI provider used to translate batches.
      * @param  TranslationPublisher  $publisher  Dictionary writer and change recorder.
      * @param  TranslationService  $translations  Export metadata and locale hierarchy service.
      */
     public function __construct(
-        private readonly OpenAiTranslator $translator,
+        private readonly OpenAiTranslator $openAiTranslator,
+        private readonly CloudflareTranslator $cloudflareTranslator,
         private readonly TranslationPublisher $publisher,
         private readonly TranslationService $translations,
     ) {}
@@ -39,13 +45,17 @@ class AutoTranslationService
      *
      * @param  Translation  $destination  Language selected by the admin.
      * @param  array{id: string, name: string, roles: list<string>}  $actor  Initiating admin captured for auditing.
+     * @param  string  $provider  Translation provider selected by the admin.
      * @return Run The queued, active, or resumed run.
      */
-    public function start(Translation $destination, array $actor): Run
+    public function start(Translation $destination, array $actor, string $provider = self::OPENAI): Run
     {
-        return DB::connection('sqlite')->transaction(function () use ($destination, $actor) {
+        abort_unless(in_array($provider, [self::OPENAI, self::CLOUDFLARE], true), 422, 'ارائه‌دهنده ترجمه انتخاب‌شده معتبر نیست.');
+
+        return DB::connection('sqlite')->transaction(function () use ($destination, $actor, $provider) {
             $created = Run::query()->insertOrIgnore([
                 'translation_id' => $destination->id,
+                'provider' => $provider,
                 'active' => true,
                 'status' => Run::QUEUED,
                 'actor' => json_encode($actor, JSON_THROW_ON_ERROR),
@@ -55,13 +65,44 @@ class AutoTranslationService
             $run = Run::query()->where('translation_id', $destination->id)->where('active', true)->firstOrFail();
 
             if ($created) {
-                abort_if(blank(config('services.openai.key')), 503, 'کلید OpenAI برای ترجمه خودکار تنظیم نشده است.');
+                abort_if($this->providerIsUnconfigured($provider), 503, $provider === self::OPENAI
+                    ? 'کلید OpenAI برای ترجمه خودکار تنظیم نشده است.'
+                    : 'اعتبار Cloudflare Workers AI برای ترجمه خودکار تنظیم نشده است.');
             } elseif ($run->status === Run::PUBLICATION_FAILED) {
                 $run->update(['status' => Run::PUBLISHING, 'step' => $run->step + 1, 'error' => null]);
             } else {
                 return $run;
             }
             $this->enqueue($run);
+
+            return $run;
+        }, 5);
+    }
+
+    /**
+     * Stop an active run so reserved and queued jobs cannot save another batch.
+     *
+     * @param  Translation  $destination  Locale that owns the run.
+     * @param  int  $runId  Active run identifier scoped to the locale.
+     * @return Run Cancelled run with any translations saved before cancellation retained.
+     */
+    public function cancel(Translation $destination, int $runId): Run
+    {
+        return DB::connection('sqlite')->transaction(function () use ($destination, $runId) {
+            $run = Run::query()
+                ->where('translation_id', $destination->id)
+                ->where('active', true)
+                ->findOrFail($runId);
+
+            abort_unless(in_array($run->status, [Run::QUEUED, Run::TRANSLATING, Run::PUBLISHING], true), 409, 'این صف ترجمه قابل توقف نیست.');
+
+            $run->update([
+                'status' => Run::CANCELLED,
+                'active' => null,
+                'items' => null,
+                'results' => null,
+                'error' => 'فرایند ترجمه خودکار توسط مدیر متوقف شد.',
+            ]);
 
             return $run;
         }, 5);
@@ -95,7 +136,7 @@ class AutoTranslationService
      *
      * @param  int  $runId  Run with a failed provider request.
      * @param  int  $step  Step that made the request.
-     * @param  string  $error  Displayable OpenAI error.
+     * @param  string  $error  Displayable provider error.
      * @return void Updates the current step's progress record.
      */
     public function recordProviderError(int $runId, int $step, string $error): void
@@ -109,7 +150,7 @@ class AutoTranslationService
      *
      * @param  int  $runId  Run whose job failed.
      * @param  int  $step  Step number of the failed job.
-     * @param  string|null  $error  Displayable provider error when the failure came from OpenAI.
+     * @param  string|null  $error  Displayable provider error when a translation request failed.
      * @return void An exhausted publication stays eligible for a manual retry.
      */
     public function fail(int $runId, int $step, ?string $error): void
@@ -158,7 +199,8 @@ class AutoTranslationService
     {
         $batch = [];
         $characters = 0;
-        foreach (array_slice($run->items, $run->processed, self::BATCH_SIZE, preserve_keys: true) as $id => $item) {
+        $translator = $this->translatorFor($run->provider);
+        foreach (array_slice($run->items, $run->processed, min(self::BATCH_SIZE, $translator->batchSize()), preserve_keys: true) as $id => $item) {
             $characters += mb_strlen($item['text']);
             if ($batch !== [] && $characters > self::BATCH_CHARACTERS) {
                 break;
@@ -166,60 +208,114 @@ class AutoTranslationService
             $batch[$id] = $item;
         }
 
-        $results = $this->translator->translate($destination, $batch);
-        $this->advance($run, function () use ($run, $results) {
+        try {
+            $results = $translator->translate($destination, $batch);
+        } catch (TranslationProviderException $exception) {
+            $this->commitPartialBatch($run, $destination, $batch, $exception->results);
+
+            throw $exception;
+        }
+
+        $this->commitBatch($run, $destination, $batch, $results);
+    }
+
+    /**
+     * Commit a complete provider batch before scheduling the next provider request.
+     *
+     * @param  Run  $run  Active translation run.
+     * @param  Translation  $destination  Locale receiving translated fields.
+     * @param  array<int, array{id: string, source: string, text: string, modal: string, tab: string}>  $batch  Fields submitted to the provider.
+     * @param  array<int, string>  $results  Validated provider translations keyed by field ID.
+     * @return void Saves values and schedules the next batch or publication.
+     */
+    private function commitBatch(Run $run, Translation $destination, array $batch, array $results): void
+    {
+        $this->advance($run, function () use ($run, $destination, $batch, $results) {
+            $saved = $this->saveBatchFields($run, $destination, $batch, $results);
             $run->update([
-                'results' => $run->results + $results,
                 'processed' => $run->processed + count($results),
+                'translated' => $run->translated + $saved,
                 'error' => null,
             ]);
 
             if ($run->processed === $run->total) {
-                $this->saveTranslations($run);
-            } else {
+                $run->update([
+                    'status' => $run->translated > 0 ? Run::PUBLISHING : Run::COMPLETED,
+                    'active' => $run->translated > 0 ? true : null,
+                    'items' => null,
+                    'results' => null,
+                ]);
+            }
+
+            if ($run->status === Run::TRANSLATING) {
+                $this->enqueue($run);
+            } elseif ($run->status === Run::PUBLISHING) {
                 $this->enqueue($run);
             }
         });
     }
 
     /**
-     * Apply the staged results after rechecking the source text and destination inside the write transaction.
+     * Commit completed Cloudflare fields without advancing the queue step that raised an error.
      *
-     * @param  Run  $run  Run with all candidate translations staged.
-     * @return void The caller commits the translation writes and outbox event together.
+     * @param  Run  $run  Active translation run.
+     * @param  Translation  $destination  Locale receiving translated fields.
+     * @param  array<int, array{id: string, source: string, text: string, modal: string, tab: string}>  $batch  Fields submitted to Cloudflare.
+     * @param  array<int, string>  $results  Complete fields returned before the provider error.
+     * @return void Persists fields so a rate-limit failure retains completed work.
      */
-    private function saveTranslations(Run $run): void
+    private function commitPartialBatch(Run $run, Translation $destination, array $batch, array $results): void
     {
-        $destination = Translation::query()->findOrFail($run->translation_id);
+        if ($results === []) {
+            return;
+        }
+
+        DB::connection('sqlite')->transaction(function () use ($run, $destination, $batch, $results) {
+            $run->refresh();
+            if ($run->status !== Run::TRANSLATING || ! $run->active) {
+                return;
+            }
+
+            $saved = $this->saveBatchFields($run, $destination, $batch, $results);
+            $run->update([
+                'processed' => $run->processed + count($results),
+                'translated' => $run->translated + $saved,
+            ]);
+        }, 5);
+    }
+
+    /**
+     * Apply validated fields and record the resulting dictionary changes for publication.
+     *
+     * @param  Run  $run  Active translation run and actor.
+     * @param  Translation  $destination  Locale receiving translated fields.
+     * @param  array<int, array{id: string, source: string, text: string, modal: string, tab: string}>  $batch  Fields submitted to the provider.
+     * @param  array<int, string>  $results  Validated provider translations keyed by field ID.
+     * @return int Number of values written to SQLite.
+     */
+    private function saveBatchFields(Run $run, Translation $destination, array $batch, array $results): int
+    {
         $current = $this->candidates($destination);
         $before = $this->publisher->snapshot();
-        $translated = 0;
+        $saved = 0;
 
-        foreach ($run->results as $id => $text) {
-            // A deleted or edited source, or a populated destination, invalidates the staged translation.
-            if (($current[$id] ?? null) !== $run->items[$id]) {
+        foreach ($results as $id => $text) {
+            if (($current[$id] ?? null) !== ($batch[$id] ?? null)) {
                 continue;
             }
 
-            $this->fillField($destination, $id, $current[$id], $text);
-            $translated++;
+            $this->fillField($destination, $id, $batch[$id], $text);
+            $saved++;
         }
 
-        $run->update([
-            'status' => $translated > 0 ? Run::PUBLISHING : Run::COMPLETED,
-            'active' => $translated > 0 ? true : null,
-            'translated' => $translated,
-            'items' => null,
-            'results' => null,
-        ]);
-
-        if ($translated > 0) {
+        if ($saved > 0) {
             $this->publisher->record($before, actor: $run->actor);
-            $this->enqueue($run);
             if ($destination->code === TranslationService::REFERENCE_LANGUAGE_CODE) {
                 DB::connection('sqlite')->afterCommit($this->translations->forgetPersianHierarchyCache(...));
             }
         }
+
+        return $saved;
     }
 
     /**
@@ -341,5 +437,32 @@ class AutoTranslationService
     private function enqueue(Run $run): void
     {
         Queue::connection('auto-translations')->push(new ProcessAutoTranslation($run->id, $run->step));
+    }
+
+    /**
+     * Resolve the configured translator for a persisted run.
+     *
+     * @param  string  $provider  Provider identifier stored on the run.
+     * @return OpenAiTranslator|CloudflareTranslator Provider implementation.
+     */
+    private function translatorFor(string $provider): TranslationProvider
+    {
+        return match ($provider) {
+            self::CLOUDFLARE => $this->cloudflareTranslator,
+            default => $this->openAiTranslator,
+        };
+    }
+
+    /**
+     * Determine whether the selected provider has the credentials required for a new run.
+     *
+     * @param  string  $provider  Provider identifier selected by the admin.
+     * @return bool Whether configuration is incomplete.
+     */
+    private function providerIsUnconfigured(string $provider): bool
+    {
+        return $provider === self::CLOUDFLARE
+            ? blank(config('services.cloudflare.account_id')) || blank(config('services.cloudflare.api_token'))
+            : blank(config('services.openai.key'));
     }
 }

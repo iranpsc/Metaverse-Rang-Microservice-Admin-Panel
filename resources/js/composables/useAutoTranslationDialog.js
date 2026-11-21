@@ -14,19 +14,22 @@ import { formatPersianNumber } from '../utils/numberFormatter'
  * @returns {string}
  */
 function describeRun (run) {
+  const provider = run.provider === 'cloudflare' ? 'Cloudflare' : 'OpenAI'
   switch (run.status) {
     case 'queued':
-      return 'در صف ترجمه. پردازش هنوز شروع نشده است.'
+      return `سرویس انتخاب‌شده: ${provider}\nدر صف ترجمه. پردازش هنوز شروع نشده است.`
     case 'translating': {
-      const progress = `در حال ترجمه ${formatPersianNumber(run.processed)} از ${formatPersianNumber(run.total)} عبارت`
+      const progress = `سرویس: ${provider}\nدر حال ترجمه ${formatPersianNumber(run.processed)} از ${formatPersianNumber(run.total)} عبارت`
       return run.error ? `${progress}\nتلاش دوباره به‌صورت خودکار انجام می‌شود.\n${run.error}` : progress
     }
     case 'publishing':
-      return 'در حال انتشار JSON'
+      return `سرویس: ${provider}\nدر حال انتشار JSON`
     case 'publication_failed':
       return 'ترجمه‌ها ذخیره شدند. انتشار JSON ناموفق بود.'
     case 'failed':
       return run.error || 'ترجمه خودکار انجام نشد.'
+    case 'cancelled':
+      return run.error || 'ترجمه خودکار توسط مدیر متوقف شد.'
     default:
       if (run.translated > 0) return `${formatPersianNumber(run.translated)} عبارت ترجمه شد.`
       return run.total === 0 ? 'عبارت قابل ترجمه‌ای پیدا نشد.' : 'هیچ عبارتی در این اجرا ذخیره نشد.'
@@ -45,37 +48,58 @@ export function useAutoTranslationDialog (refreshTranslations) {
   let disposed = false
 
   /**
-   * Load the latest run or submit a start request through the shared verification flow.
+   * Ask the admin which configured provider should process a new run.
    *
-   * @param {number} translationId Destination locale ID.
-   * @param {boolean} restart Whether the admin explicitly requested another run or publication retry.
-   * @returns {Promise<AutoTranslationRun>}
+   * @param {{name: string}} row Selected destination language.
+   * @returns {Promise<'openai'|'cloudflare'|null>} Selected provider, or null when dismissed.
    */
-  async function loadRun (translationId, restart) {
-    if (!restart) {
-      const run = await translationApi.getLatestAutoTranslationRun(translationId)
-      if (run) return run
-    }
+  async function selectProvider (row) {
+    const result = await confirm(
+      `سرویس ترجمه برای زبان ${row.name} را انتخاب کنید.`,
+      'انتخاب سرویس ترجمه',
+      {
+        input: 'select',
+        inputOptions: {
+          openai: 'OpenAI',
+          cloudflare: 'Cloudflare Workers AI'
+        },
+        inputValidator: (value) => value ? undefined : 'انتخاب سرویس ترجمه الزامی است.',
+        confirmText: 'شروع ترجمه',
+        cancelText: 'انصراف'
+      }
+    )
 
-    return translationApi.startAutoTranslation(translationId)
+    return result.isConfirmed ? result.value : null
   }
 
   /**
    * Show and track a locale's run until the admin dismisses the dialog.
    *
    * @param {{id: number, name: string}} row Selected language.
-   * @param {boolean} [restart=false] Whether to submit a new request explicitly.
+   * @param {'openai'|'cloudflare'|'new'|null} [action=null] New run, publication retry with its saved provider, or status lookup.
    * @returns {Promise<void>}
    */
-  async function open (row, restart = false) {
+  async function open (row, action = null) {
     if (loadingRun || disposed) return
 
     loadingRun = true
     let run
     let requestError
+    let retryAction = null
     try {
-      // A protected start request stays pending while the phone modal is open.
-      run = await loadRun(row.id, restart)
+      if (!action) {
+        const latest = await translationApi.getLatestAutoTranslationRun(row.id)
+        if (['queued', 'translating', 'publishing', 'publication_failed'].includes(latest?.status)) {
+          run = latest
+        }
+      }
+      if (!run && !disposed) {
+        const provider = action && action !== 'new' ? action : await selectProvider(row)
+        if (!provider || disposed) return
+        retryAction = action || 'new'
+        // A protected start request stays pending while the phone modal is open.
+        run = await translationApi.startAutoTranslation(row.id, provider)
+      }
     } catch (error) {
       if (isCancel(error)) return
       requestError = error
@@ -87,7 +111,6 @@ export function useAutoTranslationDialog (refreshTranslations) {
 
     let timer
     let closed = false
-    let retryRun = false
     const close = () => {
       closed = true
       clearTimeout(timer)
@@ -138,6 +161,7 @@ export function useAutoTranslationDialog (refreshTranslations) {
      */
     function showRun (run) {
       if (!isCurrent()) return
+      retryAction = null
 
       const text = describeRun(run)
       if (['queued', 'translating', 'publishing'].includes(run.status)) {
@@ -149,13 +173,16 @@ export function useAutoTranslationDialog (refreshTranslations) {
         return
       }
 
-      retryRun = true
+      retryAction = ['failed', 'publication_failed'].includes(run.status)
+        ? (run.status === 'publication_failed' ? run.provider : 'new')
+        : null
       const completed = run.status === 'completed'
+      const cancelled = run.status === 'cancelled'
       Swal.hideLoading()
       Swal.update({
         text,
-        icon: completed ? 'success' : 'error',
-        showConfirmButton: true,
+        icon: completed ? 'success' : (cancelled ? 'info' : 'error'),
+        showConfirmButton: !cancelled,
         confirmButtonText: run.status === 'publication_failed' ? 'تلاش دوباره برای انتشار' : 'اجرای دوباره'
       })
       if (completed && run.translated > 0) void refreshTranslations()
@@ -168,7 +195,7 @@ export function useAutoTranslationDialog (refreshTranslations) {
     }
     const { isConfirmed } = await result
     if (currentPopup === popup) currentPopup = undefined
-    if (isConfirmed && !disposed) await open(row, retryRun)
+    if (isConfirmed && !disposed) await open(row, retryAction)
   }
 
   onScopeDispose(() => {

@@ -18,6 +18,8 @@ class AutoTranslationRun extends Model
 
     public const PUBLICATION_FAILED = 'publication_failed';
 
+    public const CANCELLED = 'cancelled';
+
     protected $connection = 'sqlite';
 
     protected $guarded = [];

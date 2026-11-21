@@ -69,6 +69,7 @@ class AutoTranslationApiTest extends TestCase
         (require database_path('migrations/2026_10_22_000001_create_content_webhook_tables.php'))->up();
         (require database_path('migrations/2026_11_18_000001_create_auto_translation_queue.php'))->up();
         (require database_path('migrations/2026_11_18_000002_add_error_to_auto_translation_runs.php'))->up();
+        (require database_path('migrations/2026_11_21_000001_add_provider_to_auto_translation_runs.php'))->up();
 
         $this->persian = Translation::create(['code' => 'fa', 'name' => 'Persian']);
         $this->english = Translation::create(['code' => 'en', 'name' => 'English']);
@@ -98,12 +99,14 @@ class AutoTranslationApiTest extends TestCase
         $this->getJson($this->url($this->german))->assertUnauthorized();
         $this->getJson('/api/translations/auto-translate/runs')->assertUnauthorized();
         $this->getJson($this->url($this->german).'/1')->assertUnauthorized();
+        $this->deleteJson($this->url($this->german).'/1')->assertUnauthorized();
 
         $this->actingAsRegularAdmin();
         $this->postJson($this->url($this->german))->assertForbidden();
         $this->getJson($this->url($this->german))->assertForbidden();
         $this->getJson('/api/translations/auto-translate/runs')->assertForbidden();
         $this->getJson($this->url($this->german).'/1')->assertForbidden();
+        $this->deleteJson($this->url($this->german).'/1')->assertForbidden();
     }
 
     /**
@@ -125,6 +128,103 @@ class AutoTranslationApiTest extends TestCase
     }
 
     /**
+     * Ensure an admin can stop only an active, locale-scoped translation queue.
+     *
+     * @return void Verifies cancellation persistence, queue-list removal, and safe no-op processing.
+     */
+    public function test_translation_manager_can_cancel_an_active_run(): void
+    {
+        $this->actingAsAdminWithRole('translations-management');
+        $run = $this->start($this->german);
+
+        $this->deleteJson($this->url($this->english).'/'.$run)->assertNotFound();
+        $this->deleteJson($this->url($this->german).'/'.$run)
+            ->assertOk()
+            ->assertJsonPath('data.status', 'cancelled')
+            ->assertJsonPath('data.error', 'فرایند ترجمه خودکار توسط مدیر متوقف شد.');
+
+        $this->assertDatabaseHas('auto_translation_runs', [
+            'id' => $run,
+            'status' => 'cancelled',
+            'active' => null,
+        ], 'sqlite');
+        $this->getJson('/api/translations/auto-translate/runs')->assertJsonCount(0, 'data');
+        $this->work();
+        $this->assertRun($this->german, $run, 'cancelled');
+    }
+
+    /**
+     * Ensure a Cloudflare-selected run uses the Workers AI response contract and persists its provider.
+     *
+     * @return void Verifies request parameters, translation progress, and the completed run.
+     */
+    public function test_cloudflare_provider_translates_and_persists_provider(): void
+    {
+        $this->actingAsAdminWithRole('translations-management');
+        config([
+            'services.cloudflare.account_id' => 'account-id',
+            'services.cloudflare.api_token' => 'cloudflare-test-token',
+        ]);
+        $this->field($this->english, 1, '<b>Hello {{name}}</b> MetaRang');
+        Http::fake([
+            'api.cloudflare.com/*' => function (Request $request) {
+                $this->assertSame('Hello', $request['text']);
+                $this->assertSame('en', $request['source_lang']);
+                $this->assertSame('de', $request['target_lang']);
+
+                return Http::response(['result' => ['translated_text' => 'Hallo']]);
+            },
+        ]);
+
+        $run = $this->postJson($this->url($this->german), ['provider' => 'cloudflare'])
+            ->assertAccepted()
+            ->assertJsonPath('data.provider', 'cloudflare')
+            ->json('data.id');
+        $this->work(3);
+
+        $this->assertRun($this->german, $run, 'completed', 1, 1, 1);
+        $this->getJson($this->url($this->german))->assertJsonPath('data.provider', 'cloudflare');
+        $this->assertSame('<b>Hallo {{name}}</b> MetaRang', Field::query()->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $this->german->id))->value('translation'));
+        Http::assertSentCount(1);
+    }
+
+    /**
+     * Stop Cloudflare requests after a rate limit while preserving earlier completed fields.
+     *
+     * @return void Verifies persisted progress and the absence of requests after HTTP 429.
+     */
+    public function test_cloudflare_rate_limit_stops_the_batch_and_commits_completed_fields(): void
+    {
+        $this->actingAsAdminWithRole('translations-management');
+        config([
+            'services.cloudflare.account_id' => 'account-id',
+            'services.cloudflare.api_token' => 'cloudflare-test-token',
+            'services.cloudflare.translation_batch_size' => 5,
+        ]);
+        foreach (range(1, 3) as $id) {
+            $this->field($this->english, $id, "Text {$id}");
+        }
+
+        $requests = 0;
+        Http::fake(function () use (&$requests) {
+            $requests++;
+
+            return $requests === 1
+                ? Http::response(['result' => ['translated_text' => 'ترجمه اول']])
+                : Http::response(['errors' => [['message' => 'Rate limit reached.']]], 429);
+        });
+
+        $run = $this->postJson($this->url($this->german), ['provider' => 'cloudflare'])->assertAccepted()->json('data.id');
+        $this->work(2);
+
+        $this->assertRun($this->german, $run, 'failed', 3, 1, 1);
+        $this->getJson($this->url($this->german))->assertJsonPath('data.error', 'Cloudflare Workers AI (HTTP 429): Rate limit reached.');
+        $this->assertSame('ترجمه اول', Field::query()->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $this->german->id))->where('unique_id', 1)->value('translation'));
+        $this->assertNull(Field::query()->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $this->german->id))->where('unique_id', 2)->value('translation'));
+        $this->assertSame(2, $requests);
+    }
+
+    /**
      * Check that a missing API key leaves no queued work.
      *
      * @return void Checks HTTP 503 and empty run and queue tables.
@@ -135,6 +235,21 @@ class AutoTranslationApiTest extends TestCase
         config(['services.openai.key' => null]);
 
         $this->postJson($this->url($this->german))->assertServiceUnavailable();
+        $this->assertSame(0, AutoTranslationRun::query()->count());
+        $this->assertSame(0, Queue::connection('auto-translations')->size());
+    }
+
+    /**
+     * Check that a missing Cloudflare credential leaves no queued work.
+     *
+     * @return void Checks HTTP 503 and empty run and queue tables for the selected provider.
+     */
+    public function test_missing_cloudflare_configuration_leaves_no_run_or_job(): void
+    {
+        $this->actingAsSuperAdmin();
+        config(['services.cloudflare.account_id' => null, 'services.cloudflare.api_token' => null]);
+
+        $this->postJson($this->url($this->german), ['provider' => 'cloudflare'])->assertServiceUnavailable();
         $this->assertSame(0, AutoTranslationRun::query()->count());
         $this->assertSame(0, Queue::connection('auto-translations')->size());
     }
@@ -240,7 +355,7 @@ class AutoTranslationApiTest extends TestCase
     }
 
     /**
-     * Check that a large run retries only the rate-limited batch and applies validated results together.
+     * Check that a large OpenAI run checkpoints batches and retries a rate-limited request.
      *
      * @return void Verifies progress before and after the queued retry.
      */
@@ -262,11 +377,11 @@ class AutoTranslationApiTest extends TestCase
 
         $run = $this->start($this->german);
         $this->work(2);
-        $this->assertRun($this->german, $run, 'translating', 52, 20);
+        $this->assertRun($this->german, $run, 'translating', 52, 20, 20);
         $this->work();
-        $this->assertRun($this->german, $run, 'translating', 52, 20);
+        $this->assertRun($this->german, $run, 'translating', 52, 20, 20);
         $this->getJson($this->url($this->german))->assertJsonPath('data.error', 'OpenAI (HTTP 429): Rate limit reached.');
-        $this->assertSame(0, $this->german->modals()->count());
+        $this->assertSame(1, $this->german->modals()->count());
 
         $this->travel(11)->seconds();
         $this->work(3);
@@ -314,14 +429,14 @@ class AutoTranslationApiTest extends TestCase
 
         $run = $this->start($this->german);
         $this->work(2);
-        $this->assertRun($this->german, $run, 'translating', 2, 1);
+        $this->assertRun($this->german, $run, 'translating', 2, 1, 1);
         $this->field($this->german, 1, 'Von Hand');
         $this->field($this->german, 2, 'Auch von Hand');
-        $this->work();
+        $this->work(2);
 
-        $this->assertRun($this->german, $run, 'completed', 2, 2, 0);
-        $this->assertDatabaseCount('content_change_outbox', 0);
-        $this->get('/lang/de.json')->assertNotFound();
+        $this->assertRun($this->german, $run, 'completed', 2, 2, 1);
+        $this->assertDatabaseCount('content_change_outbox', 1);
+        $this->get('/lang/de.json')->assertOk();
         Http::assertSentCount(2);
     }
 

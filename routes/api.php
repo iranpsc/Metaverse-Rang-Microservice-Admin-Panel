@@ -399,6 +399,7 @@ Route::middleware([
         Route::get('{translation}/auto-translate', [AutoTranslationController::class, 'latest']);
         Route::post('{translation}/auto-translate', [AutoTranslationController::class, 'store'])
             ->withoutMiddleware(CaptureContentChanges::class);
+        Route::delete('{translation}/auto-translate/{run}', [AutoTranslationController::class, 'destroy'])->whereNumber('run');
         Route::get('{translation}/auto-translate/{run}', [AutoTranslationController::class, 'show'])->whereNumber('run');
 
         Route::controller(TranslationController::class)->group(function () {

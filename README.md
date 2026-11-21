@@ -144,14 +144,21 @@ Disabled languages can be translated while their public dictionaries remain
 disabled. If publishing fails, the row offers a publication retry using the
 already-saved translations.
 
-Set `OPENAI_API_KEY` in the server environment. `OPENAI_TRANSLATION_MODEL` defaults
-to `gpt-5-mini` and must support Structured Outputs on the Responses API. The
-worker sends the strings selected for translation and their screen context to
-OpenAI. Run `php artisan migrate` to create the run and queue tables on the
-translations SQLite connection. Docker Compose starts the `auto-translations`
-worker with the app. For Herd and other native environments, start the dedicated
-worker alongside the existing default worker. It needs access to the same SQLite
-database and Laravel storage as the web process.
+Set `OPENAI_API_KEY` for OpenAI runs. `OPENAI_TRANSLATION_MODEL` defaults to
+`gpt-5-mini` and must support Structured Outputs on the Responses API. For
+Cloudflare Workers AI runs, set `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`,
+and optionally `CLOUDFLARE_TRANSLATION_MODEL` (defaults to
+`@cf/meta/m2m100-1.2b`). `CLOUDFLARE_TRANSLATION_BATCH_SIZE` defaults to `5`;
+keep it small for the free tier. Cloudflare fields are requested sequentially
+within each batch, so an HTTP 429 immediately stops further requests. The admin
+selects the provider when starting a new run; the selected provider is persisted
+so retries continue through the same service.
+The worker sends the strings selected for translation and their screen context to
+the chosen provider. Run `php artisan migrate` to create/update the run and queue
+tables on the translations SQLite connection. Docker Compose starts the
+`auto-translations` worker with the app. For Herd and other native environments,
+start the dedicated worker alongside the existing default worker. It needs access
+to the same SQLite database and Laravel storage as the web process.
 
 ```sh
 php artisan queue:work auto-translations --sleep=2 --timeout=80 --max-time=3600
@@ -162,15 +169,17 @@ The authenticated API uses the existing translation management roles.
 | Request | Result |
 | --- | --- |
 | `GET /api/translations/{translation}/auto-translate` | `200` with the latest run, including its final status, or `null` before the first run. |
-| `POST /api/translations/{translation}/auto-translate` | `202` with the new or already active run. Resumes publication for a run whose file write failed. A new run requires configured OpenAI credentials. |
+| `POST /api/translations/{translation}/auto-translate` | `202` with the new or already active run. Supply `provider` as `openai` or `cloudflare`; a new run requires credentials for that provider. Resumes publication for a run whose file write failed. |
 | `GET /api/translations/auto-translate/runs` | `200` with active runs and runs awaiting publication retry. |
 | `GET /api/translations/{translation}/auto-translate/{run}` | `200` with the specified run scoped to the destination language. |
 
-Each run has `id`, `translation_id`, `status`, `total`, `processed`, and
-`translated` under `data`. The nullable `error` field carries the latest OpenAI diagnostic.
+Each run has `id`, `translation_id`, `provider`, `status`, `total`, `processed`,
+and `translated` under `data`. The nullable `error` field carries the latest
+provider diagnostic.
 Status progresses from `queued` to `translating`,
 `publishing`, and `completed`. Empty runs can complete from the queue. A
-`failed` run has no applied translations. `publication_failed` means the
+`failed` run can retain fields completed before a provider rate limit; starting
+another run selects only remaining blank fields. `publication_failed` means the
 translations were saved and the JSON still needs to be published.
 
 ## License
