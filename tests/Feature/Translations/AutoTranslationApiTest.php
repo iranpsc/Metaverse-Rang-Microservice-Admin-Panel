@@ -128,6 +128,24 @@ class AutoTranslationApiTest extends TestCase
     }
 
     /**
+     * Ensure deployments with pre-existing SQLite queue tables can record their missing migration history safely.
+     *
+     * @return void Verifies repeated migration execution preserves the queue schema without duplicate-table errors.
+     */
+    public function test_auto_translation_migrations_are_safe_for_existing_sqlite_tables(): void
+    {
+        (require database_path('migrations/2026_11_18_000001_create_auto_translation_queue.php'))->up();
+        (require database_path('migrations/2026_11_18_000002_add_error_to_auto_translation_runs.php'))->up();
+        (require database_path('migrations/2026_11_21_000001_add_provider_to_auto_translation_runs.php'))->up();
+
+        $schema = Schema::connection('sqlite');
+        $this->assertTrue($schema->hasTable('auto_translation_runs'));
+        $this->assertTrue($schema->hasTable('auto_translation_jobs'));
+        $this->assertTrue($schema->hasColumn('auto_translation_runs', 'error'));
+        $this->assertTrue($schema->hasColumn('auto_translation_runs', 'provider'));
+    }
+
+    /**
      * Ensure an admin can stop only an active, locale-scoped translation queue.
      *
      * @return void Verifies cancellation persistence, queue-list removal, and safe no-op processing.

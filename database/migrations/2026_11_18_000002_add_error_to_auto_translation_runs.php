@@ -13,9 +13,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::connection('sqlite')->table('auto_translation_runs', function (Blueprint $table) {
-            $table->text('error')->nullable();
-        });
+        $schema = Schema::connection('sqlite');
+        if (! $schema->hasColumn('auto_translation_runs', 'error')) {
+            $schema->table('auto_translation_runs', function (Blueprint $table) {
+                $table->text('error')->nullable();
+            });
+        }
     }
 
     /**
