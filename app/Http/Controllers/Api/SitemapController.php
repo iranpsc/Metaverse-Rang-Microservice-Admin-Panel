@@ -5,13 +5,17 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Sitemaps\GenerateSitemapRequest;
 use App\Http\Requests\Sitemaps\UploadSitemapRequest;
+use App\Services\ActivityLoggerService;
 use App\Services\Sitemaps\SitemapGeneratorClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class SitemapController extends Controller
 {
-    public function __construct(private readonly SitemapGeneratorClient $client) {}
+    public function __construct(
+        private readonly SitemapGeneratorClient $client,
+        private readonly ActivityLoggerService $activityLogger,
+    ) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -36,8 +40,14 @@ class SitemapController extends Controller
     public function upload(UploadSitemapRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $sitemap = $this->client->upload($data['file'], $data['language']);
 
-        return response()->json(['success' => true, 'data' => ['sitemap' => $this->client->upload($data['file'], $data['language'])], 'message' => 'سایت مپ با موفقیت بارگذاری شد.']);
+        $this->activityLogger->logStaticFileUpload('sitemaps', $data['file']->getClientOriginalName(), [
+            'language' => $data['language'],
+            'filename' => $sitemap['filename'] ?? null,
+        ]);
+
+        return response()->json(['success' => true, 'data' => ['sitemap' => $sitemap], 'message' => 'سایت مپ با موفقیت بارگذاری شد.']);
     }
 
     public function destroy(Request $request, string $language, string $filename): JsonResponse

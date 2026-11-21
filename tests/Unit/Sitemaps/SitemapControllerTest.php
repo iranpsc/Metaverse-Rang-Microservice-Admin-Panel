@@ -5,6 +5,7 @@ namespace Tests\Unit\Sitemaps;
 use App\Http\Controllers\Api\SitemapController;
 use App\Http\Requests\Sitemaps\GenerateSitemapRequest;
 use App\Http\Requests\Sitemaps\UploadSitemapRequest;
+use App\Services\ActivityLoggerService;
 use App\Services\Sitemaps\SitemapGeneratorClient;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -24,7 +25,7 @@ class SitemapControllerTest extends TestCase
         $client = Mockery::mock(SitemapGeneratorClient::class);
         $client->expects('files')->with(['language' => 'fa', 'type' => 'full', 'status' => 'ready'])->andReturn(['items' => 1]);
 
-        $response = (new SitemapController($client))->index(Request::create('/', 'GET', [
+        $response = (new SitemapController($client, Mockery::mock(ActivityLoggerService::class)))->index(Request::create('/', 'GET', [
             'language' => 'fa', 'type' => 'full', 'status' => 'ready',
         ]));
 
@@ -36,7 +37,7 @@ class SitemapControllerTest extends TestCase
         $client = Mockery::mock(SitemapGeneratorClient::class);
         $client->expects('logs')->with(1, 100)->andReturn(['logs' => []]);
 
-        $response = (new SitemapController($client))->logs(Request::create('/', 'GET', [
+        $response = (new SitemapController($client, Mockery::mock(ActivityLoggerService::class)))->logs(Request::create('/', 'GET', [
             'page' => 0, 'per_page' => 200,
         ]));
 
@@ -50,7 +51,12 @@ class SitemapControllerTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('sitemap.xml', '<urlset/>');
         $client->expects('upload')->with($file, 'fa')->andReturn(['filename' => 'sitemap.xml']);
         $client->expects('delete')->with('fa-IR', 'site.xml');
-        $controller = new SitemapController($client);
+        $activityLogger = Mockery::mock(ActivityLoggerService::class);
+        $activityLogger->expects('logStaticFileUpload')->with('sitemaps', 'sitemap.xml', [
+            'language' => 'fa',
+            'filename' => 'sitemap.xml',
+        ]);
+        $controller = new SitemapController($client, $activityLogger);
 
         $generate = Mockery::mock(GenerateSitemapRequest::class)->makePartial();
         $generate->expects('validated')->andReturn(['target' => 'full', 'language' => 'fa']);
