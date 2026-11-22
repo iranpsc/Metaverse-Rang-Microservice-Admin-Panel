@@ -220,7 +220,7 @@ class AutoTranslationApiTest extends TestCase
             'services.cloudflare.translation_batch_size' => 5,
         ]);
         foreach (range(1, 3) as $id) {
-            $this->field($this->english, $id, "Text {$id}");
+            $this->field($this->english, $id, "Text {$id} مرکز کنترل");
         }
 
         $requests = 0;
@@ -237,7 +237,7 @@ class AutoTranslationApiTest extends TestCase
 
         $this->assertRun($this->german, $run, 'failed', 3, 1, 1);
         $this->getJson($this->url($this->german))->assertJsonPath('data.error', 'Cloudflare Workers AI (HTTP 429): Rate limit reached.');
-        $this->assertSame('ترجمه اول', Field::query()->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $this->german->id))->where('unique_id', 1)->value('translation'));
+        $this->assertSame('ترجمه اول Control Center', Field::query()->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $this->german->id))->where('unique_id', 1)->value('translation'));
         $this->assertNull(Field::query()->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $this->german->id))->where('unique_id', 2)->value('translation'));
         $this->assertSame(2, $requests);
     }
@@ -300,10 +300,11 @@ class AutoTranslationApiTest extends TestCase
             $this->assertSame(['fa', 'en'], array_column($input['strings'], 'source'));
             $this->assertSame(['1', '2'], array_column($input['strings'], 'id'));
             $this->assertSame('Form', $input['strings'][1]['modal']);
+            $this->assertSame('ورود به {{metarang_glossary_0}} {{name}}', $input['strings'][0]['text']);
 
             return $this->providerResponse([
                 ['id' => '2', 'translation' => 'E-Mail eingeben'],
-                ['id' => '1', 'translation' => 'Bei MetaRang anmelden {{name}}'],
+                ['id' => '1', 'translation' => 'Bei {{metarang_glossary_0}} anmelden {{name}}'],
             ]);
         });
 
@@ -492,13 +493,13 @@ class AutoTranslationApiTest extends TestCase
         yield 'unauthorized' => [[], 401];
         yield 'incomplete output' => [['status' => 'incomplete', 'output' => []], 200];
 
-        $validFirst = ['id' => '1', 'translation' => 'MetaRang {{name}} speichern'];
+        $validFirst = ['id' => '1', 'translation' => '{{metarang_glossary_0}} {{name}} speichern'];
         $variants = [
             'duplicate ID' => [$validFirst, $validFirst],
             'missing ID' => [$validFirst],
             'extra ID' => [$validFirst, ['id' => '3', 'translation' => 'Öffnen']],
             'blank translation' => [$validFirst, ['id' => '2', 'translation' => ' ']],
-            'changed placeholder' => [['id' => '1', 'translation' => 'MetaRang {other} speichern']],
+            'changed placeholder' => [['id' => '1', 'translation' => '{{metarang_glossary_0}} {other} speichern']],
             'malformed output' => null,
         ];
         foreach ($variants as $name => $results) {

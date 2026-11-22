@@ -208,15 +208,38 @@ class AutoTranslationService
             $batch[$id] = $item;
         }
 
+        $glossary = new TranslationGlossary;
+        $providerBatch = $batch;
+        $names = [];
+        foreach ($providerBatch as $id => $item) {
+            [$providerBatch[$id]['text'], $names[$id]] = $glossary->protect($item['text'], $item['source'], $destination->code);
+        }
+
         try {
-            $results = $translator->translate($destination, $batch);
+            $results = $translator->translate($destination, $providerBatch);
         } catch (TranslationProviderException $exception) {
-            $this->commitPartialBatch($run, $destination, $batch, $exception->results);
+            $this->commitPartialBatch($run, $destination, $batch, $this->restoreGlossary($exception->results, $names));
 
             throw $exception;
         }
 
-        $this->commitBatch($run, $destination, $batch, $results);
+        $this->commitBatch($run, $destination, $batch, $this->restoreGlossary($results, $names));
+    }
+
+    /**
+     * Restore destination spellings in completed provider results.
+     *
+     * @param  array<int, string>  $results  Validated translations by field ID.
+     * @param  array<int, array<string, string>>  $names  Placeholder-to-name maps by field ID.
+     * @return array<int, string> Translations with glossary names restored.
+     */
+    private function restoreGlossary(array $results, array $names): array
+    {
+        foreach ($results as $id => $text) {
+            $results[$id] = strtr($text, $names[$id]);
+        }
+
+        return $results;
     }
 
     /**
