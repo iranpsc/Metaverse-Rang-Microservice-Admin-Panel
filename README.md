@@ -134,7 +134,7 @@ and returns the file as a download. Laravel serves it at `/lang/{code}.json`.
 ### Automatic translation
 
 Choose **«ترجمه خودکار»** on the destination language. The dialog shows live
-progress and OpenAI errors. You can close it and click the action again to see
+progress and provider errors. You can close it and click the action again to see
 the latest status. A finished run offers an explicit retry. For each numeric key, the
 worker uses Persian when available and falls back to English, excluding the
 destination itself. It fills missing or empty values in batches, preserving
@@ -149,10 +149,17 @@ Set `OPENAI_API_KEY` for OpenAI runs. `OPENAI_TRANSLATION_MODEL` defaults to
 Cloudflare Workers AI runs, set `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`,
 and optionally `CLOUDFLARE_TRANSLATION_MODEL` (defaults to
 `@cf/meta/m2m100-1.2b`). `CLOUDFLARE_TRANSLATION_BATCH_SIZE` defaults to `5`;
-keep it small for the free tier. Cloudflare fields are requested sequentially
-within each batch, so an HTTP 429 immediately stops further requests. The admin
-selects the provider when starting a new run; the selected provider is persisted
-so retries continue through the same service.
+each field can send several sequential API requests.
+`CLOUDFLARE_TRANSLATION_REQUESTS_PER_MINUTE` defaults to `300` and counts actual
+requests across jobs sharing the same account and Laravel cache. Use a shared,
+lock-capable cache such as Redis for multiple workers. The limiter spaces
+requests 200 ms apart. Slow batches checkpoint and continue in a new job
+before the worker timeout.
+Cloudflare HTTP 429 stops the current batch and saves completed fields. Code
+`3036` pauses the account until midnight UTC. Code `3040` waits for
+`Retry-After` (or 30 seconds by default) and allows two delayed retries per
+batch. The admin selects the provider when starting a run, and retries continue
+through the same provider.
 The worker sends the strings selected for translation and their screen context to
 the chosen provider. Run `php artisan migrate` to create/update the run and queue
 tables on the translations SQLite connection. Docker Compose starts the

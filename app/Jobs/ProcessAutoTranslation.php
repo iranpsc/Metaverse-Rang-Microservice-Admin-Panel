@@ -23,11 +23,12 @@ class ProcessAutoTranslation implements ShouldQueue
      *
      * @param  int  $runId  Run identifier stored in the queue payload.
      * @param  int  $step  Step number to process.
+     * @param  int  $capacityRetries  Capacity retries used for this batch.
      */
-    public function __construct(public readonly int $runId, public readonly int $step) {}
+    public function __construct(public readonly int $runId, public readonly int $step, public int $capacityRetries = 0) {}
 
     /**
-     * Process the step and fail immediately when the provider rejects the request or returns invalid output.
+     * Process a step and schedule delayed continuation when the provider is paused.
      *
      * @param  AutoTranslationService  $service  Run service injected by the queue worker.
      * @return void Retryable failures propagate to Laravel's queue worker.
@@ -37,6 +38,15 @@ class ProcessAutoTranslation implements ShouldQueue
         try {
             $service->process($this->runId, $this->step);
         } catch (TranslationProviderException $exception) {
+            if ($exception->resumeAt !== null) {
+                $capacityRetries = ($this->capacityRetries ?? 0) + (int) $exception->capacityFailure;
+                if ($capacityRetries <= 2) {
+                    $service->defer($this->runId, $this->step, $exception, $capacityRetries);
+
+                    return;
+                }
+            }
+
             if (! $exception->retryable) {
                 $this->fail($exception);
 

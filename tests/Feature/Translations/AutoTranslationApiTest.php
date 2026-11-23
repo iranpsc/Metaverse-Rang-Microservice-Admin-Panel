@@ -7,7 +7,9 @@ use App\Models\Translations\Field;
 use App\Models\Translations\Translation;
 use App\Services\ContentWebhooks\ChangeRecorder;
 use App\Services\Translations\AutoTranslationService;
+use App\Services\Translations\CloudflareRequestGate;
 use GuzzleHttp\Promise\PromiseInterface;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Client\Request;
 use Illuminate\Queue\WorkerOptions;
@@ -240,6 +242,161 @@ class AutoTranslationApiTest extends TestCase
         $this->assertSame('ترجمه اول Control Center', Field::query()->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $this->german->id))->where('unique_id', 1)->value('translation'));
         $this->assertNull(Field::query()->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $this->german->id))->where('unique_id', 2)->value('translation'));
         $this->assertSame(2, $requests);
+    }
+
+    /**
+     * Persist completed fields on quota exhaustion and resume only after midnight UTC.
+     */
+    public function test_cloudflare_daily_quota_pauses_all_runs_for_the_account(): void
+    {
+        $this->travelTo(now('UTC')->startOfDay()->addHours(23)->addMinutes(59));
+        $this->actingAsAdminWithRole('translations-management');
+        config(['services.cloudflare.account_id' => 'account', 'services.cloudflare.api_token' => 'token']);
+        $this->field($this->english, 1, 'First');
+        $this->field($this->english, 2, 'Second');
+        Http::fakeSequence()
+            ->push(['result' => ['translated_text' => 'Erste']])
+            ->push(['errors' => [['code' => 3036, 'message' => 'Daily quota exhausted.']]], 429)
+            ->push(['result' => ['translated_text' => 'Zweite']])
+            ->push(['result' => ['translated_text' => 'اول']])
+            ->push(['result' => ['translated_text' => 'دوم']]);
+
+        $run = $this->postJson($this->url($this->german), ['provider' => 'cloudflare'])->assertAccepted()->json('data.id');
+        $this->work(2);
+        $this->assertRun($this->german, $run, 'translating', 2, 1, 1);
+        $this->getJson($this->url($this->german))
+            ->assertJsonPath('data.error', 'Cloudflare Workers AI (HTTP 429, code 3036): Daily quota exhausted.');
+
+        $otherRun = $this->postJson($this->url($this->persian), ['provider' => 'cloudflare'])->assertAccepted()->json('data.id');
+        $this->work(2);
+        $this->assertRun($this->persian, $otherRun, 'translating', 2);
+        $this->travel(59)->seconds();
+        $this->work();
+        Http::assertSentCount(2);
+
+        $this->travel(1)->seconds();
+        $this->work(4);
+        $this->assertRun($this->german, $run, 'completed', 2, 2, 2);
+        $this->assertRun($this->persian, $otherRun, 'completed', 2, 2, 2);
+        Http::assertSentCount(5);
+    }
+
+    /**
+     * Honor the provider delay and end a run after two capacity retries.
+     */
+    public function test_cloudflare_capacity_retries_are_delayed_and_bounded(): void
+    {
+        $this->freezeSecond();
+        $this->actingAsAdminWithRole('translations-management');
+        config(['services.cloudflare.account_id' => 'account', 'services.cloudflare.api_token' => 'token']);
+        $this->field($this->english, 1, 'First');
+        Http::fake([
+            '*' => Http::response(['errors' => [['code' => 3040, 'message' => 'Busy.']]], 429, ['Retry-After' => '12']),
+        ]);
+
+        $run = $this->postJson($this->url($this->german), ['provider' => 'cloudflare'])->assertAccepted()->json('data.id');
+        $this->work(2);
+        $this->travel(11)->seconds();
+        $this->work();
+        Http::assertSentCount(1);
+
+        $this->travel(1)->seconds();
+        $this->work();
+        Http::assertSentCount(2);
+        $this->travel(12)->seconds();
+        $this->work(2);
+        Http::assertSentCount(3);
+        $this->assertRun($this->german, $run, 'failed', 1);
+        $this->getJson($this->url($this->german))
+            ->assertJsonPath('data.error', 'Cloudflare Workers AI (HTTP 429, code 3040): Busy.');
+    }
+
+    /**
+     * Pace actual requests and resume a field split by a protected token.
+     */
+    public function test_cloudflare_request_budget_preserves_translated_segments_across_queue_steps(): void
+    {
+        $this->freezeSecond();
+        $this->actingAsAdminWithRole('translations-management');
+        config([
+            'services.cloudflare.account_id' => 'account',
+            'services.cloudflare.api_token' => 'token',
+            'services.cloudflare.translation_requests_per_minute' => 1,
+        ]);
+        $this->field($this->english, 1, 'Hello {{name}} welcome');
+        Http::fakeSequence()->push(['result' => ['translated_text' => 'Hallo']])
+            ->push(['result' => ['translated_text' => 'willkommen']]);
+
+        $run = $this->postJson($this->url($this->german), ['provider' => 'cloudflare'])->assertAccepted()->json('data.id');
+        $this->work(2);
+        $this->assertRun($this->german, $run, 'translating', 1);
+        Http::assertSentCount(1);
+
+        $this->travel(60)->seconds();
+        $this->work(2);
+        Http::assertSentCount(2);
+        $this->assertRun($this->german, $run, 'completed', 1, 1, 1);
+        $this->assertSame('Hallo {{name}} willkommen', Field::query()
+            ->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $this->german->id))->value('translation'));
+    }
+
+    /**
+     * Checkpoint completed fields and segments before the worker can time out.
+     */
+    public function test_cloudflare_slow_requests_checkpoint_before_the_queue_timeout(): void
+    {
+        $this->freezeSecond();
+        $this->actingAsAdminWithRole('translations-management');
+        config(['services.cloudflare.account_id' => 'account', 'services.cloudflare.api_token' => 'token']);
+        $this->field($this->english, 1, 'First');
+        $this->field($this->english, 2, 'One {{x}} two {{y}} three {{z}} four');
+        Http::fake(function (Request $request) {
+            $this->travel(14)->seconds();
+
+            return Http::response(['result' => ['translated_text' => ucfirst($request['text'])]]);
+        });
+
+        $run = $this->postJson($this->url($this->german), ['provider' => 'cloudflare'])->assertAccepted()->json('data.id');
+        $this->work(2);
+        Http::assertSentCount(4);
+        $this->assertRun($this->german, $run, 'translating', 2, 1, 1);
+
+        $this->travel(1)->seconds();
+        $this->work(2);
+        Http::assertSentCount(5);
+        $this->assertRun($this->german, $run, 'completed', 2, 2, 2);
+        $this->assertSame('One {{x}} Two {{y}} Three {{z}} Four', Field::query()
+            ->whereHas('tab.modal', fn ($query) => $query->where('translation_id', $this->german->id))
+            ->where('unique_id', 2)->value('translation'));
+    }
+
+    /**
+     * Preserve the provider diagnostic and completed fields when the cooldown lock cannot be acquired.
+     */
+    public function test_cloudflare_checkpoints_when_the_cooldown_lock_times_out(): void
+    {
+        $this->freezeSecond();
+        $this->actingAsAdminWithRole('translations-management');
+        config(['services.cloudflare.account_id' => 'account', 'services.cloudflare.api_token' => 'token']);
+        $this->partialMock(CloudflareRequestGate::class)
+            ->shouldReceive('pause')->once()->andThrow(new LockTimeoutException);
+        $this->field($this->english, 1, 'First');
+        $this->field($this->english, 2, 'Second');
+        Http::fakeSequence()
+            ->push(['result' => ['translated_text' => 'Erste']])
+            ->push(['errors' => [['code' => 3040, 'message' => 'Busy.']]], 429, ['Retry-After' => '12'])
+            ->push(['result' => ['translated_text' => 'Zweite']]);
+
+        $run = $this->postJson($this->url($this->german), ['provider' => 'cloudflare'])->assertAccepted()->json('data.id');
+        $this->work(2);
+        $this->assertRun($this->german, $run, 'translating', 2, 1, 1);
+        $this->getJson($this->url($this->german))
+            ->assertJsonPath('data.error', 'Cloudflare Workers AI (HTTP 429, code 3040): Busy.');
+
+        $this->travel(12)->seconds();
+        $this->work(2);
+        Http::assertSentCount(3);
+        $this->assertRun($this->german, $run, 'completed', 2, 2, 2);
     }
 
     /**

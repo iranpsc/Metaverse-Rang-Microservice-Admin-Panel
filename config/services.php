@@ -25,6 +25,7 @@ return [
         'endpoint' => env('CLOUDFLARE_AI_ENDPOINT', 'https://api.cloudflare.com/client/v4/accounts/'.env('CLOUDFLARE_ACCOUNT_ID').'/ai/run'),
         'translation_model' => env('CLOUDFLARE_TRANSLATION_MODEL', '@cf/meta/m2m100-1.2b'),
         'translation_batch_size' => env('CLOUDFLARE_TRANSLATION_BATCH_SIZE', 5),
+        'translation_requests_per_minute' => env('CLOUDFLARE_TRANSLATION_REQUESTS_PER_MINUTE', 300),
     ],
 
     'mailgun' => [

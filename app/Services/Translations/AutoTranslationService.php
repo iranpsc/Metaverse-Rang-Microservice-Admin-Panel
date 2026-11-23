@@ -146,6 +146,29 @@ class AutoTranslationService
     }
 
     /**
+     * Replace a paused step with a durable delayed continuation.
+     *
+     * @param  int  $runId  Run awaiting provider availability.
+     * @param  int  $step  Current step that should be superseded.
+     * @param  TranslationProviderException  $error  Provider error and resume timestamp.
+     * @param  int  $capacityRetries  Capacity retry count to carry forward.
+     * @return void Saves the visible error and queues the next attempt.
+     */
+    public function defer(int $runId, int $step, TranslationProviderException $error, int $capacityRetries): void
+    {
+        $run = Run::query()->where('step', $step)->where('status', Run::TRANSLATING)->find($runId);
+        if ($run) {
+            $this->advance($run, function () use ($run, $error, $capacityRetries) {
+                $run->update(['error' => $error->getMessage()]);
+                Queue::connection('auto-translations')->later(
+                    max(1, $error->resumeAt - now()->timestamp),
+                    new ProcessAutoTranslation($run->id, $run->step, $capacityRetries),
+                );
+            });
+        }
+    }
+
+    /**
      * Record an exhausted step and retain the run for publication retry when values were saved.
      *
      * @param  int  $runId  Run whose job failed.
@@ -293,9 +316,10 @@ class AutoTranslationService
             return;
         }
 
-        DB::connection('sqlite')->transaction(function () use ($run, $destination, $batch, $results) {
+        $step = $run->step;
+        DB::connection('sqlite')->transaction(function () use ($run, $destination, $batch, $results, $step) {
             $run->refresh();
-            if ($run->status !== Run::TRANSLATING || ! $run->active) {
+            if ($run->status !== Run::TRANSLATING || ! $run->active || $run->step !== $step) {
                 return;
             }
 
