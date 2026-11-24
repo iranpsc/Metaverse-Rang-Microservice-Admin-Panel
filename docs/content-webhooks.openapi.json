@@ -38,10 +38,7 @@
                     "trigger": "manual",
                     "triggered_by": {
                       "id": "4829",
-                      "name": "Example admin",
-                      "roles": [
-                        "super-admin"
-                      ]
+                      "name": "Example admin"
                     },
                     "changes": [
                       {
@@ -54,10 +51,7 @@
                         "modifiers": [
                           {
                             "id": "4829",
-                            "name": "Example admin",
-                            "roles": [
-                              "super-admin"
-                            ]
+                            "name": "Example admin"
                           }
                         ],
                         "affected_routes": [
@@ -65,10 +59,6 @@
                           "/api/levels/12/gift"
                         ]
                       }
-                    ],
-                    "affected_routes": [
-                      "/api/levels/12",
-                      "/api/levels/12/gift"
                     ]
                   }
                 },
@@ -81,10 +71,7 @@
                     "trigger": "manual",
                     "triggered_by": {
                       "id": "4829",
-                      "name": "Example admin",
-                      "roles": [
-                        "super-admin"
-                      ]
+                      "name": "Example admin"
                     },
                     "changes": [
                       {
@@ -93,25 +80,18 @@
                         "resource": "dictionary",
                         "locale": "fa",
                         "actions": [
-                          "CREATE",
                           "UPDATE"
                         ],
                         "modifiers": [
                           {
                             "id": "4829",
-                            "name": "Example admin",
-                            "roles": [
-                              "super-admin"
-                            ]
+                            "name": "Example admin"
                           }
                         ],
                         "affected_routes": [
                           "/lang/fa.json"
                         ]
                       }
-                    ],
-                    "affected_routes": [
-                      "/lang/fa.json"
                     ]
                   }
                 },
@@ -124,10 +104,7 @@
                     "trigger": "manual",
                     "triggered_by": {
                       "id": "4829",
-                      "name": "Example admin",
-                      "roles": [
-                        "super-admin"
-                      ]
+                      "name": "Example admin"
                     },
                     "changes": [
                       {
@@ -140,10 +117,7 @@
                         "modifiers": [
                           {
                             "id": "4829",
-                            "name": "Example admin",
-                            "roles": [
-                              "super-admin"
-                            ]
+                            "name": "Example admin"
                           }
                         ],
                         "affected_routes": [
@@ -157,27 +131,18 @@
                         "resource": "dictionary",
                         "locale": "fa",
                         "actions": [
-                          "CREATE",
                           "UPDATE"
                         ],
                         "modifiers": [
                           {
                             "id": "4829",
-                            "name": "Example admin",
-                            "roles": [
-                              "super-admin"
-                            ]
+                            "name": "Example admin"
                           }
                         ],
                         "affected_routes": [
                           "/lang/fa.json"
                         ]
                       }
-                    ],
-                    "affected_routes": [
-                      "/api/levels/12",
-                      "/api/levels/12/gift",
-                      "/lang/fa.json"
                     ]
                   }
                 }
@@ -524,8 +489,7 @@
         "type": "object",
         "required": [
           "id",
-          "name",
-          "roles"
+          "name"
         ],
         "properties": {
           "id": {
@@ -533,12 +497,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         }
       },
@@ -601,8 +559,7 @@
           "timestamp",
           "trigger",
           "triggered_by",
-          "changes",
-          "affected_routes"
+          "changes"
         ],
         "properties": {
           "event": {
@@ -643,14 +600,6 @@
             "minItems": 1,
             "items": {
               "$ref": "#/components/schemas/Change"
-            }
-          },
-          "affected_routes": {
-            "type": "array",
-            "minItems": 1,
-            "uniqueItems": true,
-            "items": {
-              "type": "string"
             }
           }
         }

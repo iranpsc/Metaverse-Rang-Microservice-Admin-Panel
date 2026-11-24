@@ -2,7 +2,7 @@
 
 return [
     'activity_description' => "The :subject ':name':part:detail has been :event.",
-    'translation_description' => 'The :locale translation :detail has been :event.',
+    'translation_exported' => 'The :locale translation was exported to JSON.',
     'subjects' => [
         'citizen_level' => 'citizen level',
         'video_category' => 'video category',

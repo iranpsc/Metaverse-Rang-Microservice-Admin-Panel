@@ -12,7 +12,7 @@ http.createServer((req, res) => {
       const supplied = Buffer.from(req.headers['x-webhook-secret'] || '');
       const expected = Buffer.from(secret);
       if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return reply(401, { error: 'Invalid webhook secret' });
-      if (payload.event !== 'admin.content.batch' || !payload.batch_id || !payload.version || !Array.isArray(payload.affected_routes)) return reply(422, { error: 'Invalid contract' });
+      if (payload.event !== 'admin.content.batch' || !payload.batch_id || !payload.version || !Array.isArray(payload.changes) || !payload.changes.length || !payload.changes.every(change => Array.isArray(change?.affected_routes))) return reply(422, { error: 'Invalid contract' });
       if (req.url.includes('failure=503')) return reply(503, { error: 'Temporarily unavailable' });
       if (req.url.includes('failure=401')) return reply(401, { error: 'Rejected' });
       if (req.url.includes('failure=timeout')) return setTimeout(() => reply(504, { error: 'Delayed' }), 20000);

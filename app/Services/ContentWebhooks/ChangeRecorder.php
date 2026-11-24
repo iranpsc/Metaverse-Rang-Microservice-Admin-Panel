@@ -109,7 +109,7 @@ class ChangeRecorder
                     $activity->created_at = $source->created_at;
                     $activity->save();
                     DB::table('content_change_receipts')->insert(['source_id' => $source->id, 'activity_id' => $activity->id]);
-                    if (empty($data['affected_routes'])) {
+                    if (empty($data['affected_routes']) || ($data['feature'] === 'translations' && $data['event'] !== 'exported')) {
                         return;
                     }
                     DB::table('content_changes')->insert(['source_id' => $source->id, 'activity_id' => $activity->id,

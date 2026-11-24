@@ -41,7 +41,7 @@ class ActivityLogController extends Controller
         abort_unless(Schema::hasTable('content_changes') && Schema::hasTable('content_delivery_state'), 404);
 
         app(ChangeRecorder::class)->reconcile();
-        $batch = DB::table('content_webhook_batches')->where('status', '!=', 'delivered')->orderBy('created_at')->first(['id', 'version', 'status']);
+        $batch = app(DeliveryService::class)->oldestQueuedBatch(['id', 'version', 'status']);
         $changes = DB::table('content_changes')
             ->when($batch, fn ($builder) => $builder->where('batch_id', $batch->id), fn ($builder) => $builder->whereNull('batch_id'))
             ->orderBy('id')->get();

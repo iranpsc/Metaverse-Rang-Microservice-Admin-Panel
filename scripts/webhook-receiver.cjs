@@ -61,14 +61,10 @@ const server = http.createServer(async (req, res) => {
   entry.body = body;
   entry.batch_id = body.batch_id;
   entry.version = body.version;
-  const routes = body.affected_routes;
-  if (body.event !== 'admin.content.batch' || !/^[0-9a-f-]{36}$/i.test(body.batch_id || '') || !/^V1\.1\.[1-9][0-9]*$/.test(body.version || '') || !Array.isArray(body.changes) || !body.changes.length || !Array.isArray(routes) || !routes.length || new Set(routes).size !== routes.length) return finish(422, { error: 'Invalid batch contract' });
-  const union = new Set();
+  if (body.event !== 'admin.content.batch' || !/^[0-9a-f-]{36}$/i.test(body.batch_id || '') || !/^V1\.1\.[1-9][0-9]*$/.test(body.version || '') || !Array.isArray(body.changes) || !body.changes.length) return finish(422, { error: 'Invalid batch contract' });
   for (const change of body.changes) {
     if (!change.feature || !change.entity_id || !change.resource || !Array.isArray(change.actions) || !change.actions.every(a => ['CREATE', 'UPDATE', 'DELETE'].includes(a)) || !Array.isArray(change.modifiers) || !Array.isArray(change.affected_routes)) return finish(422, { error: 'Invalid change contract' });
-    change.affected_routes.forEach(route => union.add(route));
   }
-  if (union.size !== routes.length || routes.some(route => !union.has(route))) return finish(422, { error: 'Route union mismatch' });
   if (accepted.has(body.batch_id) && accepted.get(body.batch_id) !== raw) return finish(409, { error: 'Batch ID reused with changed payload' });
   const failure = entry.mode;
   if (/^[45]\d\d$/.test(failure)) return finish(Number(failure), { error: 'Injected HTTP failure' });

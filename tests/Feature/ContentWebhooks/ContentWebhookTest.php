@@ -80,7 +80,8 @@ class ContentWebhookTest extends TestCase
         $payload = json_decode($batch->payload, true);
         $this->assertSame('V1.1.1', $payload['version']);
         $this->assertCount(1, $payload['changes']);
-        $this->assertSame(['/api/levels/12/gift'], $payload['affected_routes']);
+        $this->assertArrayNotHasKey('affected_routes', $payload);
+        $this->assertSame(['/api/levels/12/gift'], $payload['changes'][0]['affected_routes']);
         $this->change('/api/levels/12/gem');
         app(ChangeRecorder::class)->reconcile();
         $this->accept(enveloped: true);
@@ -393,10 +394,14 @@ class ContentWebhookTest extends TestCase
         $first->name = 'Renamed later';
         $first->save();
         $service = app(DeliveryService::class);
-        $cycle = $service->trigger();
+        $cycle = $service->trigger('manual', ['id' => (string) $second->id, 'name' => $second->name, 'roles' => ['super-admin']]);
         $service->deliver($cycle);
         $payload = json_decode(DB::table('content_webhook_batches')->value('payload'), true);
-        $this->assertSame(['First editor', 'Second editor'], array_column($payload['changes'][0]['modifiers'], 'name'));
+        $this->assertSame(['id' => (string) $second->id, 'name' => 'Second editor'], $payload['triggered_by']);
+        $this->assertSame([
+            ['id' => (string) $first->id, 'name' => 'First editor'],
+            ['id' => (string) $second->id, 'name' => 'Second editor'],
+        ], $payload['changes'][0]['modifiers']);
         $id = DB::table('content_changes')->orderBy('id')->value('activity_id');
         $this->getJson('/api/activity-logs/'.$id)->assertOk()->assertJsonPath('data.activity.causer.name', 'First editor');
     }

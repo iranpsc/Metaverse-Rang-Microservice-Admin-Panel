@@ -6,12 +6,10 @@ use App\Jobs\ProcessAutoTranslation;
 use App\Models\Translations\AutoTranslationRun as Run;
 use App\Models\Translations\Field;
 use App\Models\Translations\Translation;
-use App\Services\ContentWebhooks\ChangeRecorder;
 use App\Services\ContentWebhooks\TranslationPublisher;
 use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
-use Throwable;
 
 class AutoTranslationService
 {
@@ -30,7 +28,7 @@ class AutoTranslationService
      *
      * @param  OpenAiTranslator  $openAiTranslator  OpenAI provider used to translate batches.
      * @param  CloudflareTranslator  $cloudflareTranslator  Cloudflare Workers AI provider used to translate batches.
-     * @param  TranslationPublisher  $publisher  Dictionary writer and change recorder.
+     * @param  TranslationPublisher  $publisher  Dictionary writer.
      * @param  TranslationService  $translations  Export metadata and locale hierarchy service.
      */
     public function __construct(
@@ -277,7 +275,7 @@ class AutoTranslationService
     private function commitBatch(Run $run, Translation $destination, array $batch, array $results): void
     {
         $this->advance($run, function () use ($run, $destination, $batch, $results) {
-            $saved = $this->saveBatchFields($run, $destination, $batch, $results);
+            $saved = $this->saveBatchFields($destination, $batch, $results);
             $run->update([
                 'processed' => $run->processed + count($results),
                 'translated' => $run->translated + $saved,
@@ -323,7 +321,7 @@ class AutoTranslationService
                 return;
             }
 
-            $saved = $this->saveBatchFields($run, $destination, $batch, $results);
+            $saved = $this->saveBatchFields($destination, $batch, $results);
             $run->update([
                 'processed' => $run->processed + count($results),
                 'translated' => $run->translated + $saved,
@@ -334,16 +332,14 @@ class AutoTranslationService
     /**
      * Apply validated fields and record the resulting dictionary changes for publication.
      *
-     * @param  Run  $run  Active translation run and actor.
      * @param  Translation  $destination  Locale receiving translated fields.
      * @param  array<int, array{id: string, source: string, text: string, modal: string, tab: string}>  $batch  Fields submitted to the provider.
      * @param  array<int, string>  $results  Validated provider translations keyed by field ID.
      * @return int Number of values written to SQLite.
      */
-    private function saveBatchFields(Run $run, Translation $destination, array $batch, array $results): int
+    private function saveBatchFields(Translation $destination, array $batch, array $results): int
     {
         $current = $this->candidates($destination);
-        $before = $this->publisher->snapshot();
         $saved = 0;
 
         foreach ($results as $id => $text) {
@@ -355,18 +351,15 @@ class AutoTranslationService
             $saved++;
         }
 
-        if ($saved > 0) {
-            $this->publisher->record($before, actor: $run->actor);
-            if ($destination->code === TranslationService::REFERENCE_LANGUAGE_CODE) {
-                DB::connection('sqlite')->afterCommit($this->translations->forgetPersianHierarchyCache(...));
-            }
+        if ($saved > 0 && $destination->code === TranslationService::REFERENCE_LANGUAGE_CODE) {
+            DB::connection('sqlite')->afterCommit($this->translations->forgetPersianHierarchyCache(...));
         }
 
         return $saved;
     }
 
     /**
-     * Publish the committed dictionary and project its audit record after publication.
+     * Publish the committed dictionary.
      *
      * @param  Run  $run  Run whose translations are ready for publication.
      * @return void The run records completion after the dictionary is written.
@@ -381,12 +374,6 @@ class AutoTranslationService
             }
             $run->update(['status' => Run::COMPLETED, 'active' => null]);
         });
-
-        try {
-            app(ChangeRecorder::class)->reconcile();
-        } catch (Throwable $exception) {
-            report($exception);
-        }
     }
 
     /**

@@ -56,6 +56,7 @@
             <option value="created">ایجاد</option>
             <option value="updated">ویرایش</option>
             <option value="deleted">حذف</option>
+            <option value="exported">خروجی JSON</option>
             <option value="login">ورود</option>
             <option value="logout">خروج</option>
             <option value="login_failed">ورود ناموفق</option>
@@ -486,6 +487,7 @@ const eventLabels = {
   created: 'ایجاد',
   updated: 'ویرایش',
   deleted: 'حذف',
+  exported: 'خروجی JSON',
   login: 'ورود',
   logout: 'خروج',
   login_failed: 'ورود ناموفق',

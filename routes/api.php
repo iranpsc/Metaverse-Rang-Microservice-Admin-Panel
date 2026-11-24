@@ -419,7 +419,7 @@ Route::middleware([
             Route::get('{translation}', 'show');
             Route::delete('{translation}', 'destroy');
             Route::patch('{translation}/status', 'toggleStatus');
-            Route::post('{translation}/export', 'export');
+            Route::post('{translation}/export', 'export')->name('translations.export');
             Route::post('{translation}/import', 'import');
         });
 

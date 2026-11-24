@@ -2,7 +2,7 @@
 
 return [
     'activity_description' => ':subject \':name\':part:detail :event.',
-    'translation_description' => 'ترجمه :locale :detail :event.',
+    'translation_exported' => 'از ترجمه :locale خروجی JSON گرفته شد.',
     'subjects' => [
         'citizen_level' => 'سطح شهروندی',
         'video_category' => 'دسته‌بندی ویدیو',

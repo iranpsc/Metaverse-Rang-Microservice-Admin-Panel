@@ -660,11 +660,13 @@ class TranslationService
         $filePath = storage_path("app/lang/{$fileName}");
         $encodedPayload = json_encode(
             $payload,
-            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT
+            JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT
         );
 
         $this->filesystem->ensureDirectoryExists(dirname($filePath));
-        $this->filesystem->put($filePath, $encodedPayload);
+        if ($this->filesystem->put($filePath, $encodedPayload) === false) {
+            throw new \RuntimeException('Cannot write the translation dictionary.');
+        }
 
         return $filePath;
     }

@@ -490,8 +490,8 @@ class AutoTranslationApiTest extends TestCase
         ], json_decode(File::get(storage_path('app/lang/de.json')), true));
         $this->assertSame(2, $this->german->fresh()->version);
         $this->assertStringEndsWith('/lang/de.json', $this->german->fresh()->file_url);
-        $this->assertDatabaseHas('activity_log', ['causer_id' => $admin->id, 'log_name' => 'translations']);
-        $this->assertDatabaseCount('content_changes', 1);
+        $this->assertDatabaseMissing('activity_log', ['log_name' => 'translations']);
+        $this->assertDatabaseCount('content_changes', 0);
         Http::assertSentCount(1);
     }
 
@@ -611,7 +611,7 @@ class AutoTranslationApiTest extends TestCase
         $this->work(2);
 
         $this->assertRun($this->german, $run, 'completed', 2, 2, 1);
-        $this->assertDatabaseCount('content_change_outbox', 1);
+        $this->assertDatabaseCount('content_change_outbox', 0);
         $this->get('/lang/de.json')->assertOk();
         Http::assertSentCount(2);
     }
@@ -698,7 +698,7 @@ class AutoTranslationApiTest extends TestCase
         $this->assertRun($this->german, $run, 'publication_failed', 1, 1, 1);
         $this->assertSame(1, $this->german->fresh()->version);
         $this->assertSame(1, $this->german->modals()->count());
-        $this->assertDatabaseCount('content_change_outbox', 1);
+        $this->assertDatabaseCount('content_change_outbox', 0);
 
         config(['services.openai.key' => null]);
         $this->postJson($this->url($this->german))->assertAccepted()
@@ -707,33 +707,34 @@ class AutoTranslationApiTest extends TestCase
 
         $this->assertRun($this->german, $run, 'completed', 1, 1, 1);
         $this->assertSame(2, $this->german->fresh()->version);
-        $this->assertDatabaseCount('content_changes', 1);
+        $this->assertDatabaseCount('content_changes', 0);
         Http::assertSentCount(1);
     }
 
     /**
-     * Check that the outbox retains the audit event when immediate projection fails.
+     * Check that manual export remains successful when immediate projection fails.
      *
-     * @return void Verifies the outbox can be projected after the run completes.
+     * @return void Verifies the export can be projected later with the admin attribution.
      */
-    public function test_publication_succeeds_when_audit_projection_needs_to_be_retried(): void
+    public function test_manual_export_succeeds_when_audit_projection_needs_to_be_retried(): void
     {
-        $this->actingAsSuperAdmin();
+        $admin = $this->actingAsSuperAdmin();
         $this->field($this->english, 1, 'Save');
         Http::fake(fn (Request $request) => $this->translateRequest($request));
         $run = $this->start($this->german);
-        $this->work(2);
+        $this->work(3);
 
         $recorder = app(ChangeRecorder::class);
-        $this->mock(ChangeRecorder::class)->shouldReceive('reconcile')->once()
+        $this->partialMock(ChangeRecorder::class)->shouldReceive('reconcile')->once()
             ->andThrow(new RuntimeException('Projection unavailable'));
-        $this->work();
+        $this->post('/api/translations/'.$this->german->id.'/export')->assertOk();
 
         $this->assertRun($this->german, $run, 'completed', 1, 1, 1);
         $this->get('/lang/de.json')->assertOk();
         $this->assertDatabaseCount('content_changes', 0);
         $recorder->reconcile();
         $this->assertDatabaseCount('content_changes', 1);
+        $this->assertDatabaseHas('activity_log', ['causer_id' => $admin->id, 'log_name' => 'translations', 'event' => 'exported']);
     }
 
     /**
