@@ -4,16 +4,41 @@ namespace App\Services\ContentWebhooks;
 
 use App\Models\Translations\Translation;
 use App\Services\Translations\TranslationService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
 class TranslationPublisher
 {
-    public function recordExport(Translation $translation): void
+    /**
+     * Track field IDs changed since this locale's last successful manual export.
+     *
+     * @param  Translation  $translation  Exported locale and updated export metadata.
+     * @param  array<int|string, string|null>  $dictionary  Exact flat dictionary written to disk.
+     * @return void Saves the baseline and source event in the caller's SQLite transaction.
+     */
+    public function recordExport(Translation $translation, array $dictionary): void
     {
+        unset($dictionary['']); // Legacy unkeyed fields have no unique_id.
+        $snapshot = DB::connection('sqlite')->table('translation_export_snapshots');
+        $previous = $snapshot->where('translation_id', $translation->id)->value('dictionary');
+        $previous = $previous === null ? [] : json_decode($previous, true, flags: JSON_THROW_ON_ERROR);
+        $keys = array_keys($dictionary + $previous);
+        sort($keys, SORT_NUMERIC);
+        $changed = [];
+        foreach ($keys as $key) {
+            if (! array_key_exists($key, $previous) || ! array_key_exists($key, $dictionary) || $dictionary[$key] !== $previous[$key]) {
+                $changed[] = (string) $key;
+            }
+        }
+
+        $snapshot->updateOrInsert(['translation_id' => $translation->id], [
+            'dictionary' => json_encode($dictionary, JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE),
+        ]);
         app(ChangeRecorder::class)->write('sqlite', [
             'feature' => 'translations',
             'category' => 'translations',
             'entity_id' => (string) $translation->getKey(),
+            'unique_ids' => $changed,
             'locale' => $translation->code,
             'resource' => 'dictionary',
             'event' => 'exported',

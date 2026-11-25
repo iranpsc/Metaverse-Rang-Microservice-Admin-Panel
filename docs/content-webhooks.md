@@ -48,7 +48,18 @@ The registry is `App\Services\ContentWebhooks\RouteMapper`. Paths follow `api-en
 
 Next.js must map these identifiers to its actual paths/tags, including every query/pagination variant of collection and search caches. Category/subcategory placeholders are slugs. Visitor interactions/views do not trigger admin publication. Deleted and moved content retains old targets in the immutable event.
 
-Translation edits, imports, deletions and auto-translation do not create activity or webhook entries. Each successful manual JSON export records the admin, locale and export version and queues that locale for the normal manual or scheduled delivery. Delivery leaves dictionary files untouched. Translation model versions remain independent of webhook delivery versions.
+Manual field creates, updates and deletes write activity entries without adding
+webhook changes. Imports and auto-translation do not queue webhook changes.
+Each successful manual JSON export records the admin, locale and export version
+and queues that locale for delivery. In a dictionary change, `entity_id` is the
+translation record ID and `unique_ids` lists the shared field IDs as strings.
+The list includes added, changed and removed keys compared with the previous
+manual export of that locale. The first export after migration lists all keyed
+fields, and an unchanged export lists none. If several exports are delivered in
+one batch, the receiver gets the union of their IDs for that locale. Older
+batches may omit `unique_ids`, and other features keep their existing shape.
+Delivery leaves dictionary files untouched. Translation model versions remain
+independent of webhook delivery versions.
 
 During the export-only rollout, drain requests and stop the old application, queue workers and scheduler before running the migration. Resume traffic and processing on the new code. The migration excludes legacy translation edits from unsent delivery. It keeps activity entries, delivered batches and attempt history. Any unrelated changes in a superseded batch return to the queue and receive a fresh batch identity and version.
 

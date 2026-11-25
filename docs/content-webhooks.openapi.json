@@ -79,6 +79,7 @@
                         "entity_id": "1",
                         "resource": "dictionary",
                         "locale": "fa",
+                        "unique_ids": ["101", "205", "319"],
                         "actions": [
                           "UPDATE"
                         ],
@@ -127,9 +128,10 @@
                       },
                       {
                         "feature": "translations",
-                        "entity_id": "1",
+                        "entity_id": "7",
                         "resource": "dictionary",
-                        "locale": "fa",
+                        "locale": "en",
+                        "unique_ids": ["101", "205", "319"],
                         "actions": [
                           "UPDATE"
                         ],
@@ -140,7 +142,7 @@
                           }
                         ],
                         "affected_routes": [
-                          "/lang/fa.json"
+                          "/lang/en.json"
                         ]
                       }
                     ]
@@ -515,13 +517,23 @@
             "type": "string"
           },
           "entity_id": {
-            "type": "string"
+            "type": "string",
+            "description": "Entity ID. For translation dictionaries, this is the translation record ID."
           },
           "resource": {
             "type": "string"
           },
           "locale": {
             "type": "string"
+          },
+          "unique_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "description": "For translation dictionary changes, the shared field IDs added, changed or removed since the prior manual export. Multiple exports in one batch contribute the union of their IDs. Legacy batches may omit this property.",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
           },
           "actions": {
             "type": "array",

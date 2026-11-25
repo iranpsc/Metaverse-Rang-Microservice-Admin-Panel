@@ -2,8 +2,12 @@
 
 namespace Tests\Feature\ContentWebhooks;
 
+use App\Http\Controllers\Api\V1\Translations\FieldController;
 use App\Http\Controllers\Api\V1\Translations\TranslationController;
 use App\Http\Middleware\CaptureContentChanges;
+use App\Http\Requests\Translations\StoreFieldRequest;
+use App\Http\Requests\Translations\UpdateFieldRequest;
+use App\Models\Admin;
 use App\Models\Translations\Field;
 use App\Models\Translations\Translation;
 use App\Services\ContentWebhooks\ChangeRecorder;
@@ -13,6 +17,7 @@ use App\Services\Translations\TranslationService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -65,6 +70,7 @@ class TranslationWebhookTest extends TestCase
             $t->unsignedBigInteger('unique_id')->nullable();
             $t->text('translation')->nullable();
         });
+        (require database_path('migrations/2026_11_25_000001_create_translation_export_snapshots.php'))->up();
         foreach (['fa', 'en'] as $code) {
             $language = Translation::create(['code' => $code, 'name' => $code]);
             $language->modals()->create(['name' => 'Home'])->tabs()->create(['name' => 'Main']);
@@ -78,26 +84,51 @@ class TranslationWebhookTest extends TestCase
         parent::tearDown();
     }
 
-    private function mutate(string $method, \Closure $callback): void
+    private function mutate(string $method, \Closure $callback, ?string $name = null): void
     {
-        app(CaptureContentChanges::class)->handle(Request::create('/api/translations/1/modals/1/tabs/1/fields', $method), function () use ($callback) {
+        $request = Request::create('/api/translations/1/modals/1/tabs/1/fields', $method);
+        if ($name !== null) {
+            $request->setRouteResolver(fn () => app('router')->getRoutes()->getByName($name));
+        }
+        app(CaptureContentChanges::class)->handle($request, function () use ($callback) {
             $callback();
 
             return response()->json(['success' => true]);
         });
     }
 
-    public function test_field_and_hierarchy_edits_do_not_create_activity_or_webhook_entries(): void
+    public function test_manual_field_mutations_are_logged_without_webhook_entries(): void
     {
         $language = Translation::first();
         $modal = $language->modals->first();
-        $this->mutate('POST', fn () => app(TranslationService::class)->createField($modal->tabs->first(), 'سلام'));
-        $this->mutate('PUT', fn () => app(TranslationService::class)->updateModal($modal, 'Renamed'));
-        $this->mutate('DELETE', fn () => app(TranslationService::class)->deleteField(Field::first()));
+        $tab = $modal->tabs->first();
+        $admin = (new Admin)->forceFill(['id' => 42, 'name' => 'Editor'])->setRelation('roles', collect());
+        Auth::guard('admin')->setUser($admin);
+        $controller = app(FieldController::class);
+        $this->mutate('POST', fn () => $controller->store(
+            StoreFieldRequest::create('/', 'POST', ['value' => 'سلام']), $language, $modal, $tab
+        ), 'translations.fields.store');
+        $field = $tab->fields()->firstOrFail();
+        foreach (['درود', 'درود'] as $text) {
+            $this->mutate('PATCH', fn () => $controller->update(
+                UpdateFieldRequest::create('/', 'PATCH', ['translation' => $text]), $language, $modal, $tab, $field->fresh()
+            ), 'translations.fields.update');
+        }
+        $this->mutate('DELETE', fn () => $controller->destroy($language, $modal, $tab, $field), 'translations.fields.destroy');
+        $this->mutate('PATCH', fn () => app(TranslationService::class)->updateModal($modal, 'Renamed'));
 
-        $this->assertDatabaseCount('activity_log', 0);
+        $entries = DB::table('activity_log')->orderBy('id')->get();
+        $this->assertSame(['created', 'updated', 'deleted'], $entries->pluck('event')->all());
+        foreach ($entries as $entry) {
+            $this->assertEquals(42, $entry->causer_id);
+            $data = json_decode($entry->properties, true);
+            $this->assertEquals($field->unique_id, $data['attributes']['unique_id']);
+            $this->assertSame('fa', $data['locale']);
+            $this->assertSame([], $data['affected_routes']);
+        }
+        $this->assertSame(0, Field::count());
         $this->assertDatabaseCount('content_changes', 0);
-        $this->assertDatabaseCount('content_change_outbox', 0, 'sqlite');
+        $this->assertDatabaseCount('content_change_outbox', 3, 'sqlite');
     }
 
     public function test_failed_translation_transaction_has_no_outbox_and_no_main_log(): void
@@ -147,6 +178,7 @@ class TranslationWebhookTest extends TestCase
         $this->assertSame('exported', $data['event']);
         $this->assertSame($language->version, $data['attributes']['version']);
         $this->assertSame(['/lang/fa.json'], $data['affected_routes']);
+        $this->assertSame([], $data['unique_ids']);
 
         $field->update(['translation' => 'Unexported value']);
         config(['content_webhooks.enabled' => true, 'content_webhooks.url' => 'http://localhost/api/webhook', 'content_webhooks.secret' => 'test-secret']);
@@ -158,8 +190,64 @@ class TranslationWebhookTest extends TestCase
         $service->deliver($cycle);
 
         Http::assertSentCount(1);
+        Http::assertSent(fn ($request) => $request['changes'][0]['unique_ids'] === ['1']);
         $this->assertDatabaseHas('content_webhook_batches', ['status' => 'delivered']);
         $this->assertSame(['1' => 'Exported value'], json_decode(File::get(storage_path('app/lang/fa.json')), true));
+    }
+
+    /**
+     * Track additions, edits, and deletions against the last manual export and merge IDs by locale.
+     */
+    public function test_english_exports_report_deduplicated_field_ids_in_a_mixed_batch(): void
+    {
+        $language = Translation::where('code', 'en')->firstOrFail();
+        $tab = $language->modals->first()->tabs->first();
+        $updated = $tab->fields()->create(['unique_id' => 101, 'translation' => 'Old']);
+        $removed = $tab->fields()->create(['unique_id' => 205, 'translation' => null]);
+        $tab->fields()->create(['unique_id' => 404, 'translation' => 'Unchanged']);
+        $this->export($language);
+        DB::table('content_changes')->delete();
+
+        $updated->update(['translation' => 'New']);
+        $removed->delete();
+        $tab->fields()->create(['unique_id' => 319, 'translation' => 'Added']);
+        app(TranslationPublisher::class)->publish('en');
+        $this->export($language);
+
+        $data = json_decode(DB::table('content_changes')->first()->data, true);
+        $this->assertSame(['101', '205', '319'], $data['unique_ids']);
+        $updated->update(['translation' => 'Latest']);
+        $this->export($language);
+        app(ChangeRecorder::class)->write(null, [
+            'feature' => 'citizen_levels_details',
+            'category' => 'citizen_levels',
+            'entity_id' => '12',
+            'resource' => 'gift',
+            'event' => 'updated',
+            'action' => 'UPDATE',
+            'description' => 'Level gift updated.',
+            'affected_routes' => ['/api/levels/12', '/api/levels/12/gift'],
+        ]);
+
+        config(['content_webhooks.enabled' => true, 'content_webhooks.url' => 'http://localhost/api/webhook', 'content_webhooks.secret' => 'test-secret']);
+        Queue::fake();
+        Http::fake(fn ($request) => Http::response(['batch_id' => $request['batch_id'], 'status' => 'accepted']));
+        $service = app(DeliveryService::class);
+        $cycle = $service->trigger();
+        $service->deliver($cycle);
+        $service->deliver($cycle);
+
+        Http::assertSent(function ($request) use ($language) {
+            $byFeature = collect($request['changes'])->keyBy('feature');
+            $this->assertSame((string) $language->id, $byFeature['translations']['entity_id']);
+            $this->assertSame('en', $byFeature['translations']['locale']);
+            $this->assertSame(['101', '205', '319'], $byFeature['translations']['unique_ids']);
+            $this->assertSame(['/lang/en.json'], $byFeature['translations']['affected_routes']);
+            $this->assertSame('12', $byFeature['citizen_levels_details']['entity_id']);
+            $this->assertArrayNotHasKey('unique_ids', $byFeature['citizen_levels_details']);
+
+            return true;
+        });
     }
 
     private function export(Translation $language): void

@@ -185,6 +185,12 @@ class DeliveryService
             $key = json_encode([$data['feature'], $data['entity_id'], $data['resource'], $data['locale'] ?? null], JSON_THROW_ON_ERROR);
             $groups[$key] ??= array_intersect_key($data, array_flip(['feature', 'entity_id', 'resource', 'locale'])) + ['actions' => [], 'modifiers' => [], 'affected_routes' => []];
             $groups[$key]['actions'][] = $data['action'];
+            if ($data['feature'] === 'translations' && array_key_exists('unique_ids', $data)) {
+                $groups[$key]['unique_ids'] ??= [];
+                foreach ($data['unique_ids'] as $uniqueId) {
+                    $groups[$key]['unique_ids'][$uniqueId] = $uniqueId;
+                }
+            }
             if ($data['modifier']) {
                 $modifier = $this->payloadActor($data['modifier']);
                 $groups[$key]['modifiers'][json_encode($modifier, JSON_THROW_ON_ERROR)] = $modifier;
@@ -197,6 +203,10 @@ class DeliveryService
             $group['actions'] = array_values(array_unique($group['actions']));
             $group['modifiers'] = array_values($group['modifiers']);
             $group['affected_routes'] = array_values($group['affected_routes']);
+            if (isset($group['unique_ids'])) {
+                $group['unique_ids'] = array_values($group['unique_ids']);
+                sort($group['unique_ids'], SORT_NUMERIC);
+            }
 
             return $group;
         }, array_values($groups));

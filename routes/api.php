@@ -439,9 +439,9 @@ Route::middleware([
 
                 Route::prefix('{tab}/fields')->controller(TranslationFieldController::class)->group(function () {
                     Route::get('/', 'index');
-                    Route::post('/', 'store');
-                    Route::patch('{field}', 'update');
-                    Route::delete('{field}', 'destroy');
+                    Route::post('/', 'store')->name('translations.fields.store');
+                    Route::patch('{field}', 'update')->name('translations.fields.update');
+                    Route::delete('{field}', 'destroy')->name('translations.fields.destroy');
                 });
             });
         });

@@ -72,6 +72,7 @@ class AutoTranslationApiTest extends TestCase
         (require database_path('migrations/2026_11_18_000001_create_auto_translation_queue.php'))->up();
         (require database_path('migrations/2026_11_18_000002_add_error_to_auto_translation_runs.php'))->up();
         (require database_path('migrations/2026_11_21_000001_add_provider_to_auto_translation_runs.php'))->up();
+        (require database_path('migrations/2026_11_25_000001_create_translation_export_snapshots.php'))->up();
 
         $this->persian = Translation::create(['code' => 'fa', 'name' => 'Persian']);
         $this->english = Translation::create(['code' => 'en', 'name' => 'English']);

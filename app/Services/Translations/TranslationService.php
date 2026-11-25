@@ -7,12 +7,14 @@ use App\Models\Translations\Field;
 use App\Models\Translations\Modal;
 use App\Models\Translations\Tab;
 use App\Models\Translations\Translation;
+use App\Services\ContentWebhooks\TranslationPublisher;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use JsonException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -125,6 +127,10 @@ class TranslationService
         $filePath = $this->writeLangFile($translation, $payload);
 
         $this->updateExportMetadata($translation);
+
+        if (Schema::connection('sqlite')->hasTable('content_change_outbox')) {
+            app(TranslationPublisher::class)->recordExport($translation, $payload);
+        }
 
         return response()->download($filePath, basename($filePath));
     }

@@ -7,12 +7,10 @@ use App\Http\Requests\Translations\ImportTranslationRequest;
 use App\Http\Requests\Translations\StoreTranslationRequest;
 use App\Http\Resources\Translations\TranslationResource;
 use App\Models\Translations\Translation;
-use App\Services\ContentWebhooks\TranslationPublisher;
 use App\Services\Translations\TranslationService;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Schema;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class TranslationController extends Controller
@@ -115,13 +113,7 @@ class TranslationController extends Controller
 
     public function export(Translation $translation): BinaryFileResponse
     {
-        $response = $this->translationService->exportTranslation($translation);
-
-        if (Schema::connection('sqlite')->hasTable('content_change_outbox')) {
-            app(TranslationPublisher::class)->recordExport($translation);
-        }
-
-        return $response;
+        return $this->translationService->exportTranslation($translation);
     }
 
     /**
