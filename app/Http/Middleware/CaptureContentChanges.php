@@ -34,7 +34,7 @@ class CaptureContentChanges
             $db->rollBack();
             throw $e;
         }
-        if ($translation && ! $request->routeIs('translations.export', 'translations.fields.*')) {
+        if ($translation && ! $request->routeIs('translations.export', 'translations.destroy', 'translations.fields.*')) {
             return $response;
         }
 

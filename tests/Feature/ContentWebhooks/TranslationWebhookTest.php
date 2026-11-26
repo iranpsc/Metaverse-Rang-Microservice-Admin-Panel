@@ -190,9 +190,35 @@ class TranslationWebhookTest extends TestCase
         $service->deliver($cycle);
 
         Http::assertSentCount(1);
-        Http::assertSent(fn ($request) => $request['changes'][0]['unique_ids'] === ['1']);
+        Http::assertSent(fn ($request) => $request['changes'][0]['actions'] === ['CREATED']
+            && ! array_key_exists('unique_ids', $request['changes'][0]));
         $this->assertDatabaseHas('content_webhook_batches', ['status' => 'delivered']);
         $this->assertSame(['1' => 'Exported value'], json_decode(File::get(storage_path('app/lang/fa.json')), true));
+    }
+
+    public function test_deleting_a_locale_supersedes_pending_exports_in_the_batch(): void
+    {
+        $language = Translation::where('code', 'en')->firstOrFail();
+        $this->export($language);
+        $language->modals->first()->tabs->first()->fields()->create(['unique_id' => 101, 'translation' => 'Added']);
+        $this->export($language);
+
+        $this->mutate('DELETE', fn () => app(TranslationController::class)->destroy($language), 'translations.destroy');
+
+        $this->assertModelMissing($language);
+        $this->assertDatabaseCount('content_changes', 3);
+        config(['content_webhooks.enabled' => true, 'content_webhooks.url' => 'http://localhost/api/webhook', 'content_webhooks.secret' => 'test-secret']);
+        Queue::fake();
+        $service = app(DeliveryService::class);
+        $service->deliver($service->trigger());
+
+        $payload = json_decode(DB::table('content_webhook_batches')->value('payload'), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertCount(1, $payload['changes']);
+        $change = $payload['changes'][0];
+        $this->assertSame(['DELETED'], $change['actions']);
+        $this->assertSame('en', $change['locale']);
+        $this->assertSame(['/lang/en.json'], $change['affected_routes']);
+        $this->assertArrayNotHasKey('unique_ids', $change);
     }
 
     /**

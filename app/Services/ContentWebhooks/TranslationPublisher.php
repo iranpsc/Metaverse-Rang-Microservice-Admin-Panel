@@ -20,31 +20,49 @@ class TranslationPublisher
     {
         unset($dictionary['']); // Legacy unkeyed fields have no unique_id.
         $snapshot = DB::connection('sqlite')->table('translation_export_snapshots');
-        $previous = $snapshot->where('translation_id', $translation->id)->value('dictionary');
-        $previous = $previous === null ? [] : json_decode($previous, true, flags: JSON_THROW_ON_ERROR);
-        $keys = array_keys($dictionary + $previous);
-        sort($keys, SORT_NUMERIC);
+        $baseline = $snapshot->where('translation_id', $translation->id)->value('dictionary');
         $changed = [];
-        foreach ($keys as $key) {
-            if (! array_key_exists($key, $previous) || ! array_key_exists($key, $dictionary) || $dictionary[$key] !== $previous[$key]) {
-                $changed[] = (string) $key;
+        if ($baseline !== null) {
+            $previous = json_decode($baseline, true, flags: JSON_THROW_ON_ERROR);
+            $keys = array_keys($dictionary + $previous);
+            sort($keys, SORT_NUMERIC);
+            foreach ($keys as $key) {
+                if (! array_key_exists($key, $previous) || ! array_key_exists($key, $dictionary) || $dictionary[$key] !== $previous[$key]) {
+                    $changed[] = (string) $key;
+                }
             }
         }
 
         $snapshot->updateOrInsert(['translation_id' => $translation->id], [
             'dictionary' => json_encode($dictionary, JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE),
         ]);
+        $this->recordDictionaryChange($translation, [
+            'event' => 'exported',
+            'action' => $baseline === null ? 'CREATED' : 'UPDATE',
+            'description' => __('content_webhooks.translation_exported', ['locale' => $translation->code]),
+            'attributes' => ['version' => $translation->version],
+            ...($baseline === null ? [] : ['unique_ids' => $changed]),
+        ]);
+    }
+
+    public function recordDeletion(Translation $translation): void
+    {
+        $this->recordDictionaryChange($translation, [
+            'event' => 'deleted',
+            'action' => 'DELETED',
+            'description' => __('content_webhooks.translation_deleted', ['locale' => $translation->code]),
+        ]);
+    }
+
+    private function recordDictionaryChange(Translation $translation, array $change): void
+    {
         app(ChangeRecorder::class)->write('sqlite', [
             'feature' => 'translations',
             'category' => 'translations',
             'entity_id' => (string) $translation->getKey(),
-            'unique_ids' => $changed,
             'locale' => $translation->code,
             'resource' => 'dictionary',
-            'event' => 'exported',
-            'action' => 'UPDATE',
-            'description' => __('content_webhooks.translation_exported', ['locale' => $translation->code]),
-            'attributes' => ['version' => $translation->version],
+            ...$change,
             'affected_routes' => ['/lang/'.rawurlencode(strtolower($translation->code)).'.json'],
         ]);
     }

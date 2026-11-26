@@ -3,6 +3,7 @@
 return [
     'activity_description' => ':subject \':name\':part:detail :event.',
     'translation_exported' => 'از ترجمه :locale خروجی JSON گرفته شد.',
+    'translation_deleted' => 'ترجمه :locale حذف شد.',
     'translation_field_activity' => 'فیلد ترجمه شماره :id (:locale) :event.',
     'subjects' => [
         'citizen_level' => 'سطح شهروندی',

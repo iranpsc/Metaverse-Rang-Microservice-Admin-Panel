@@ -35,8 +35,10 @@ The registry is `App\Services\ContentWebhooks\RouteMapper`. Paths follow `api-en
 
 | Admin content | Invalidation identifiers |
 | --- | --- |
-| Level create/delete or list-visible name, slug, score, image/background edits | `/api/levels` plus the affected `/api/levels/{id}` |
-| Level general-info, gem, gift, licenses, prize | `/api/levels/{id}/{resource}` plus `/api/levels/{id}`; no unrelated level list refresh |
+| Level record or image update, including image replacement during a level edit | `/api/levels/{id}` |
+| Level record or image creation/deletion outside a level edit | `/api/levels` plus `/api/levels/{id}`. Deleting the level record also includes its subresource routes. |
+| Level general-info, gem, gift, licenses, or prize update | `/api/levels/{id}/{resource}` |
+| Level subresource creation/deletion | `/api/levels/{id}/{resource}` plus `/api/levels/{id}` |
 | Level deletion | Level collection, detail and all five subresources |
 | Calendar | `/api/calendar` and `/api/calendar/{id}` |
 | Versions (`Calendar.is_version`) | Calendar collection/detail plus `/api/calendar/latest-version` |
@@ -45,6 +47,7 @@ The registry is `App\Services\ContentWebhooks\RouteMapper`. Paths follow `api-en
 | Video categories | `/api/tutorials/categories`, `/api/tutorials/categories/{slug}`, `/api/tutorials/categories/{slug}/videos`; deletion includes descendants |
 | Video subcategories | Category listing, old/new parent category detail/video collection and `/api/tutorials/categories/{category}/{subcategory}` |
 | Successful manual translation JSON export | `/lang/{locale}.json` for the exported locale |
+| Entire translation deleted | `/lang/{locale}.json` for the deleted locale |
 
 Next.js must map these identifiers to its actual paths/tags, including every query/pagination variant of collection and search caches. Category/subcategory placeholders are slugs. Visitor interactions/views do not trigger admin publication. Deleted and moved content retains old targets in the immutable event.
 
@@ -53,11 +56,13 @@ webhook changes. Imports and auto-translation do not queue webhook changes.
 Each successful manual JSON export records the admin, locale and export version
 and queues that locale for delivery. In a dictionary change, `entity_id` is the
 translation record ID and `unique_ids` lists the shared field IDs as strings.
-The list includes added, changed and removed keys compared with the previous
-manual export of that locale. The first export after migration lists all keyed
-fields, and an unchanged export lists none. If several exports are delivered in
-one batch, the receiver gets the union of their IDs for that locale. Older
-batches may omit `unique_ids`, and other features keep their existing shape.
+The first manual export without a saved baseline sends `["CREATED"]`. Deleting
+an entire locale queues `["DELETED"]`. Both omit `unique_ids`. Subsequent
+exports send `["UPDATE"]` with the IDs added, changed, or removed since the
+previous manual export. An unchanged export sends an empty list. A batch
+combines IDs for updates to the same dictionary, unless it includes a creation
+or deletion. Deletion takes precedence over creation, and creation takes
+precedence over updates for the same dictionary.
 Delivery leaves dictionary files untouched. Translation model versions remain
 independent of webhook delivery versions.
 

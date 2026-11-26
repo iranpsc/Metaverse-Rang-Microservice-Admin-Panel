@@ -3,6 +3,7 @@
 return [
     'activity_description' => "The :subject ':name':part:detail has been :event.",
     'translation_exported' => 'The :locale translation was exported to JSON.',
+    'translation_deleted' => 'The :locale translation was deleted.',
     'translation_field_activity' => 'Translation field #:id (:locale) was :event.',
     'subjects' => [
         'citizen_level' => 'citizen level',

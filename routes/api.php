@@ -417,7 +417,7 @@ Route::middleware([
             Route::post('/', 'store');
             Route::post('import', 'importNew');
             Route::get('{translation}', 'show');
-            Route::delete('{translation}', 'destroy');
+            Route::delete('{translation}', 'destroy')->name('translations.destroy');
             Route::patch('{translation}/status', 'toggleStatus');
             Route::post('{translation}/export', 'export')->name('translations.export');
             Route::post('{translation}/import', 'import');

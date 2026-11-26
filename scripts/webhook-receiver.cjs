@@ -63,7 +63,7 @@ const server = http.createServer(async (req, res) => {
   entry.version = body.version;
   if (body.event !== 'admin.content.batch' || !/^[0-9a-f-]{36}$/i.test(body.batch_id || '') || !/^V1\.1\.[1-9][0-9]*$/.test(body.version || '') || !Array.isArray(body.changes) || !body.changes.length) return finish(422, { error: 'Invalid batch contract' });
   for (const change of body.changes) {
-    if (!change.feature || !change.entity_id || !change.resource || !Array.isArray(change.actions) || !change.actions.every(a => ['CREATE', 'UPDATE', 'DELETE'].includes(a)) || !Array.isArray(change.modifiers) || !Array.isArray(change.affected_routes)) return finish(422, { error: 'Invalid change contract' });
+    if (!change.feature || !change.entity_id || !change.resource || !Array.isArray(change.actions) || !change.actions.every(a => ['CREATE', 'UPDATE', 'DELETE', 'CREATED', 'DELETED'].includes(a)) || !Array.isArray(change.modifiers) || !Array.isArray(change.affected_routes)) return finish(422, { error: 'Invalid change contract' });
   }
   if (accepted.has(body.batch_id) && accepted.get(body.batch_id) !== raw) return finish(409, { error: 'Batch ID reused with changed payload' });
   const failure = entry.mode;

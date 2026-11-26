@@ -30,7 +30,7 @@ class RouteMapper
             $feature = 'citizen_levels';
             $category = 'levels';
             $routes = ["/api/levels/{$id}"];
-            if ($event !== 'updated' || $resource === 'image' || array_intersect(array_keys($model->getChanges()), ['name', 'slug', 'score', 'background_image'])) {
+            if ($event !== 'updated' && ! ($resource === 'image' && request()->routeIs('levels.update'))) {
                 $routes[] = '/api/levels';
             }
             if ($event === 'deleted' && $resource === 'record') {
@@ -50,7 +50,10 @@ class RouteMapper
             $name = Level::find($id)?->name ?? $id;
             $feature = 'citizen_levels_details';
             $category = 'levels';
-            $routes = ["/api/levels/{$id}", "/api/levels/{$id}/{$resource}"];
+            $routes = ["/api/levels/{$id}/{$resource}"];
+            if ($event !== 'updated') {
+                array_unshift($routes, "/api/levels/{$id}");
+            }
         } elseif ($model instanceof Calendar) {
             $feature = $category = $model->is_version ? 'versions' : 'calendar';
             $routes = ['/api/calendar', "/api/calendar/{$id}"];

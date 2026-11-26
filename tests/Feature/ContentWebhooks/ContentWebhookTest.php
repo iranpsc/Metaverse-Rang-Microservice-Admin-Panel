@@ -167,12 +167,12 @@ class ContentWebhookTest extends TestCase
         $this->assertStringContainsString("'Diamond' background image", Activity::latest('id')->first()->description);
     }
 
-    public function test_level_details_map_without_invalidating_level_list(): void
+    public function test_level_detail_update_only_invalidates_its_resource_route(): void
     {
         $level = Level::create(['name' => 'Diamond', 'slug' => 'diamond', 'score' => 1]);
         $gift = new LevelGift(['level_id' => $level->id]);
         $mapping = app(RouteMapper::class)->map($gift, 'updated');
-        $this->assertSame(["/api/levels/{$level->id}", "/api/levels/{$level->id}/gift"], $mapping['affected_routes']);
+        $this->assertSame(["/api/levels/{$level->id}/gift"], $mapping['affected_routes']);
     }
 
     public function test_dispatch_authorization_and_delivery_details(): void
@@ -449,6 +449,18 @@ class ContentWebhookTest extends TestCase
         $image->setRelation('imageable', $level);
         $routes = app(RouteMapper::class)->map($image, 'deleted')['affected_routes'];
         $this->assertEqualsCanonicalizing(['/api/levels', '/api/levels/12'], $routes);
+    }
+
+    public function test_replacing_a_level_image_during_an_edit_only_invalidates_level_details(): void
+    {
+        $level = new Level(['id' => 12, 'name' => 'Diamond']);
+        $image = new Image(['url' => 'diamond.png']);
+        $image->setRelation('imageable', $level);
+        request()->setRouteResolver(fn () => app('router')->getRoutes()->getByName('levels.update'));
+
+        $mapper = app(RouteMapper::class);
+        $this->assertSame(['/api/levels/12'], $mapper->map($image, 'deleted')['affected_routes']);
+        $this->assertSame(['/api/levels/12'], $mapper->map($image, 'created')['affected_routes']);
     }
 
     public function test_midnight_schedule_and_recovery_resume_only_authorized_cycles(): void

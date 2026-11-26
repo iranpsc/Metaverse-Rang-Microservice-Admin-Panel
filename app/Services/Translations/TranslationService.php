@@ -102,7 +102,11 @@ class TranslationService
 
     public function deleteTranslation(Translation $translation): void
     {
-        $translation->delete();
+        DB::connection('sqlite')->transaction(function () use ($translation) {
+            if ($translation->delete() && Schema::connection('sqlite')->hasTable('content_change_outbox')) {
+                app(TranslationPublisher::class)->recordDeletion($translation);
+            }
+        });
     }
 
     public function toggleStatus(Translation $translation): Translation

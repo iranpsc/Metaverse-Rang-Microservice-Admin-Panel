@@ -55,7 +55,6 @@
                           }
                         ],
                         "affected_routes": [
-                          "/api/levels/12",
                           "/api/levels/12/gift"
                         ]
                       }
@@ -122,7 +121,6 @@
                           }
                         ],
                         "affected_routes": [
-                          "/api/levels/12",
                           "/api/levels/12/gift"
                         ]
                       },
@@ -529,7 +527,7 @@
           "unique_ids": {
             "type": "array",
             "uniqueItems": true,
-            "description": "For translation dictionary changes, the shared field IDs added, changed or removed since the prior manual export. Multiple exports in one batch contribute the union of their IDs. Legacy batches may omit this property.",
+            "description": "For translation dictionary updates, the shared field IDs added, changed or removed since the prior manual export. Multiple updates in one batch contribute the union of their IDs. CREATED and DELETED omit this property.",
             "items": {
               "type": "string",
               "pattern": "^[0-9]+$"
@@ -537,13 +535,16 @@
           },
           "actions": {
             "type": "array",
+            "description": "Translation dictionaries use CREATED for the first manual export without a baseline, UPDATE for subsequent exports, and DELETED when the locale is removed.",
             "uniqueItems": true,
             "items": {
               "type": "string",
               "enum": [
                 "CREATE",
                 "UPDATE",
-                "DELETE"
+                "DELETE",
+                "CREATED",
+                "DELETED"
               ]
             }
           },

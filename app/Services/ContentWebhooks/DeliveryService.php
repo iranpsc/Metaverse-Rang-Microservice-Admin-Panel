@@ -201,6 +201,15 @@ class DeliveryService
         }
         $groupedChanges = array_map(static function (array $group): array {
             $group['actions'] = array_values(array_unique($group['actions']));
+            if ($group['feature'] === 'translations' && $group['resource'] === 'dictionary') {
+                if (in_array('DELETED', $group['actions'], true)) {
+                    $group['actions'] = ['DELETED'];
+                    unset($group['unique_ids']);
+                } elseif (in_array('CREATED', $group['actions'], true)) {
+                    $group['actions'] = ['CREATED'];
+                    unset($group['unique_ids']);
+                }
+            }
             $group['modifiers'] = array_values($group['modifiers']);
             $group['affected_routes'] = array_values($group['affected_routes']);
             if (isset($group['unique_ids'])) {

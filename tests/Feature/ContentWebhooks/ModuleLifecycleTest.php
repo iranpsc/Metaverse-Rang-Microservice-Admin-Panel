@@ -14,6 +14,7 @@ use App\Models\Level\LevelPrize;
 use App\Models\Video;
 use App\Models\VideoCategory;
 use App\Models\VideoSubCategory;
+use App\Services\ContentWebhooks\DeliveryService;
 use Illuminate\Http\Request;
 use Illuminate\Queue\WorkerOptions;
 use Illuminate\Support\Facades\DB;
@@ -61,6 +62,28 @@ class ModuleLifecycleTest extends TestCase
             'content_webhooks.secret' => 'local-webhook-test-secret',
             'content_webhooks.url' => 'http://127.0.0.1:4900/api/webhooks/cache-revalidate']);
         $this->actingAsSuperAdmin();
+    }
+
+    public function test_level_and_gem_updates_have_separate_routes_in_the_same_batch(): void
+    {
+        $level = Level::withoutEvents(fn () => Level::create(['name' => 'Diamond']));
+        $gem = LevelGem::withoutEvents(fn () => LevelGem::create(['level_id' => $level->id, 'points' => 1]));
+
+        app(CaptureContentChanges::class)->handle(Request::create("/api/levels/{$level->id}", 'PUT'), function () use ($level, $gem) {
+            $level->update(['name' => 'Ruby']);
+            $gem->update(['points' => 2]);
+
+            return response()->json(['success' => true]);
+        });
+
+        $delivery = app(DeliveryService::class);
+        $delivery->deliver($delivery->trigger());
+        $payload = json_decode(DB::table('content_webhook_batches')->value('payload'), true, flags: JSON_THROW_ON_ERROR);
+
+        $this->assertSame([
+            'record' => ["/api/levels/{$level->id}"],
+            'gem' => ["/api/levels/{$level->id}/gem"],
+        ], array_column($payload['changes'], 'affected_routes', 'resource'));
     }
 
     public static function modules(): array
@@ -130,6 +153,12 @@ class ModuleLifecycleTest extends TestCase
             $route = '/api/levels/'.$model->id;
         }
         $this->assertContains($route, $data[0]['affected_routes']);
+        if ($data[1]['category'] === 'levels') {
+            $this->assertSame([$route], $data[1]['affected_routes']);
+            $relatedRoute = $feature === 'citizen_levels' ? '/api/levels' : "/api/levels/{$level->id}";
+            $this->assertContains($relatedRoute, $data[0]['affected_routes']);
+            $this->assertContains($relatedRoute, $data[2]['affected_routes']);
+        }
         if ($class === Video::class) {
             $this->assertContains('/api/tutorials/after', $data[1]['affected_routes']);
             $this->assertContains('/api/tutorials/before', $data[1]['affected_routes']);
@@ -138,11 +167,16 @@ class ModuleLifecycleTest extends TestCase
             Http::fake(fn ($r) => Http::response(['batch_id' => $r['batch_id'], 'status' => 'accepted']));
         }
         $this->postJson('/api/activity-logs/webhook-dispatch')->assertStatus(202);
-        $work = fn () => $this->app->make('queue.worker')->runNextJob('content-webhooks', 'content-webhooks', new WorkerOptions(sleep: 0, maxTries: 0));
+        $work = fn () => $this->app->make('queue.worker')->runNextJob(
+            config('content_webhooks.queue_connection'),
+            config('content_webhooks.queue'),
+            new WorkerOptions(sleep: 0, maxTries: 0),
+        );
         $work();
         $work();
         $work();
         $batch = DB::table('content_webhook_batches')->first();
+        $this->assertNotNull($batch, 'The queued delivery should create a webhook batch.');
         $this->assertSame('delivered', $batch->status);
         $this->assertSame('V1.1.1', $batch->version);
         $this->assertSame(0, DB::table('jobs')->count());
