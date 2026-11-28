@@ -3,6 +3,8 @@
 namespace App\Services\ContentWebhooks;
 
 use App\Models\Admin;
+use App\Models\Translations\Field;
+use App\Models\Translations\Translation;
 use App\Services\ActivityLoggerService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +68,42 @@ class ChangeRecorder
     }
 
     /**
+     * Record one manual field mutation for audit without any invalidation target.
+     *
+     * @param  Translation  $translation  Locale selected by the admin.
+     * @param  Field  $field  Field row, including its shared unique ID.
+     * @param  'created'|'updated'|'deleted'  $event  Successful manual mutation.
+     * @return void Queues the activity log on the translation SQLite connection.
+     */
+    public function translationField(Translation $translation, Field $field, string $event): void
+    {
+        if (! Schema::connection('sqlite')->hasTable('content_change_outbox')) {
+            return;
+        }
+
+        $this->write('sqlite', [
+            'feature' => 'translations',
+            'category' => 'translations',
+            'entity_id' => (string) $translation->id,
+            'locale' => $translation->code,
+            'resource' => 'field',
+            'model' => Field::class,
+            'model_id' => (string) $field->id,
+            'event' => $event,
+            'action' => match ($event) {
+                'created' => 'CREATE', 'updated' => 'UPDATE', 'deleted' => 'DELETE',
+            },
+            'description' => __('content_webhooks.translation_field_activity', [
+                'id' => $field->unique_id ?? $field->id,
+                'locale' => $translation->code,
+                'event' => __('content_webhooks.events.'.$event),
+            ]),
+            'attributes' => ['unique_id' => $field->unique_id, 'tab_id' => $field->tab_id],
+            'affected_routes' => [],
+        ]);
+    }
+
+    /**
      * Write the change to its source outbox using the supplied actor or the current admin.
      *
      * @param  string|null  $connection  Source database connection, with null selecting the default.
@@ -109,7 +147,9 @@ class ChangeRecorder
                     $activity->created_at = $source->created_at;
                     $activity->save();
                     DB::table('content_change_receipts')->insert(['source_id' => $source->id, 'activity_id' => $activity->id]);
-                    if (empty($data['affected_routes'])) {
+                    $translationPublication = $data['event'] === 'exported'
+                        || ($data['event'] === 'deleted' && ($data['resource'] ?? null) === 'dictionary' && ($data['action'] ?? null) === 'DELETED');
+                    if (empty($data['affected_routes']) || ($data['feature'] === 'translations' && ! $translationPublication)) {
                         return;
                     }
                     DB::table('content_changes')->insert(['source_id' => $source->id, 'activity_id' => $activity->id,

@@ -6,11 +6,12 @@ const baseUrl = '/translations'
  * @typedef {object} AutoTranslationRun
  * @property {number} id Run identifier.
  * @property {number} translation_id Destination locale identifier.
- * @property {'queued'|'translating'|'publishing'|'completed'|'failed'|'publication_failed'} status Current run state.
+ * @property {'openai'|'cloudflare'} provider Provider used for this run.
+ * @property {'queued'|'translating'|'publishing'|'completed'|'failed'|'publication_failed'|'cancelled'} status Current run state.
  * @property {number} total Number of candidate keys.
  * @property {number} processed Number of validated translations.
  * @property {number} translated Number of translations applied to the destination.
- * @property {string|null} error Most recent displayable OpenAI diagnostic.
+ * @property {string|null} error Most recent displayable provider diagnostic.
  */
 
 export const translationApi = {
@@ -48,10 +49,33 @@ export const translationApi = {
    * Start or resume an auto-translation run for the destination language.
    *
    * @param {number} translationId Destination locale ID in the request path.
+   * @param {'openai'|'cloudflare'} [provider='openai'] Provider selected by the admin.
    * @returns {Promise<AutoTranslationRun>} Run from the HTTP 202 response.
    */
-  async startAutoTranslation (translationId) {
-    const response = await apiClient.post(`${baseUrl}/${translationId}/auto-translate`)
+  async startAutoTranslation (translationId, provider = 'openai') {
+    const response = await apiClient.post(`${baseUrl}/${translationId}/auto-translate`, { provider })
+    return response.data.data
+  },
+
+  /**
+   * Read automatic translation runs that are still active or await publication retry.
+   *
+   * @returns {Promise<AutoTranslationRun[]>} Active run records for the queue-status panel.
+   */
+  async getActiveAutoTranslationRuns () {
+    const response = await apiClient.get(`${baseUrl}/auto-translate/runs`)
+    return response.data.data
+  },
+
+  /**
+   * Stop a locale-scoped automatic translation run.
+   *
+   * @param {number} translationId Destination locale ID in the request path.
+   * @param {number} runId Active automatic translation run ID.
+   * @returns {Promise<AutoTranslationRun>} Cancelled run returned by the API.
+   */
+  async cancelAutoTranslationRun (translationId, runId) {
+    const response = await apiClient.delete(`${baseUrl}/${translationId}/auto-translate/${runId}`)
     return response.data.data
   },
 

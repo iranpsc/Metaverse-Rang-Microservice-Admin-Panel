@@ -8,6 +8,65 @@
     />
 
     <section
+      v-if="runningAutoTranslationRuns.length"
+      class="space-y-4 rounded-2xl border border-cyan-400/30 bg-cyan-400/5 p-5"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-semibold text-[var(--theme-text-primary)]">صف‌های ترجمه خودکار در حال اجرا</h2>
+          <p class="mt-1 text-sm text-[var(--theme-text-secondary)]">وضعیت صف‌ها هر ۵ ثانیه به‌روزرسانی می‌شود.</p>
+        </div>
+        <Badge variant="info">{{ formatPersianNumber(runningAutoTranslationRuns.length) }} صف فعال</Badge>
+      </div>
+
+      <div class="grid gap-3 xl:grid-cols-2">
+        <article
+          v-for="run in runningAutoTranslationRuns"
+          :key="run.id"
+          class="space-y-3 rounded-xl border border-[var(--theme-border)] bg-[var(--theme-bg-elevated)] p-4"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p class="font-medium text-[var(--theme-text-primary)]">{{ autoTranslationLanguageName(run) }}</p>
+              <p class="mt-1 text-xs text-[var(--theme-text-secondary)]">{{ autoTranslationProviderName(run.provider) }}</p>
+            </div>
+            <Badge :variant="run.status === 'publishing' ? 'info' : 'warning'">
+              {{ autoTranslationStatusName(run.status) }}
+            </Badge>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex items-center justify-between text-xs text-[var(--theme-text-secondary)]">
+              <span>{{ formatPersianNumber(run.processed) }} از {{ formatPersianNumber(run.total) }} عبارت</span>
+              <span>{{ formatPersianNumber(autoTranslationProgress(run)) }}٪</span>
+            </div>
+            <div class="h-2 overflow-hidden rounded-full bg-[var(--theme-bg-glass)]">
+              <div
+                class="h-full rounded-full bg-cyan-400 transition-[width] duration-300"
+                :style="{ width: `${autoTranslationProgress(run)}%` }"
+              />
+            </div>
+          </div>
+
+          <p v-if="run.error" class="text-xs text-amber-300">{{ run.error }}</p>
+
+          <div class="flex justify-end">
+            <Button
+              size="sm"
+              variant="danger"
+              rounded="full"
+              :loading="stoppingRunId === run.id"
+              :disabled="stoppingRunId !== null"
+              @click="stopAutoTranslationRun(run)"
+            >
+              توقف صف
+            </Button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section
       class="space-y-4 rounded-2xl border border-[var(--theme-border)] bg-[var(--theme-bg-elevated)] p-6 backdrop-blur-md"
     >
       <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -227,7 +286,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { translationApi } from '../../api/translations'
 import Table from '../../components/ui/Table.vue'
@@ -248,6 +307,7 @@ import { confirm } from '../../utils/notifications'
 import { useAutoTranslationDialog } from '../../composables/useAutoTranslationDialog'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
 import { usePaginatedList } from '../../composables/usePaginatedList'
+import { formatPersianNumber } from '../../utils/numberFormatter'
 
 const { showToast } = useToast()
 
@@ -273,6 +333,9 @@ const creating = ref(false)
 const exportingId = ref(null)
 const importing = ref(false)
 const translations = ref([])
+const activeAutoTranslationRuns = ref([])
+const stoppingRunId = ref(null)
+let activeRunsInterval
 
 const languagesLoading = ref(false)
 const languagesError = ref('')
@@ -306,6 +369,10 @@ const languageOptions = computed(() =>
     value: language.code
   }))
 )
+
+const runningAutoTranslationRuns = computed(() => activeAutoTranslationRuns.value.filter((run) =>
+  ['queued', 'translating', 'publishing'].includes(run.status)
+))
 
 const fetchLanguages = async () => {
   languagesLoading.value = true
@@ -352,6 +419,88 @@ const fetchTranslations = () => execute(async () => {
   logLabel: 'Translations fetch error:',
   fallbackMessage: 'خطا در دریافت ترجمه‌ها'
 })
+
+/**
+ * Read active automatic translation runs without interrupting the page's primary translation-list request.
+ *
+ * @returns {Promise<void>} Updates the in-memory active queue list, or clears it when the status request fails.
+ */
+const fetchActiveAutoTranslationRuns = async () => {
+  try {
+    activeAutoTranslationRuns.value = await translationApi.getActiveAutoTranslationRuns()
+  } catch (err) {
+    activeAutoTranslationRuns.value = []
+    console.error('Active auto-translation runs fetch error:', err)
+  }
+}
+
+/**
+ * Resolve a run's language name from the currently loaded translation rows.
+ *
+ * @param {AutoTranslationRun} run Active automatic translation run.
+ * @returns {string} Localized language name, or a stable fallback when its row is not on the current page.
+ */
+const autoTranslationLanguageName = (run) => {
+  const translation = translations.value.find((item) => item.id === run.translation_id)
+  return translation?.name || `زبان #${formatPersianNumber(run.translation_id)}`
+}
+
+/**
+ * Format the persisted provider identifier for the running-queue panel.
+ *
+ * @param {'openai'|'cloudflare'} provider Translation provider identifier.
+ * @returns {string} Provider name suitable for the Persian admin UI.
+ */
+const autoTranslationProviderName = (provider) => provider === 'cloudflare' ? 'Cloudflare Workers AI' : 'OpenAI'
+
+/**
+ * Translate a run status identifier into its Persian display label.
+ *
+ * @param {'queued'|'translating'|'publishing'} status Running queue status.
+ * @returns {string} Persian status label.
+ */
+const autoTranslationStatusName = (status) => ({
+  queued: 'در صف',
+  translating: 'در حال ترجمه',
+  publishing: 'در حال انتشار'
+}[status] || status)
+
+/**
+ * Calculate a bounded whole-number progress percentage for a run.
+ *
+ * @param {AutoTranslationRun} run Active automatic translation run.
+ * @returns {number} Progress percentage from zero through one hundred.
+ */
+const autoTranslationProgress = (run) => {
+  if (!run.total) return 0
+  return Math.min(100, Math.round((run.processed / run.total) * 100))
+}
+
+/**
+ * Confirm and stop an active run through the phone-verification-protected API.
+ *
+ * @param {AutoTranslationRun} run Active automatic translation run to stop.
+ * @returns {Promise<void>} Removes the cancelled run from the live queue panel after a successful response.
+ */
+const stopAutoTranslationRun = async (run) => {
+  const result = await confirm(
+    'آیا از توقف این صف ترجمه خودکار مطمئن هستید؟ ترجمه‌های ذخیره‌شده تا این لحظه حفظ می‌شوند.',
+    'توقف صف ترجمه',
+    { confirmText: 'توقف صف', cancelText: 'انصراف', confirmButtonColor: '#dc2626' }
+  )
+  if (!result.isConfirmed) return
+
+  stoppingRunId.value = run.id
+  try {
+    await translationApi.cancelAutoTranslationRun(run.translation_id, run.id)
+    activeAutoTranslationRuns.value = activeAutoTranslationRuns.value.filter((item) => item.id !== run.id)
+    showToast('صف ترجمه خودکار متوقف شد.', 'success')
+  } catch (err) {
+    showToast(err?.response?.data?.message || 'توقف صف ترجمه امکان‌پذیر نبود.', 'error')
+  } finally {
+    stoppingRunId.value = null
+  }
+}
 
 const onPageChange = (page) => goToPage(page, fetchTranslations)
 
@@ -500,7 +649,12 @@ const navigateToModals = (translation) => {
 const getFlagSrc = (translation) => `/assets/images/flags/${String(translation.code || '').toUpperCase()}.svg`
 
 onMounted(async () => {
-  await Promise.all([fetchLanguages(), fetchTranslations()])
+  await Promise.all([fetchLanguages(), fetchTranslations(), fetchActiveAutoTranslationRuns()])
+  activeRunsInterval = window.setInterval(fetchActiveAutoTranslationRuns, 5000)
+})
+
+onBeforeUnmount(() => {
+  window.clearInterval(activeRunsInterval)
 })
 </script>
 

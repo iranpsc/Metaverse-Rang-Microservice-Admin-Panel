@@ -56,6 +56,7 @@
             <option value="created">ایجاد</option>
             <option value="updated">ویرایش</option>
             <option value="deleted">حذف</option>
+            <option value="exported">خروجی JSON</option>
             <option value="login">ورود</option>
             <option value="logout">خروج</option>
             <option value="login_failed">ورود ناموفق</option>
@@ -308,7 +309,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import apiClient from '../../utils/api'
 import { Table, Pagination, LoadingState, ErrorState, Button, Modal, SearchBox } from '../../components/ui'
 import TableActionIcon from '../../components/icons/TableActionIcon.vue'
@@ -332,6 +333,7 @@ const webhookProgress = ref({
   responseBody: null,
   error: null
 })
+let webhookPollingCancelled = false
 const deliveryLabel = status => ({ pending: 'در انتظار', delivered: 'تحویل شده', failed: 'ناموفق' }[status] || 'نامرتبط')
 const deliveryBadgeClass = status => 'inline-flex px-2 py-1 rounded-full text-xs ' + ({ pending: 'bg-amber-500/10 text-amber-300', delivered: 'bg-emerald-500/10 text-emerald-300', failed: 'bg-rose-500/10 text-rose-300' }[status] || 'text-[var(--theme-text-muted)]')
 const webhookProgressMessage = computed(() => ({
@@ -368,7 +370,9 @@ const openWebhookPreview = async batchId => {
   }
 }
 const confirmWebhookSend = async () => {
-  const batchId = webhookPreview.value.batchId
+  // A pending batch resumes through the regular dispatch endpoint. The retry
+  // endpoint deliberately accepts only a failed batch.
+  const batchId = webhookPreview.value.is_retry ? webhookPreview.value.batchId : null
   isWebhookPreviewModalOpen.value = false
   await sendWebhook(batchId, true)
 }
@@ -377,8 +381,13 @@ const fetchWebhookSummary = async () => {
   webhookSummary.value = response.data.data
 }
 const waitForWebhookCompletion = async cycleId => {
-  for (let attempt = 0; attempt < 120; attempt += 1) {
-    await new Promise(resolve => setTimeout(resolve, 500))
+  webhookPollingCancelled = false
+
+  // Keep status checks safely below the API's global 60 requests/minute limit.
+  for (let attempt = 0; attempt < 30 && !webhookPollingCancelled; attempt += 1) {
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    if (webhookPollingCancelled) return
+
     const response = await apiClient.get(`/activity-logs/webhook-cycles/${cycleId}`)
     const delivery = response.data.data
     webhookProgress.value = {
@@ -394,6 +403,9 @@ const waitForWebhookCompletion = async cycleId => {
       return
     }
   }
+
+  if (webhookPollingCancelled) return
+
   webhookProgress.value.status = 'waiting'
   await fetchWebhookSummary()
   await fetchActivities()
@@ -423,6 +435,9 @@ const sendWebhook = async (batchId, confirmed = false) => {
     showToast(err.response?.data?.message || 'خطا در ارسال وبهوک', 'error')
   } finally { sending.value = false }
 }
+onUnmounted(() => {
+  webhookPollingCancelled = true
+})
 const cancelWebhook = async () => {
   const cycleId = webhookSummary.value.active_cycle
   if (!cycleId) return
@@ -472,6 +487,7 @@ const eventLabels = {
   created: 'ایجاد',
   updated: 'ویرایش',
   deleted: 'حذف',
+  exported: 'خروجی JSON',
   login: 'ورود',
   logout: 'خروج',
   login_failed: 'ورود ناموفق',

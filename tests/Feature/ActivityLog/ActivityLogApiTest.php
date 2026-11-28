@@ -4,6 +4,7 @@ namespace Tests\Feature\ActivityLog;
 
 use App\Models\Admin;
 use App\Services\ActivityLogCategoryResolver;
+use App\Services\ActivityLoggerService;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Morilog\Jalali\Jalalian;
@@ -117,6 +118,24 @@ class ActivityLogApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.activity.id', $activity->id);
+    }
+
+    public function test_sitemap_file_upload_is_recorded_with_its_category_and_actor(): void
+    {
+        $admin = $this->actingAsSuperAdmin();
+
+        app(ActivityLoggerService::class)->logStaticFileUpload('sitemaps', 'sitemap-fa.xml', [
+            'language' => 'fa',
+            'filename' => 'sitemap-fa.xml',
+        ]);
+
+        $activity = Activity::query()->sole();
+
+        $this->assertSame('sitemaps', $activity->log_name);
+        $this->assertSame('uploaded', $activity->event);
+        $this->assertSame($admin->id, $activity->causer_id);
+        $this->assertSame('static-file', $activity->properties->get('resource'));
+        $this->assertSame('sitemap-fa.xml', $activity->properties->get('file_name'));
     }
 
     public function test_admin_with_view_activity_logs_permission_can_access_endpoints(): void

@@ -80,7 +80,8 @@ class ContentWebhookTest extends TestCase
         $payload = json_decode($batch->payload, true);
         $this->assertSame('V1.1.1', $payload['version']);
         $this->assertCount(1, $payload['changes']);
-        $this->assertSame(['/api/levels/12/gift'], $payload['affected_routes']);
+        $this->assertArrayNotHasKey('affected_routes', $payload);
+        $this->assertSame(['/api/levels/12/gift'], $payload['changes'][0]['affected_routes']);
         $this->change('/api/levels/12/gem');
         app(ChangeRecorder::class)->reconcile();
         $this->accept(enveloped: true);
@@ -166,12 +167,12 @@ class ContentWebhookTest extends TestCase
         $this->assertStringContainsString("'Diamond' background image", Activity::latest('id')->first()->description);
     }
 
-    public function test_level_details_map_without_invalidating_level_list(): void
+    public function test_level_detail_update_only_invalidates_its_resource_route(): void
     {
         $level = Level::create(['name' => 'Diamond', 'slug' => 'diamond', 'score' => 1]);
         $gift = new LevelGift(['level_id' => $level->id]);
         $mapping = app(RouteMapper::class)->map($gift, 'updated');
-        $this->assertSame(["/api/levels/{$level->id}", "/api/levels/{$level->id}/gift"], $mapping['affected_routes']);
+        $this->assertSame(["/api/levels/{$level->id}/gift"], $mapping['affected_routes']);
     }
 
     public function test_dispatch_authorization_and_delivery_details(): void
@@ -240,6 +241,12 @@ class ContentWebhookTest extends TestCase
         $this->assertNull(DB::table('content_delivery_state')->where('id', 1)->value('active_cycle'));
     }
 
+    public function test_content_webhook_queue_uses_redis(): void
+    {
+        $this->assertSame('redis', config('queue.connections.content-webhooks.driver'));
+        $this->assertSame('content-webhooks', config('queue.connections.content-webhooks.queue'));
+    }
+
     public function test_cancelling_a_delivery_preserves_pending_changes_and_the_frozen_batch(): void
     {
         $this->actingAsSuperAdmin();
@@ -255,8 +262,11 @@ class ContentWebhookTest extends TestCase
         $this->assertSame('cancelled', DB::table('content_delivery_cycles')->where('id', $cycle)->value('status'));
         $this->getJson('/api/activity-logs/webhook-summary')->assertJsonPath('data.pending_count', 1)->assertJsonPath('data.active_cycle', null);
         $this->assertEquals(1, DB::table('content_delivery_state')->where('id', 1)->value('next_patch'));
+        $this->getJson('/api/activity-logs/webhook-preview')
+            ->assertJsonPath('data.batch_id', $batch->id)
+            ->assertJsonPath('data.is_retry', false);
 
-        $next = $service->trigger();
+        $next = $this->postJson('/api/activity-logs/webhook-dispatch')->assertStatus(202)->json('data.cycle_id');
         $this->postJson('/api/activity-logs/webhook-cancel', ['cycle_id' => $cycle])->assertStatus(409);
         $this->assertSame($next, DB::table('content_delivery_state')->where('id', 1)->value('active_cycle'));
         $this->accept();
@@ -323,7 +333,8 @@ class ContentWebhookTest extends TestCase
         });
         Queue::swap($this->realQueue);
         Http::swap(new Factory);
-        config(['content_webhooks.url' => 'http://127.0.0.1:4900/nextjs/api/webhooks/cache-revalidate',
+        config(['content_webhooks.queue_connection' => 'database',
+            'content_webhooks.url' => 'http://127.0.0.1:4900/nextjs/api/webhooks/cache-revalidate',
             'content_webhooks.secret' => 'local-webhook-test-secret']);
         $work = fn () => $this->app->make('queue.worker')->runNextJob('content-webhooks', 'content-webhooks', new WorkerOptions(sleep: 0, maxTries: 0));
         $this->change();
@@ -383,10 +394,14 @@ class ContentWebhookTest extends TestCase
         $first->name = 'Renamed later';
         $first->save();
         $service = app(DeliveryService::class);
-        $cycle = $service->trigger();
+        $cycle = $service->trigger('manual', ['id' => (string) $second->id, 'name' => $second->name, 'roles' => ['super-admin']]);
         $service->deliver($cycle);
         $payload = json_decode(DB::table('content_webhook_batches')->value('payload'), true);
-        $this->assertSame(['First editor', 'Second editor'], array_column($payload['changes'][0]['modifiers'], 'name'));
+        $this->assertSame(['id' => (string) $second->id, 'name' => 'Second editor'], $payload['triggered_by']);
+        $this->assertSame([
+            ['id' => (string) $first->id, 'name' => 'First editor'],
+            ['id' => (string) $second->id, 'name' => 'Second editor'],
+        ], $payload['changes'][0]['modifiers']);
         $id = DB::table('content_changes')->orderBy('id')->value('activity_id');
         $this->getJson('/api/activity-logs/'.$id)->assertOk()->assertJsonPath('data.activity.causer.name', 'First editor');
     }
@@ -412,6 +427,21 @@ class ContentWebhookTest extends TestCase
         $this->postJson('/api/activity-logs/webhook-batches/00000000-0000-4000-8000-000000000000/retry')->assertStatus(409);
     }
 
+    public function test_dispatch_rejects_a_failed_pack_that_requires_an_explicit_retry(): void
+    {
+        $this->actingAsSuperAdmin();
+        $this->change();
+        $service = app(DeliveryService::class);
+        $cycle = $service->trigger();
+        $service->deliver($cycle);
+        Http::fake(fn () => Http::response(['batch_id' => 'wrong', 'status' => 'accepted']));
+        $service->deliver($cycle);
+
+        $this->postJson('/api/activity-logs/webhook-dispatch')
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'The oldest failed pack must be retried.');
+    }
+
     public function test_removing_only_a_level_image_does_not_invalidate_unrelated_subresources(): void
     {
         $level = new Level(['id' => 12, 'name' => 'Diamond']);
@@ -419,6 +449,18 @@ class ContentWebhookTest extends TestCase
         $image->setRelation('imageable', $level);
         $routes = app(RouteMapper::class)->map($image, 'deleted')['affected_routes'];
         $this->assertEqualsCanonicalizing(['/api/levels', '/api/levels/12'], $routes);
+    }
+
+    public function test_replacing_a_level_image_during_an_edit_only_invalidates_level_details(): void
+    {
+        $level = new Level(['id' => 12, 'name' => 'Diamond']);
+        $image = new Image(['url' => 'diamond.png']);
+        $image->setRelation('imageable', $level);
+        request()->setRouteResolver(fn () => app('router')->getRoutes()->getByName('levels.update'));
+
+        $mapper = app(RouteMapper::class);
+        $this->assertSame(['/api/levels/12'], $mapper->map($image, 'deleted')['affected_routes']);
+        $this->assertSame(['/api/levels/12'], $mapper->map($image, 'created')['affected_routes']);
     }
 
     public function test_midnight_schedule_and_recovery_resume_only_authorized_cycles(): void

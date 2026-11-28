@@ -58,10 +58,17 @@ x-php-environment: &php-environment
   CACHE_STORE: ${CACHE_STORE:-redis}
   SESSION_DRIVER: ${SESSION_DRIVER:-redis}
   QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+  CONTENT_WEBHOOK_QUEUE_CONNECTION: ${CONTENT_WEBHOOK_QUEUE_CONNECTION:-content-webhooks}
+  CONTENT_WEBHOOK_QUEUE: ${CONTENT_WEBHOOK_QUEUE:-content-webhooks}
+  CONTENT_WEBHOOK_REDIS_CONNECTION: ${CONTENT_WEBHOOK_REDIS_CONNECTION:-default}
   QUEUE_FAILED_DRIVER: ${QUEUE_FAILED_DRIVER:-database-uuids}
   RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
   OPENAI_API_KEY: ${OPENAI_API_KEY:-}
   OPENAI_TRANSLATION_MODEL: ${OPENAI_TRANSLATION_MODEL:-gpt-5-mini}
+  CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID:-}
+  CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+  CLOUDFLARE_TRANSLATION_MODEL: ${CLOUDFLARE_TRANSLATION_MODEL:-@cf/meta/m2m100-1.2b}
+  CLOUDFLARE_TRANSLATION_BATCH_SIZE: ${CLOUDFLARE_TRANSLATION_BATCH_SIZE:-5}
   REDIS_HOST: ${REDIS_HOST:-admin-panel-redis}
   REDIS_PASSWORD: ${REDIS_PASSWORD:-}
   REDIS_PORT: ${REDIS_PORT:-6379}
@@ -150,6 +157,20 @@ services:
       RUN_MIGRATIONS: "0"
     # Use default QUEUE_CONNECTION (redis). --max-time recycles the worker hourly; restart policy brings it back.
     command: ["php", "artisan", "queue:work", "--sleep=3", "--tries=3", "--max-time=3600", "--timeout=90"]
+    stop_grace_period: 60s
+    depends_on:
+      app:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  content-webhooks:
+    <<: *app-common
+    pull_policy: never
+    environment:
+      <<: *php-environment
+      RUN_MIGRATIONS: "0"
+    command: ["php", "artisan", "queue:work", "content-webhooks", "--queue=content-webhooks", "--sleep=2", "--tries=0", "--max-time=3600", "--timeout=45"]
     stop_grace_period: 60s
     depends_on:
       app:

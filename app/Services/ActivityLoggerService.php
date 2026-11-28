@@ -9,6 +9,29 @@ use Illuminate\Support\Facades\Auth;
 
 class ActivityLoggerService
 {
+    /**
+     * Record an upload that is handled by a remote service rather than an Eloquent model.
+     *
+     * @param  array<string, mixed>  $properties
+     */
+    public function logStaticFileUpload(string $category, string $fileName, array $properties = []): void
+    {
+        $builder = activity($category)
+            ->event('uploaded')
+            ->withProperties(array_merge($properties, [
+                'category' => $category,
+                'resource' => 'static-file',
+                'file_name' => $fileName,
+            ]));
+
+        $causer = self::causer();
+        if ($causer) {
+            $builder->causedBy($causer);
+        }
+
+        $builder->log(__('activity_log.sitemap_file_uploaded', ['file' => $fileName]));
+    }
+
     public static function causer(): ?Admin
     {
         $user = Auth::guard('admin')->user() ?? Auth::user();

@@ -3,6 +3,7 @@
 namespace App\Services\ContentWebhooks;
 
 use App\Jobs\DeliverContentWebhook;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -10,6 +11,14 @@ use Illuminate\Support\Str;
 
 class DeliveryService
 {
+    public function oldestQueuedBatch(array $columns = ['*']): ?object
+    {
+        return DB::table('content_webhook_batches')
+            ->whereIn('status', ['pending', 'failed'])
+            ->oldest()
+            ->first($columns);
+    }
+
     public function cancel(string $cycleId): void
     {
         DB::transaction(function () use ($cycleId) {
@@ -28,9 +37,11 @@ class DeliveryService
         return DB::transaction(function () use ($trigger, $actor, $retry) {
             $this->reserveSqliteWriter();
             $state = DB::table('content_delivery_state')->where('id', 1)->lockForUpdate()->first();
-            $oldest = DB::table('content_webhook_batches')->where('status', '!=', 'delivered')->orderBy('created_at')->first();
+            $oldest = $this->oldestQueuedBatch();
             if ($retry) {
                 abort_unless($oldest && $oldest->id === $retry && $oldest->status === 'failed', 409, 'Only the oldest failed pack can be retried.');
+            } elseif ($oldest?->status === 'failed') {
+                abort(409, 'The oldest failed pack must be retried.');
             }
             if ($state->active_cycle) {
                 return $state->active_cycle;
@@ -66,7 +77,7 @@ class DeliveryService
                 return null;
             }
             $cycle = DB::table('content_delivery_cycles')->where('id', $cycleId)->first();
-            $batch = DB::table('content_webhook_batches')->where('status', '!=', 'delivered')->orderBy('created_at')->first();
+            $batch = $this->oldestQueuedBatch();
             if (! $batch) {
                 $changes = DB::table('content_changes')->whereNull('batch_id')->where('id', '<=', $cycle->cutoff)->orderBy('id')->get();
                 if ($changes->isEmpty()) {
@@ -74,7 +85,7 @@ class DeliveryService
 
                     return null;
                 }
-                $batch = $this->pack($changes, $cycle, $state->next_patch);
+                $this->pack($changes, $cycle, $state->next_patch);
 
                 // Commit membership/payload BEFORE any network I/O. A timeout or
                 // crash must never result in a different retry body or batch ID.
@@ -98,10 +109,6 @@ class DeliveryService
                 if (! $url || ! $secret) {
                     throw new \RuntimeException('Webhook URL and secret must be configured.');
                 }
-                $payload = json_decode($batch->payload, true, flags: JSON_THROW_ON_ERROR);
-                foreach (array_unique(array_filter(array_column($payload['changes'], 'locale'))) as $locale) {
-                    app(TranslationPublisher::class)->publish($locale);
-                }
                 $response = Http::connectTimeout(5)->timeout(15)->withoutRedirecting()
                     ->withHeaders(['x-webhook-secret' => $secret])->withBody($batch->payload, 'application/json')->post($url);
                 $status = $response->status();
@@ -123,7 +130,7 @@ class DeliveryService
                     $retryable = in_array($status, [408, 429]) || $status >= 500;
                 }
             } catch (\Throwable $e) {
-                $error = 'Delivery or language publication failed: '.class_basename($e);
+                $error = 'Delivery failed: '.class_basename($e);
                 report($e);
             }
             $attempt = $batch->retry_attempts + 1;
@@ -169,37 +176,64 @@ class DeliveryService
         }
     }
 
-    private function pack($changes, object $cycle, int $patch): object
+    private function pack(Collection $changes, object $cycle, int $patch): void
     {
         $id = (string) Str::uuid();
         $groups = [];
-        $routes = [];
         foreach ($changes as $change) {
             $data = json_decode($change->data, true, flags: JSON_THROW_ON_ERROR);
-            $key = json_encode([$data['feature'], $data['entity_id'], $data['resource'], $data['locale'] ?? null]);
+            $key = json_encode([$data['feature'], $data['entity_id'], $data['resource'], $data['locale'] ?? null], JSON_THROW_ON_ERROR);
             $groups[$key] ??= array_intersect_key($data, array_flip(['feature', 'entity_id', 'resource', 'locale'])) + ['actions' => [], 'modifiers' => [], 'affected_routes' => []];
             $groups[$key]['actions'][] = $data['action'];
-            if ($data['modifier']) {
-                $groups[$key]['modifiers'][json_encode($data['modifier'])] = $data['modifier'];
+            if ($data['feature'] === 'translations' && array_key_exists('unique_ids', $data)) {
+                $groups[$key]['unique_ids'] ??= [];
+                foreach ($data['unique_ids'] as $uniqueId) {
+                    $groups[$key]['unique_ids'][$uniqueId] = $uniqueId;
+                }
             }
-            $groups[$key]['affected_routes'] = array_values(array_unique([...$groups[$key]['affected_routes'], ...$data['affected_routes']]));
-            $routes = [...$routes, ...$data['affected_routes']];
+            if ($data['modifier']) {
+                $modifier = $this->payloadActor($data['modifier']);
+                $groups[$key]['modifiers'][json_encode($modifier, JSON_THROW_ON_ERROR)] = $modifier;
+            }
+            foreach ($data['affected_routes'] as $route) {
+                $groups[$key]['affected_routes'][$route] = $route;
+            }
         }
-        foreach ($groups as &$group) {
+        $groupedChanges = array_map(static function (array $group): array {
             $group['actions'] = array_values(array_unique($group['actions']));
+            if ($group['feature'] === 'translations' && $group['resource'] === 'dictionary') {
+                if (in_array('DELETED', $group['actions'], true)) {
+                    $group['actions'] = ['DELETED'];
+                    unset($group['unique_ids']);
+                } elseif (in_array('CREATED', $group['actions'], true)) {
+                    $group['actions'] = ['CREATED'];
+                    unset($group['unique_ids']);
+                }
+            }
             $group['modifiers'] = array_values($group['modifiers']);
-        }
-        unset($group);
+            $group['affected_routes'] = array_values($group['affected_routes']);
+            if (isset($group['unique_ids'])) {
+                $group['unique_ids'] = array_values($group['unique_ids']);
+                sort($group['unique_ids'], SORT_NUMERIC);
+            }
+
+            return $group;
+        }, array_values($groups));
         $version = 'V1.1.'.$patch;
         $payload = json_encode(['event' => 'admin.content.batch', 'batch_id' => $id, 'version' => $version,
             'timestamp' => now('UTC')->toISOString(), 'trigger' => $cycle->trigger,
-            'triggered_by' => $cycle->actor ? json_decode($cycle->actor, true) : null,
-            'changes' => array_values($groups), 'affected_routes' => array_values(array_unique($routes))], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            'triggered_by' => $cycle->actor
+                ? $this->payloadActor(json_decode($cycle->actor, true, flags: JSON_THROW_ON_ERROR))
+                : null,
+            'changes' => $groupedChanges], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         DB::table('content_webhook_batches')->insert(['id' => $id, 'version' => $version, 'payload' => $payload,
             'status' => 'pending', 'created_at' => now('UTC'), 'updated_at' => now('UTC')]);
         DB::table('content_changes')->whereIn('id', $changes->pluck('id'))->update(['batch_id' => $id]);
+    }
 
-        return DB::table('content_webhook_batches')->where('id', $id)->first();
+    private function payloadActor(array $actor): array
+    {
+        return ['id' => $actor['id'], 'name' => $actor['name']];
     }
 
     private function finish(string $cycleId, string $status): void

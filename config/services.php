@@ -19,6 +19,15 @@ return [
         'translation_model' => env('OPENAI_TRANSLATION_MODEL', 'gpt-5-mini'),
     ],
 
+    'cloudflare' => [
+        'account_id' => env('CLOUDFLARE_ACCOUNT_ID'),
+        'api_token' => env('CLOUDFLARE_API_TOKEN'),
+        'endpoint' => env('CLOUDFLARE_AI_ENDPOINT', 'https://api.cloudflare.com/client/v4/accounts/'.env('CLOUDFLARE_ACCOUNT_ID').'/ai/run'),
+        'translation_model' => env('CLOUDFLARE_TRANSLATION_MODEL', '@cf/meta/m2m100-1.2b'),
+        'translation_batch_size' => env('CLOUDFLARE_TRANSLATION_BATCH_SIZE', 5),
+        'translation_requests_per_minute' => env('CLOUDFLARE_TRANSLATION_REQUESTS_PER_MINUTE', 300),
+    ],
+
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),

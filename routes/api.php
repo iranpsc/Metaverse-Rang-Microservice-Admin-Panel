@@ -399,6 +399,7 @@ Route::middleware([
         Route::get('{translation}/auto-translate', [AutoTranslationController::class, 'latest']);
         Route::post('{translation}/auto-translate', [AutoTranslationController::class, 'store'])
             ->withoutMiddleware(CaptureContentChanges::class);
+        Route::delete('{translation}/auto-translate/{run}', [AutoTranslationController::class, 'destroy'])->whereNumber('run');
         Route::get('{translation}/auto-translate/{run}', [AutoTranslationController::class, 'show'])->whereNumber('run');
 
         Route::controller(TranslationController::class)->group(function () {
@@ -416,9 +417,9 @@ Route::middleware([
             Route::post('/', 'store');
             Route::post('import', 'importNew');
             Route::get('{translation}', 'show');
-            Route::delete('{translation}', 'destroy');
+            Route::delete('{translation}', 'destroy')->name('translations.destroy');
             Route::patch('{translation}/status', 'toggleStatus');
-            Route::post('{translation}/export', 'export');
+            Route::post('{translation}/export', 'export')->name('translations.export');
             Route::post('{translation}/import', 'import');
         });
 
@@ -438,9 +439,9 @@ Route::middleware([
 
                 Route::prefix('{tab}/fields')->controller(TranslationFieldController::class)->group(function () {
                     Route::get('/', 'index');
-                    Route::post('/', 'store');
-                    Route::patch('{field}', 'update');
-                    Route::delete('{field}', 'destroy');
+                    Route::post('/', 'store')->name('translations.fields.store');
+                    Route::patch('{field}', 'update')->name('translations.fields.update');
+                    Route::delete('{field}', 'destroy')->name('translations.fields.destroy');
                 });
             });
         });

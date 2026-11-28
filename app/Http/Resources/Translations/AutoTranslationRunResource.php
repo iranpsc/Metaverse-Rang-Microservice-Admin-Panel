@@ -14,11 +14,12 @@ class AutoTranslationRunResource extends JsonResource
      * @return array{
      *     id: int,
      *     translation_id: int,
-     *     status: 'queued'|'translating'|'publishing'|'completed'|'failed'|'publication_failed',
+     *     provider: 'openai'|'cloudflare',
+     *     status: 'queued'|'translating'|'publishing'|'completed'|'failed'|'publication_failed'|'cancelled',
      *     total: int,
      *     processed: int,
      *     translated: int,
-     *     error: string|null
+     *     error: string|null Provider diagnostic suitable for the admin UI.
      * }
      */
     public function toArray(Request $request): array
@@ -26,6 +27,7 @@ class AutoTranslationRunResource extends JsonResource
         return [
             'id' => $this->id,
             'translation_id' => $this->translation_id,
+            'provider' => $this->provider,
             'status' => $this->status,
             'total' => $this->total,
             'processed' => $this->processed,

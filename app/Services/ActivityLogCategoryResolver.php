@@ -88,6 +88,7 @@ class ActivityLogCategoryResolver
             'challenge' => 'چالش پرسش و پاسخ',
             'tutorials' => 'فیلم های آموزشی',
             'translations' => 'ترجمه',
+            'sitemaps' => 'نقشه‌های سایت',
             'isic-codes' => 'کدهای ISIC',
             self::CATEGORY_AUTH => 'احراز هویت',
             'other' => 'سایر',

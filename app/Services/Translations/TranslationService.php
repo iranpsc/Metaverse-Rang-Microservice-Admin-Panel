@@ -7,12 +7,14 @@ use App\Models\Translations\Field;
 use App\Models\Translations\Modal;
 use App\Models\Translations\Tab;
 use App\Models\Translations\Translation;
+use App\Services\ContentWebhooks\TranslationPublisher;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use JsonException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -100,7 +102,11 @@ class TranslationService
 
     public function deleteTranslation(Translation $translation): void
     {
-        $translation->delete();
+        DB::connection('sqlite')->transaction(function () use ($translation) {
+            if ($translation->delete() && Schema::connection('sqlite')->hasTable('content_change_outbox')) {
+                app(TranslationPublisher::class)->recordDeletion($translation);
+            }
+        });
     }
 
     public function toggleStatus(Translation $translation): Translation
@@ -125,6 +131,10 @@ class TranslationService
         $filePath = $this->writeLangFile($translation, $payload);
 
         $this->updateExportMetadata($translation);
+
+        if (Schema::connection('sqlite')->hasTable('content_change_outbox')) {
+            app(TranslationPublisher::class)->recordExport($translation, $payload);
+        }
 
         return response()->download($filePath, basename($filePath));
     }
@@ -660,11 +670,13 @@ class TranslationService
         $filePath = storage_path("app/lang/{$fileName}");
         $encodedPayload = json_encode(
             $payload,
-            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT
+            JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT
         );
 
         $this->filesystem->ensureDirectoryExists(dirname($filePath));
-        $this->filesystem->put($filePath, $encodedPayload);
+        if ($this->filesystem->put($filePath, $encodedPayload) === false) {
+            throw new \RuntimeException('Cannot write the translation dictionary.');
+        }
 
         return $filePath;
     }

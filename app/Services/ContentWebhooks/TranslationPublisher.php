@@ -4,69 +4,67 @@ namespace App\Services\ContentWebhooks;
 
 use App\Models\Translations\Translation;
 use App\Services\Translations\TranslationService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
 class TranslationPublisher
 {
     /**
-     * Read each locale’s dictionary and hierarchy for change tracking.
+     * Track field IDs changed since this locale's last successful manual export.
      *
-     * @return array<string, array{
-     *     id: string,
-     *     status: bool,
-     *     fields: array<int|string, string>,
-     *     structure: list<array{id: int, name: string, tabs: list<array{id: int, name: string}>}>
-     * }> Snapshots keyed by locale code.
+     * @param  Translation  $translation  Exported locale and updated export metadata.
+     * @param  array<int|string, string|null>  $dictionary  Exact flat dictionary written to disk.
+     * @return void Saves the baseline and source event in the caller's SQLite transaction.
      */
-    public function snapshot(): array
+    public function recordExport(Translation $translation, array $dictionary): void
     {
-        return Translation::with('modals.tabs')->get()->mapWithKeys(function ($translation) {
-            $fields = app(TranslationService::class)->buildFlatPayloadForTranslation($translation);
-            // Empty replicated placeholders are not published translations.
-            $fields = array_filter($fields, fn ($value) => $value !== null);
-            ksort($fields);
-            $structure = $translation->modals->map(fn ($modal) => ['id' => $modal->id, 'name' => $modal->name,
-                'tabs' => $modal->tabs->map(fn ($tab) => ['id' => $tab->id, 'name' => $tab->name])->all()])->all();
+        unset($dictionary['']); // Legacy unkeyed fields have no unique_id.
+        $snapshot = DB::connection('sqlite')->table('translation_export_snapshots');
+        $baseline = $snapshot->where('translation_id', $translation->id)->value('dictionary');
+        $changed = [];
+        if ($baseline !== null) {
+            $previous = json_decode($baseline, true, flags: JSON_THROW_ON_ERROR);
+            $keys = array_keys($dictionary + $previous);
+            sort($keys, SORT_NUMERIC);
+            foreach ($keys as $key) {
+                if (! array_key_exists($key, $previous) || ! array_key_exists($key, $dictionary) || $dictionary[$key] !== $previous[$key]) {
+                    $changed[] = (string) $key;
+                }
+            }
+        }
 
-            return [$translation->code => ['id' => (string) $translation->id, 'status' => (bool) $translation->status, 'fields' => $fields, 'structure' => $structure]];
-        })->all();
+        $snapshot->updateOrInsert(['translation_id' => $translation->id], [
+            'dictionary' => json_encode($dictionary, JSON_THROW_ON_ERROR | JSON_FORCE_OBJECT | JSON_UNESCAPED_UNICODE),
+        ]);
+        $this->recordDictionaryChange($translation, [
+            'event' => 'exported',
+            'action' => $baseline === null ? 'CREATED' : 'UPDATE',
+            'description' => __('content_webhooks.translation_exported', ['locale' => $translation->code]),
+            'attributes' => ['version' => $translation->version],
+            ...($baseline === null ? [] : ['unique_ids' => $changed]),
+        ]);
     }
 
-    /**
-     * Record locale changes and the client routes affected by them.
-     *
-     * @param  array<string, array<string, mixed>>  $before  Locale snapshots from snapshot() before the write.
-     * @param  string  $operation  Event name for a locale present in both snapshots.
-     * @param  array{id: string, name: string, roles: list<string>}|null  $actor  Optional admin captured for a queued change.
-     * @return void Persists changes to the SQLite outbox for projection.
-     */
-    public function record(array $before, string $operation = 'updated', ?array $actor = null): void
+    public function recordDeletion(Translation $translation): void
     {
-        $after = $this->snapshot();
-        foreach (array_unique([...array_keys($before), ...array_keys($after)]) as $locale) {
-            $old = $before[$locale] ?? null;
-            $new = $after[$locale] ?? null;
-            if ($old === $new) {
-                continue;
-            }
-            $event = ! $old ? 'created' : (! $new ? 'deleted' : $operation);
-            $publishedChanged = ! $old || ! $new || $old['status'] !== $new['status'] || $old['fields'] !== $new['fields'];
-            $changedKeys = array_keys(array_diff_assoc($new['fields'] ?? [], $old['fields'] ?? []) + array_diff_assoc($old['fields'] ?? [], $new['fields'] ?? []));
-            $detail = $changedKeys ? 'fields '.implode(', ', $changedKeys) :
-                (($old['status'] ?? null) !== ($new['status'] ?? null) ? 'publication status' : 'structure');
-            app(ChangeRecorder::class)->write('sqlite', [
-                'feature' => 'translations', 'category' => 'translations', 'entity_id' => ($new ?? $old)['id'],
-                'locale' => $locale, 'resource' => 'dictionary', 'event' => $event,
-                'action' => match ($event) {
-                    'created' => 'CREATE', 'deleted' => 'DELETE', default => 'UPDATE'
-                },
-                'description' => __('content_webhooks.translation_description', [
-                    'locale' => $locale, 'detail' => $detail, 'event' => __('content_webhooks.events.'.$event),
-                ]),
-                'attributes' => $new, 'old' => $old,
-                'affected_routes' => $publishedChanged ? ['/lang/'.rawurlencode(strtolower($locale)).'.json'] : [],
-            ], $actor);
-        }
+        $this->recordDictionaryChange($translation, [
+            'event' => 'deleted',
+            'action' => 'DELETED',
+            'description' => __('content_webhooks.translation_deleted', ['locale' => $translation->code]),
+        ]);
+    }
+
+    private function recordDictionaryChange(Translation $translation, array $change): void
+    {
+        app(ChangeRecorder::class)->write('sqlite', [
+            'feature' => 'translations',
+            'category' => 'translations',
+            'entity_id' => (string) $translation->getKey(),
+            'locale' => $translation->code,
+            'resource' => 'dictionary',
+            ...$change,
+            'affected_routes' => ['/lang/'.rawurlencode(strtolower($translation->code)).'.json'],
+        ]);
     }
 
     /**

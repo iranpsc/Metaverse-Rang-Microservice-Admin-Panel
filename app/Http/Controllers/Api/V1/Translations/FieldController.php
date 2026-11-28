@@ -10,13 +10,17 @@ use App\Models\Translations\Field;
 use App\Models\Translations\Modal;
 use App\Models\Translations\Tab;
 use App\Models\Translations\Translation;
+use App\Services\ContentWebhooks\ChangeRecorder;
 use App\Services\Translations\TranslationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class FieldController extends Controller
 {
-    public function __construct(private readonly TranslationService $translationService) {}
+    public function __construct(
+        private readonly TranslationService $translationService,
+        private readonly ChangeRecorder $changes,
+    ) {}
 
     public function index(Request $request, Translation $translation, Modal $modal, Tab $tab): JsonResponse
     {
@@ -50,6 +54,7 @@ class FieldController extends Controller
         abort_unless($modal->translation_id === $translation->id && $tab->modal_id === $modal->id, 404);
 
         $field = $this->translationService->createField($tab, $request->get('value'));
+        $this->changes->translationField($translation, $field, 'created');
 
         return response()->json([
             'success' => true,
@@ -70,6 +75,9 @@ class FieldController extends Controller
         );
 
         $this->translationService->updateField($field, $request->get('translation'));
+        if ($field->wasChanged('translation')) {
+            $this->changes->translationField($translation, $field, 'updated');
+        }
 
         return response()->json([
             'success' => true,
@@ -90,6 +98,7 @@ class FieldController extends Controller
         );
 
         $this->translationService->deleteField($field);
+        $this->changes->translationField($translation, $field, 'deleted');
 
         return response()->json([
             'success' => true,

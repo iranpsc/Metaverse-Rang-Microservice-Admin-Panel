@@ -6,7 +6,7 @@ The admin records content changes immediately, but sends only after a manual tri
 
 1. Run `php artisan migrate`. The content webhook migration creates the primary delivery tables and the source outbox on the translation SQLite connection. Back up both databases together. Rollback removes publication history.
 2. Configure `WEBHOOK_URL` and `WEBHOOK_SECRET` in the deployment environment. The sender uses `x-webhook-secret: <WEBHOOK_SECRET>` with a JSON body containing `batch_id` and `version`; it sends no custom Metarang headers. Leave `CONTENT_WEBHOOKS_ENABLED=false` until the receiver passes integration testing. Never commit the secret.
-3. In non-local environments, run a supervised dedicated worker: `php artisan queue:work content-webhooks --queue=content-webhooks --sleep=1 --timeout=45 --tries=0`. This uses the database driver regardless of the application's default queue. The existing `jobs` table must be migrated. Local environments use the synchronous queue by default so the admin can see a delivery result without a separate worker; set `CONTENT_WEBHOOK_QUEUE_CONNECTION=content-webhooks` to use the worker locally.
+3. In non-local environments, run a supervised dedicated worker: `php artisan queue:work content-webhooks --queue=content-webhooks --sleep=2 --timeout=45 --tries=0`. This uses the dedicated Redis connection and queue, separate from the application's default worker. Local environments use the synchronous queue by default so the admin can see a delivery result without a separate worker; set `CONTENT_WEBHOOK_QUEUE_CONNECTION=content-webhooks` to use the Redis worker locally.
 4. Run Laravel's scheduler every minute (`php artisan schedule:run`, or the deployment's existing scheduler). Midnight delivery is configured in `routes/console.php`; the recovery task only resumes already authorized cycles and projects committed changes.
 5. Grant `send-content-webhooks` (admin guard) to appropriate admins through existing permission management. Super-admins already have access. Viewing logs alone does not permit sending everyone's changes.
 6. Implement and stage-test the external receiver using `content-webhooks.openapi.json`, then set `CONTENT_WEBHOOKS_ENABLED=true` and restart long-running workers after configuration changes.
@@ -15,9 +15,9 @@ The migration has been applied to the local development databases. No real recei
 
 ## Data integrity and delivery
 
-Relevant admin mutation requests are wrapped in a transaction on their source database. Level, calendar, version and video observers write a source event alongside the mutation. Translation requests compare dictionaries and hierarchy before/after the mutation on SQLite, including bulk imports/deletions. An idempotent projector writes the existing Spatie activity log and a publication record on the primary connection; receipts make replay safe after interruption between databases. A failed projection is recovered by the scheduler and before dispatch.
+Relevant admin mutation requests are wrapped in a transaction on their source database. Level, calendar, version and video observers write a source event alongside the mutation. Each successful manual translation JSON export writes one SQLite outbox event. An idempotent projector writes the Spatie activity log and a publication record on the primary connection. Receipts make replay safe after interruption between databases. A failed projection is recovered by the scheduler and before dispatch.
 
-Each trigger captures a change-ID cutoff. Repeated edits are grouped by feature, entity, resource and language; the top-level route array is deduplicated. Audit entries remain separate. Membership and payload are committed before network delivery. New changes never join an in-flight pack. Empty triggers consume no version.
+Each trigger captures a change-ID cutoff. Repeated edits are grouped by feature, entity, resource and language. Each change has a deduplicated `affected_routes` array. Receivers can combine these arrays to invalidate each route once. Audit entries remain separate. Membership and payload are committed before network delivery. New changes never join an in-flight pack. Empty triggers consume no version.
 
 The first pack is `V1.1.1`. A receiver acknowledgement advances the next patch exactly once. A failed pack blocks newer packs, and both manual and midnight triggers retry the oldest first. An authorized recovery cycle can send an old failed pack followed by one newer pack. Five transport attempts use delays of 10, 30, 120 and 300 seconds. Network failures, 408, 429 and 5xx are retryable; other rejected responses fail immediately. Status is pending during retries, failed on exhaustion/rejection, and delivered only after the matching acknowledgement. Delivery disabled mid-cycle pauses it without discarding membership.
 
@@ -35,8 +35,10 @@ The registry is `App\Services\ContentWebhooks\RouteMapper`. Paths follow `api-en
 
 | Admin content | Invalidation identifiers |
 | --- | --- |
-| Level create/delete or list-visible name, slug, score, image/background edits | `/api/levels` plus the affected `/api/levels/{id}` |
-| Level general-info, gem, gift, licenses, prize | `/api/levels/{id}/{resource}` plus `/api/levels/{id}`; no unrelated level list refresh |
+| Level record or image update, including image replacement during a level edit | `/api/levels/{id}` |
+| Level record or image creation/deletion outside a level edit | `/api/levels` plus `/api/levels/{id}`. Deleting the level record also includes its subresource routes. |
+| Level general-info, gem, gift, licenses, or prize update | `/api/levels/{id}/{resource}` |
+| Level subresource creation/deletion | `/api/levels/{id}/{resource}` plus `/api/levels/{id}` |
 | Level deletion | Level collection, detail and all five subresources |
 | Calendar | `/api/calendar` and `/api/calendar/{id}` |
 | Versions (`Calendar.is_version`) | Calendar collection/detail plus `/api/calendar/latest-version` |
@@ -44,11 +46,27 @@ The registry is `App\Services\ContentWebhooks\RouteMapper`. Paths follow `api-en
 | Video deletion | Video targets plus `/api/tutorials/{video}/interactions` (numeric video ID) |
 | Video categories | `/api/tutorials/categories`, `/api/tutorials/categories/{slug}`, `/api/tutorials/categories/{slug}/videos`; deletion includes descendants |
 | Video subcategories | Category listing, old/new parent category detail/video collection and `/api/tutorials/categories/{category}/{subcategory}` |
-| Translations | `/lang/{locale}.json` only for languages whose content or publication status changed |
+| Successful manual translation JSON export | `/lang/{locale}.json` for the exported locale |
+| Entire translation deleted | `/lang/{locale}.json` for the deleted locale |
 
 Next.js must map these identifiers to its actual paths/tags, including every query/pagination variant of collection and search caches. Category/subcategory placeholders are slugs. Visitor interactions/views do not trigger admin publication. Deleted and moved content retains old targets in the immutable event.
 
-Translation additions/edits ignore empty replicated placeholders in other languages. Shared deletions include languages containing the deleted content. Hierarchy-only changes create audit entries without pending delivery records. Before each delivery, affected language files are atomically regenerated from current committed dictionaries; deleted/disabled languages have their exported file removed. Null placeholders are excluded from these regenerated files. The system invalidates current data, rather than publishing historical snapshots from each batch. Translation model versions remain independent of delivery versions.
+Manual field creates, updates and deletes write activity entries without adding
+webhook changes. Imports and auto-translation do not queue webhook changes.
+Each successful manual JSON export records the admin, locale and export version
+and queues that locale for delivery. In a dictionary change, `entity_id` is the
+translation record ID and `unique_ids` lists the shared field IDs as strings.
+The first manual export without a saved baseline sends `["CREATED"]`. Deleting
+an entire locale queues `["DELETED"]`. Both omit `unique_ids`. Subsequent
+exports send `["UPDATE"]` with the IDs added, changed, or removed since the
+previous manual export. An unchanged export sends an empty list. A batch
+combines IDs for updates to the same dictionary, unless it includes a creation
+or deletion. Deletion takes precedence over creation, and creation takes
+precedence over updates for the same dictionary.
+Delivery leaves dictionary files untouched. Translation model versions remain
+independent of webhook delivery versions.
+
+During the export-only rollout, drain requests and stop the old application, queue workers and scheduler before running the migration. Resume traffic and processing on the new code. The migration excludes legacy translation edits from unsent delivery. It keeps activity entries, delivered batches and attempt history. Any unrelated changes in a superseded batch return to the queue and receive a fresh batch identity and version.
 
 ## Verification
 

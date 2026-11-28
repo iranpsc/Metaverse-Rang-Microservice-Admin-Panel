@@ -38,10 +38,7 @@
                     "trigger": "manual",
                     "triggered_by": {
                       "id": "4829",
-                      "name": "Example admin",
-                      "roles": [
-                        "super-admin"
-                      ]
+                      "name": "Example admin"
                     },
                     "changes": [
                       {
@@ -54,21 +51,13 @@
                         "modifiers": [
                           {
                             "id": "4829",
-                            "name": "Example admin",
-                            "roles": [
-                              "super-admin"
-                            ]
+                            "name": "Example admin"
                           }
                         ],
                         "affected_routes": [
-                          "/api/levels/12",
                           "/api/levels/12/gift"
                         ]
                       }
-                    ],
-                    "affected_routes": [
-                      "/api/levels/12",
-                      "/api/levels/12/gift"
                     ]
                   }
                 },
@@ -81,10 +70,7 @@
                     "trigger": "manual",
                     "triggered_by": {
                       "id": "4829",
-                      "name": "Example admin",
-                      "roles": [
-                        "super-admin"
-                      ]
+                      "name": "Example admin"
                     },
                     "changes": [
                       {
@@ -92,26 +78,20 @@
                         "entity_id": "1",
                         "resource": "dictionary",
                         "locale": "fa",
+                        "unique_ids": ["101", "205", "319"],
                         "actions": [
-                          "CREATE",
                           "UPDATE"
                         ],
                         "modifiers": [
                           {
                             "id": "4829",
-                            "name": "Example admin",
-                            "roles": [
-                              "super-admin"
-                            ]
+                            "name": "Example admin"
                           }
                         ],
                         "affected_routes": [
                           "/lang/fa.json"
                         ]
                       }
-                    ],
-                    "affected_routes": [
-                      "/lang/fa.json"
                     ]
                   }
                 },
@@ -124,10 +104,7 @@
                     "trigger": "manual",
                     "triggered_by": {
                       "id": "4829",
-                      "name": "Example admin",
-                      "roles": [
-                        "super-admin"
-                      ]
+                      "name": "Example admin"
                     },
                     "changes": [
                       {
@@ -140,44 +117,32 @@
                         "modifiers": [
                           {
                             "id": "4829",
-                            "name": "Example admin",
-                            "roles": [
-                              "super-admin"
-                            ]
+                            "name": "Example admin"
                           }
                         ],
                         "affected_routes": [
-                          "/api/levels/12",
                           "/api/levels/12/gift"
                         ]
                       },
                       {
                         "feature": "translations",
-                        "entity_id": "1",
+                        "entity_id": "7",
                         "resource": "dictionary",
-                        "locale": "fa",
+                        "locale": "en",
+                        "unique_ids": ["101", "205", "319"],
                         "actions": [
-                          "CREATE",
                           "UPDATE"
                         ],
                         "modifiers": [
                           {
                             "id": "4829",
-                            "name": "Example admin",
-                            "roles": [
-                              "super-admin"
-                            ]
+                            "name": "Example admin"
                           }
                         ],
                         "affected_routes": [
-                          "/lang/fa.json"
+                          "/lang/en.json"
                         ]
                       }
-                    ],
-                    "affected_routes": [
-                      "/api/levels/12",
-                      "/api/levels/12/gift",
-                      "/lang/fa.json"
                     ]
                   }
                 }
@@ -524,8 +489,7 @@
         "type": "object",
         "required": [
           "id",
-          "name",
-          "roles"
+          "name"
         ],
         "properties": {
           "id": {
@@ -533,12 +497,6 @@
           },
           "name": {
             "type": "string"
-          },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           }
         }
       },
@@ -557,7 +515,8 @@
             "type": "string"
           },
           "entity_id": {
-            "type": "string"
+            "type": "string",
+            "description": "Entity ID. For translation dictionaries, this is the translation record ID."
           },
           "resource": {
             "type": "string"
@@ -565,15 +524,27 @@
           "locale": {
             "type": "string"
           },
+          "unique_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "description": "For translation dictionary updates, the shared field IDs added, changed or removed since the prior manual export. Multiple updates in one batch contribute the union of their IDs. CREATED and DELETED omit this property.",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            }
+          },
           "actions": {
             "type": "array",
+            "description": "Translation dictionaries use CREATED for the first manual export without a baseline, UPDATE for subsequent exports, and DELETED when the locale is removed.",
             "uniqueItems": true,
             "items": {
               "type": "string",
               "enum": [
                 "CREATE",
                 "UPDATE",
-                "DELETE"
+                "DELETE",
+                "CREATED",
+                "DELETED"
               ]
             }
           },
@@ -601,8 +572,7 @@
           "timestamp",
           "trigger",
           "triggered_by",
-          "changes",
-          "affected_routes"
+          "changes"
         ],
         "properties": {
           "event": {
@@ -643,14 +613,6 @@
             "minItems": 1,
             "items": {
               "$ref": "#/components/schemas/Change"
-            }
-          },
-          "affected_routes": {
-            "type": "array",
-            "minItems": 1,
-            "uniqueItems": true,
-            "items": {
-              "type": "string"
             }
           }
         }
